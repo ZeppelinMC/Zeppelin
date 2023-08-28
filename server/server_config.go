@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/aimjel/minecraft"
@@ -57,6 +59,17 @@ type ServerConfig struct {
 	Messages           Messages  `toml:"messages"`
 }
 
+func GetWorldPath() string {
+	for _, arg := range os.Args {
+		if strings.HasPrefix(arg, "worldpath=") {
+			if strings.TrimPrefix(arg, "worldpath=") != "" {
+				return strings.TrimPrefix(arg, "worldpath=")
+			}
+		}
+	}
+	return "world"
+}
+
 func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
 		Status:               minecraft.NewStatus(763, cfg.MaxPlayers, cfg.MOTD),
@@ -68,7 +81,11 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, 
 	if err != nil {
 		return nil, err
 	}
-	w, _ := world.OpenWorld("world")
+	w, err := world.OpenWorld(GetWorldPath())
+	if err != nil {
+		logger.Error("Failed to load world: %s", err)
+		os.Exit(1)
+	}
 	srv := &Server{
 		Config:   cfg,
 		listener: ln,

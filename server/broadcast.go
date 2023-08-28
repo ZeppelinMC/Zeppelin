@@ -5,29 +5,29 @@ import (
 	"github.com/aimjel/minecraft/player"
 )
 
-func (server Server) GlobalBroadcast(pk packet.Packet) {
-	server.Lock()
-	defer server.Unlock()
-	for _, player := range server.Players {
+func (srv Server) GlobalBroadcast(pk packet.Packet) {
+	srv.Lock()
+	defer srv.Unlock()
+	for _, player := range srv.Players {
 		player.Session.Conn.SendPacket(pk)
 	}
 }
 
-func (server Server) PlayerlistUpdate() {
+func (srv Server) PlayerlistUpdate() {
 	var players []player.Info
-	server.Lock()
-	for _, player := range server.Players {
-		info := *player.Session.Conn.Info
+	srv.Lock()
+	for _, p := range srv.Players {
+		info := *p.Session.Conn.Info
 		info.Listed = true
 		players = append(players, info)
 	}
-	server.Unlock()
-	server.GlobalBroadcast(&packet.PlayerInfoUpdate{
+	srv.Unlock()
+	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
 		Actions: 0x01 | 0x08,
 		Players: players,
 	})
 }
 
-func (server Server) PlayerlistRemove(players ...[16]byte) {
-	server.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDS: players})
+func (srv Server) PlayerlistRemove(players ...[16]byte) {
+	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDS: players})
 }
