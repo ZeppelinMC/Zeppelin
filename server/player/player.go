@@ -8,17 +8,32 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
+type BrandMessage string
+
+func (s BrandMessage) ID() int32 {
+	return 0x17
+}
+
+func (s BrandMessage) Decode(r *packet.Reader) error {
+	return nil
+}
+
+func (s BrandMessage) Encode(w packet.Writer) error {
+	w.String("minecraft:brand")
+	return w.String(string(s))
+}
+
 type Player struct {
-	session *network.Session
+	Session *network.Session
 }
 
 func NewPlayer(s *network.Session) *Player {
-	return &Player{session: s}
+	return &Player{Session: s}
 }
 
 func (p *Player) JoinDimension(eid int32, hardcore bool, gm byte, d *world.Dimension, seed int64, vd, sd int32) error {
 	hs := [8]byte{}
-	if err := p.session.Conn.SendPacket(&packet.JoinGame{
+	if err := p.Session.Conn.SendPacket(&packet.JoinGame{
 		EntityID:           eid,
 		IsHardcore:         hardcore,
 		GameMode:           gm,
@@ -34,7 +49,9 @@ func (p *Player) JoinDimension(eid int32, hardcore bool, gm byte, d *world.Dimen
 		return err
 	}
 
-	if err := p.session.Conn.SendPacket(&packet.SetDefaultSpawnPosition{}); err != nil {
+	p.Session.Conn.SendPacket(BrandMessage("DynamiteMC"))
+
+	if err := p.Session.Conn.SendPacket(&packet.SetDefaultSpawnPosition{}); err != nil {
 		return err
 	}
 	return nil

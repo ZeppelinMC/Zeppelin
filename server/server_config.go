@@ -1,8 +1,11 @@
 package server
 
 import (
+	"sync"
+
 	"github.com/aimjel/minecraft"
 	"github.com/dynamitemc/dynamite/logger"
+	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -70,7 +73,9 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, 
 		Config:   cfg,
 		listener: ln,
 		Logger:   logger,
-		wrld:     w,
+		world:    w,
+		Mutex:    &sync.Mutex{},
+		Players:  make(map[string]*player.Player),
 	}
 	return srv, nil
 }
