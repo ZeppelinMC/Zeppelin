@@ -49,6 +49,8 @@ github.com/aimjel/minecraft v0.0.0-20230827212436-abc1a09d7365 h1:mH+5ggKL9p/oHs
 github.com/aimjel/minecraft v0.0.0-20230827212436-abc1a09d7365/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
 github.com/aimjel/minecraft v0.0.0-20230828020820-a411e910ead1 h1:MFMNkYsHLXuWuOkqSRoUQPb2gY9PAfkfovz2vNwrDEM=
 github.com/aimjel/minecraft v0.0.0-20230828020820-a411e910ead1/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
+github.com/aimjel/minecraft v0.0.0-20230828203926-7e63df378915 h1:UQjh+gzADwK29eBTYCVVcv6qJFswhA7qvA4N5sDwLD0=
+github.com/aimjel/minecraft v0.0.0-20230828203926-7e63df378915/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
 github.com/akavel/rsrc v0.10.2/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=

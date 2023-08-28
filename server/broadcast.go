@@ -17,13 +17,12 @@ func (srv Server) PlayerlistUpdate() {
 	var players []player.Info
 	srv.Lock()
 	for _, p := range srv.Players {
-		info := *p.Session.Conn.Info
-		info.Listed = true
-		players = append(players, info)
+		p.Session.Conn.Info.Listed = true
+		players = append(players, *p.Session.Conn.Info)
 	}
 	srv.Unlock()
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
-		Actions: 0x01 | 0x08,
+		Actions: 0x01, // | 0x08,
 		Players: players,
 	})
 }

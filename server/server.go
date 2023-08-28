@@ -42,7 +42,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	srv.Players[uuid] = player
 	srv.Unlock()
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", session.Conn.RemoteAddr().String(), session.Conn.Info.Name, uuid)
-	srv.PlayerlistUpdate()
+	//srv.PlayerlistUpdate()
 
 	player.JoinDimension(0,
 		srv.Config.Hardcore,
