@@ -22,7 +22,7 @@ func (srv Server) PlayerlistUpdate() {
 	}
 	srv.Unlock()
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
-		Actions: 0x01, // | 0x08,
+		Actions: 0x01 | 0x08,
 		Players: players,
 	})
 }

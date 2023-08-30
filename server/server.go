@@ -35,14 +35,14 @@ func (srv *Server) Start() error {
 }
 
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
-	session := network.NewSession(conn)
+	session := network.NewSession(conn, srv, srv.Logger)
 	player := p.NewPlayer(session)
 	uuid := util.ParseUUID(session.Conn.Info.UUID)
 	srv.Lock()
 	srv.Players[uuid] = player
 	srv.Unlock()
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", session.Conn.RemoteAddr().String(), session.Conn.Info.Name, uuid)
-	//srv.PlayerlistUpdate()
+	srv.PlayerlistUpdate()
 
 	player.JoinDimension(0,
 		srv.Config.Hardcore,
