@@ -2,12 +2,14 @@ package packets
 
 import (
 	"github.com/aimjel/minecraft"
+	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/util"
 )
 
 type server interface {
 	PlayerlistRemove(players ...[16]byte)
+	GlobalBroadcast(packet.Packet)
 }
 
 func Disconnect(conn *minecraft.Conn, srv server, logger logger.Logger) {

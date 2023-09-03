@@ -1,7 +1,4 @@
 package packets
 
-import "fmt"
-
-func ChatMessagePacket(content string) {
-	fmt.Println(content)
+func ChatMessagePacket(content string, srv server) {
 }

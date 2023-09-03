@@ -13,6 +13,7 @@ type Session struct {
 
 type server interface {
 	PlayerlistRemove(players ...[16]byte)
+	GlobalBroadcast(packet.Packet)
 }
 
 func NewSession(c *minecraft.Conn, srv server, logger logger.Logger) *Session {
@@ -26,7 +27,7 @@ func NewSession(c *minecraft.Conn, srv server, logger logger.Logger) *Session {
 			switch pk := pk.(type) {
 			case *packet.ChatMessageServer:
 				{
-					packets.ChatMessagePacket(pk.Message)
+					packets.ChatMessagePacket(pk.Message, srv)
 				}
 			}
 		}

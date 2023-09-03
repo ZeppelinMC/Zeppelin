@@ -3,7 +3,7 @@ module github.com/dynamitemc/dynamite
 go 1.20
 
 require (
-	github.com/aimjel/minecraft v0.0.0-20230830161442-e3275440ed94
+	github.com/aimjel/minecraft v0.0.0-20230903212405-b8d4aec3c1f7
 	github.com/fatih/color v1.15.0
 	github.com/pelletier/go-toml/v2 v2.0.9
 )

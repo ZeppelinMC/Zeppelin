@@ -72,9 +72,17 @@ func GetWorldPath() string {
 
 func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
-		Status:               minecraft.NewStatus(763, cfg.MaxPlayers, cfg.MOTD),
+		Status: minecraft.NewStatus(minecraft.Version{
+			Text:     "DynamiteMC 1.20.1",
+			Protocol: 763,
+		}, cfg.MaxPlayers, cfg.MOTD),
 		OnlineMode:           cfg.Online,
-		CompressionThreshold: 256, //no cfg field
+		CompressionThreshold: 256,
+		Messages: &minecraft.Messages{
+			OnlineMode:     cfg.Messages.OnlineMode,
+			ProtocolTooNew: cfg.Messages.ProtocolNew,
+			ProtocolTooOld: cfg.Messages.ProtocolOld,
+		},
 	}
 
 	ln, err := lnCfg.Listen(address)
