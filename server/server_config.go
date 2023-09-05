@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/aimjel/minecraft"
+	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
@@ -84,6 +85,7 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, 
 			ProtocolTooOld: cfg.Messages.ProtocolOld,
 		},
 	}
+	gui.SetMaxPlayers(cfg.MaxPlayers)
 
 	ln, err := lnCfg.Listen(address)
 	if err != nil {

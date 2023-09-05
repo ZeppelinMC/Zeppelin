@@ -3,10 +3,9 @@ package logger
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
-	"fyne.io/fyne/v2/widget"
+	"github.com/dynamitemc/dynamite/gui"
 	"github.com/fatih/color"
 )
 
@@ -22,14 +21,11 @@ func HasArg(arg string) bool {
 type Logger struct {
 	FilePath    string
 	ConsoleText []string
-	GUIConsole  *widget.TextGrid
 }
 
 func (logger *Logger) Append(str string) {
 	logger.ConsoleText = append(logger.ConsoleText, str)
-	if logger.GUIConsole != nil {
-		logger.GUIConsole.SetText(strings.Join(logger.ConsoleText, "\n"))
-	}
+	gui.Log(str)
 }
 
 func getDateString() string {

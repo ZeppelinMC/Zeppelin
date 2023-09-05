@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/aimjel/minecraft"
+	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/network"
@@ -43,6 +44,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	srv.Unlock()
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", session.Conn.RemoteAddr().String(), session.Conn.Info.Name, uuid)
 	srv.PlayerlistUpdate()
+	gui.AddPlayer(session.Conn.Info.Name, uuid)
 
 	player.JoinDimension(0,
 		srv.Config.Hardcore,
