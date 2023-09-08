@@ -22,7 +22,13 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.RequestURI {
 	case "/":
 		{
+			code = http.StatusOK
 			io.WriteString(w, "hello there!")
+		}
+	default:
+		{
+			code = http.StatusNotFound
+			io.WriteString(w, "Page not found!")
 		}
 	}
 	log.Debug("[GUI] [%s] visited %s | Code %d", r.RemoteAddr, r.RequestURI, code)
