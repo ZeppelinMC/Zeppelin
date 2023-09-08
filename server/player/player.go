@@ -6,21 +6,6 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
-type BrandMessage string
-
-func (s BrandMessage) ID() int32 {
-	return 0x17
-}
-
-func (s BrandMessage) Decode(r *packet.Reader) error {
-	return nil
-}
-
-func (s BrandMessage) Encode(w packet.Writer) error {
-	w.String("minecraft:brand")
-	return w.String(string(s))
-}
-
 type Player struct {
 	Session *network.Session
 }
@@ -46,7 +31,12 @@ func (p *Player) JoinDimension(eid int32, hardcore bool, gm byte, d *world.Dimen
 		return err
 	}
 
-	p.Session.Conn.SendPacket(BrandMessage("DynamiteMC"))
+	if err := p.Session.Conn.SendPacket(packet.PluginMessage{
+		Channel: "minecraft:brand",
+		Data:    []byte("DynamiteMC"),
+	}); err != nil {
+		return err
+	}
 
 	if err := p.Session.Conn.SendPacket(&packet.SetDefaultSpawnPosition{}); err != nil {
 		return err
