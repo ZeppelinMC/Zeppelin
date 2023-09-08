@@ -68,3 +68,21 @@ func FetchUUID(uuid string) (bool, Player) {
 	player.Name = data["name"]
 	return true, player
 }
+
+type Placeholders struct {
+	PlayerName   string
+	Message      string
+	PlayerGroup  string
+	PlayerPrefix string
+	PlayerSuffix string
+}
+
+func ParsePlaceholders(str string, placeholders Placeholders) string {
+	str = strings.ReplaceAll(str, "%player%", placeholders.PlayerName)
+	str = strings.ReplaceAll(str, "%message%", placeholders.Message)
+	str = strings.ReplaceAll(str, "%player_prefix%", placeholders.PlayerPrefix)
+	str = strings.ReplaceAll(str, "%player_suffix%", placeholders.PlayerSuffix)
+	str = strings.ReplaceAll(str, "%player_group%", placeholders.PlayerGroup)
+	str = strings.TrimSpace(str)
+	return str
+}

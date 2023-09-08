@@ -30,7 +30,7 @@ func start(cfg server.ServerConfig) {
 }
 
 func main() {
-	log.Info("Starting DynamiteMC")
+	log.Info("Starting Dynamite Server")
 	var cfg server.ServerConfig
 	config.LoadConfig("config.toml", &cfg)
 	log.Debug("Loaded config")

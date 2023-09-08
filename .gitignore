@@ -2,3 +2,7 @@ resources
 config.toml
 dynamite
 .idea
+banned_ips.json
+banned_players.json
+ops.json
+whitelist.json

@@ -5,7 +5,7 @@ import (
 	"github.com/aimjel/minecraft/player"
 )
 
-func (srv Server) GlobalBroadcast(pk packet.Packet) {
+func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 	srv.Lock()
 	defer srv.Unlock()
 	for _, player := range srv.Players {
@@ -13,7 +13,7 @@ func (srv Server) GlobalBroadcast(pk packet.Packet) {
 	}
 }
 
-func (srv Server) PlayerlistUpdate() {
+func (srv *Server) PlayerlistUpdate() {
 	var players []player.Info
 	srv.Lock()
 	for _, p := range srv.Players {
@@ -27,6 +27,6 @@ func (srv Server) PlayerlistUpdate() {
 	})
 }
 
-func (srv Server) PlayerlistRemove(players ...[16]byte) {
+func (srv *Server) PlayerlistRemove(players ...[16]byte) {
 	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDS: players})
 }

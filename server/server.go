@@ -1,9 +1,12 @@
 package server
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/aimjel/minecraft"
+	"github.com/aimjel/minecraft/chat"
+	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
@@ -19,6 +22,11 @@ type Server struct {
 	Logger       logger.Logger
 	CommandGraph commands.Graph
 	Players      map[string]*p.Player
+
+	WhitelistedPlayers []PlayerBase
+	Operators          []PlayerBase
+	BannedPlayers      []PlayerBase
+	BannedIPs          []string
 
 	listener *minecraft.Listener
 
@@ -36,15 +44,33 @@ func (srv *Server) Start() error {
 }
 
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
-	session := network.NewSession(conn, srv, srv.Logger)
+	session := network.NewSession(conn)
 	player := p.NewPlayer(session)
 	uuid := util.ParseUUID(session.Conn.Info.UUID)
-	srv.Lock()
-	srv.Players[uuid] = player
-	srv.Unlock()
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", session.Conn.RemoteAddr().String(), session.Conn.Info.Name, uuid)
-	srv.PlayerlistUpdate()
-	gui.AddPlayer(session.Conn.Info.Name, uuid)
+	var reason string
+	if r := srv.ValidatePlayer(session.Conn.Info.Name, uuid, strings.Split(session.Conn.RemoteAddr().String(), ":")[0]); r != CONNECTION_VALID {
+		switch r {
+		case CONNECTION_SERVER_FULL:
+			{
+				reason = srv.Config.Messages.ServerFull
+			}
+		case CONNECTION_PLAYER_BANNED:
+			{
+				reason = srv.Config.Messages.Banned
+			}
+		case CONNECTION_PLAYER_ALREADY_PLAYING:
+			{
+				reason = srv.Config.Messages.AlreadyPlaying
+			}
+		case CONNECTION_PLAYER_NOT_IN_WHITELIST:
+			{
+				reason = srv.Config.Messages.NotInWhitelist
+			}
+		}
+		msg := chat.NewMessage(reason)
+		conn.SendPacket(&packet.DisconnectLogin{Reason: msg.String()})
+		return
+	}
 
 	player.JoinDimension(0,
 		srv.Config.Hardcore,
@@ -54,6 +80,27 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		int32(srv.Config.ViewDistance),
 		int32(srv.Config.SimulationDistance),
 	)
+
+	srv.addPlayer(player)
+
+	if err := session.HandlePackets(); err != nil {
+		u := session.Conn.Info.UUID
+		uuid := util.ParseUUID(u)
+
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, uuid)
+		srv.PlayerlistRemove(u)
+		gui.RemovePlayer(uuid)
+	}
 }
 
-//translate gamemode
+func (srv *Server) addPlayer(p *p.Player) {
+	uuid := util.ParseUUID(p.Session.Conn.Info.UUID)
+	srv.Lock()
+	srv.Players[uuid] = p
+	srv.Unlock()
+	srv.PlayerlistUpdate()
+	gui.AddPlayer(p.Session.Conn.Info.Name, uuid)
+
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.Session.Conn.RemoteAddr().String(), p.Session.Conn.Info.Name, uuid)
+
+}

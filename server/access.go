@@ -1,0 +1,124 @@
+package server
+
+import (
+	"encoding/json"
+	"os"
+)
+
+type PlayerBase struct {
+	UUID string `json:"id"`
+	Name string `json:"name"`
+}
+
+func LoadPlayerList(path string) []PlayerBase {
+	list := []PlayerBase{}
+
+	file, err := os.Open(path)
+	if err != nil {
+		file.Close()
+		file, _ := os.Create(path)
+		e := json.NewEncoder(file)
+		e.Encode(&list)
+		return list
+	}
+	defer file.Close()
+
+	d := json.NewDecoder(file)
+
+	if err := d.Decode(&list); err != nil {
+		return nil
+	}
+
+	return list
+}
+
+func WritePlayerList(path string, player PlayerBase) []PlayerBase {
+	list := []PlayerBase{}
+
+	b, err := os.ReadFile(path)
+	if err != nil {
+		list = append(list, player)
+		data, _ := json.Marshal(list)
+		os.WriteFile(path, data, 0755)
+	}
+	json.Unmarshal(b, &list)
+	list = append(list, player)
+	data, _ := json.Marshal(list)
+	os.WriteFile(path, data, 0755)
+	return list
+}
+
+func LoadIPBans() []string {
+	list := []string{}
+
+	file, err := os.Open("banned_ips.json")
+	if err != nil {
+		file.Close()
+		file, _ := os.Create("banned_ips.json")
+		e := json.NewEncoder(file)
+		e.Encode(&list)
+		return list
+	}
+	defer file.Close()
+
+	d := json.NewDecoder(file)
+
+	if err := d.Decode(&list); err != nil {
+		return nil
+	}
+
+	return list
+}
+
+/*
+
+0: User is valid
+1: User is not in whitelist
+2: User is banned
+3: Server is full
+4: User is already playing on another client
+
+*/
+
+const (
+	CONNECTION_VALID = iota
+	CONNECTION_PLAYER_NOT_IN_WHITELIST
+	CONNECTION_PLAYER_BANNED
+	CONNECTION_SERVER_FULL
+	CONNECTION_PLAYER_ALREADY_PLAYING
+)
+
+func (server *Server) ValidatePlayer(name string, id string, ip string) int {
+	for _, player := range server.BannedPlayers {
+		if player.UUID == id {
+			return CONNECTION_PLAYER_BANNED
+		}
+	}
+	for _, i := range server.BannedIPs {
+		if i == ip {
+			return CONNECTION_PLAYER_BANNED
+		}
+	}
+	if server.Config.Whitelist.Enable {
+		d := false
+		for _, player := range server.WhitelistedPlayers {
+			if player.UUID == id {
+				d = true
+				break
+			}
+		}
+		if !d {
+			return CONNECTION_PLAYER_NOT_IN_WHITELIST
+		}
+	}
+	if server.Players[id] != nil {
+		return CONNECTION_PLAYER_ALREADY_PLAYING
+	}
+	if server.Config.MaxPlayers == -1 {
+		return CONNECTION_VALID
+	}
+	if len(server.Players) >= server.Config.MaxPlayers {
+		return CONNECTION_SERVER_FULL
+	}
+	return CONNECTION_VALID
+}

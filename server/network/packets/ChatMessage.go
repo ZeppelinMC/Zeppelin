@@ -1,4 +1,4 @@
 package packets
 
-func ChatMessagePacket(content string, srv server) {
+func ChatMessagePacket(content string) {
 }

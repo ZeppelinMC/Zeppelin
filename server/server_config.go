@@ -104,5 +104,7 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, 
 		Mutex:    &sync.Mutex{},
 		Players:  make(map[string]*player.Player),
 	}
+	srv.WhitelistedPlayers, srv.BannedPlayers, srv.Operators, srv.BannedIPs = LoadPlayerList("whitelist.json"), LoadPlayerList("banned_players.json"), LoadPlayerList("ops.json"), LoadIPBans()
+	logger.Debug("Loaded player info")
 	return srv, nil
 }
