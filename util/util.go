@@ -6,8 +6,33 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
+
+func Point[T any](d T) *T {
+	return &d
+}
+
+func HasArg(arg string) bool {
+	for _, s := range os.Args {
+		if s == arg {
+			return true
+		}
+	}
+	return false
+}
+
+func GetArg(name string, def string) string {
+	for _, arg := range os.Args {
+		if strings.HasPrefix(arg, name+"=") {
+			if s := strings.TrimPrefix(arg, name+"="); s != "" {
+				return s
+			}
+		}
+	}
+	return def
+}
 
 type Player struct {
 	UUID string `json:"id"`

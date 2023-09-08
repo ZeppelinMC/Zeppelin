@@ -2,7 +2,6 @@ package server
 
 import (
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/aimjel/minecraft"
@@ -10,11 +9,19 @@ import (
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/dynamitemc/dynamite/util"
 )
 
 type Tablist struct {
 	Header []string `toml:"header"`
 	Footer []string `toml:"footer"`
+}
+
+type GUI struct {
+	ServerIP   string `toml:"server_ip"`
+	ServerPort int    `toml:"server_port"`
+	Password   string `toml:"password"`
+	Enable     bool   `toml:"enable"`
 }
 
 type Messages struct {
@@ -51,6 +58,7 @@ type ServerConfig struct {
 	SimulationDistance int       `toml:"simulation_distance"`
 	MOTD               string    `toml:"motd"`
 	Whitelist          Whitelist `toml:"whitelist"`
+	GUI                GUI       `toml:"gui"`
 	Gamemode           string    `toml:"gamemode"`
 	Hardcore           bool      `toml:"hardcore"`
 	MaxPlayers         int       `toml:"max_players"`
@@ -58,17 +66,6 @@ type ServerConfig struct {
 	Tablist            Tablist   `toml:"tablist"`
 	Chat               Chat      `toml:"chat"`
 	Messages           Messages  `toml:"messages"`
-}
-
-func GetWorldPath() string {
-	for _, arg := range os.Args {
-		if strings.HasPrefix(arg, "worldpath=") {
-			if strings.TrimPrefix(arg, "worldpath=") != "" {
-				return strings.TrimPrefix(arg, "worldpath=")
-			}
-		}
-	}
-	return "world"
 }
 
 func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, error) {
@@ -91,7 +88,7 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, 
 	if err != nil {
 		return nil, err
 	}
-	w, err := world.OpenWorld(GetWorldPath())
+	w, err := world.OpenWorld(util.GetArg("worldpath", "world"))
 	if err != nil {
 		logger.Error("Failed to load world: %s", err)
 		os.Exit(1)

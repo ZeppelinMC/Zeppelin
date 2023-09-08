@@ -61,6 +61,12 @@ func defaultConfig() server.ServerConfig {
 			ServerClosed:            "Server closed.",
 			OnlineMode:              "The server is in online mode.",
 		},
+		GUI: server.GUI{
+			ServerIP:   "0.0.0.0",
+			ServerPort: 8080,
+			Password:   "ChangeMe",
+			Enable:     false,
+		},
 		Tablist: server.Tablist{
 			Header: []string{},
 			Footer: []string{},

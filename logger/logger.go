@@ -2,21 +2,12 @@ package logger
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/dynamitemc/dynamite/gui"
+	"github.com/dynamitemc/dynamite/util"
 	"github.com/fatih/color"
 )
-
-func HasArg(arg string) bool {
-	for _, s := range os.Args {
-		if s == arg {
-			return true
-		}
-	}
-	return false
-}
 
 type Logger struct {
 	FilePath    string
@@ -47,7 +38,7 @@ func (logger *Logger) Print(format string, a ...interface{}) {
 }
 
 func (logger *Logger) Debug(format string, a ...interface{}) {
-	if !HasArg("-debug") {
+	if !util.HasArg("-debug") {
 		return
 	}
 	cyan := color.New(color.FgCyan).Add(color.Bold).SprintFunc()

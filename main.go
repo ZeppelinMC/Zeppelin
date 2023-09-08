@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server"
+	"github.com/dynamitemc/dynamite/util"
 )
 
 var log logger.Logger
@@ -34,10 +36,22 @@ func main() {
 	var cfg server.ServerConfig
 	config.LoadConfig("config.toml", &cfg)
 	log.Debug("Loaded config")
-	if !logger.HasArg("-nogui") {
-		go start(cfg)
-		log.Info("Loading GUI panel")
-		gui.LaunchGUI()
+	if cfg.GUI.Enable {
+		if !util.HasArg("-nogui") {
+			go gui.LaunchGUI(fmt.Sprintf("%s:%d", cfg.GUI.ServerIP, cfg.GUI.ServerPort), cfg.GUI.Password, &log)
+		} else {
+			log.Warn("Remove the -nogui argument to load the gui panel")
+		}
+	}
+	if util.HasArg("-uselegacygui") {
+		if !util.HasArg("-nogui") {
+			go start(cfg)
+			log.Info("Loading legacy GUI panel")
+			gui.LaunchLegacyGUI()
+		} else {
+			log.Warn("Remove the -nogui argument to load the legacy gui panel")
+			start(cfg)
+		}
 	} else {
 		start(cfg)
 	}
