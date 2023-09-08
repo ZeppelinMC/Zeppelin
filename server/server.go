@@ -36,15 +36,9 @@ func (srv *Server) Start() error {
 }
 
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
-	session := network.NewSession(conn, srv, srv.Logger)
+	session := network.NewSession(conn)
 	player := p.NewPlayer(session)
-	uuid := util.ParseUUID(session.Conn.Info.UUID)
-	srv.Lock()
-	srv.Players[uuid] = player
-	srv.Unlock()
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", session.Conn.RemoteAddr().String(), session.Conn.Info.Name, uuid)
-	srv.PlayerlistUpdate()
-	gui.AddPlayer(session.Conn.Info.Name, uuid)
+	srv.addPlayer(player)
 
 	player.JoinDimension(0,
 		srv.Config.Hardcore,
@@ -54,6 +48,27 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		int32(srv.Config.ViewDistance),
 		int32(srv.Config.SimulationDistance),
 	)
+
+	if err := session.HandlePackets(); err != nil {
+		u := session.Conn.Info.UUID
+		uuid := util.ParseUUID(u)
+
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, uuid)
+		srv.PlayerlistRemove(u)
+		gui.RemovePlayer(uuid)
+	}
+}
+
+func (srv *Server) addPlayer(p *p.Player) {
+	uuid := util.ParseUUID(p.Session.Conn.Info.UUID)
+	srv.Lock()
+	srv.Players[uuid] = p
+	srv.Unlock()
+	srv.PlayerlistUpdate()
+	gui.AddPlayer(p.Session.Conn.Info.Name, uuid)
+
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.Session.Conn.RemoteAddr().String(), p.Session.Conn.Info.Name, uuid)
+
 }
 
 //translate gamemode

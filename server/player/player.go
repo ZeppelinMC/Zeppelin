@@ -1,8 +1,6 @@
 package player
 
 import (
-	"encoding/binary"
-
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/network"
 	"github.com/dynamitemc/dynamite/server/world"
@@ -32,7 +30,6 @@ func NewPlayer(s *network.Session) *Player {
 }
 
 func (p *Player) JoinDimension(eid int32, hardcore bool, gm byte, d *world.Dimension, seed int64, vd, sd int32) error {
-	hs := [8]byte{}
 	if err := p.Session.Conn.SendPacket(&packet.JoinGame{
 		EntityID:           eid,
 		IsHardcore:         hardcore,
@@ -41,7 +38,7 @@ func (p *Player) JoinDimension(eid int32, hardcore bool, gm byte, d *world.Dimen
 		DimensionNames:     []string{d.Type()},
 		DimensionName:      d.Type(),
 		DimensionType:      d.Type(),
-		HashedSeed:         int64(binary.BigEndian.Uint64(hs[:8])),
+		HashedSeed:         seed,
 		ViewDistance:       vd,
 		SimulationDistance: sd,
 		PartialCooldown:    3,
