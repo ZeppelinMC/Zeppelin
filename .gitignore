@@ -1,4 +1,4 @@
 resources
-config.toml
+configs/config.toml
 dynamite
 .idea
