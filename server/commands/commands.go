@@ -1,11 +1,15 @@
 package commands
 
-import pk "github.com/aimjel/minecraft/packet"
+import (
+	pk "github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/player"
+)
 
 type Command struct {
 	Name      string
 	Arguments []Argument
 	Aliases   []string
+	Execute   func(*player.Player, []Argument)
 }
 
 type Properties struct {
