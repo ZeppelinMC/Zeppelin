@@ -45,7 +45,6 @@ func (srv *Server) Start() error {
 
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	session := network.NewSession(conn)
-	session := network.NewSession(conn)
 	player := p.NewPlayer(session)
 	uuid := util.ParseUUID(session.Conn.Info.UUID)
 	var reason string
@@ -72,7 +71,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		conn.SendPacket(&packet.DisconnectLogin{Reason: msg.String()})
 		return
 	}
-
+	srv.addPlayer(player)
 	player.JoinDimension(0,
 		srv.Config.Hardcore,
 		byte(p.Gamemode(srv.Config.Gamemode)),
@@ -81,6 +80,15 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		int32(srv.Config.ViewDistance),
 		int32(srv.Config.SimulationDistance),
 	)
+
+	if err := session.HandlePackets(); err != nil {
+		u := session.Conn.Info.UUID
+		uuid := util.ParseUUID(u)
+
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, uuid)
+		srv.PlayerlistRemove(u)
+		gui.RemovePlayer(uuid)
+	}
 }
 
 func (srv *Server) addPlayer(p *p.Player) {

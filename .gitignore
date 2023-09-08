@@ -5,4 +5,5 @@ dynamite
 banned_ips.json
 banned_players.json
 ops.json
+config.toml
 whitelist.json
