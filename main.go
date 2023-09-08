@@ -47,7 +47,7 @@ func main() {
 		if !util.HasArg("-nogui") {
 			go start(cfg)
 			log.Info("Loading legacy GUI panel")
-			gui.LaunchLegacyGUI()
+			gui.LaunchLegacyGUI(&log)
 		} else {
 			log.Warn("Remove the -nogui argument to load the legacy gui panel")
 			start(cfg)

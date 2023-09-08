@@ -59,7 +59,12 @@ func Log(str string) {
 	}
 }
 
-func LaunchLegacyGUI() {
+func LaunchLegacyGUI(log logger) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("Failed to start legacy GUI panel: %s", r)
+		}
+	}()
 	app := app.New()
 	window := app.NewWindow("Dynamite Server")
 	title := widget.NewRichTextFromMarkdown("# Dynamite Server")

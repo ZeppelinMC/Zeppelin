@@ -3,15 +3,12 @@ package server
 import (
 	"encoding/json"
 	"os"
+
+	"github.com/dynamitemc/dynamite/util"
 )
 
-type PlayerBase struct {
-	UUID string `json:"id"`
-	Name string `json:"name"`
-}
-
-func LoadPlayerList(path string) []PlayerBase {
-	list := []PlayerBase{}
+func LoadPlayerList(path string) []util.Player {
+	list := []util.Player{}
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -32,8 +29,8 @@ func LoadPlayerList(path string) []PlayerBase {
 	return list
 }
 
-func WritePlayerList(path string, player PlayerBase) []PlayerBase {
-	list := []PlayerBase{}
+func WritePlayerList(path string, player util.Player) []util.Player {
+	list := []util.Player{}
 
 	b, err := os.ReadFile(path)
 	if err != nil {

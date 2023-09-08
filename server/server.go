@@ -13,6 +13,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/network"
 	p "github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/dynamitemc/dynamite/util"
 )
 
 type Server struct {
@@ -22,9 +23,9 @@ type Server struct {
 	CommandGraph commands.Graph
 	Players      map[string]*p.Player
 
-	WhitelistedPlayers []PlayerBase
-	Operators          []PlayerBase
-	BannedPlayers      []PlayerBase
+	WhitelistedPlayers []util.Player
+	Operators          []util.Player
+	BannedPlayers      []util.Player
 	BannedIPs          []string
 
 	listener *minecraft.Listener
