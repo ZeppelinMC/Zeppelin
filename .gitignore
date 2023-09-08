@@ -1,5 +1,5 @@
 resources
-config.toml
+configs/config.toml
 dynamite
 .idea
 banned_ips.json
