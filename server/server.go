@@ -13,7 +13,6 @@ import (
 	"github.com/dynamitemc/dynamite/server/network"
 	p "github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
-	"github.com/dynamitemc/dynamite/util"
 )
 
 type Server struct {
@@ -46,9 +45,8 @@ func (srv *Server) Start() error {
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	session := network.NewSession(conn)
 	player := p.NewPlayer(session)
-	uuid := util.ParseUUID(session.Conn.Info.UUID)
 	var reason string
-	if r := srv.ValidatePlayer(session.Conn.Info.Name, uuid, strings.Split(session.Conn.RemoteAddr().String(), ":")[0]); r != CONNECTION_VALID {
+	if r := srv.ValidatePlayer(session.Conn.Info.Name, player.UUID, strings.Split(session.Conn.RemoteAddr().String(), ":")[0]); r != CONNECTION_VALID {
 		switch r {
 		case CONNECTION_SERVER_FULL:
 			{
@@ -83,22 +81,19 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	if err := session.HandlePackets(); err != nil {
 		u := session.Conn.Info.UUID
-		uuid := util.ParseUUID(u)
 
-		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, uuid)
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, player.UUID)
 		srv.PlayerlistRemove(u)
-		gui.RemovePlayer(uuid)
+		gui.RemovePlayer(player.UUID)
 	}
 }
 
 func (srv *Server) addPlayer(p *p.Player) {
-	uuid := util.ParseUUID(p.Session.Conn.Info.UUID)
 	srv.Lock()
-	srv.Players[uuid] = p
+	srv.Players[p.UUID] = p
 	srv.Unlock()
 	srv.PlayerlistUpdate()
-	gui.AddPlayer(p.Session.Conn.Info.Name, uuid)
+	gui.AddPlayer(p.Session.Conn.Info.Name, p.UUID)
 
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.Session.Conn.RemoteAddr().String(), p.Session.Conn.Info.Name, uuid)
-
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.Session.Conn.RemoteAddr().String(), p.Session.Conn.Info.Name, p.UUID)
 }

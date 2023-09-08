@@ -1,7 +1,6 @@
 package util
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,10 +8,6 @@ import (
 	"os"
 	"strings"
 )
-
-func Point[T any](d T) *T {
-	return &d
-}
 
 func HasArg(arg string) bool {
 	for _, s := range os.Args {
@@ -37,10 +32,6 @@ func GetArg(name string, def string) string {
 type Player struct {
 	UUID string `json:"id"`
 	Name string `json:"name"`
-}
-
-func ParseUUID(uuid [16]byte) string {
-	return AddDashesToUUID(hex.EncodeToString(uuid[:]))
 }
 
 func AddDashesToUUID(uuid string) string {

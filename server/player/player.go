@@ -4,14 +4,17 @@ import (
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/network"
 	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/google/uuid"
 )
 
 type Player struct {
+	UUID    string
 	Session *network.Session
 }
 
 func NewPlayer(s *network.Session) *Player {
-	return &Player{Session: s}
+	uuid, _ := uuid.FromBytes(s.Conn.Info.UUID[:])
+	return &Player{Session: s, UUID: uuid.String()}
 }
 
 func (p *Player) JoinDimension(eid int32, hardcore bool, gm byte, d *world.Dimension, seed int64, vd, sd int32) error {
