@@ -85,20 +85,20 @@ const (
 	CONNECTION_PLAYER_ALREADY_PLAYING
 )
 
-func (server *Server) ValidatePlayer(name string, id string, ip string) int {
-	for _, player := range server.BannedPlayers {
+func (srv *Server) ValidatePlayer(name string, id string, ip string) int {
+	for _, player := range srv.BannedPlayers {
 		if player.UUID == id {
 			return CONNECTION_PLAYER_BANNED
 		}
 	}
-	for _, i := range server.BannedIPs {
+	for _, i := range srv.BannedIPs {
 		if i == ip {
 			return CONNECTION_PLAYER_BANNED
 		}
 	}
-	if server.Config.Whitelist.Enable {
+	if srv.Config.Whitelist.Enable {
 		d := false
-		for _, player := range server.WhitelistedPlayers {
+		for _, player := range srv.WhitelistedPlayers {
 			if player.UUID == id {
 				d = true
 				break
@@ -108,13 +108,13 @@ func (server *Server) ValidatePlayer(name string, id string, ip string) int {
 			return CONNECTION_PLAYER_NOT_IN_WHITELIST
 		}
 	}
-	if server.Players[id] != nil {
+	if srv.Players[id] != nil {
 		return CONNECTION_PLAYER_ALREADY_PLAYING
 	}
-	if server.Config.MaxPlayers == -1 {
+	if srv.Config.MaxPlayers == -1 {
 		return CONNECTION_VALID
 	}
-	if len(server.Players) >= server.Config.MaxPlayers {
+	if len(srv.Players) >= srv.Config.MaxPlayers {
 		return CONNECTION_SERVER_FULL
 	}
 	return CONNECTION_VALID
