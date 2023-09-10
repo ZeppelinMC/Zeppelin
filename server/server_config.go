@@ -17,7 +17,7 @@ type Tablist struct {
 	Footer []string `toml:"footer"`
 }
 
-type GUI struct {
+type Web struct {
 	ServerIP   string `toml:"server_ip"`
 	ServerPort int    `toml:"server_port"`
 	Password   string `toml:"password"`
@@ -58,7 +58,8 @@ type ServerConfig struct {
 	SimulationDistance int       `toml:"simulation_distance"`
 	MOTD               string    `toml:"motd"`
 	Whitelist          Whitelist `toml:"whitelist"`
-	GUI                GUI       `toml:"gui"`
+	Web                Web       `toml:"web"`
+	GUI                bool      `toml:"gui"`
 	Gamemode           string    `toml:"gamemode"`
 	Hardcore           bool      `toml:"hardcore"`
 	MaxPlayers         int       `toml:"max_players"`

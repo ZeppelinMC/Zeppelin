@@ -36,20 +36,20 @@ func main() {
 	var cfg server.ServerConfig
 	config.LoadConfig("config.toml", &cfg)
 	log.Debug("Loaded config")
-	if cfg.GUI.Enable {
+	if cfg.Web.Enable {
 		if !util.HasArg("-nogui") {
-			go gui.LaunchGUI(fmt.Sprintf("%s:%d", cfg.GUI.ServerIP, cfg.GUI.ServerPort), cfg.GUI.Password, &log)
+			go gui.LaunchGUI(fmt.Sprintf("%s:%d", cfg.Web.ServerIP, cfg.Web.ServerPort), cfg.Web.Password, &log)
 		} else {
-			log.Warn("Remove the -nogui argument to load the gui panel")
+			log.Warn("Remove the -nogui argument to load the web panel")
 		}
 	}
-	if util.HasArg("-uselegacygui") {
+	if cfg.GUI {
 		if !util.HasArg("-nogui") {
 			go start(cfg)
-			log.Info("Loading legacy GUI panel")
+			log.Info("Loading GUI panel")
 			gui.LaunchLegacyGUI(&log)
 		} else {
-			log.Warn("Remove the -nogui argument to load the legacy gui panel")
+			log.Warn("Remove the -nogui argument to load the GUI panel")
 			start(cfg)
 		}
 	} else {
