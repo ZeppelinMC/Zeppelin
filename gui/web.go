@@ -67,7 +67,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug("[WEB] [%s] visited %s | Code %d", r.RemoteAddr, r.RequestURI, code)
 }
 
-func LaunchGUI(addr string, password string, l logger) {
+func LaunchWebPanel(addr string, password string, l logger) {
 	log = l
 	if len(password) < 8 && !util.HasArg("-no_password_req") {
 		log.Error("Failed to start web panel. Password must be at least 8 characters long. You can bypass this using -no_password_req")

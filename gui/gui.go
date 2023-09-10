@@ -59,7 +59,7 @@ func Log(str string) {
 	}
 }
 
-func LaunchLegacyGUI(log logger) {
+func LaunchGUI(log logger) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("Failed to start legacy GUI panel: %s", r)

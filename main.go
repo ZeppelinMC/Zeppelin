@@ -38,7 +38,7 @@ func main() {
 	log.Debug("Loaded config")
 	if cfg.Web.Enable {
 		if !util.HasArg("-nogui") {
-			go gui.LaunchGUI(fmt.Sprintf("%s:%d", cfg.Web.ServerIP, cfg.Web.ServerPort), cfg.Web.Password, &log)
+			go gui.LaunchWebPanel(fmt.Sprintf("%s:%d", cfg.Web.ServerIP, cfg.Web.ServerPort), cfg.Web.Password, &log)
 		} else {
 			log.Warn("Remove the -nogui argument to load the web panel")
 		}
@@ -47,7 +47,7 @@ func main() {
 		if !util.HasArg("-nogui") {
 			go start(cfg)
 			log.Info("Loading GUI panel")
-			gui.LaunchLegacyGUI(&log)
+			gui.LaunchGUI(&log)
 		} else {
 			log.Warn("Remove the -nogui argument to load the GUI panel")
 			start(cfg)
