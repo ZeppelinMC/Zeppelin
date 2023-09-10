@@ -1,11 +1,11 @@
 package gui
 
 import (
+	"embed"
 	"errors"
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/dynamitemc/dynamite/util"
@@ -17,12 +17,15 @@ type logger interface {
 	Debug(string, ...interface{})
 }
 
+//go:embed pages cdn
+var guifs embed.FS
+
 var log logger
 
 type handler struct{}
 
 func (handler) Render(w http.ResponseWriter, name string, vars map[string]string) (int, error) {
-	f, err := os.ReadFile("gui/pages/" + name)
+	f, err := guifs.ReadFile("pages/" + name)
 	if err != nil {
 		return 0, err
 	}
@@ -37,7 +40,7 @@ func (handler) Render(w http.ResponseWriter, name string, vars map[string]string
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var code int
 	if strings.HasPrefix(r.RequestURI, "/cdn") {
-		file, err := os.ReadFile("gui/cdn/" + strings.TrimPrefix(r.RequestURI, "/cdn/"))
+		file, err := guifs.ReadFile("cdn/" + strings.TrimPrefix(r.RequestURI, "/cdn/"))
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				io.WriteString(w, "Unknown file!")
