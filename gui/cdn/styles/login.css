@@ -47,3 +47,14 @@ button {
     border-width: 1px;
     cursor: pointer;
 }
+
+.red-placeholder::placeholder {
+    color: red;
+}
+
+#error {
+    margin-top: 5px;
+    color: red;
+    display: none;
+    font-family: 'Roboto', sans-serif;
+}

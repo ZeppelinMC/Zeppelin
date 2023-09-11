@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
+	"net/url"
 	"strings"
 
 	"github.com/dynamitemc/dynamite/util"
@@ -26,7 +26,7 @@ var log logger
 type handler struct{}
 
 func (handler) Render(w http.ResponseWriter, name string, vars map[string]string) (int, error) {
-	f, err := os.ReadFile("gui/pages/" + name)
+	f, err := guifs.ReadFile("gui/pages/" + name)
 	if err != nil {
 		return 0, err
 	}
@@ -39,9 +39,10 @@ func (handler) Render(w http.ResponseWriter, name string, vars map[string]string
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	uri, _ := url.ParseRequestURI(r.RequestURI)
 	var code int
 	if strings.HasPrefix(r.RequestURI, "/cdn") {
-		file, err := os.ReadFile("gui/cdn/" + strings.TrimPrefix(r.RequestURI, "/cdn/"))
+		file, err := guifs.ReadFile("gui/cdn/" + strings.TrimPrefix(uri.Path, "/cdn/"))
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				io.WriteString(w, "Unknown file!")
@@ -53,7 +54,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, string(file))
 		return
 	}
-	switch r.RequestURI {
+	switch uri.Path {
 	case "/":
 		{
 			code = http.StatusOK
