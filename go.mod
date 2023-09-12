@@ -3,13 +3,13 @@ module github.com/dynamitemc/dynamite
 go 1.20
 
 require (
-	github.com/aimjel/minecraft v0.0.0-20230912143819-566af89d5f6f
 	github.com/fatih/color v1.15.0
 	github.com/pelletier/go-toml/v2 v2.1.0
 )
 
 require (
 	fyne.io/systray v1.10.1-0.20230722100817-88df1e0ffa9a // indirect
+	github.com/aimjel/minecraft v0.0.0-20230912143819-566af89d5f6f
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
