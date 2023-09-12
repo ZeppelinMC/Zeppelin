@@ -9,7 +9,7 @@ type Command struct {
 	Name      string
 	Arguments []Argument
 	Aliases   []string
-	Execute   func(*player.Player, []Argument)
+	Execute   func(*player.Player, []string)
 }
 
 type Properties struct {

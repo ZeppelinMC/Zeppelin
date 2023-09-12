@@ -7,6 +7,7 @@ import (
 	"github.com/aimjel/minecraft"
 	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
+	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 	"github.com/dynamitemc/dynamite/util"
@@ -69,7 +70,7 @@ type ServerConfig struct {
 	Messages           Messages  `toml:"messages"`
 }
 
-func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, error) {
+func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGraph *commands.Graph) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
 		Status: minecraft.NewStatus(minecraft.Version{
 			Text:     "DynamiteMC 1.20.1",
@@ -95,12 +96,13 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger) (*Server, 
 		os.Exit(1)
 	}
 	srv := &Server{
-		Config:   cfg,
-		listener: ln,
-		Logger:   logger,
-		world:    w,
-		Mutex:    &sync.Mutex{},
-		Players:  make(map[string]*player.Player),
+		Config:       cfg,
+		listener:     ln,
+		Logger:       logger,
+		world:        w,
+		Mutex:        &sync.Mutex{},
+		Players:      make(map[string]*player.Player),
+		CommandGraph: *commandGraph,
 	}
 	srv.WhitelistedPlayers, srv.BannedPlayers, srv.Operators, srv.BannedIPs = LoadPlayerList("whitelist.json"), LoadPlayerList("banned_players.json"), LoadPlayerList("ops.json"), LoadIPBans()
 	logger.Debug("Loaded player info")

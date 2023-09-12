@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dynamitemc/dynamite/config"
+	"github.com/dynamitemc/dynamite/core_commands"
 	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server"
@@ -17,7 +18,7 @@ var log logger.Logger
 var startTime = time.Now().Unix()
 
 func start(cfg server.ServerConfig) {
-	srv, err := cfg.Listen(cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log)
+	srv, err := cfg.Listen(cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
 	log.Info("Opened TCP server on %s:%d", cfg.ServerIP, cfg.ServerPort)
 	if err != nil {
 		log.Error("Failed to open TCP server: %s", err)

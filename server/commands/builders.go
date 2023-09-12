@@ -8,7 +8,7 @@ const (
 	StringGreedyPhrase
 )
 
-func NewCommand(name string, execute func(*player.Player, []Argument), arguments ...Argument) *Command {
+func NewCommand(name string, execute func(*player.Player, []string), arguments ...Argument) *Command {
 	return &Command{Name: name, Execute: execute, Arguments: arguments}
 }
 

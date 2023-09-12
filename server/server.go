@@ -71,6 +71,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		return
 	}
 	srv.addPlayer(player)
+	player.SetCommands(srv.CommandGraph.Data())
 	player.JoinDimension(0,
 		srv.Config.Hardcore,
 		byte(p.Gamemode(srv.Config.Gamemode)),
@@ -97,4 +98,20 @@ func (srv *Server) addPlayer(p *p.Player) {
 	gui.AddPlayer(p.Session.Conn.Info.Name, p.UUID)
 
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.Session.Conn.RemoteAddr().String(), p.Session.Conn.Info.Name, p.UUID)
+}
+
+func (srv *Server) GetCommand(name string) func(*p.Player, []string) {
+	var cmd func(*p.Player, []string)
+	for _, c := range srv.CommandGraph.Commands {
+		if c.Name == name {
+			return c.Execute
+		} else {
+			for _, a := range c.Aliases {
+				if a == name {
+					return c.Execute
+				}
+			}
+		}
+	}
+	return cmd
 }

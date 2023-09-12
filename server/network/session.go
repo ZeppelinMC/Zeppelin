@@ -24,6 +24,8 @@ func (s *Session) HandlePackets() error {
 		switch pk := p.(type) {
 		case *packet.ChatMessageServer:
 			packets.ChatMessagePacket(pk.Message)
+		case *packet.ChatCommandServer:
+			packets.ChatCommandPacket(pk.Command)
 		}
 	}
 }

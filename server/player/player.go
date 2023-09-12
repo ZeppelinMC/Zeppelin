@@ -17,6 +17,14 @@ func NewPlayer(s *network.Session) *Player {
 	return &Player{Session: s, UUID: uuid.String()}
 }
 
+func (p *Player) SetCommands(commands *packet.DeclareCommands) error {
+	return p.Session.Conn.SendPacket(commands)
+}
+
+func (p *Player) SystemChatMessage(content string) error {
+	return p.Session.Conn.SendPacket(&packet.SystemChatMessage{Content: content})
+}
+
 func (p *Player) JoinDimension(eid int32, hardcore bool, gm byte, d *world.Dimension, seed int64, vd, sd int32) error {
 	if err := p.Session.Conn.SendPacket(&packet.JoinGame{
 		EntityID:           eid,
