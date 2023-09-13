@@ -6,21 +6,21 @@ import (
 )
 
 func (srv *Server) GlobalBroadcast(pk packet.Packet) {
-	srv.Lock()
-	defer srv.Unlock()
-	for _, player := range srv.Players {
-		player.Session.Conn.SendPacket(pk)
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, p := range srv.Players {
+		p.session.SendPacket(pk)
 	}
 }
 
 func (srv *Server) PlayerlistUpdate() {
 	var players []player.Info
-	srv.Lock()
+	srv.mu.RLock()
 	for _, p := range srv.Players {
-		p.Session.Conn.Info.Listed = true
-		players = append(players, *p.Session.Conn.Info)
+		p.session.Info().Listed = true
+		players = append(players, *p.session.Info())
 	}
-	srv.Unlock()
+	srv.mu.RUnlock()
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
 		Actions: 0x01 | 0x08,
 		Players: players,

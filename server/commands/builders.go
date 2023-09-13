@@ -1,14 +1,12 @@
 package commands
 
-import "github.com/dynamitemc/dynamite/server/player"
-
 const (
 	StringSingleWord = iota
 	StringQuotablePhrase
 	StringGreedyPhrase
 )
 
-func NewCommand(name string, execute func(*player.Player, []string), arguments ...Argument) *Command {
+func NewCommand(name string, execute func(Executor, []string), arguments ...Argument) *Command {
 	return &Command{Name: name, Execute: execute, Arguments: arguments}
 }
 

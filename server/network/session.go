@@ -3,20 +3,25 @@ package network
 import (
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"
+	player2 "github.com/aimjel/minecraft/player"
 	"github.com/dynamitemc/dynamite/server/network/packets"
+	"github.com/dynamitemc/dynamite/server/player"
+	"net"
 )
 
 type Session struct {
-	Conn *minecraft.Conn
+	conn *minecraft.Conn
+
+	state *player.Player
 }
 
-func NewSession(c *minecraft.Conn) *Session {
-	return &Session{Conn: c}
+func New(c *minecraft.Conn, s *player.Player) *Session {
+	return &Session{conn: c, state: s}
 }
 
 func (s *Session) HandlePackets() error {
 	for {
-		p, err := s.Conn.ReadPacket()
+		p, err := s.conn.ReadPacket()
 		if err != nil {
 			return err
 		}
@@ -28,4 +33,17 @@ func (s *Session) HandlePackets() error {
 			packets.ChatCommandPacket(pk.Command)
 		}
 	}
+}
+
+func (s *Session) SendPacket(p packet.Packet) error {
+
+	return s.conn.SendPacket(p)
+}
+
+func (s *Session) Info() *player2.Info {
+	return s.conn.Info
+}
+
+func (s *Session) RemoteAddr() net.Addr {
+	return s.conn.RemoteAddr()
 }

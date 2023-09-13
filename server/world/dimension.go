@@ -4,8 +4,10 @@ type Dimension struct {
 	typ string
 	//TODO
 	//chunk reader
-	//chunk gnerator
+	//chunk generator
 	//chunk writer
+
+	seed int64
 }
 
 func NewDimension(typ string) *Dimension {
@@ -14,4 +16,8 @@ func NewDimension(typ string) *Dimension {
 
 func (d *Dimension) Type() string {
 	return d.typ
+}
+
+func (d *Dimension) Seed() int64 {
+	return d.seed
 }

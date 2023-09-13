@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"os"
 	"sync"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
-	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 	"github.com/dynamitemc/dynamite/util"
 )
@@ -100,11 +100,22 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGra
 		listener:     ln,
 		Logger:       logger,
 		world:        w,
-		Mutex:        &sync.Mutex{},
-		Players:      make(map[string]*player.Player),
+		mu:           &sync.RWMutex{},
+		Players:      make(map[string]*PlayerController),
 		CommandGraph: *commandGraph,
 	}
-	srv.WhitelistedPlayers, srv.BannedPlayers, srv.Operators, srv.BannedIPs = LoadPlayerList("whitelist.json"), LoadPlayerList("banned_players.json"), LoadPlayerList("ops.json"), LoadIPBans()
+
+	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
+	var addresses = [][]user{srv.WhitelistedPlayers, srv.BannedPlayers, srv.Operators, srv.BannedIPs}
+	for i, file := range files {
+		u, err := loadUsers(file)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+
+		addresses[i] = u
+	}
+
 	logger.Debug("Loaded player info")
 	return srv, nil
 }

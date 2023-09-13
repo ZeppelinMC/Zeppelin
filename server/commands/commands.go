@@ -2,14 +2,15 @@ package commands
 
 import (
 	pk "github.com/aimjel/minecraft/packet"
-	"github.com/dynamitemc/dynamite/server/player"
 )
+
+type Executor interface{}
 
 type Command struct {
 	Name      string
 	Arguments []Argument
 	Aliases   []string
-	Execute   func(*player.Player, []string)
+	Execute   func(Executor, []string)
 }
 
 type Properties struct {

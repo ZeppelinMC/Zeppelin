@@ -1,121 +1,102 @@
 package server
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"github.com/aimjel/minecraft"
+	"github.com/aimjel/minecraft/chat"
+	"github.com/aimjel/minecraft/packet"
+	"net"
 	"os"
-
-	"github.com/dynamitemc/dynamite/util"
 )
 
-func LoadPlayerList(path string) []util.Player {
-	list := []util.Player{}
+type user struct {
+	Ip string `json:"ip,omitempty"`
 
+	UUID string `json:"uuid,omitempty"`
+	Name string `json:"name,omitempty"`
+
+	Created string `json:"created,omitempty"`
+	Source  string `json:"source,omitempty"`
+	Expires string `json:"expires,omitempty"`
+	Reason  string `json:"reason,omitempty"`
+}
+
+func loadUsers(path string) ([]user, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		file.Close()
-		file, _ := os.Create(path)
-		e := json.NewEncoder(file)
-		e.Encode(&list)
-		return list
+		return nil, err
 	}
 	defer file.Close()
 
 	d := json.NewDecoder(file)
 
-	if err := d.Decode(&list); err != nil {
-		return nil
-	}
+	var users []user
+	err = d.Decode(&users)
 
-	return list
+	return users, err
 }
 
-func WritePlayerList(path string, player util.Player) []util.Player {
-	list := []util.Player{}
-
-	b, err := os.ReadFile(path)
-	if err != nil {
-		list = append(list, player)
-		data, _ := json.Marshal(list)
-		os.WriteFile(path, data, 0755)
-	}
-	json.Unmarshal(b, &list)
-	list = append(list, player)
-	data, _ := json.Marshal(list)
-	os.WriteFile(path, data, 0755)
-	return list
+func WritePlayerList(path string, user []user) error {
+	data, _ := json.Marshal(user)
+	return os.WriteFile(path, data, 0755)
 }
 
-func LoadIPBans() []string {
-	list := []string{}
-
-	file, err := os.Open("banned_ips.json")
-	if err != nil {
-		file.Close()
-		file, _ := os.Create("banned_ips.json")
-		e := json.NewEncoder(file)
-		e.Encode(&list)
-		return list
-	}
-	defer file.Close()
-
-	d := json.NewDecoder(file)
-
-	if err := d.Decode(&list); err != nil {
-		return nil
+// ValidateConn checks if the connection is allowed to join the server,
+// if not the connection is kicked with the appropriate message.
+// returns true if the connection was disconnected, false otherwise.
+func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
+	var reason string
+	if srv.IsPlayerBanned(conn.Info.UUID) {
+		reason = srv.Config.Messages.Banned
 	}
 
-	return list
-}
-
-/*
-
-0: User is valid
-1: User is not in whitelist
-2: User is banned
-3: Server is full
-4: User is already playing on another client
-
-*/
-
-const (
-	CONNECTION_VALID = iota
-	CONNECTION_PLAYER_NOT_IN_WHITELIST
-	CONNECTION_PLAYER_BANNED
-	CONNECTION_SERVER_FULL
-	CONNECTION_PLAYER_ALREADY_PLAYING
-)
-
-func (srv *Server) ValidatePlayer(name string, id string, ip string) int {
-	for _, player := range srv.BannedPlayers {
-		if player.UUID == id {
-			return CONNECTION_PLAYER_BANNED
-		}
+	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+	if srv.IsIPBanned(ip) {
+		reason = srv.Config.Messages.Banned
 	}
-	for _, i := range srv.BannedIPs {
-		if i == ip {
-			return CONNECTION_PLAYER_BANNED
-		}
-	}
+
 	if srv.Config.Whitelist.Enable {
-		d := false
-		for _, player := range srv.WhitelistedPlayers {
-			if player.UUID == id {
-				d = true
-				break
-			}
-		}
-		if !d {
-			return CONNECTION_PLAYER_NOT_IN_WHITELIST
+		if !srv.IsWhitelisted(conn.Info.Name) {
+			reason = srv.Config.Messages.NotInWhitelist
 		}
 	}
-	if srv.Players[id] != nil {
-		return CONNECTION_PLAYER_ALREADY_PLAYING
+
+	if reason != "" {
+		msg := chat.NewMessage(reason)
+		conn.SendPacket(&packet.DisconnectLogin{Reason: msg.String()})
 	}
-	if srv.Config.MaxPlayers == -1 {
-		return CONNECTION_VALID
+
+	return reason != ""
+}
+
+func (srv *Server) IsPlayerBanned(uuid [16]byte) bool {
+	suuid := hex.EncodeToString(uuid[:])
+	for _, u := range srv.BannedPlayers {
+		if u.UUID == suuid {
+			return true
+		}
 	}
-	if len(srv.Players) >= srv.Config.MaxPlayers {
-		return CONNECTION_SERVER_FULL
+
+	return false
+}
+
+func (srv *Server) IsIPBanned(ip string) bool {
+	for _, u := range srv.BannedIPs {
+		if u.Ip == ip {
+			return true
+		}
 	}
-	return CONNECTION_VALID
+
+	return false
+}
+
+func (srv *Server) IsWhitelisted(name string) bool {
+	for _, u := range srv.WhitelistedPlayers {
+		if u.Name == name {
+			return true
+		}
+	}
+
+	return false
 }

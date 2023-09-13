@@ -58,7 +58,7 @@ func getGroup(group string) GroupPermissions {
 	return data
 }
 
-func (srv Server) HasPermissions(playerId string, perms []string) bool {
+func (srv *Server) HasPermissions(playerId string, perms []string) bool {
 	if playerId == "console" {
 		return true
 	}

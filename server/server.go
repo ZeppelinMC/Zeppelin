@@ -1,36 +1,37 @@
 package server
 
 import (
-	"strings"
+	"encoding/hex"
+	"github.com/dynamitemc/dynamite/util"
 	"sync"
 
 	"github.com/aimjel/minecraft"
-	"github.com/aimjel/minecraft/chat"
-	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/network"
-	p "github.com/dynamitemc/dynamite/server/player"
+	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
-	"github.com/dynamitemc/dynamite/util"
 )
 
 type Server struct {
-	*sync.Mutex
 	Config       *ServerConfig
 	Logger       logger.Logger
 	CommandGraph commands.Graph
-	Players      map[string]*p.Player
 
-	WhitelistedPlayers []util.Player
-	Operators          []util.Player
-	BannedPlayers      []util.Player
-	BannedIPs          []string
+	// Players mapped by UUID
+	Players map[string]*PlayerController
+
+	WhitelistedPlayers,
+	Operators,
+	BannedPlayers,
+	BannedIPs []user
 
 	listener *minecraft.Listener
 
 	world *world.World
+
+	mu *sync.RWMutex
 }
 
 func (srv *Server) Start() error {
@@ -44,74 +45,61 @@ func (srv *Server) Start() error {
 }
 
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
-	session := network.NewSession(conn)
-	player := p.NewPlayer(session)
-	var reason string
-	if r := srv.ValidatePlayer(session.Conn.Info.Name, player.UUID, strings.Split(session.Conn.RemoteAddr().String(), ":")[0]); r != CONNECTION_VALID {
-		switch r {
-		case CONNECTION_SERVER_FULL:
-			{
-				reason = srv.Config.Messages.ServerFull
-			}
-		case CONNECTION_PLAYER_BANNED:
-			{
-				reason = srv.Config.Messages.Banned
-			}
-		case CONNECTION_PLAYER_ALREADY_PLAYING:
-			{
-				reason = srv.Config.Messages.AlreadyPlaying
-			}
-		case CONNECTION_PLAYER_NOT_IN_WHITELIST:
-			{
-				reason = srv.Config.Messages.NotInWhitelist
-			}
-		}
-		msg := chat.NewMessage(reason)
-		conn.SendPacket(&packet.DisconnectLogin{Reason: msg.String()})
+	if srv.ValidateConn(conn) {
 		return
 	}
-	srv.addPlayer(player)
-	player.SetCommands(srv.CommandGraph.Data())
-	player.JoinDimension(0,
-		srv.Config.Hardcore,
-		byte(p.Gamemode(srv.Config.Gamemode)),
-		srv.world.DefaultDimension(),
-		srv.world.Seed(),
-		int32(srv.Config.ViewDistance),
-		int32(srv.Config.SimulationDistance),
-	)
 
-	if err := session.HandlePackets(); err != nil {
-		u := session.Conn.Info.UUID
+	plyr := player.New()
+	sesh := network.New(conn, plyr)
+	cntrl := &PlayerController{player: plyr, session: sesh}
+	cntrl.UUID = util.AddDashesToUUID(hex.EncodeToString(conn.Info.UUID[:]))
+	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {
+		//TODO log error
+		conn.Close(err)
+		panic(err)
+		return
+	}
 
-		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, player.UUID)
-		srv.PlayerlistRemove(u)
-		gui.RemovePlayer(player.UUID)
+	if err := cntrl.SendAvailableCommands(srv.CommandGraph.Data()); err != nil {
+		//TODO log error
+		conn.Close(err)
+		return
+	}
+
+	srv.addPlayer(cntrl)
+	if err := sesh.HandlePackets(); err != nil {
+		u := cntrl.UUID
+
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, u)
+		srv.PlayerlistRemove(conn.Info.UUID)
+		gui.RemovePlayer(cntrl.UUID)
 	}
 }
 
-func (srv *Server) addPlayer(p *p.Player) {
-	srv.Lock()
+func (srv *Server) addPlayer(p *PlayerController) {
+	srv.mu.Lock()
 	srv.Players[p.UUID] = p
-	srv.Unlock()
-	srv.PlayerlistUpdate()
-	gui.AddPlayer(p.Session.Conn.Info.Name, p.UUID)
+	srv.mu.Unlock()
 
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.Session.Conn.RemoteAddr().String(), p.Session.Conn.Info.Name, p.UUID)
+	srv.PlayerlistUpdate()
+	gui.AddPlayer(p.session.Info().Name, p.UUID)
+
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.Info().Name, p.UUID)
 }
 
-func (srv *Server) GetCommand(name string) func(*p.Player, []string) {
-	var cmd func(*p.Player, []string)
+func (srv *Server) GetCommand(name string) func(commands.Executor, []string) {
+	var cmd func(commands.Executor, []string)
 	for _, c := range srv.CommandGraph.Commands {
 		if c.Name == name {
 			return c.Execute
-		} else {
-			for _, a := range c.Aliases {
-				if a == name {
-					return c.Execute
-				}
+		}
+
+		for _, a := range c.Aliases {
+			if a == name {
+				return c.Execute
 			}
 		}
 	}
+
 	return cmd
 }

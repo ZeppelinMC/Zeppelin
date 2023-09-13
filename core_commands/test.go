@@ -1,13 +1,14 @@
 package core_commands
 
 import (
+	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
-	"github.com/dynamitemc/dynamite/server/player"
 )
 
 var test_cmd = &commands.Command{
 	Name: "test",
-	Execute: func(p *player.Player, s []string) {
+	Execute: func(e commands.Executor, s []string) {
+		p, _ := e.(*server.PlayerController)
 		p.SystemChatMessage("hello!")
 	},
 }

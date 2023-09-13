@@ -5,6 +5,17 @@ import (
 	"strings"
 )
 
+func AddDashesToUUID(uuid string) string {
+	str := ""
+	for i, char := range strings.Split(uuid, "") {
+		str += char
+		if i == 7 || i == 11 || i == 15 || i == 19 {
+			str += "-"
+		}
+	}
+	return str
+}
+
 func HasArg(arg string) bool {
 	for _, s := range os.Args {
 		if s == arg {

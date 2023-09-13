@@ -9,7 +9,7 @@ require (
 
 require (
 	fyne.io/systray v1.10.1-0.20230722100817-88df1e0ffa9a // indirect
-	github.com/aimjel/minecraft v0.0.0-20230912143819-566af89d5f6f
+	github.com/aimjel/minecraft v0.0.0-20230913195637-f88fef694bb7
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -39,7 +39,6 @@ require (
 
 require (
 	fyne.io/fyne/v2 v2.4.0
-	github.com/google/uuid v1.3.1
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	golang.org/x/sys v0.12.0 // indirect
