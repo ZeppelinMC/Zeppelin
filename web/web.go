@@ -1,4 +1,4 @@
-package gui
+package web
 
 import (
 	"embed"

@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/aimjel/minecraft"
-	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/world"
@@ -60,7 +59,6 @@ type ServerConfig struct {
 	MOTD               string    `toml:"motd"`
 	Whitelist          Whitelist `toml:"whitelist"`
 	Web                Web       `toml:"web"`
-	GUI                bool      `toml:"gui"`
 	Gamemode           string    `toml:"gamemode"`
 	Hardcore           bool      `toml:"hardcore"`
 	MaxPlayers         int       `toml:"max_players"`
@@ -84,7 +82,7 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGra
 			ProtocolTooOld: cfg.Messages.ProtocolOld,
 		},
 	}
-	gui.SetMaxPlayers(cfg.MaxPlayers)
+	//web.SetMaxPlayers(cfg.MaxPlayers)
 
 	ln, err := lnCfg.Listen(address)
 	if err != nil {

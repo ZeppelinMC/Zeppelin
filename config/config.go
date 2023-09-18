@@ -67,7 +67,6 @@ func defaultConfig() server.ServerConfig {
 			Password:   "ChangeMe",
 			Enable:     false,
 		},
-		GUI: true,
 		Tablist: server.Tablist{
 			Header: []string{},
 			Footer: []string{},

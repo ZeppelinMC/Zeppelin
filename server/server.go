@@ -2,11 +2,12 @@ package server
 
 import (
 	"encoding/hex"
-	"github.com/dynamitemc/dynamite/util"
 	"sync"
 
+	"github.com/dynamitemc/dynamite/util"
+
 	"github.com/aimjel/minecraft"
-	"github.com/dynamitemc/dynamite/gui"
+	//"github.com/dynamitemc/dynamite/web"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/network"
@@ -72,7 +73,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, u)
 		srv.PlayerlistRemove(conn.Info.UUID)
-		gui.RemovePlayer(cntrl.UUID)
+		//gui.RemovePlayer(cntrl.UUID)
 	}
 }
 
@@ -82,7 +83,7 @@ func (srv *Server) addPlayer(p *PlayerController) {
 	srv.mu.Unlock()
 
 	srv.PlayerlistUpdate()
-	gui.AddPlayer(p.session.Info().Name, p.UUID)
+	//gui.AddPlayer(p.session.Info().Name, p.UUID)
 
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.Info().Name, p.UUID)
 }

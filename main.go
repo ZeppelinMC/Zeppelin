@@ -8,10 +8,10 @@ import (
 
 	"github.com/dynamitemc/dynamite/config"
 	"github.com/dynamitemc/dynamite/core_commands"
-	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/util"
+	"github.com/dynamitemc/dynamite/web"
 )
 
 var log logger.Logger
@@ -39,21 +39,10 @@ func main() {
 	log.Debug("Loaded config")
 	if cfg.Web.Enable {
 		if !util.HasArg("-nogui") {
-			go gui.LaunchWebPanel(fmt.Sprintf("%s:%d", cfg.Web.ServerIP, cfg.Web.ServerPort), cfg.Web.Password, &log)
+			go web.LaunchWebPanel(fmt.Sprintf("%s:%d", cfg.Web.ServerIP, cfg.Web.ServerPort), cfg.Web.Password, &log)
 		} else {
 			log.Warn("Remove the -nogui argument to load the web panel")
 		}
 	}
-	if cfg.GUI {
-		if !util.HasArg("-nogui") {
-			go start(cfg)
-			log.Info("Loading GUI panel")
-			gui.LaunchGUI(&log)
-		} else {
-			log.Warn("Remove the -nogui argument to load the GUI panel")
-			start(cfg)
-		}
-	} else {
-		start(cfg)
-	}
+	start(cfg)
 }

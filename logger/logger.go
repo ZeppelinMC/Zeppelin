@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dynamitemc/dynamite/gui"
 	"github.com/dynamitemc/dynamite/util"
 	"github.com/fatih/color"
 )
@@ -16,7 +15,7 @@ type Logger struct {
 
 func (logger *Logger) Append(str string) {
 	logger.ConsoleText = append(logger.ConsoleText, str)
-	gui.Log(str)
+	//web.Log(str)
 }
 
 func getDateString() string {
