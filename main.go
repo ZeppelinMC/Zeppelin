@@ -24,6 +24,7 @@ func start(cfg server.ServerConfig) {
 		log.Error("Failed to open TCP server: %s", err)
 		os.Exit(1)
 	}
+	server.LoadPlugins(log)
 	log.Info("Done! (%ds)", time.Now().Unix()-startTime)
 	err = srv.Start()
 	if err != nil {

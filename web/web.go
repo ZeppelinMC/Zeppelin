@@ -26,7 +26,7 @@ var log logger
 type handler struct{}
 
 func (handler) Render(w http.ResponseWriter, name string, vars map[string]string) (int, error) {
-	f, err := guifs.ReadFile("gui/pages/" + name)
+	f, err := guifs.ReadFile("pages/" + name)
 	if err != nil {
 		return 0, err
 	}
@@ -42,7 +42,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uri, _ := url.ParseRequestURI(r.RequestURI)
 	var code int
 	if strings.HasPrefix(r.RequestURI, "/cdn") {
-		file, err := guifs.ReadFile("gui/cdn/" + strings.TrimPrefix(uri.Path, "/cdn/"))
+		file, err := guifs.ReadFile("cdn/" + strings.TrimPrefix(uri.Path, "/cdn/"))
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				io.WriteString(w, "Unknown file!")
