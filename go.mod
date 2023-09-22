@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf
 	github.com/aimjel/minecraft v0.0.0-20230913195637-f88fef694bb7
 	github.com/robertkrimen/otto v0.2.1
 )

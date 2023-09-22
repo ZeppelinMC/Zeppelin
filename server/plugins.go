@@ -7,17 +7,132 @@ import (
 	"os"
 	"strings"
 
+	lua "github.com/Shopify/go-lua"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/robertkrimen/otto"
 )
 
 var unrecognizedScript = errors.New("unrecognized scripting language")
 
-type loader struct {
-	js *otto.Otto
+const (
+	PluginTypeJavaScript = iota
+	PluginTypeLua
+)
+
+type Plugin struct {
+	Identifier string
+	Filename   string
+	JSLoader   *otto.Otto
+	LuaLoader  *lua.State
+	Type       int
 }
 
-func getJavaScriptVM(logger logger.Logger, pluginName string) *otto.Otto {
+func luaCreateFunction(l *lua.State, k string, f lua.Function) {
+	l.PushGoFunction(f)
+	l.SetField(-2, k)
+}
+
+func luaCreateGlobalFunction(l *lua.State, k string, f lua.Function) {
+	l.PushGoFunction(f)
+	l.SetGlobal(k)
+}
+
+func getLuaVM(logger logger.Logger, plugin *Plugin) *lua.State {
+	l := lua.NewState()
+	l.NewTable()
+	luaCreateFunction(l, "close", func(state *lua.State) int {
+		code := 0
+		if c, ok := state.ToInteger(1); ok {
+			code = c
+		}
+		os.Exit(code)
+		return 0
+	})
+	l.NewTable()
+	luaCreateFunction(l, "info", func(state *lua.State) int {
+		text, ok := state.ToString(1)
+		if !ok {
+			return 0
+		}
+		var data []interface{}
+		for i := 2; ; i++ {
+			val := state.ToValue(i)
+			if val == nil {
+				break
+			}
+			data = append(data, val)
+		}
+		logger.Info(text, data...)
+		return 0
+	})
+	luaCreateFunction(l, "error", func(state *lua.State) int {
+		text, ok := state.ToString(1)
+		if !ok {
+			return 0
+		}
+		var data []interface{}
+		for i := 2; ; i++ {
+			val := state.ToValue(i)
+			if val == nil {
+				break
+			}
+			data = append(data, val)
+		}
+		logger.Error(text, data...)
+		return 0
+	})
+	luaCreateFunction(l, "debug", func(state *lua.State) int {
+		text, ok := state.ToString(1)
+		if !ok {
+			return 0
+		}
+		var data []interface{}
+		for i := 2; ; i++ {
+			val := state.ToValue(i)
+			if val == nil {
+				break
+			}
+			data = append(data, val)
+		}
+		logger.Debug(text, data...)
+		return 0
+	})
+	luaCreateFunction(l, "warn", func(state *lua.State) int {
+		text, ok := state.ToString(1)
+		if !ok {
+			return 0
+		}
+		var data []interface{}
+		for i := 2; ; i++ {
+			val := state.ToValue(i)
+			if val == nil {
+				break
+			}
+			data = append(data, val)
+		}
+		logger.Warn(text, data...)
+		return 0
+	})
+	l.SetField(-2, "logger")
+	l.SetGlobal("server")
+
+	luaCreateGlobalFunction(l, "Plugin", func(state *lua.State) int {
+		if state.IsTable(1) {
+			l.Field(1, "identifier")
+			identifier, ok := l.ToString(-1)
+			if !ok {
+				logger.Error("Failed to load plugin %s: identifier was not specified", plugin.Filename)
+			}
+			plugin.Identifier = identifier
+		} else {
+			logger.Error("Failed to load plugin %s: invalid plugin data", plugin.Filename)
+		}
+		return 0
+	})
+	return l
+}
+
+func getJavaScriptVM(logger logger.Logger, plugin *Plugin) *otto.Otto {
 	vm := otto.New()
 	server, _ := vm.Object("server = {}")
 	log, _ := vm.Object("server.logger = {}")
@@ -88,18 +203,18 @@ func getJavaScriptVM(logger logger.Logger, pluginName string) *otto.Otto {
 			data := obj.Object()
 			identifier, _ := data.Get("identifier")
 			if identifier.IsUndefined() {
-				logger.Error("Failed to load plugin %s: identifier was not specified", pluginName)
+				logger.Error("Failed to load plugin %s: identifier was not specified", plugin.Filename)
 			}
-
+			plugin.Identifier, _ = identifier.ToString()
 		} else {
-			logger.Error("Failed to load plugin %s: invalid plugin data", pluginName)
+			logger.Error("Failed to load plugin %s: invalid plugin data", plugin.Filename)
 		}
 		return otto.UndefinedValue()
 	})
 	return vm
 }
 
-func LoadPlugins(logger logger.Logger) error {
+func (srv *Server) LoadPlugins() error {
 	err := os.Mkdir("plugins", 0755)
 	if err != nil {
 		if !errors.Is(err, fs.ErrExist) {
@@ -112,29 +227,47 @@ func LoadPlugins(logger logger.Logger) error {
 		return err
 	}
 	for _, file := range dir {
-		if err := LoadPlugin("plugins/"+file.Name(), logger, loader{js: getJavaScriptVM(logger, file.Name())}); err != nil {
+		if plugin, err := srv.LoadPlugin("plugins/" + file.Name()); err != nil {
 			return err
+		} else {
+			if plugin == nil {
+				continue
+			}
+			srv.Plugins[plugin.Identifier] = plugin
+			srv.Logger.Info("Finished loading plugin %s", plugin.Identifier)
 		}
 	}
 	return nil
 }
 
-func LoadPlugin(path string, logger logger.Logger, loader loader) error {
+func (srv *Server) LoadPlugin(path string) (*Plugin, error) {
 	file, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return nil, err
 	}
 	sp := strings.Split(path, "/")
 	filename := sp[len(sp)-1]
 	switch {
 	case strings.HasSuffix(path, ".js"):
 		{
-			_, err := loader.js.Run(string(file))
+			plugin := &Plugin{Filename: filename, Type: PluginTypeJavaScript}
+			js := getJavaScriptVM(srv.Logger, plugin)
+			plugin.JSLoader = js
+			_, err := js.Run(string(file))
 			if err != nil {
-				logger.Error("Failed to load plugin %s: %s", filename, err)
+				srv.Logger.Error("Failed to load plugin %s: %s", filename, err)
 			}
+			return plugin, nil
+		}
+	case strings.HasSuffix(path, ".lua"):
+		{
+			plugin := &Plugin{Filename: filename, Type: PluginTypeJavaScript}
+			l := getLuaVM(srv.Logger, plugin)
+			plugin.LuaLoader = l
+			lua.DoString(l, string(file))
+			return plugin, nil
 		}
 	}
-	return nil
+	return nil, nil
 }

@@ -101,6 +101,7 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGra
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
 		CommandGraph: *commandGraph,
+		Plugins:      make(map[string]*Plugin),
 	}
 
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}

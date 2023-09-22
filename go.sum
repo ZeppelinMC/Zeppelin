@@ -1,3 +1,5 @@
+github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf h1:VSUCKpFV0AfYGslgQSRdBI9HCVp1TCXJmScWD0VXL5g=
+github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf/go.mod h1:UCCi6u6YA8oXfJ15vEMiMGIaWWfLiOacinBPHxLXtEU=
 github.com/aimjel/minecraft v0.0.0-20230913195637-f88fef694bb7 h1:XPhfvCmyVpja/BJvhZZ20LL3XrBNQsdhCp4SX2Y/woQ=
 github.com/aimjel/minecraft v0.0.0-20230913195637-f88fef694bb7/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
