@@ -1,13 +1,14 @@
 package server
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/dop251/goja"
 	"github.com/dynamitemc/dynamite/logger"
 )
 
-type PluginData struct {
+type pluginConfiguration struct {
 	Identifier string `js:"identifier"`
 }
 
@@ -32,7 +33,7 @@ func at[T any](arr []T, index int) (val T) {
 	return arr[index]
 }
 
-func getJavaScriptVM(logger logger.Logger, plugin *Plugin) *goja.Runtime {
+func getJavaScriptVM(logger logger.Logger, plugin *Plugin, root string) *goja.Runtime {
 	vm := goja.New()
 	vm.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
 	server := vm.NewObject()
@@ -63,7 +64,7 @@ func getJavaScriptVM(logger logger.Logger, plugin *Plugin) *goja.Runtime {
 		logger.Print(format, a...)
 	})
 
-	vm.Set("Plugin", func(data *PluginData) {
+	vm.Set("Plugin", func(data *pluginConfiguration) {
 		if data == nil {
 			logger.Error("Failed to load plugin %s: invalid plugin data", plugin.Filename)
 		} else {
@@ -76,5 +77,20 @@ func getJavaScriptVM(logger logger.Logger, plugin *Plugin) *goja.Runtime {
 	})
 	server.Set("logger", log)
 	vm.Set("server", server)
+
+	vm.Set("require", func(file string) map[string]interface{} {
+		exports := make(map[string]interface{})
+		path := root + "/" + file
+		f, err := os.ReadFile(path)
+		if err != nil {
+			return exports
+		}
+		v := *vm
+		v.Set("exports", goja.Undefined())
+		v.RunString(string(f))
+		v.ExportTo(v.Get("exports"), &exports)
+		fmt.Println(v.Get("exports"))
+		return exports
+	})
 	return vm
 }
