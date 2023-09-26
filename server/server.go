@@ -10,7 +10,6 @@ import (
 	//"github.com/dynamitemc/dynamite/web"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
-	"github.com/dynamitemc/dynamite/server/network"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 )
@@ -53,7 +52,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 
 	plyr := player.New()
-	sesh := network.New(conn, plyr)
+	sesh := New(conn, plyr)
 	cntrl := &PlayerController{player: plyr, session: sesh}
 	cntrl.UUID = util.AddDashesToUUID(hex.EncodeToString(conn.Info.UUID[:]))
 	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {

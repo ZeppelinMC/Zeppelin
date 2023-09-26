@@ -1,12 +1,13 @@
-package network
+package server
 
 import (
+	"net"
+
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"
 	player2 "github.com/aimjel/minecraft/player"
-	"github.com/dynamitemc/dynamite/server/network/packets"
+	"github.com/dynamitemc/dynamite/server/network/handlers"
 	"github.com/dynamitemc/dynamite/server/player"
-	"net"
 )
 
 type Session struct {
@@ -28,9 +29,15 @@ func (s *Session) HandlePackets() error {
 
 		switch pk := p.(type) {
 		case *packet.ChatMessageServer:
-			packets.ChatMessagePacket(pk.Message)
+			handlers.ChatMessagePacket(pk.Message)
 		case *packet.ChatCommandServer:
-			packets.ChatCommandPacket(pk.Command)
+			handlers.ChatCommandPacket(pk.Command)
+		}
+		switch p.ID() {
+		case 0x14, 0x15, 0x16, 0x17:
+			{
+				handlers.PlayerMovement(s.state, p)
+			}
 		}
 	}
 }

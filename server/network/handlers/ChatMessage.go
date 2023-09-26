@@ -1,4 +1,4 @@
-package packets
+package handlers
 
 func ChatMessagePacket(content string) {
 }

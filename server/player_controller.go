@@ -2,14 +2,13 @@ package server
 
 import (
 	"github.com/aimjel/minecraft/packet"
-	"github.com/dynamitemc/dynamite/server/network"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
 type PlayerController struct {
 	player  *player.Player
-	session *network.Session
+	session *Session
 
 	UUID string
 }
@@ -39,4 +38,16 @@ func (p *PlayerController) SendAvailableCommands(commands *packet.DeclareCommand
 
 func (p *PlayerController) SystemChatMessage(s string) error {
 	return p.session.SendPacket(&packet.SystemChatMessage{Content: s})
+}
+
+func (p *PlayerController) Position() (x float64, y float64, z float64) {
+	return p.player.X, p.player.Y, p.player.Z
+}
+
+func (p *PlayerController) Rotation() (yaw float32, pitch float32) {
+	return p.player.Yaw, p.player.Pitch
+}
+
+func (p *PlayerController) OnGround() bool {
+	return p.player.OnGround
 }

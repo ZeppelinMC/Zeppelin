@@ -7,6 +7,10 @@ type Player struct {
 
 	viewDistance       int32
 	simulationDistance int32
+
+	X, Y, Z    float64
+	Yaw, Pitch float32
+	OnGround   bool
 }
 
 func New() *Player {
