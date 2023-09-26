@@ -7,10 +7,11 @@ import (
 type Executor interface{}
 
 type Command struct {
-	Name      string
-	Arguments []Argument
-	Aliases   []string
-	Execute   func(Executor, []string)
+	Name                string
+	Arguments           []Argument
+	Aliases             []string
+	Execute             func(Executor, []string)
+	RequiredPermissions []string
 }
 
 type Properties struct {

@@ -8,6 +8,8 @@ type Player struct {
 	viewDistance       int32
 	simulationDistance int32
 
+	Operator bool
+
 	X, Y, Z    float64
 	Yaw, Pitch float32
 	OnGround   bool

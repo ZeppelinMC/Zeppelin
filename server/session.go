@@ -20,7 +20,7 @@ func New(c *minecraft.Conn, s *player.Player) *Session {
 	return &Session{conn: c, state: s}
 }
 
-func (s *Session) HandlePackets() error {
+func (s *Session) HandlePackets(controller *PlayerController) error {
 	for {
 		p, err := s.conn.ReadPacket()
 		if err != nil {
@@ -31,7 +31,7 @@ func (s *Session) HandlePackets() error {
 		case *packet.ChatMessageServer:
 			handlers.ChatMessagePacket(pk.Message)
 		case *packet.ChatCommandServer:
-			handlers.ChatCommandPacket(pk.Command)
+			handlers.ChatCommandPacket(controller, controller.Server.CommandGraph, pk.Command)
 		}
 		switch p.ID() {
 		case 0x14, 0x15, 0x16, 0x17:

@@ -105,14 +105,14 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGra
 	}
 
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
-	var addresses = [][]user{srv.WhitelistedPlayers, srv.BannedPlayers, srv.Operators, srv.BannedIPs}
+	var addresses = []*[]user{&srv.WhitelistedPlayers, &srv.BannedPlayers, &srv.Operators, &srv.BannedIPs}
 	for i, file := range files {
 		u, err := loadUsers(file)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
 
-		addresses[i] = u
+		*addresses[i] = u
 	}
 
 	logger.Debug("Loaded player info")

@@ -58,19 +58,14 @@ func getGroup(group string) GroupPermissions {
 	return data
 }
 
-func (srv *Server) HasPermissions(playerId string, perms []string) bool {
-	if playerId == "console" {
-		return true
-	}
+func (p *PlayerController) HasPermissions(perms []string) bool {
 	if len(perms) == 0 {
 		return true
 	}
-	/*for i := 0; i < len(server.Players.OPs); i++ {
-		if server.Players.OPs[i].UUID == playerId {
-			return true
-		}
-	}*/
-	permissionsPlayer := getPlayer(playerId)
+	if p.player.Operator {
+		return true
+	}
+	permissionsPlayer := getPlayer(p.UUID)
 	permissionsGroup := getGroup(permissionsPlayer.Group)
 	for _, perm := range perms {
 		if !permissionsPlayer.Permissions[perm] && !permissionsGroup.Permissions[perm] {

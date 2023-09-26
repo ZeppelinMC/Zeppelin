@@ -1,7 +1,10 @@
 package server
 
 import (
+	"slices"
+
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 )
@@ -9,6 +12,7 @@ import (
 type PlayerController struct {
 	player  *player.Player
 	session *Session
+	Server  *Server
 
 	UUID string
 }
@@ -32,10 +36,6 @@ func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{})
 }
 
-func (p *PlayerController) SendAvailableCommands(commands *packet.DeclareCommands) error {
-	return p.session.SendPacket(commands)
-}
-
 func (p *PlayerController) SystemChatMessage(s string) error {
 	return p.session.SendPacket(&packet.SystemChatMessage{Content: s})
 }
@@ -50,4 +50,13 @@ func (p *PlayerController) Rotation() (yaw float32, pitch float32) {
 
 func (p *PlayerController) OnGround() bool {
 	return p.player.OnGround
+}
+
+func (p *PlayerController) SendCommands(graph commands.Graph) {
+	for i, command := range graph.Commands {
+		if !p.HasPermissions(command.RequiredPermissions) {
+			graph.Commands = slices.Delete(graph.Commands, i, i+1)
+		}
+	}
+	p.session.SendPacket(graph.Data())
 }

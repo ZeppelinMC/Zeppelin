@@ -2,6 +2,8 @@ package server
 
 import (
 	"encoding/hex"
+	"errors"
+	"os"
 	"sync"
 
 	"github.com/dynamitemc/dynamite/util"
@@ -53,8 +55,17 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	plyr := player.New()
 	sesh := New(conn, plyr)
-	cntrl := &PlayerController{player: plyr, session: sesh}
+	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	cntrl.UUID = util.AddDashesToUUID(hex.EncodeToString(conn.Info.UUID[:]))
+
+	for _, op := range srv.Operators {
+		if op.UUID == cntrl.UUID {
+			plyr.Operator = true
+		}
+	}
+
+	cntrl.SendCommands(srv.CommandGraph)
+
 	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {
 		//TODO log error
 		conn.Close(err)
@@ -62,14 +73,8 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		return
 	}
 
-	if err := cntrl.SendAvailableCommands(srv.CommandGraph.Data()); err != nil {
-		//TODO log error
-		conn.Close(err)
-		return
-	}
-
 	srv.addPlayer(cntrl)
-	if err := sesh.HandlePackets(); err != nil {
+	if err := sesh.HandlePackets(cntrl); err != nil {
 		u := cntrl.UUID
 
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, u)
@@ -104,4 +109,24 @@ func (srv *Server) GetCommand(name string) func(commands.Executor, []string) {
 	}
 
 	return cmd
+}
+
+func (srv *Server) Reload() error {
+	// load player data
+	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
+	var addresses = []*[]user{&srv.WhitelistedPlayers, &srv.BannedPlayers, &srv.Operators, &srv.BannedIPs}
+	for i, file := range files {
+		u, err := loadUsers(file)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+
+		*addresses[i] = u
+	}
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, p := range srv.Players {
+		p.SendCommands(srv.CommandGraph)
+	}
+	return nil
 }
