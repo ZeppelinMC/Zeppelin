@@ -10,9 +10,22 @@ type Player struct {
 
 	Operator bool
 
+	ClientSettings ClientInformation
+
 	X, Y, Z    float64
 	Yaw, Pitch float32
 	OnGround   bool
+}
+
+type ClientInformation struct {
+	Locale               string
+	ViewDistance         int8
+	ChatMode             int32
+	ChatColors           bool
+	DisplayedSkinParts   uint8
+	MainHand             int32
+	DisableTextFiltering bool
+	AllowServerListings  bool
 }
 
 func New() *Player {

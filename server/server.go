@@ -1,18 +1,18 @@
 package server
 
 import (
-	"encoding/hex"
 	"errors"
 	"os"
 	"sync"
 
-	"github.com/dynamitemc/dynamite/util"
+	"github.com/google/uuid"
 
 	"github.com/aimjel/minecraft"
 	//"github.com/dynamitemc/dynamite/web"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
+	"github.com/dynamitemc/dynamite/server/plugins"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -21,7 +21,7 @@ type Server struct {
 	Logger       logger.Logger
 	CommandGraph commands.Graph
 
-	Plugins map[string]*Plugin
+	Plugins map[string]*plugins.Plugin
 
 	// Players mapped by UUID
 	Players map[string]*PlayerController
@@ -56,7 +56,8 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	plyr := player.New()
 	sesh := New(conn, plyr)
 	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
-	cntrl.UUID = util.AddDashesToUUID(hex.EncodeToString(conn.Info.UUID[:]))
+	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
+	cntrl.UUID = uuid.String()
 
 	for _, op := range srv.Operators {
 		if op.UUID == cntrl.UUID {

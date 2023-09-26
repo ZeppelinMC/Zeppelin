@@ -1,4 +1,4 @@
-package server
+package plugins
 
 import (
 	"os"
@@ -49,7 +49,7 @@ func luaGlobalTable(l *lua.State, s [][2]interface{}) {
 	}
 }
 
-func getLuaVM(logger logger.Logger, plugin *Plugin) *lua.State {
+func GetLuaVM(logger logger.Logger, plugin *Plugin) *lua.State {
 	l := lua.NewState()
 	luaGlobalTable(l, [][2]interface{}{
 		{

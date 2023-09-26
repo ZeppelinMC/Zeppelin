@@ -8,6 +8,7 @@ import (
 	"github.com/aimjel/minecraft"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/plugins"
 	"github.com/dynamitemc/dynamite/server/world"
 	"github.com/dynamitemc/dynamite/util"
 )
@@ -101,7 +102,7 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGra
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
 		CommandGraph: *commandGraph,
-		Plugins:      make(map[string]*Plugin),
+		Plugins:      make(map[string]*plugins.Plugin),
 	}
 
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}

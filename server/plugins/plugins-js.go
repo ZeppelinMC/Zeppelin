@@ -1,4 +1,4 @@
-package server
+package plugins
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ func at[T any](arr []T, index int) (val T) {
 	return arr[index]
 }
 
-func getJavaScriptVM(logger logger.Logger, plugin *Plugin, root string) *goja.Runtime {
+func GetJavaScriptVM(logger logger.Logger, plugin *Plugin, root string) *goja.Runtime {
 	vm := goja.New()
 	vm.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
 	server := vm.NewObject()

@@ -32,6 +32,8 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 			handlers.ChatMessagePacket(pk.Message)
 		case *packet.ChatCommandServer:
 			handlers.ChatCommandPacket(controller, controller.Server.CommandGraph, pk.Command)
+		case *packet.ClientSettings:
+			handlers.ClientSettings(s.state, pk)
 		}
 		switch p.ID() {
 		case 0x14, 0x15, 0x16, 0x17:
