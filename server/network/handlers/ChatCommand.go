@@ -1,12 +1,17 @@
 package handlers
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
-func ChatCommandPacket(controller interface{}, graph commands.Graph, content string) {
+type controller interface {
+	SystemChatMessage(s string) error
+}
+
+func ChatCommandPacket(controller controller, graph commands.Graph, content string) {
 	args := strings.Split(content, " ")
 	cmd := args[0]
 	var command *commands.Command
@@ -22,6 +27,7 @@ func ChatCommandPacket(controller interface{}, graph commands.Graph, content str
 		}
 	}
 	if command == nil {
+		controller.SystemChatMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n%s§o<--[HERE]", content))
 		return
 	}
 	command.Execute(controller, args)
