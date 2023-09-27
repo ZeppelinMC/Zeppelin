@@ -5,15 +5,10 @@ import (
 	"strings"
 
 	"github.com/dynamitemc/dynamite/server/commands"
-	"github.com/dynamitemc/dynamite/server/player"
 )
 
 type controller interface {
 	SystemChatMessage(s string) error
-	OnGround() bool
-	ClientSettings() player.ClientInformation
-	Position() (x float64, y float64, z float64)
-	Rotation() (yaw float32, pitch float32)
 	HasPermissions(perms []string) bool
 }
 

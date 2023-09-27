@@ -37,11 +37,12 @@ var gamemode_cmd = &commands.Command{
 		}
 		var player *server.PlayerController
 		if len(ctx.Arguments) == 1 {
-			if ctx.IsConsole {
+			if p, ok := ctx.Executor.(*server.PlayerController); ok {
 				ctx.Incomplete()
 				return
+			} else {
+				player = p
 			}
-			player = ctx.Executor.(*server.PlayerController)
 		} else {
 			p := ctx.Executor.(*server.PlayerController).Server.FindPlayer(ctx.Arguments[1])
 			if p == nil {

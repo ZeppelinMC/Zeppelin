@@ -5,21 +5,14 @@ import (
 	"strings"
 
 	pk "github.com/aimjel/minecraft/packet"
-	"github.com/dynamitemc/dynamite/server/player"
 )
 
 type CommandContext struct {
 	Executor interface {
 		SystemChatMessage(s string) error
-		OnGround() bool
-		ClientSettings() player.ClientInformation
-		Position() (x float64, y float64, z float64)
-		Rotation() (yaw float32, pitch float32)
-		HasPermissions(perms []string) bool
 	} `js:"executor"`
 	Arguments   []string `js:"arguments"`
 	FullCommand string   `js:"fullCommand"`
-	IsConsole   bool     `js:"isConsole"`
 }
 
 func (ctx *CommandContext) Reply(content string) {
