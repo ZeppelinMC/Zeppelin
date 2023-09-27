@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	pk "github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/player"
 )
@@ -13,11 +15,20 @@ type CommandContext struct {
 		Position() (x float64, y float64, z float64)
 		Rotation() (yaw float32, pitch float32)
 	} `js:"executor"`
-	Arguments []string `js:"arguments"`
+	Arguments   []string `js:"arguments"`
+	FullCommand string
 }
 
 func (ctx *CommandContext) Reply(content string) {
 	ctx.Executor.SystemChatMessage(content)
+}
+
+func (ctx *CommandContext) Incomplete() {
+	ctx.Reply(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§7%s§r§c§o<--[HERE]", ctx.FullCommand))
+}
+
+func (ctx *CommandContext) Error(msg string) {
+	ctx.Reply(fmt.Sprintf("§c%s\n§7%s§r§c§o<--[HERE]", msg, ctx.FullCommand))
 }
 
 const (

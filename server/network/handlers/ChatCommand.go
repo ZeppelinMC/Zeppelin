@@ -32,11 +32,12 @@ func ChatCommandPacket(controller controller, graph *commands.Graph, content str
 		}
 	}
 	if command == nil {
-		controller.SystemChatMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n%s§o<--[HERE]", content))
+		controller.SystemChatMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", content))
 		return
 	}
 	command.Execute(commands.CommandContext{
-		Arguments: args,
-		Executor:  controller,
+		Arguments:   args,
+		Executor:    controller,
+		FullCommand: content,
 	})
 }
