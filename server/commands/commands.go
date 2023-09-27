@@ -15,9 +15,11 @@ type CommandContext struct {
 		ClientSettings() player.ClientInformation
 		Position() (x float64, y float64, z float64)
 		Rotation() (yaw float32, pitch float32)
+		HasPermissions(perms []string) bool
 	} `js:"executor"`
 	Arguments   []string `js:"arguments"`
-	FullCommand string
+	FullCommand string   `js:"fullCommand"`
+	IsConsole   bool     `js:"isConsole"`
 }
 
 func (ctx *CommandContext) Reply(content string) {
@@ -28,9 +30,13 @@ func (ctx *CommandContext) Incomplete() {
 	ctx.Reply(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§7%s§r§c§o<--[HERE]", ctx.FullCommand))
 }
 
-func (ctx *CommandContext) Error(msg string) {
+func (ctx *CommandContext) ErrorAt(msg string) {
 	sp := strings.Split(ctx.FullCommand, " ")
-	ctx.Reply(fmt.Sprintf("§c%s\n§7%s§c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1]))
+	ctx.Reply(fmt.Sprintf("§c%s\n§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1]))
+}
+
+func (ctx *CommandContext) Error(msg string) {
+	ctx.Reply("§c" + msg)
 }
 
 const (
@@ -82,6 +88,9 @@ func (graph Graph) Data() *pk.DeclareCommands {
 	commands := graph.Commands
 	rootChildren := []int32{}
 	for _, command := range commands {
+		if command == nil {
+			continue
+		}
 		for _, alias := range command.Aliases {
 			commands = append(commands, &Command{
 				Name:      alias,
@@ -90,13 +99,16 @@ func (graph Graph) Data() *pk.DeclareCommands {
 		}
 	}
 	for _, command := range commands {
+		if command == nil {
+			continue
+		}
 		rootChildren = append(rootChildren, int32(len(packet.Nodes)))
-		parent := len(packet.Nodes)
 		packet.Nodes = append(packet.Nodes, pk.Node{
 			Name:  command.Name,
 			Flags: 1,
 		})
 		for _, argument := range command.Arguments {
+			parent := len(packet.Nodes) - 1
 			packet.Nodes[parent].Children = append(packet.Nodes[parent].Children, int32(len(packet.Nodes)))
 			node := pk.Node{Flags: 2, Name: argument.Name, Properties: argument.Properties, ParserID: argument.ParserID}
 			if argument.SuggestionType != "" {

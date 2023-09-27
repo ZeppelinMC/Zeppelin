@@ -15,7 +15,7 @@ type worldData struct {
 			Seed int64 `nbt:"seed"`
 		}
 		DataVersion int32
-		GameRules   map[string]string
+		GameRules   map[string]interface{}
 	}
 }
 

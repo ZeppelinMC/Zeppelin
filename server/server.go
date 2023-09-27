@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aimjel/minecraft"
+
 	//"github.com/dynamitemc/dynamite/web"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
@@ -80,10 +81,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	srv.addPlayer(cntrl)
 	if err := sesh.HandlePackets(cntrl); err != nil {
-		u := cntrl.UUID
-
-		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, u)
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, cntrl.UUID)
 		srv.PlayerlistRemove(conn.Info.UUID)
+		delete(srv.Players, cntrl.UUID)
 		//gui.RemovePlayer(cntrl.UUID)
 	}
 }

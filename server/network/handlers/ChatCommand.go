@@ -14,6 +14,7 @@ type controller interface {
 	ClientSettings() player.ClientInformation
 	Position() (x float64, y float64, z float64)
 	Rotation() (yaw float32, pitch float32)
+	HasPermissions(perms []string) bool
 }
 
 func ChatCommandPacket(controller controller, graph *commands.Graph, content string) {
@@ -21,6 +22,9 @@ func ChatCommandPacket(controller controller, graph *commands.Graph, content str
 	cmd := args[0]
 	var command *commands.Command
 	for _, c := range graph.Commands {
+		if c == nil {
+			continue
+		}
 		if c.Name == cmd {
 			command = c
 		}
@@ -31,12 +35,12 @@ func ChatCommandPacket(controller controller, graph *commands.Graph, content str
 			}
 		}
 	}
-	if command == nil {
+	if command == nil || !controller.HasPermissions(command.RequiredPermissions) {
 		controller.SystemChatMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", content))
 		return
 	}
 	command.Execute(commands.CommandContext{
-		Arguments:   args,
+		Arguments:   args[1:],
 		Executor:    controller,
 		FullCommand: content,
 	})

@@ -2,6 +2,12 @@ github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf h1:VSUCKpFV0AfYGslg
 github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf/go.mod h1:UCCi6u6YA8oXfJ15vEMiMGIaWWfLiOacinBPHxLXtEU=
 github.com/aimjel/minecraft v0.0.0-20230913195637-f88fef694bb7 h1:XPhfvCmyVpja/BJvhZZ20LL3XrBNQsdhCp4SX2Y/woQ=
 github.com/aimjel/minecraft v0.0.0-20230913195637-f88fef694bb7/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
+github.com/aimjel/minecraft v0.0.0-20230927150952-b10c2a7b1397 h1:vb08EgkegNGu03fxYG2fxmj2F6E4fNrFqY1PGLWr9SM=
+github.com/aimjel/minecraft v0.0.0-20230927150952-b10c2a7b1397/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
+github.com/aimjel/minecraft v0.0.0-20230927163915-b3907034c0a8 h1:Vl58C0lpKTDgSZJivqU1AynKQXPQ2vR2+72pz1iIFFI=
+github.com/aimjel/minecraft v0.0.0-20230927163915-b3907034c0a8/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
+github.com/aimjel/minecraft v0.0.0-20230927182639-1fa3dd7aeebc h1:irjh4/oH9vWvkOr8xyQGudFeOYVpuzy9dgDnTkevtvg=
+github.com/aimjel/minecraft v0.0.0-20230927182639-1fa3dd7aeebc/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
 github.com/chzyer/logex v1.2.0/go.mod h1:9+9sk7u7pGNWYMkh0hdiL++6OeibzJccyQU4p4MedaY=
 github.com/chzyer/readline v1.5.0/go.mod h1:x22KAscuvRqlLoK9CsoYsmxoXZMMFVyOl86cAH8qUic=
 github.com/chzyer/test v0.0.0-20210722231415-061457976a23/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=

@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"fmt"
 	"os"
 	"slices"
 
@@ -190,7 +189,6 @@ func GetLuaVM(srv interface {
 	l.SetGlobal("server")
 
 	luaCreateGlobalFunction(l, "Plugin", func(state *lua.State) int {
-		fmt.Println("h")
 		if state.IsTable(1) {
 			l.Field(1, "identifier")
 			identifier, ok := l.ToString(-1)

@@ -8,7 +8,7 @@ import (
 var reload_cmd = &commands.Command{
 	Name:                "reload",
 	Aliases:             []string{"rl"},
-	RequiredPermissions: []string{"server.reload"},
+	RequiredPermissions: []string{"server.command.reload"},
 	Execute: func(ctx commands.CommandContext) {
 		srv := ctx.Executor.(*server.PlayerController).Server
 		srv.Reload()

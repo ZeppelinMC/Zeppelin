@@ -6,5 +6,6 @@ var Commands = &commands.Graph{
 	Commands: []*commands.Command{
 		test_cmd,
 		reload_cmd,
+		gamemode_cmd,
 	},
 }

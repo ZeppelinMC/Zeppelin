@@ -1,8 +1,6 @@
 package server
 
 import (
-	"slices"
-
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
@@ -17,9 +15,13 @@ type PlayerController struct {
 	UUID string
 }
 
+func (p *PlayerController) Name() string {
+	return p.session.conn.Info.Name
+}
+
 func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
-		EntityID:           p.player.EntityID, //TODO
+		EntityID:           p.player.EntityID,
 		IsHardcore:         p.player.IsHardcore(),
 		GameMode:           p.player.GameMode(),
 		PreviousGameMode:   p.player.PreviousGameMode(),
@@ -61,8 +63,10 @@ func (p *PlayerController) GameMode() byte {
 }
 
 func (p *PlayerController) SetGameMode(gm byte) {
-	// TO BE IMPLEMENTED
-	//p.session.SendPacket()
+	p.session.SendPacket(&packet.GameEvent{
+		Event: 3,
+		Value: float32(gm),
+	})
 }
 
 func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
@@ -80,7 +84,8 @@ func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 func (p *PlayerController) SendCommands(graph *commands.Graph) {
 	for i, command := range graph.Commands {
 		if !p.HasPermissions(command.RequiredPermissions) {
-			graph.Commands = slices.Delete(graph.Commands, i, i+1)
+			//graph.Commands = slices.Delete(graph.Commands, i-1, i)
+			graph.Commands[i] = nil
 		}
 	}
 	p.session.SendPacket(graph.Data())
