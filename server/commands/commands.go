@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
 	pk "github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/player"
@@ -28,7 +29,8 @@ func (ctx *CommandContext) Incomplete() {
 }
 
 func (ctx *CommandContext) Error(msg string) {
-	ctx.Reply(fmt.Sprintf("§c%s\n§7%s§r§c§o<--[HERE]", msg, ctx.FullCommand))
+	sp := strings.Split(ctx.FullCommand, " ")
+	ctx.Reply(fmt.Sprintf("§c%s\n§7%s§c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1]))
 }
 
 const (

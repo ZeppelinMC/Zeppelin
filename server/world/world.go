@@ -9,13 +9,18 @@ import (
 	"github.com/aimjel/minecraft/nbt"
 )
 
-type World struct {
-	nbt struct {
-		Data struct {
-			Seed        int64 `nbt:"seed"`
-			DataVersion int32
+type worldData struct {
+	Data struct {
+		WorldGenSettings struct {
+			Seed int64 `nbt:"seed"`
 		}
+		DataVersion int32
+		GameRules   map[string]string
 	}
+}
+
+type World struct {
+	nbt worldData
 
 	entityIdCounter atomic.Value
 
@@ -51,7 +56,7 @@ func OpenWorld(name string) (*World, error) {
 }
 
 func (w *World) Seed() int64 {
-	return w.nbt.Data.Seed
+	return w.nbt.Data.WorldGenSettings.Seed
 }
 
 func (w *World) DefaultDimension() *Dimension {
