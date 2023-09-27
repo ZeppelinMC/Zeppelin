@@ -101,7 +101,7 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGra
 		world:        w,
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
-		CommandGraph: *commandGraph,
+		CommandGraph: commandGraph,
 		Plugins:      make(map[string]*plugins.Plugin),
 	}
 

@@ -19,7 +19,7 @@ import (
 type Server struct {
 	Config       *ServerConfig
 	Logger       logger.Logger
-	CommandGraph commands.Graph
+	CommandGraph *commands.Graph
 
 	Plugins map[string]*plugins.Plugin
 
@@ -32,6 +32,8 @@ type Server struct {
 	BannedIPs []user
 
 	listener *minecraft.Listener
+
+	teleportCounter int32
 
 	world *world.World
 
@@ -70,8 +72,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {
 		//TODO log error
 		conn.Close(err)
-		panic(err)
-		return
+		srv.Logger.Error("Failed to join player to dimension %s", err)
 	}
 
 	srv.addPlayer(cntrl)
@@ -95,21 +96,8 @@ func (srv *Server) addPlayer(p *PlayerController) {
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.Info().Name, p.UUID)
 }
 
-func (srv *Server) GetCommand(name string) func(commands.Executor, []string) {
-	var cmd func(commands.Executor, []string)
-	for _, c := range srv.CommandGraph.Commands {
-		if c.Name == name {
-			return c.Execute
-		}
-
-		for _, a := range c.Aliases {
-			if a == name {
-				return c.Execute
-			}
-		}
-	}
-
-	return cmd
+func (srv *Server) GetCommandGraph() *commands.Graph {
+	return srv.CommandGraph
 }
 
 func (srv *Server) Reload() error {

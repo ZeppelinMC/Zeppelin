@@ -6,7 +6,7 @@ const (
 	StringGreedyPhrase
 )
 
-func NewCommand(name string, execute func(Executor, []string), arguments ...Argument) *Command {
+func NewCommand(name string, execute func(ctx CommandContext), arguments ...Argument) *Command {
 	return &Command{Name: name, Execute: execute, Arguments: arguments}
 }
 

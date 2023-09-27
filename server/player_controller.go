@@ -40,6 +40,10 @@ func (p *PlayerController) SystemChatMessage(s string) error {
 	return p.session.SendPacket(&packet.SystemChatMessage{Content: s})
 }
 
+func (p *PlayerController) ClientSettings() player.ClientInformation {
+	return p.player.ClientSettings
+}
+
 func (p *PlayerController) Position() (x float64, y float64, z float64) {
 	return p.player.X, p.player.Y, p.player.Z
 }
@@ -52,7 +56,28 @@ func (p *PlayerController) OnGround() bool {
 	return p.player.OnGround
 }
 
-func (p *PlayerController) SendCommands(graph commands.Graph) {
+func (p *PlayerController) GameMode() byte {
+	return p.player.GameMode()
+}
+
+func (p *PlayerController) SetGameMode(gm byte) {
+	// TO BE IMPLEMENTED
+	//p.session.SendPacket()
+}
+
+func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
+	p.Server.teleportCounter++
+	p.session.SendPacket(&packet.PlayerPositionLook{
+		X:          x,
+		Y:          y,
+		Z:          z,
+		Yaw:        yaw,
+		Pitch:      pitch,
+		TeleportID: p.Server.teleportCounter,
+	})
+}
+
+func (p *PlayerController) SendCommands(graph *commands.Graph) {
 	for i, command := range graph.Commands {
 		if !p.HasPermissions(command.RequiredPermissions) {
 			graph.Commands = slices.Delete(graph.Commands, i, i+1)

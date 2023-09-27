@@ -2,16 +2,36 @@ package commands
 
 import (
 	pk "github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
-type Executor interface{}
+type CommandContext struct {
+	Executor interface {
+		SystemChatMessage(s string) error
+		OnGround() bool
+		ClientSettings() player.ClientInformation
+		Position() (x float64, y float64, z float64)
+		Rotation() (yaw float32, pitch float32)
+	} `js:"executor"`
+	Arguments []string `js:"arguments"`
+}
+
+func (ctx *CommandContext) Reply(content string) {
+	ctx.Executor.SystemChatMessage(content)
+}
+
+const (
+	ChatModeEnabled = iota
+	ChatModeCommandsOnly
+	ChatModeHidden
+)
 
 type Command struct {
-	Name                string
-	Arguments           []Argument
-	Aliases             []string
-	Execute             func(Executor, []string)
-	RequiredPermissions []string
+	Name                string                   `js:"name"`
+	Arguments           []Argument               `js:"arguments"`
+	Aliases             []string                 `js:"aliases"`
+	Execute             func(ctx CommandContext) `js:"execute"`
+	RequiredPermissions []string                 `js:"requiredPermissions"`
 }
 
 type Properties struct {
@@ -21,9 +41,9 @@ type Properties struct {
 }
 
 type Argument struct {
-	Name           string
-	ParserID       int32
-	SuggestionType string
+	Name           string `js:"name"`
+	ParserID       int32  `js:"parserId"`
+	SuggestionType string `js:"suggestionType"`
 	Properties     Properties
 }
 

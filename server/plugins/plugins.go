@@ -7,12 +7,12 @@ import (
 	"github.com/dop251/goja"
 )
 
-var PluginUnrecognizedType = errors.New("unrecognized plugin type")
-var PluginUninitalized = errors.New("plugin was not initialized")
-var PluginNoData = errors.New("no plugin data found")
-var PluginInvalidData = errors.New("failed to parse plugin data")
-var PluginNoRoot = errors.New("no plugin root file")
-var PluginSingleFile = errors.New("cannot import files in single file plugin")
+var ErrPluginUnrecognizedType = errors.New("unrecognized plugin type")
+var ErrPluginUninitalized = errors.New("plugin was not initialized")
+var ErrPluginNoData = errors.New("no plugin data found")
+var ErrPluginInvalidData = errors.New("failed to parse plugin data")
+var ErrPluginNoRoot = errors.New("no plugin root file")
+var ErrPluginSingleFile = errors.New("cannot import files in single file plugin")
 
 const (
 	PluginTypeJavaScript = iota
@@ -31,4 +31,5 @@ type Plugin struct {
 	JSLoader    *goja.Runtime
 	LuaLoader   *lua.State
 	Type        int
+	OnLoad      func()
 }

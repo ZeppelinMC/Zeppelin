@@ -5,13 +5,18 @@ import (
 	"strings"
 
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
 type controller interface {
 	SystemChatMessage(s string) error
+	OnGround() bool
+	ClientSettings() player.ClientInformation
+	Position() (x float64, y float64, z float64)
+	Rotation() (yaw float32, pitch float32)
 }
 
-func ChatCommandPacket(controller controller, graph commands.Graph, content string) {
+func ChatCommandPacket(controller controller, graph *commands.Graph, content string) {
 	args := strings.Split(content, " ")
 	cmd := args[0]
 	var command *commands.Command
@@ -30,5 +35,8 @@ func ChatCommandPacket(controller controller, graph commands.Graph, content stri
 		controller.SystemChatMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n%s§o<--[HERE]", content))
 		return
 	}
-	command.Execute(controller, args)
+	command.Execute(commands.CommandContext{
+		Arguments: args,
+		Executor:  controller,
+	})
 }

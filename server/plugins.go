@@ -52,24 +52,24 @@ func (srv *Server) LoadPlugin(path string) (*plugins.Plugin, error) {
 		file, err := os.ReadFile(path + "/plugin.json")
 		var data plugins.PluginData
 		if err != nil {
-			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.PluginNoData)
-			return nil, plugins.PluginNoData
+			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginNoData)
+			return nil, plugins.ErrPluginNoData
 		}
 		err = json.Unmarshal(file, &data)
 		if err != nil {
-			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.PluginInvalidData)
-			return nil, plugins.PluginInvalidData
+			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginInvalidData)
+			return nil, plugins.ErrPluginInvalidData
 		}
 		file, err = os.ReadFile(path + "/" + data.RootFile)
 		if err != nil {
-			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.PluginNoRoot)
-			return nil, plugins.PluginNoRoot
+			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginNoRoot)
+			return nil, plugins.ErrPluginNoRoot
 		}
 		switch data.Type {
 		case "javascript":
 			{
 				plugin := &plugins.Plugin{Filename: info.Name(), Type: plugins.PluginTypeJavaScript}
-				js := plugins.GetJavaScriptVM(srv.Logger, plugin, path)
+				js := plugins.GetJavaScriptVM(srv, srv.Logger, plugin, path)
 				plugin.JSLoader = js
 				_, err := js.RunString(string(file))
 				if err != nil {
@@ -77,27 +77,27 @@ func (srv *Server) LoadPlugin(path string) (*plugins.Plugin, error) {
 					return nil, err
 				}
 				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.PluginUninitalized)
-					return nil, plugins.PluginUninitalized
+					srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginUninitalized)
+					return nil, plugins.ErrPluginUninitalized
 				}
 				return plugin, nil
 			}
 		case "lua":
 			{
 				plugin := &plugins.Plugin{Filename: info.Name(), Type: plugins.PluginTypeLua}
-				l := plugins.GetLuaVM(srv.Logger, plugin)
+				l := plugins.GetLuaVM(srv, srv.Logger, plugin)
 				plugin.LuaLoader = l
 				lua.DoString(l, string(file))
 				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.PluginUninitalized)
-					return nil, plugins.PluginUninitalized
+					srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginUninitalized)
+					return nil, plugins.ErrPluginUninitalized
 				}
 				return plugin, nil
 			}
 		default:
 			{
-				srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.PluginUnrecognizedType)
-				return nil, plugins.PluginUnrecognizedType
+				srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginUnrecognizedType)
+				return nil, plugins.ErrPluginUnrecognizedType
 			}
 		}
 	} else {
@@ -112,7 +112,7 @@ func (srv *Server) LoadPlugin(path string) (*plugins.Plugin, error) {
 		case strings.HasSuffix(path, ".js"):
 			{
 				plugin := &plugins.Plugin{Filename: filename, Type: plugins.PluginTypeJavaScript}
-				js := plugins.GetJavaScriptVM(srv.Logger, plugin, "")
+				js := plugins.GetJavaScriptVM(srv, srv.Logger, plugin, "")
 				plugin.JSLoader = js
 				_, err := js.RunString(string(file))
 				if err != nil {
@@ -120,27 +120,27 @@ func (srv *Server) LoadPlugin(path string) (*plugins.Plugin, error) {
 					return nil, err
 				}
 				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.PluginUninitalized)
-					return nil, plugins.PluginUninitalized
+					srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.ErrPluginUninitalized)
+					return nil, plugins.ErrPluginUninitalized
 				}
 				return plugin, nil
 			}
 		case strings.HasSuffix(path, ".lua"):
 			{
 				plugin := &plugins.Plugin{Filename: filename, Type: plugins.PluginTypeLua}
-				l := plugins.GetLuaVM(srv.Logger, plugin)
+				l := plugins.GetLuaVM(srv, srv.Logger, plugin)
 				plugin.LuaLoader = l
 				lua.DoString(l, string(file))
 				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.PluginUninitalized)
-					return nil, plugins.PluginUninitalized
+					srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.ErrPluginUninitalized)
+					return nil, plugins.ErrPluginUninitalized
 				}
 				return plugin, nil
 			}
 		default:
 			{
-				srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.PluginUnrecognizedType)
-				return nil, plugins.PluginUnrecognizedType
+				srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.ErrPluginUnrecognizedType)
+				return nil, plugins.ErrPluginUnrecognizedType
 			}
 		}
 	}

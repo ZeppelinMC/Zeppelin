@@ -1,39 +1,22 @@
 package plugins
 
 import (
-	"fmt"
 	"os"
+	"slices"
 
 	"github.com/dop251/goja"
 	"github.com/dynamitemc/dynamite/logger"
+	"github.com/dynamitemc/dynamite/server/commands"
 )
 
 type pluginConfiguration struct {
 	Identifier string `js:"identifier"`
+	OnLoad     func() `js:"onLoad"`
 }
 
-func makeJSMap[K comparable, V any](vm *goja.Runtime, from *map[K]V) *goja.Object {
-	m := vm.NewObject()
-	m.Set("set", func(key K, value V) {
-		(*from)[key] = value
-	})
-	m.Set("delete", func(key K) {
-		delete(*from, key)
-	})
-	m.Set("get", func(key K) V {
-		return (*from)[key]
-	})
-	return m
-}
-
-func at[T any](arr []T, index int) (val T) {
-	if len(arr) <= index {
-		return val
-	}
-	return arr[index]
-}
-
-func GetJavaScriptVM(logger logger.Logger, plugin *Plugin, root string) *goja.Runtime {
+func GetJavaScriptVM(srv interface {
+	GetCommandGraph() *commands.Graph
+}, logger logger.Logger, plugin *Plugin, root string) *goja.Runtime {
 	vm := goja.New()
 	vm.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
 	server := vm.NewObject()
@@ -43,6 +26,33 @@ func GetJavaScriptVM(logger logger.Logger, plugin *Plugin, root string) *goja.Ru
 		var code int64 = c
 		os.Exit(int(code))
 	})
+
+	graph := srv.GetCommandGraph()
+	cmds := vm.NewObject()
+	cmds.Set("register", func(cmds ...*commands.Command) {
+		graph.AddCommands(cmds...)
+	})
+	cmds.Set("delete", func(name string) {
+		for i, cmd := range graph.Commands {
+			if cmd.Name == name {
+				graph.Commands = slices.Delete(graph.Commands, i, i+1)
+				return
+			}
+		}
+	})
+	cmds.Set("get", func(name string) *commands.Command {
+		for _, cmd := range graph.Commands {
+			if cmd.Name == name {
+				return cmd
+			}
+		}
+		return nil
+	})
+	cmds.Set("getAll", func(name string) []*commands.Command {
+		return graph.Commands
+	})
+
+	server.Set("commands", cmds)
 
 	log.Set("info", func(format string, a ...interface{}) {
 		logger.Info(format, a...)
@@ -72,6 +82,10 @@ func GetJavaScriptVM(logger logger.Logger, plugin *Plugin, root string) *goja.Ru
 				logger.Error("Failed to load plugin %s: identifier was not specified", plugin.Filename)
 			}
 			plugin.Identifier = data.Identifier
+			plugin.OnLoad = data.OnLoad
+
+			data.OnLoad()
+
 			plugin.Initialized = true
 		}
 	})
@@ -89,7 +103,6 @@ func GetJavaScriptVM(logger logger.Logger, plugin *Plugin, root string) *goja.Ru
 		v.Set("exports", goja.Undefined())
 		v.RunString(string(f))
 		v.ExportTo(v.Get("exports"), &exports)
-		fmt.Println(v.Get("exports"))
 		return exports
 	})
 	return vm

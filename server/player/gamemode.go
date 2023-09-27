@@ -16,3 +16,18 @@ func Gamemode(gm string) int {
 
 	return -1
 }
+
+func GamemodeName(gm byte) string {
+	switch gm {
+	case 0:
+		return "survival"
+	case 1:
+		return "creative"
+	case 2:
+		return "adventure"
+	case 3:
+		return "spectator"
+	default:
+		return ""
+	}
+}
