@@ -22,17 +22,8 @@ var gamemode_cmd = &commands.Command{
 	Name:                "gamemode",
 	RequiredPermissions: []string{"server.command.gamemode"},
 	Arguments: []commands.Argument{
-		{
-			Name:     "mode",
-			ParserID: 39,
-		},
-		{
-			Name:     "player",
-			ParserID: 6,
-			Properties: commands.Properties{
-				Flags: 0x02,
-			},
-		},
+		commands.NewGamemodeArgument("mode"),
+		commands.NewEntityArgument("player", commands.EntityPlayerOnly),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if len(ctx.Arguments) == 0 {

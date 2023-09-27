@@ -6,14 +6,17 @@ const (
 	StringGreedyPhrase
 )
 
-func NewCommand(name string, execute func(ctx CommandContext), arguments ...Argument) *Command {
-	return &Command{Name: name, Execute: execute, Arguments: arguments}
-}
+const (
+	EntitySingle = iota + 1
+	EntityPlayerOnly
+)
 
 func NewBoolArgument(name string) Argument {
 	return Argument{
-		Name:     name,
-		ParserID: 0,
+		Name: name,
+		Parser: Parser{
+			ID: 0,
+		},
 	}
 }
 
@@ -31,9 +34,11 @@ func NewFloatArgument(name string, properties struct {
 		props.Max = *properties.Max
 	}
 	return Argument{
-		Name:       name,
-		ParserID:   1,
-		Properties: props,
+		Name: name,
+		Parser: Parser{
+			ID:         1,
+			Properties: props,
+		},
 	}
 }
 
@@ -51,9 +56,11 @@ func NewDoubleArgument(name string, properties struct {
 		props.Max = *properties.Max
 	}
 	return Argument{
-		Name:       name,
-		ParserID:   2,
-		Properties: props,
+		Name: name,
+		Parser: Parser{
+			ID:         2,
+			Properties: props,
+		},
 	}
 }
 
@@ -71,9 +78,11 @@ func NewIntegerArgument(name string, properties struct {
 		props.Max = uint64(*properties.Max)
 	}
 	return Argument{
-		Name:       name,
-		ParserID:   3,
-		Properties: props,
+		Name: name,
+		Parser: Parser{
+			ID:         3,
+			Properties: props,
+		},
 	}
 }
 
@@ -91,17 +100,41 @@ func NewLongArgument(name string, properties struct {
 		props.Max = uint64(*properties.Max)
 	}
 	return Argument{
-		Name:       name,
-		ParserID:   4,
-		Properties: props,
+		Name: name,
+		Parser: Parser{
+			ID:         4,
+			Properties: props,
+		},
 	}
 }
 
 func NewStringArgument(name string, properties byte) Argument {
 	props := Properties{Flags: properties}
 	return Argument{
-		Name:       name,
-		ParserID:   5,
-		Properties: props,
+		Name: name,
+		Parser: Parser{
+			ID:         5,
+			Properties: props,
+		},
+	}
+}
+
+func NewEntityArgument(name string, properties byte) Argument {
+	props := Properties{Flags: properties}
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID:         6,
+			Properties: props,
+		},
+	}
+}
+
+func NewGamemodeArgument(name string) Argument {
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID: 39,
+		},
 	}
 }

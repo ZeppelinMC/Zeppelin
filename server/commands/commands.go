@@ -54,16 +54,20 @@ type Command struct {
 }
 
 type Properties struct {
-	Flags      uint8  `json:",omitempty"`
-	Min, Max   uint64 `json:",omitempty"`
-	Identifier string `json:",omitempty"`
+	Flags      uint8
+	Min, Max   uint64
+	Identifier string
+}
+
+type Parser struct {
+	ID         int32      `js:"id"`
+	Properties Properties `js:"properties"`
 }
 
 type Argument struct {
 	Name           string `js:"name"`
-	ParserID       int32  `js:"parserId"`
 	SuggestionType string `js:"suggestionType"`
-	Properties     Properties
+	Parser         Parser `js:"parser"`
 }
 
 type Graph struct {
@@ -110,7 +114,7 @@ func (graph Graph) Data() *pk.DeclareCommands {
 		for _, argument := range command.Arguments {
 			parent := len(packet.Nodes) - 1
 			packet.Nodes[parent].Children = append(packet.Nodes[parent].Children, int32(len(packet.Nodes)))
-			node := pk.Node{Flags: 2, Name: argument.Name, Properties: argument.Properties, ParserID: argument.ParserID}
+			node := pk.Node{Flags: 2, Name: argument.Name, Properties: argument.Parser.Properties, ParserID: argument.Parser.ID}
 			if argument.SuggestionType != "" {
 				node.Flags |= 0x10
 				node.SuggestionsType = argument.SuggestionType
