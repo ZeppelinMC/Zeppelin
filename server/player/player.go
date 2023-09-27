@@ -8,6 +8,8 @@ type Player struct {
 	viewDistance       int32
 	simulationDistance int32
 
+	EntityID int32
+
 	Operator bool
 
 	ClientSettings ClientInformation
@@ -28,8 +30,8 @@ type ClientInformation struct {
 	AllowServerListings  bool
 }
 
-func New() *Player {
-	return &Player{}
+func New(entityID int32) *Player {
+	return &Player{EntityID: entityID}
 }
 
 func (p *Player) IsHardcore() bool {

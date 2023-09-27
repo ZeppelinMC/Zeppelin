@@ -19,7 +19,7 @@ type PlayerController struct {
 
 func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
-		EntityID:           0, //TODO
+		EntityID:           p.player.EntityID, //TODO
 		IsHardcore:         p.player.IsHardcore(),
 		GameMode:           p.player.GameMode(),
 		PreviousGameMode:   p.player.PreviousGameMode(),

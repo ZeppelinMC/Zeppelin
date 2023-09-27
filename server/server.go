@@ -35,6 +35,8 @@ type Server struct {
 
 	teleportCounter int32
 
+	entityCounter int32
+
 	world *world.World
 
 	mu *sync.RWMutex
@@ -54,8 +56,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	if srv.ValidateConn(conn) {
 		return
 	}
+	srv.entityCounter++
 
-	plyr := player.New()
+	plyr := player.New(srv.entityCounter)
 	sesh := New(conn, plyr)
 	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
