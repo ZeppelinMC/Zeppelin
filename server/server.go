@@ -115,10 +115,17 @@ func (srv *Server) Reload() error {
 
 		*addresses[i] = u
 	}
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
 		p.SendCommands(srv.CommandGraph)
+	}
+	return nil
+}
+
+func (srv *Server) FindPlayer(username string) *PlayerController {
+	for _, p := range srv.Players {
+		if p.Name() == username {
+			return p
+		}
 	}
 	return nil
 }
