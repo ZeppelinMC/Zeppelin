@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/dynamitemc/dynamite/server/commands"
@@ -13,11 +15,17 @@ type ConsoleExecutor struct {
 
 func (srv *Server) ScanConsole() {
 	fmt.Print("> ")
-	var content string
-	fmt.Scanln(&content)
+
+	reader := bufio.NewReader(os.Stdin)
+	content, _ := reader.ReadString('\n')
+	content = strings.TrimSpace(content)
 
 	args := strings.Split(content, " ")
 	cmd := args[0]
+
+	if cmd == "" {
+		return
+	}
 
 	defer srv.ScanConsole()
 	var command *commands.Command

@@ -129,3 +129,8 @@ func (srv *Server) FindPlayer(username string) *PlayerController {
 	}
 	return nil
 }
+
+func (srv *Server) Close() {
+	srv.Logger.Info("Closing server...")
+	os.Exit(0)
+}

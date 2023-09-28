@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
 	"time"
 
@@ -26,6 +27,13 @@ func start(cfg server.ServerConfig) {
 	}
 	srv.LoadPlugins()
 	log.Info("Done! (%ds)", time.Now().Unix()-startTime)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			srv.Close()
+		}
+	}()
 	go srv.ScanConsole()
 	err = srv.Start()
 	if err != nil {

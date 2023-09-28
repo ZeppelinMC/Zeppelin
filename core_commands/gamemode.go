@@ -37,14 +37,14 @@ var gamemode_cmd = &commands.Command{
 		}
 		var player *server.PlayerController
 		if len(ctx.Arguments) == 1 {
-			if p, ok := ctx.Executor.(*server.PlayerController); ok {
+			if p, ok := ctx.Executor.(*server.PlayerController); !ok {
 				ctx.Incomplete()
 				return
 			} else {
 				player = p
 			}
 		} else {
-			p := ctx.Executor.(*server.PlayerController).Server.FindPlayer(ctx.Arguments[1])
+			p := getServer(ctx.Executor).FindPlayer(ctx.Arguments[1])
 			if p == nil {
 				ctx.Error("No player was found")
 				return
