@@ -26,6 +26,7 @@ func start(cfg server.ServerConfig) {
 	}
 	srv.LoadPlugins()
 	log.Info("Done! (%ds)", time.Now().Unix()-startTime)
+	go srv.ScanConsole()
 	err = srv.Start()
 	if err != nil {
 		log.Error("Failed to start server: %s", err)

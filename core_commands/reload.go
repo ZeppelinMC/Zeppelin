@@ -5,12 +5,21 @@ import (
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
+func getServer(executor interface{}) *server.Server {
+	if p, ok := executor.(*server.PlayerController); ok {
+		return p.Server
+	} else if c, ok := executor.(*server.ConsoleExecutor); ok {
+		return c.Server
+	}
+	return nil
+}
+
 var reload_cmd = &commands.Command{
 	Name:                "reload",
 	Aliases:             []string{"rl"},
 	RequiredPermissions: []string{"server.command.reload"},
 	Execute: func(ctx commands.CommandContext) {
-		srv := ctx.Executor.(*server.PlayerController).Server
+		srv := getServer(ctx.Executor)
 		srv.Reload()
 		ctx.Reply(srv.Config.Messages.ReloadComplete)
 	},
