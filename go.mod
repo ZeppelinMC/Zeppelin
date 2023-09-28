@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf
-	github.com/aimjel/minecraft v0.0.0-20230927222750-0a432da348ec
+	github.com/aimjel/minecraft v0.0.0-20230928175911-f477127f6069
 	github.com/dop251/goja v0.0.0-20230919151941-fc55792775de
 )
 

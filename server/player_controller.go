@@ -1,6 +1,8 @@
 package server
 
 import (
+	"math/rand"
+
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
@@ -34,7 +36,14 @@ func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 	}); err != nil {
 		return err
 	}
+	p.session.SendPacket(&packet.PluginMessage{
+		Channel: "minecraft:brand",
+		Data:    []byte("Dynamite 1.20.1"),
+	})
 
+	p.Teleport(100, 100, 100, 0, 0)
+	p.SetGameMode(1)
+	p.Spawn()
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{})
 }
 
@@ -89,4 +98,9 @@ func (p *PlayerController) SendCommands(graph *commands.Graph) {
 		}
 	}
 	p.session.SendPacket(graph.Data())
+}
+
+func (p *PlayerController) Keepalive() {
+	id := rand.Int63() * 100
+	p.session.SendPacket(&packet.KeepAlive{PayloadID: id})
 }

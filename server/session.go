@@ -38,7 +38,7 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 		switch p.ID() {
 		case 0x14, 0x15, 0x16, 0x17:
 			{
-				handlers.PlayerMovement(s.state, p)
+				handlers.PlayerMovement(controller, s.state, p)
 			}
 		}
 	}

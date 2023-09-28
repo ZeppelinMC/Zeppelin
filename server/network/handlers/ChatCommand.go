@@ -10,6 +10,7 @@ import (
 type controller interface {
 	SystemChatMessage(s string) error
 	HasPermissions(perms []string) bool
+	BroadcastMovement(oldx, oldy, oldz float64)
 }
 
 func ChatCommandPacket(controller controller, graph *commands.Graph, content string) {

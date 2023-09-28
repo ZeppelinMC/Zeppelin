@@ -42,13 +42,13 @@ func start(cfg server.ServerConfig) {
 }
 
 func main() {
-	log.Info("Starting Dynamite Server")
+	log.Info("Starting Dynamite 1.20.1 Server")
 	var cfg server.ServerConfig
 	config.LoadConfig("config.toml", &cfg)
 	log.Debug("Loaded config")
 
 	if !cfg.Online && !util.HasArg("-no_offline_warn") {
-		log.Warn("Offline mode is insecure and you should not use it unless for a private server.")
+		log.Warn("Offline mode is insecure and you should not use it unless for a private server.\nRead https://github.com/DynamiteMC/Dynamite/wiki/Why-you-shouldn't-use-offline-mode")
 	}
 
 	if cfg.Web.Enable {

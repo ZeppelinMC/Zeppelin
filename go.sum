@@ -10,6 +10,8 @@ github.com/aimjel/minecraft v0.0.0-20230927182639-1fa3dd7aeebc h1:irjh4/oH9vWvkO
 github.com/aimjel/minecraft v0.0.0-20230927182639-1fa3dd7aeebc/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
 github.com/aimjel/minecraft v0.0.0-20230927222750-0a432da348ec h1:aFUC1sZUBSlOtIniOxDWN2orepj9/dSxSAdqVtdVNcE=
 github.com/aimjel/minecraft v0.0.0-20230927222750-0a432da348ec/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
+github.com/aimjel/minecraft v0.0.0-20230928175911-f477127f6069 h1:mDe3BVKwhXXuIXb/pzaZvXugDBGmJ9uUHp1jfDtI21E=
+github.com/aimjel/minecraft v0.0.0-20230928175911-f477127f6069/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
 github.com/chzyer/logex v1.2.0/go.mod h1:9+9sk7u7pGNWYMkh0hdiL++6OeibzJccyQU4p4MedaY=
 github.com/chzyer/readline v1.5.0/go.mod h1:x22KAscuvRqlLoK9CsoYsmxoXZMMFVyOl86cAH8qUic=
 github.com/chzyer/test v0.0.0-20210722231415-061457976a23/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=

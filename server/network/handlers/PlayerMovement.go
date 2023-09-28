@@ -6,13 +6,16 @@ import (
 )
 
 func PlayerMovement(
+	controller controller,
 	state *player.Player,
 	pk packet.Packet,
 ) {
 	switch pk := pk.(type) {
 	case *packet.PlayerPosition:
 		{
-			state.X, state.Y, state.Z, state.OnGround = pk.X, pk.FeetY, pk.Z, pk.OnGround
+			state.OnGround = pk.OnGround
+			controller.BroadcastMovement(state.X, state.Y, state.Z)
+			state.X, state.Y, state.Z = pk.X, pk.FeetY, pk.Z
 		}
 	case *packet.PlayerPositionRotation:
 		{
