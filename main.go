@@ -30,9 +30,8 @@ func start(cfg server.ServerConfig) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
-		for range c {
-			srv.Close()
-		}
+		<-c
+		srv.Close()
 	}()
 	go srv.ScanConsole()
 	err = srv.Start()
