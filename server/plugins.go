@@ -15,7 +15,9 @@ import (
 var pluginsDir = util.GetArg("pluginspath", "plugins")
 
 var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion: 1,
+	MagicCookieKey:   "Plugin",
+	MagicCookieValue: "Plugin",
+	ProtocolVersion:  1,
 }
 
 type Plugin struct {
