@@ -29,7 +29,7 @@ func (p *Plugin) Server(*plugin.MuxBroker) (interface{}, error) {
 	return p, nil
 }
 
-func (p *Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+func (p Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
 	return p, nil
 }
 
@@ -71,7 +71,7 @@ func (srv *Server) LoadPlugin(path string) (interface{}, error) {
 	rpcClient, _ := client.Client()
 
 	p, e := rpcClient.Dispense("plugin")
-	fmt.Println(e, p.(*Plugin).Identifier)
+	fmt.Println(e, p.(Plugin).Identifier)
 
 	return nil, nil
 }
