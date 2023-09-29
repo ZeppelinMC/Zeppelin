@@ -43,7 +43,7 @@ func start(cfg server.ServerConfig) {
 
 func main() {
 	log.Info("Starting Dynamite 1.20.1 Server")
-	var cfg server.ServerConfig
+	var cfg config.ServerConfig
 	config.LoadConfig("config.toml", &cfg)
 	log.Debug("Loaded config")
 
@@ -58,5 +58,5 @@ func main() {
 			log.Warn("Remove the -nogui argument to load the web panel")
 		}
 	}
-	start(cfg)
+	start(server.ServerConfig(cfg))
 }

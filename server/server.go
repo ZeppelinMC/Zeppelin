@@ -13,6 +13,7 @@ import (
 	"github.com/aimjel/minecraft"
 
 	//"github.com/dynamitemc/dynamite/web"
+	"github.com/dynamitemc/dynamite/config"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
@@ -21,7 +22,7 @@ import (
 )
 
 type Server struct {
-	Config       *ServerConfig
+	Config       *config.ServerConfig
 	Logger       logger.Logger
 	CommandGraph *commands.Graph
 
@@ -145,6 +146,10 @@ func (srv *Server) Reload() error {
 
 		*addresses[i] = u
 	}
+
+	// load config
+	config.LoadConfig("config.toml", srv.Config)
+
 	for _, p := range srv.Players {
 		p.SendCommands(srv.CommandGraph)
 	}
