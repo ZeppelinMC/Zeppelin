@@ -9,6 +9,7 @@ import (
 	"os/exec"
 
 	"github.com/dynamitemc/dynamite/util"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -29,7 +30,7 @@ func (p *Plugin) Server(*plugin.MuxBroker) (interface{}, error) {
 	return p, nil
 }
 
-func (p Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+func (p *Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
 	return p, nil
 }
 
@@ -65,13 +66,16 @@ func (srv *Server) LoadPlugin(path string) (interface{}, error) {
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
 		Cmd:             exec.Command(path),
+		Logger: hclog.New(&hclog.LoggerOptions{
+			Level: -1,
+		}),
 	})
 	defer client.Kill()
 
 	rpcClient, _ := client.Client()
 
-	p, e := rpcClient.Dispense("plugin")
-	fmt.Println(e, p.(Plugin).Identifier)
+	p, err := rpcClient.Dispense("plugin")
+	fmt.Println("yeah!", p.(*Plugin).Identifier, err)
 
 	return nil, nil
 }
