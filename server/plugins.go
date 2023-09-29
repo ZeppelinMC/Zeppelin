@@ -29,7 +29,7 @@ func (p *Plugin) Server(*plugin.MuxBroker) (interface{}, error) {
 	return p, nil
 }
 
-func (p Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+func (p *Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
 	return p, nil
 }
 
