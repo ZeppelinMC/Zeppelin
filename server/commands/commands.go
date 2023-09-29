@@ -73,7 +73,7 @@ func (ctx *CommandContext) Incomplete() {
 	ctx.Reply(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§7%s§r§c§o<--[HERE]", ctx.FullCommand))
 }
 
-func (ctx *CommandContext) ErrorAt(msg string) {
+func (ctx *CommandContext) ErrorHere(msg string) {
 	sp := strings.Split(ctx.FullCommand, " ")
 	ctx.Reply(fmt.Sprintf("§c%s\n§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1]))
 }

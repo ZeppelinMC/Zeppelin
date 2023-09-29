@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/md5"
 	"errors"
+	"net/rpc"
 	"os"
 	"strings"
 	"sync"
@@ -12,12 +13,13 @@ import (
 
 	"github.com/aimjel/minecraft"
 
+	"github.com/hashicorp/go-plugin"
+
 	//"github.com/dynamitemc/dynamite/web"
 	"github.com/dynamitemc/dynamite/config"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
-	"github.com/dynamitemc/dynamite/server/plugins"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -26,7 +28,7 @@ type Server struct {
 	Logger       logger.Logger
 	CommandGraph *commands.Graph
 
-	Plugins map[string]*plugins.Plugin
+	//Plugins map[string]*plugins.Plugin
 
 	// Players mapped by UUID
 	Players map[string]*PlayerController
@@ -168,4 +170,12 @@ func (srv *Server) FindPlayer(username string) *PlayerController {
 func (srv *Server) Close() {
 	srv.Logger.Info("Closing server...")
 	os.Exit(0)
+}
+
+func (srv *Server) Server(*plugin.MuxBroker) (interface{}, error) {
+	return srv, nil
+}
+
+func (srv *Server) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+	return srv, nil
 }

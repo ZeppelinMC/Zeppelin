@@ -32,7 +32,7 @@ var gamemode_cmd = &commands.Command{
 		}
 		gm := p.Gamemode(ctx.Arguments[0])
 		if gm == -1 {
-			ctx.ErrorAt(fmt.Sprintf("Unknown game mode: %s", ctx.Arguments[0]))
+			ctx.ErrorHere(fmt.Sprintf("Unknown game mode: %s", ctx.Arguments[0]))
 			return
 		}
 		var player *server.PlayerController

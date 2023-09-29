@@ -1,19 +1,35 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/rpc"
 	"os"
-	"strings"
+	"os/exec"
 
-	"github.com/Shopify/go-lua"
-	"github.com/dynamitemc/dynamite/server/plugins"
 	"github.com/dynamitemc/dynamite/util"
+	"github.com/hashicorp/go-plugin"
 )
 
 var pluginsDir = util.GetArg("pluginspath", "plugins")
+
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion: 1,
+}
+
+type Plugin struct {
+	Identifier string
+	OnLoad     func(*Server)
+}
+
+func (p *Plugin) Server(*plugin.MuxBroker) (interface{}, error) {
+	return p, nil
+}
+
+func (p Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+	return p, nil
+}
 
 func (srv *Server) LoadPlugins() error {
 	err := os.Mkdir(pluginsDir, 0755)
@@ -35,113 +51,29 @@ func (srv *Server) LoadPlugins() error {
 			if plugin == nil {
 				continue
 			}
-			srv.Plugins[plugin.Identifier] = plugin
-			srv.Logger.Debug("Finished loading plugin %s", plugin.Identifier)
+			//srv.Plugins[plugin.Identifier] = plugin
+			//srv.Logger.Debug("Finished loading plugin %s", plugin.Identifier)
 		}
 	}
 	return nil
 }
 
-func (srv *Server) LoadPlugin(path string) (*plugins.Plugin, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	if info.IsDir() {
-		file, err := os.ReadFile(path + "/plugin.json")
-		var data plugins.PluginData
-		if err != nil {
-			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginNoData)
-			return nil, plugins.ErrPluginNoData
-		}
-		err = json.Unmarshal(file, &data)
-		if err != nil {
-			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginInvalidData)
-			return nil, plugins.ErrPluginInvalidData
-		}
-		file, err = os.ReadFile(path + "/" + data.RootFile)
-		if err != nil {
-			srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginNoRoot)
-			return nil, plugins.ErrPluginNoRoot
-		}
-		switch data.Type {
-		case "javascript":
-			{
-				plugin := &plugins.Plugin{Filename: info.Name(), Type: plugins.PluginTypeJavaScript}
-				js := plugins.GetJavaScriptVM(srv, srv.Logger, plugin, path)
-				plugin.JSLoader = js
-				_, err := js.RunString(string(file))
-				if err != nil {
-					srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), err)
-					return nil, err
-				}
-				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginUninitalized)
-					return nil, plugins.ErrPluginUninitalized
-				}
-				return plugin, nil
-			}
-		case "lua":
-			{
-				plugin := &plugins.Plugin{Filename: info.Name(), Type: plugins.PluginTypeLua}
-				l := plugins.GetLuaVM(srv, srv.Logger, plugin)
-				plugin.LuaLoader = l
-				lua.DoString(l, string(file))
-				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginUninitalized)
-					return nil, plugins.ErrPluginUninitalized
-				}
-				return plugin, nil
-			}
-		default:
-			{
-				srv.Logger.Error("Failed to load plugin %s: %s", info.Name(), plugins.ErrPluginUnrecognizedType)
-				return nil, plugins.ErrPluginUnrecognizedType
-			}
-		}
-	} else {
-		file, err := os.ReadFile(path)
-		if err != nil {
-			fmt.Println(err)
-			return nil, err
-		}
-		sp := strings.Split(path, "/")
-		filename := sp[len(sp)-1]
-		switch {
-		case strings.HasSuffix(path, ".js"):
-			{
-				plugin := &plugins.Plugin{Filename: filename, Type: plugins.PluginTypeJavaScript}
-				js := plugins.GetJavaScriptVM(srv, srv.Logger, plugin, "")
-				plugin.JSLoader = js
-				_, err := js.RunString(string(file))
-				if err != nil {
-					srv.Logger.Error("Failed to load plugin %s: %s", filename, err)
-					return nil, err
-				}
-				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.ErrPluginUninitalized)
-					return nil, plugins.ErrPluginUninitalized
-				}
-				return plugin, nil
-			}
-		case strings.HasSuffix(path, ".lua"):
-			{
-				plugin := &plugins.Plugin{Filename: filename, Type: plugins.PluginTypeLua}
-				l := plugins.GetLuaVM(srv, srv.Logger, plugin)
-				plugin.LuaLoader = l
-				lua.DoString(l, string(file))
-				if !plugin.Initialized {
-					srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.ErrPluginUninitalized)
-					return nil, plugins.ErrPluginUninitalized
-				}
-				return plugin, nil
-			}
-		default:
-			{
-				srv.Logger.Error("Failed to load plugin %s: %s", filename, plugins.ErrPluginUnrecognizedType)
-				return nil, plugins.ErrPluginUnrecognizedType
-			}
-		}
-	}
+func (srv *Server) LoadPlugin(path string) (interface{}, error) {
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins:         pluginMap,
+		Cmd:             exec.Command(path),
+	})
+	defer client.Kill()
+
+	rpcClient, _ := client.Client()
+
+	p, e := rpcClient.Dispense("plugin")
+	fmt.Println(e, p.(*Plugin).Identifier)
+
+	return nil, nil
+}
+
+var pluginMap = map[string]plugin.Plugin{
+	"plugin": &Plugin{},
 }
