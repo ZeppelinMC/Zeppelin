@@ -14,9 +14,7 @@ import (
 	"github.com/dynamitemc/dynamite/util"
 )
 
-type ServerConfig config.ServerConfig
-
-func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGraph *commands.Graph) (*Server, error) {
+func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, commandGraph *commands.Graph) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
 		Status: minecraft.NewStatus(minecraft.Version{
 			Text:     "DynamiteMC 1.20.1",
@@ -41,9 +39,8 @@ func (cfg *ServerConfig) Listen(address string, logger logger.Logger, commandGra
 		logger.Error("Failed to load world: %s", err)
 		os.Exit(1)
 	}
-	c := config.ServerConfig(*cfg)
 	srv := &Server{
-		Config:       &c,
+		Config:       cfg,
 		listener:     ln,
 		Logger:       logger,
 		world:        w,

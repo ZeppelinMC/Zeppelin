@@ -18,8 +18,8 @@ import (
 var log logger.Logger
 var startTime = time.Now().Unix()
 
-func start(cfg server.ServerConfig) {
-	srv, err := cfg.Listen(cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
+func start(cfg *config.ServerConfig) {
+	srv, err := server.Listen(cfg, cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
 	log.Info("Opened TCP server on %s:%d", cfg.ServerIP, cfg.ServerPort)
 	if err != nil {
 		log.Error("Failed to open TCP server: %s", err)
@@ -58,5 +58,5 @@ func main() {
 			log.Warn("Remove the -nogui argument to load the web panel")
 		}
 	}
-	start(server.ServerConfig(cfg))
+	start(&cfg)
 }
