@@ -25,17 +25,6 @@ func HasArg(arg string) bool {
 	return false
 }
 
-func GetArg(name string, def string) string {
-	for _, arg := range os.Args {
-		if strings.HasPrefix(arg, name+"=") {
-			if s := strings.TrimPrefix(arg, name+"="); s != "" {
-				return s
-			}
-		}
-	}
-	return def
-}
-
 type Placeholders struct {
 	PlayerName   string
 	Message      string

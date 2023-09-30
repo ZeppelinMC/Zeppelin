@@ -8,3 +8,5 @@ ops.json
 config.toml
 whitelist.json
 .DS_Store
+/world
+/plugins

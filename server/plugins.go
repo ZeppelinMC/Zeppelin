@@ -8,12 +8,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/dynamitemc/dynamite/util"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 )
-
-var pluginsDir = util.GetArg("pluginspath", "plugins")
 
 var handshakeConfig = plugin.HandshakeConfig{
 	MagicCookieKey:   "Plugin",
@@ -35,20 +32,20 @@ func (p *Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error)
 }
 
 func (srv *Server) LoadPlugins() error {
-	err := os.Mkdir(pluginsDir, 0755)
+	err := os.Mkdir("plugins", 0755)
 	if err != nil {
 		if !errors.Is(err, fs.ErrExist) {
 			return err
 		}
 	}
-	dir, err := os.ReadDir(pluginsDir)
+	dir, err := os.ReadDir("plugins")
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 	for _, file := range dir {
 		srv.Logger.Debug("Loading plugin %s", file.Name())
-		if plugin, err := srv.LoadPlugin(pluginsDir + "/" + file.Name()); err != nil {
+		if plugin, err := srv.LoadPlugin("plugins/" + file.Name()); err != nil {
 			return err
 		} else {
 			if plugin == nil {

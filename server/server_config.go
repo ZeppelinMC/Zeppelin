@@ -10,7 +10,6 @@ import (
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/world"
-	"github.com/dynamitemc/dynamite/util"
 )
 
 func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, commandGraph *commands.Graph) (*Server, error) {
@@ -33,7 +32,7 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 	if err != nil {
 		return nil, err
 	}
-	w, err := world.OpenWorld(util.GetArg("worldpath", "world"))
+	w, err := world.OpenWorld("world")
 	if err != nil {
 		logger.Error("Failed to load world: %s", err)
 		os.Exit(1)
