@@ -14,6 +14,8 @@ github.com/aimjel/minecraft v0.0.0-20230927222750-0a432da348ec h1:aFUC1sZUBSlOtI
 github.com/aimjel/minecraft v0.0.0-20230927222750-0a432da348ec/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
 github.com/aimjel/minecraft v0.0.0-20230928175911-f477127f6069 h1:mDe3BVKwhXXuIXb/pzaZvXugDBGmJ9uUHp1jfDtI21E=
 github.com/aimjel/minecraft v0.0.0-20230928175911-f477127f6069/go.mod h1:/Y9/YBqxNOU7IFInEjDbsCVkdPNYJCPxC26jK+w3Phc=
+github.com/aimjel/minecraft v0.0.0-20230929030531-28e1e1d05c05 h1:3BcZm/pG1yCum0v7/LhB3iNfceM/EhRqTPQJjD5nvEk=
+github.com/aimjel/minecraft v0.0.0-20230929030531-28e1e1d05c05/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.2.0/go.mod h1:9+9sk7u7pGNWYMkh0hdiL++6OeibzJccyQU4p4MedaY=
 github.com/chzyer/readline v1.5.0/go.mod h1:x22KAscuvRqlLoK9CsoYsmxoXZMMFVyOl86cAH8qUic=

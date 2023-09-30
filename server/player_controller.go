@@ -41,8 +41,6 @@ func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 		Data:    []byte("Dynamite 1.20.1"),
 	})
 
-	p.Teleport(100, 100, 100, 0, 0)
-	p.SetGameMode(1)
 	p.Spawn()
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{})
 }
@@ -93,7 +91,6 @@ func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 func (p *PlayerController) SendCommands(graph *commands.Graph) {
 	for i, command := range graph.Commands {
 		if !p.HasPermissions(command.RequiredPermissions) {
-			//graph.Commands = slices.Delete(graph.Commands, i-1, i)
 			graph.Commands[i] = nil
 		}
 	}
@@ -103,4 +100,10 @@ func (p *PlayerController) SendCommands(graph *commands.Graph) {
 func (p *PlayerController) Keepalive() {
 	id := rand.Int63() * 100
 	p.session.SendPacket(&packet.KeepAlive{PayloadID: id})
+}
+
+func (p *PlayerController) Disconnect(reason string) {
+	pk := &packet.DisconnectPlay{}
+	pk.Reason = reason
+	p.session.SendPacket(pk)
 }

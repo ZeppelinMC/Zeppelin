@@ -1,6 +1,8 @@
 module github.com/dynamitemc/dynamite
 
-go 1.20
+go 1.21.0
+
+toolchain go1.21.1
 
 require (
 	github.com/fatih/color v1.15.0
@@ -9,7 +11,7 @@ require (
 
 require (
 	github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf
-	github.com/aimjel/minecraft v0.0.0-20230928175911-f477127f6069
+	github.com/aimjel/minecraft v0.0.0-20230929030531-28e1e1d05c05
 	github.com/dop251/goja v0.0.0-20230919151941-fc55792775de
 )
 

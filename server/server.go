@@ -136,6 +136,26 @@ func (srv *Server) Translate(msg string, data map[string]string) string {
 	return msg
 }
 
+func (srv *Server) FindCommand(name string) (cmd *commands.Command) {
+	for _, c := range srv.CommandGraph.Commands {
+		if c == nil {
+			continue
+		}
+		if c.Name == name {
+			cmd = c
+			return
+		}
+
+		for _, a := range c.Aliases {
+			if a == name {
+				cmd = c
+				return
+			}
+		}
+	}
+	return
+}
+
 func (srv *Server) Reload() error {
 	// load player data
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
@@ -169,6 +189,9 @@ func (srv *Server) FindPlayer(username string) *PlayerController {
 
 func (srv *Server) Close() {
 	srv.Logger.Info("Closing server...")
+	for _, p := range srv.Players {
+		p.Disconnect(srv.Config.Messages.ServerClosed)
+	}
 	os.Exit(0)
 }
 
