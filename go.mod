@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/aimjel/minecraft v0.0.0-20230929030531-28e1e1d05c05
+	github.com/aimjel/minecraft v0.0.0-20231003160822-35963bf464f3
 	github.com/hashicorp/go-hclog v0.14.1
 )
 
@@ -33,5 +33,3 @@ require (
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 )
-
-replace github.com/aimjel/minecraft => ../minecraft
