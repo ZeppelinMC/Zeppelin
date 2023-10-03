@@ -41,7 +41,6 @@ type ClientInformation struct {
 func New(entityID int32, vd, sd int32) *Player {
 	return &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd}
 }
-
 func (p *Player) ClientSettings() ClientInformation {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

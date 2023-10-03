@@ -28,18 +28,16 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 		}
 
 		switch pk := p.(type) {
+		case *packet.PlayerCommandServer:
+			handlers.PlayerCommand(controller, pk.ActionID)
 		case *packet.ChatMessageServer:
 			handlers.ChatMessagePacket(controller, pk.Message)
 		case *packet.ChatCommandServer:
 			handlers.ChatCommandPacket(controller, controller.Server.CommandGraph, pk.Command)
 		case *packet.ClientSettings:
 			handlers.ClientSettings(s.state, pk)
-		}
-		switch p.ID() {
-		case 14, 15, 16, 17:
-			{
-				handlers.PlayerMovement(controller, s.state, p)
-			}
+		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation, *packet.PlayerMovement:
+			handlers.PlayerMovement(controller, s.state, p)
 		}
 	}
 }

@@ -15,22 +15,21 @@ func PlayerMovement(
 	switch pk := p.(type) {
 	case *packet.PlayerPosition:
 		{
-			controller.BroadcastMovement(pk.X, pk.FeetY, pk.Z, yaw, pitch, pk.OnGround)
+			controller.BroadcastMovement(pk.ID(), pk.X, pk.FeetY, pk.Z, yaw, pitch, pk.OnGround)
 			controller.HandleCenterChunk(x, z, pk.X, pk.Z)
 		}
 	case *packet.PlayerPositionRotation:
 		{
-			controller.BroadcastMovement(pk.X, pk.FeetY, pk.Z, pk.Yaw, pk.Pitch, pk.OnGround)
+			controller.BroadcastMovement(pk.ID(), pk.X, pk.FeetY, pk.Z, pk.Yaw, pk.Pitch, pk.OnGround)
 			controller.HandleCenterChunk(x, z, pk.X, pk.Z)
-
 		}
 	case *packet.PlayerRotation:
 		{
-			controller.BroadcastMovement(x, y, z, pk.Yaw, pk.Pitch, pk.OnGround)
+			controller.BroadcastMovement(pk.ID(), x, y, z, pk.Yaw, pk.Pitch, pk.OnGround)
 		}
 	case *packet.PlayerMovement:
 		{
-			controller.BroadcastMovement(x, y, z, yaw, pitch, pk.OnGround)
+			controller.BroadcastMovement(pk.ID(), x, y, z, yaw, pitch, pk.OnGround)
 		}
 	}
 }

@@ -2,6 +2,12 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/aimjel/minecraft v0.0.0-20231003160822-35963bf464f3 h1:XnVUCvyPL2DmAKEr9ksB2ppM03dYnxwQfQCTzUhqxCw=
 github.com/aimjel/minecraft v0.0.0-20231003160822-35963bf464f3/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231003174429-d7f5823e087a h1:vvhaXrweZ5jnM1Msvq5eZRehTK8H9LVLYG/nFqH7zTc=
+github.com/aimjel/minecraft v0.0.0-20231003174429-d7f5823e087a/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231003191934-04f6688a5c84 h1:XDDRimHU6OvRtek5C0sV7TEmh3h2nRQZTwdXVnJhWG4=
+github.com/aimjel/minecraft v0.0.0-20231003191934-04f6688a5c84/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231003193236-64a3453bdb37 h1:nlv+Goy1YViFLs9HEOEd0hgivMyM5zpqwrs637RbRC8=
+github.com/aimjel/minecraft v0.0.0-20231003193236-64a3453bdb37/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZlaQsNA=
 github.com/bufbuild/protocompile v0.4.0/go.mod h1:3v93+mbWn/v3xzN+31nwkJfrEpAUwp+BagBSZWx+TP8=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

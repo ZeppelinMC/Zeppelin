@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -57,6 +56,8 @@ func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 		Channel: "minecraft:brand",
 		Data:    []byte("Dynamite 1.20.1"),
 	})
+
+	p.Teleport(9, 86, 8, 0, 0)
 
 	p.session.SendPacket(&packet.SetCenterChunk{})
 	p.SendSpawnChunks()
@@ -194,7 +195,6 @@ func (p *PlayerController) IsSpawned(entityId int32) bool {
 }
 
 func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
-	fmt.Println("spawning", p.player.EntityId())
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	entityId := pl.player.EntityId()
