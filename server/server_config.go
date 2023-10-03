@@ -33,6 +33,7 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 		return nil, err
 	}
 	w, err := world.OpenWorld("world")
+	world.CreateWorld(cfg.Hardcore)
 	if err != nil {
 		logger.Error("Failed to load world: %s", err)
 		os.Exit(1)

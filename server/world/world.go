@@ -9,16 +9,6 @@ import (
 	"github.com/aimjel/minecraft/nbt"
 )
 
-type worldData struct {
-	Data struct {
-		WorldGenSettings struct {
-			Seed int64 `nbt:"seed"`
-		}
-		DataVersion int32
-		GameRules   map[string]interface{}
-	}
-}
-
 type World struct {
 	nbt worldData
 
@@ -44,6 +34,7 @@ func OpenWorld(name string) (*World, error) {
 	}
 
 	var wrld World
+
 	if err := nbt.Unmarshal(buf.Bytes(), &wrld.nbt); err != nil {
 		return nil, err
 	}
