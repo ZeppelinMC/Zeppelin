@@ -79,6 +79,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	plyr := player.New(srv.entityCounter, int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance))
 	sesh := New(conn, plyr)
+	sesh.conn.Info.UUID = NameToUUID(sesh.conn.Info.Name)
 	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
 	cntrl.UUID = uuid.String()

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -62,9 +63,7 @@ func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 
 	p.SetGameMode(1)
 
-	//p.Teleport(0, 83, 0, 0.0, 0.0)
-
-	p.Spawn()
+	p.Teleport(8, 86, 7, 0.0, 0.0)
 
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{})
 }
@@ -197,6 +196,7 @@ func (p *PlayerController) IsSpawned(entityId int32) bool {
 }
 
 func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
+	fmt.Println("spawning", p.player.EntityId())
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	entityId := pl.player.EntityId()
