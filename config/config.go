@@ -48,20 +48,21 @@ type Whitelist struct {
 }
 
 type ServerConfig struct {
-	ServerIP           string    `toml:"server_ip"`
-	ServerPort         int       `toml:"server_port"`
-	ViewDistance       int       `toml:"view_distance"`
-	SimulationDistance int       `toml:"simulation_distance"`
-	MOTD               string    `toml:"motd"`
-	Whitelist          Whitelist `toml:"whitelist"`
-	Web                Web       `toml:"web"`
-	Gamemode           string    `toml:"gamemode"`
-	Hardcore           bool      `toml:"hardcore"`
-	MaxPlayers         int       `toml:"max_players"`
-	Online             bool      `toml:"online_mode"`
-	Tablist            Tablist   `toml:"tablist"`
-	Chat               Chat      `toml:"chat"`
-	Messages           Messages  `toml:"messages"`
+	ServerIP             string    `toml:"server_ip"`
+	ServerPort           int       `toml:"server_port"`
+	ViewDistance         int       `toml:"view_distance"`
+	SimulationDistance   int       `toml:"simulation_distance"`
+	MOTD                 string    `toml:"motd"`
+	Whitelist            Whitelist `toml:"whitelist"`
+	Web                  Web       `toml:"web"`
+	Gamemode             string    `toml:"gamemode"`
+	Hardcore             bool      `toml:"hardcore"`
+	MaxPlayers           int       `toml:"max_players"`
+	Online               bool      `toml:"online_mode"`
+	CompressionThreshold int       `toml:"compression_threshold"`
+	Tablist              Tablist   `toml:"tablist"`
+	Chat                 Chat      `toml:"chat"`
+	Messages             Messages  `toml:"messages"`
 }
 
 func LoadConfig(path string, data *ServerConfig) {
@@ -88,12 +89,13 @@ func CreateConfig(path string, config ServerConfig) error {
 
 func defaultConfig() ServerConfig {
 	return ServerConfig{
-		ServerIP:           "0.0.0.0",
-		ServerPort:         25565,
-		ViewDistance:       10,
-		SimulationDistance: 10,
-		MOTD:               "A DynamiteMC Minecraft server!",
-		Online:             true,
+		ServerIP:             "0.0.0.0",
+		ServerPort:           25565,
+		ViewDistance:         10,
+		SimulationDistance:   10,
+		MOTD:                 "A DynamiteMC Minecraft server!",
+		Online:               true,
+		CompressionThreshold: 256,
 		Whitelist: Whitelist{
 			Enforce: false,
 			Enable:  false,

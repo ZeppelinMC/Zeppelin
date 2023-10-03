@@ -1,4 +1,5 @@
 package handlers
 
-func ChatMessagePacket(content string) {
+func ChatMessagePacket(controller controller, content string) {
+	controller.Chat(content)
 }

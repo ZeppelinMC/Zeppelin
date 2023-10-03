@@ -15,57 +15,91 @@ func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 	}
 }
 
-func (srv *Server) GlobalMessage(message string) {
-	srv.GlobalBroadcast(&packet.SystemChatMessage{
-		Content: message,
-	})
+func (srv *Server) GlobalMessage(message string, sender *PlayerController) {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, p := range srv.Players {
+		if p.ClientSettings().ChatMode == 2 {
+			continue
+		} else if p.ClientSettings().ChatMode == 1 && sender != nil {
+			continue
+		}
+		p.session.SendPacket(&packet.SystemChatMessage{
+			Content: message,
+		})
+	}
 	fmt.Println(commands.ParseChat(message))
 }
 
-func (p *PlayerController) BroadcastMovement(oldx, oldy, oldz float64) {
-	x1, y1, z1 := p.Position()
-	ong := p.OnGround()
+func (p *PlayerController) BroadcastMovement(x1, y1, z1 float64, yaw, pitch float32, ong bool) {
+	oldx, oldy, oldz := p.player.Position()
+	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.Players {
 		if pl.UUID == p.UUID {
 			continue
 		}
-		x2, y2, z2 := pl.Position()
+		x2, y2, z2 := pl.player.Position()
 		distance := math.Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1))
-		if pl.ClientSettings().ViewDistance*16 > int8(distance) {
+		if float64(pl.ClientSettings().ViewDistance)*16 < distance {
+			if pl.IsSpawned(p.player.EntityId()) {
+				fmt.Println(p.Name(), "is too far! dispawning for", pl.Name())
+				pl.DespawnPlayer(p)
+			}
 			continue
 		}
-		pl.session.SendPacket(&packet.EntityPosition{
-			EntityID: p.player.EntityID,
-			X:        (int16(x1)*32 - int16(oldx)*32) * 128,
-			Y:        (int16(y1)*32 - int16(oldy)*32) * 128,
-			Z:        (int16(z1)*32 - int16(oldz)*32) * 128,
-			OnGround: ong,
-		})
+
+		if pl.IsSpawned(p.player.EntityId()) {
+			pl.session.SendPacket(&packet.EntityPositionRotation{
+				EntityID: p.player.EntityId(),
+				X:        ((int16(x1) * 32) - int16(oldx)*32) * 128,
+				Y:        ((int16(y1) * 32) - int16(oldy)*32) * 128,
+				Z:        ((int16(z1) * 32) - int16(oldz)*32) * 128,
+				Yaw:      byte(yaw),
+				Pitch:    byte(pitch),
+				OnGround: ong,
+			})
+		} else {
+			pl.SpawnPlayer(p)
+		}
 	}
 }
 
 func (p *PlayerController) Spawn() {
-	x, y, z := p.Position()
-	yaw, pitch := p.Rotation()
+	x1, y1, z1 := p.player.Position()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.Players {
+		x2, y2, z2 := pl.player.Position()
 		if pl.UUID == p.UUID {
 			continue
 		}
-		fmt.Println(p.player.EntityID, pl.player.EntityID)
-		pl.session.SendPacket(&packet.SpawnPlayer{
-			EntityID:   p.player.EntityID,
-			PlayerUUID: p.session.Info().UUID,
-			X:          x,
-			Y:          y,
-			Z:          z,
-			Yaw:        byte(yaw),
-			Pitch:      byte(pitch),
-		})
+
+		distance := math.Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1))
+		if float64(pl.ClientSettings().ViewDistance)*16 >= distance {
+			// notify existing players that a new player has joined
+			pl.SpawnPlayer(p)
+			fmt.Println("Player", p.Name(), "joined,", pl.Name(), "can see")
+			fmt.Println(pl.spawnedEntities)
+		} else {
+			fmt.Println("Player", p.Name(), "joined,", pl.Name(), "cannot see")
+		}
+		if float64(p.ClientSettings().ViewDistance)*16 >= distance {
+			// notify the new player of the existing players
+			p.SpawnPlayer(pl)
+			fmt.Println("Player", p.Name(), "joined, can see", pl.Name())
+			fmt.Println(p.spawnedEntities)
+		} else {
+			fmt.Println("Player", p.Name(), "joined, cannot see", pl.Name())
+		}
 	}
 }
 
 func (srv *Server) PlayerlistUpdate() {
 	var players []player.Info
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
 		p.session.Info().Listed = true
 		players = append(players, *p.session.Info())
@@ -77,5 +111,7 @@ func (srv *Server) PlayerlistUpdate() {
 }
 
 func (srv *Server) PlayerlistRemove(players ...[16]byte) {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
 	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDS: players})
 }

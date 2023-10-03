@@ -9,12 +9,12 @@ import (
 )
 
 type Logger struct {
-	FilePath    string
-	ConsoleText []string
+	FilePath string
+	//ConsoleText []string
 }
 
 func (logger *Logger) append(str string) {
-	logger.ConsoleText = append(logger.ConsoleText, str)
+	//logger.ConsoleText = append(logger.ConsoleText, str)
 	//web.Log(str)
 }
 

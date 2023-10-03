@@ -19,7 +19,7 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 			Protocol: 763,
 		}, cfg.MaxPlayers, cfg.MOTD),
 		OnlineMode:           cfg.Online,
-		CompressionThreshold: 256,
+		CompressionThreshold: int32(cfg.CompressionThreshold),
 		Messages: &minecraft.Messages{
 			OnlineMode:     cfg.Messages.OnlineMode,
 			ProtocolTooNew: cfg.Messages.ProtocolNew,

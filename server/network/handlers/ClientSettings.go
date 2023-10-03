@@ -6,5 +6,5 @@ import (
 )
 
 func ClientSettings(state *player.Player, pk *packet.ClientSettings) {
-	state.ClientSettings = player.ClientInformation(*pk)
+	state.SetClientSettings(player.ClientInformation(*pk))
 }

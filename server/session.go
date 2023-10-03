@@ -29,14 +29,14 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 
 		switch pk := p.(type) {
 		case *packet.ChatMessageServer:
-			handlers.ChatMessagePacket(pk.Message)
+			handlers.ChatMessagePacket(controller, pk.Message)
 		case *packet.ChatCommandServer:
 			handlers.ChatCommandPacket(controller, controller.Server.CommandGraph, pk.Command)
 		case *packet.ClientSettings:
 			handlers.ClientSettings(s.state, pk)
 		}
 		switch p.ID() {
-		case 0x14, 0x15, 0x16, 0x17:
+		case 14, 15, 16, 17:
 			{
 				handlers.PlayerMovement(controller, s.state, p)
 			}
@@ -45,7 +45,6 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 }
 
 func (s *Session) SendPacket(p packet.Packet) error {
-
 	return s.conn.SendPacket(p)
 }
 

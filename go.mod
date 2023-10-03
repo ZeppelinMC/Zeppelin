@@ -10,14 +10,12 @@ require (
 )
 
 require (
-	github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf
 	github.com/aimjel/minecraft v0.0.0-20230929030531-28e1e1d05c05
-	github.com/dop251/goja v0.0.0-20230919151941-fc55792775de
+	github.com/hashicorp/go-hclog v0.14.1
 )
 
 require (
 	github.com/golang/protobuf v1.5.0 // indirect
-	github.com/hashicorp/go-hclog v0.14.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 // indirect
 	github.com/oklog/run v1.0.0 // indirect
@@ -28,9 +26,6 @@ require (
 )
 
 require (
-	github.com/dlclark/regexp2 v1.7.0 // indirect
-	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
-	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-plugin v1.5.2
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -38,3 +33,5 @@ require (
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 )
+
+replace github.com/aimjel/minecraft => ../minecraft

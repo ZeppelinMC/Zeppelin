@@ -3,10 +3,10 @@ package world
 import (
 	"bytes"
 	"compress/gzip"
-	"os"
-	"sync/atomic"
-
+	"fmt"
 	"github.com/aimjel/minecraft/nbt"
+	"github.com/dynamitemc/dynamite/server/world/anvil"
+	"os"
 )
 
 type worldData struct {
@@ -22,8 +22,6 @@ type worldData struct {
 type World struct {
 	nbt worldData
 
-	entityIdCounter atomic.Value
-
 	dimensions []*Dimension
 }
 
@@ -32,25 +30,16 @@ func OpenWorld(name string) (*World, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	gzipRd, err := gzip.NewReader(f)
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	if _, err := buf.ReadFrom(gzipRd); err != nil {
-		return nil, err
-	}
+	defer f.Close()
 
 	var wrld World
-	if err := nbt.Unmarshal(buf.Bytes(), &wrld.nbt); err != nil {
-		return nil, err
+	if err = loadWorldData(f, &wrld.nbt); err != nil {
+		return nil, fmt.Errorf("%v loading world level data", err)
 	}
 
-	//todo temp
-	wrld.dimensions = make([]*Dimension, 0, 1)
-	wrld.dimensions = append(wrld.dimensions, NewDimension("minecraft:overworld"))
+	rd := anvil.NewReader(name + "/region/")
+	ow := NewDimension("minecraft:overworld", rd)
+	wrld.dimensions = append(wrld.dimensions, ow)
 
 	return &wrld, nil
 }
@@ -61,4 +50,18 @@ func (w *World) Seed() int64 {
 
 func (w *World) DefaultDimension() *Dimension {
 	return w.dimensions[0]
+}
+
+func loadWorldData(f *os.File, wNbt *worldData) error {
+	gzipRd, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(gzipRd); err != nil {
+		return err
+	}
+
+	return nbt.Unmarshal(buf.Bytes(), wNbt)
 }

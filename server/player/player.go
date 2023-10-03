@@ -1,5 +1,11 @@
 package player
 
+import (
+	"fmt"
+	"math"
+	"sync"
+)
+
 type Player struct {
 	isHardCore       bool
 	gameMode         byte
@@ -8,15 +14,17 @@ type Player struct {
 	viewDistance       int32
 	simulationDistance int32
 
-	EntityID int32
+	entityID int32
 
-	Operator bool
+	operator bool
 
-	ClientSettings ClientInformation
+	clientSettings ClientInformation
 
-	X, Y, Z    float64
-	Yaw, Pitch float32
-	OnGround   bool
+	x, y, z    float64
+	yaw, pitch float32
+	onGround   bool
+
+	mu sync.RWMutex
 }
 
 type ClientInformation struct {
@@ -30,26 +38,103 @@ type ClientInformation struct {
 	AllowServerListings  bool
 }
 
-func New(entityID int32) *Player {
-	return &Player{EntityID: entityID}
+func New(entityID int32, vd, sd int32) *Player {
+	return &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd}
 }
 
-func (p *Player) IsHardcore() bool {
-	return p.isHardCore
+func (p *Player) ClientSettings() ClientInformation {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.clientSettings
 }
 
-func (p *Player) GameMode() byte {
-	return p.gameMode
+func (p *Player) SetClientSettings(information ClientInformation) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.clientSettings = information
 }
-
-func (p *Player) PreviousGameMode() int8 {
-	return p.previousGameMode
-}
-
 func (p *Player) ViewDistance() int32 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	return p.viewDistance
 }
 
 func (p *Player) SimulationDistance() int32 {
-	return p.viewDistance
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.simulationDistance
+}
+
+func (p *Player) IsHardcore() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.isHardCore
+}
+
+func (p *Player) SetGameMode(gm byte) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.previousGameMode = int8(p.gameMode)
+	p.gameMode = gm
+}
+
+func (p *Player) GameMode() byte {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.gameMode
+}
+
+func (p *Player) PreviousGameMode() int8 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.previousGameMode
+}
+
+func (p *Player) Position() (x, y, z float64) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.x, p.y, p.z
+}
+
+func (p *Player) Rotation() (yaw, pitch float32) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.yaw, p.pitch
+}
+
+func (p *Player) OnGround() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.onGround
+}
+
+func (p *Player) SetPosition(x, y, z float64, yaw, pitch float32, ong bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.x, p.y, p.z, p.yaw, p.pitch, p.onGround = x, y, z, yaw, pitch, ong
+}
+
+func (p *Player) GetPosition2() uint64 {
+	x := int64(math.Float64bits(p.x))
+	y := int64(math.Float64bits(p.y))
+	z := int64(math.Float64bits(p.z))
+	fmt.Println(x, y, z)
+	return uint64((x << 38) | (z << 12) | (y))
+}
+
+func (p *Player) Operator() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.operator
+}
+
+func (p *Player) SetOperator(op bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.operator = op
+}
+
+func (p *Player) EntityId() int32 {
+	//no need to protect this with mutex because it never changes
+	return p.entityID
 }

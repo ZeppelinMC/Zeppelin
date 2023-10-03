@@ -77,7 +77,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 	srv.entityCounter++
 
-	plyr := player.New(srv.entityCounter)
+	plyr := player.New(srv.entityCounter, int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance))
 	sesh := New(conn, plyr)
 	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
@@ -85,11 +85,10 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	for _, op := range srv.Operators {
 		if op.UUID == cntrl.UUID {
-			plyr.Operator = true
+			plyr.SetOperator(true)
 		}
 	}
-
-	//cntrl.SendCommands(srv.CommandGraph)
+	cntrl.SendCommands(*srv.CommandGraph)
 
 	srv.addPlayer(cntrl)
 	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {
@@ -104,11 +103,16 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 			cntrl.Keepalive()
 		}
 	}()
+
 	if err := sesh.HandlePackets(cntrl); err != nil {
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, cntrl.UUID)
-		srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerLeave, map[string]string{"player": conn.Info.Name}))
+		srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerLeave, map[string]string{"player": conn.Info.Name}), nil)
 		srv.PlayerlistRemove(conn.Info.UUID)
+
+		//todo consider moving logic of removing player to a separate function
+		srv.mu.Lock()
 		delete(srv.Players, cntrl.UUID)
+		srv.mu.Unlock()
 		//gui.RemovePlayer(cntrl.UUID)
 	}
 }
@@ -122,7 +126,7 @@ func (srv *Server) addPlayer(p *PlayerController) {
 	//gui.AddPlayer(p.session.Info().Name, p.UUID)
 
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.Info().Name, p.UUID)
-	srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerJoin, map[string]string{"player": p.Name()}))
+	srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerJoin, map[string]string{"player": p.Name()}), nil)
 }
 
 func (srv *Server) GetCommandGraph() *commands.Graph {
@@ -173,7 +177,7 @@ func (srv *Server) Reload() error {
 	config.LoadConfig("config.toml", srv.Config)
 
 	for _, p := range srv.Players {
-		p.SendCommands(srv.CommandGraph)
+		p.SendCommands(*srv.CommandGraph)
 	}
 	return nil
 }

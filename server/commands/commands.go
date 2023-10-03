@@ -152,7 +152,7 @@ func (graph Graph) Data() *pk.DeclareCommands {
 		rootChildren = append(rootChildren, int32(len(packet.Nodes)))
 		packet.Nodes = append(packet.Nodes, pk.Node{
 			Name:  command.Name,
-			Flags: 1,
+			Flags: 1 | 0x04,
 		})
 		for _, argument := range command.Arguments {
 			parent := len(packet.Nodes) - 1

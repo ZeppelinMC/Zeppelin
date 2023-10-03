@@ -8,27 +8,29 @@ import (
 func PlayerMovement(
 	controller controller,
 	state *player.Player,
-	pk packet.Packet,
+	p packet.Packet,
 ) {
-	switch pk := pk.(type) {
+	x, y, z := state.Position()
+	yaw, pitch := state.Rotation()
+	switch pk := p.(type) {
 	case *packet.PlayerPosition:
 		{
-			state.OnGround = pk.OnGround
-			controller.BroadcastMovement(state.X, state.Y, state.Z)
-			state.X, state.Y, state.Z = pk.X, pk.FeetY, pk.Z
+			controller.BroadcastMovement(pk.X, pk.FeetY, pk.Z, yaw, pitch, pk.OnGround)
+			controller.HandleCenterChunk(x, z, pk.X, pk.Z)
 		}
 	case *packet.PlayerPositionRotation:
 		{
-			state.X, state.Y, state.Z, state.Yaw, state.Pitch, state.OnGround = pk.X, pk.FeetY, pk.Z, pk.Yaw, pk.Pitch, pk.OnGround
+			controller.BroadcastMovement(pk.X, pk.FeetY, pk.Z, pk.Yaw, pk.Pitch, pk.OnGround)
+			controller.HandleCenterChunk(x, z, pk.X, pk.Z)
+
 		}
 	case *packet.PlayerRotation:
 		{
-			state.Yaw, state.Pitch, state.OnGround = pk.Yaw, pk.Pitch, pk.OnGround
+			controller.BroadcastMovement(x, y, z, pk.Yaw, pk.Pitch, pk.OnGround)
 		}
 	case *packet.PlayerMovement:
 		{
-			state.OnGround = pk.OnGround
+			controller.BroadcastMovement(x, y, z, yaw, pitch, pk.OnGround)
 		}
 	}
-
 }

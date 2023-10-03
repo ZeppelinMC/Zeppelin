@@ -61,11 +61,12 @@ func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
 			return nil, err
 		}
 
-		if _, err := buf.ReadFrom(rd); err != nil {
+		if _, err = buf.ReadFrom(rd); err != nil {
 			return nil, err
 		}
 	}
 
+	os.WriteFile("chunk.nbt", buf.Bytes(), 0666)
 	return chunk.NewAnvilChunk(buf.Bytes())
 }
 
