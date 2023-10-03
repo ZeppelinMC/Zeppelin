@@ -88,7 +88,7 @@ func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 	})
 }
 
-func (p *PlayerController) SendCommands(graph *commands.Graph) {
+func (p *PlayerController) SendCommands(graph commands.Graph) {
 	for i, command := range graph.Commands {
 		if !p.HasPermissions(command.RequiredPermissions) {
 			graph.Commands[i] = nil

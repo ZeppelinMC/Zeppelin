@@ -89,7 +89,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		}
 	}
 
-	//cntrl.SendCommands(srv.CommandGraph)
+	cntrl.SendCommands(*srv.CommandGraph)
 
 	srv.addPlayer(cntrl)
 	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {
@@ -173,7 +173,7 @@ func (srv *Server) Reload() error {
 	config.LoadConfig("config.toml", srv.Config)
 
 	for _, p := range srv.Players {
-		p.SendCommands(srv.CommandGraph)
+		p.SendCommands(*srv.CommandGraph)
 	}
 	return nil
 }
