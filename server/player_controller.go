@@ -63,8 +63,6 @@ func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 
 	p.SetGameMode(1)
 
-	p.Teleport(8, 86, 7, 0.0, 0.0)
-
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{})
 }
 

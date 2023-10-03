@@ -68,37 +68,6 @@ func (p *PlayerController) BroadcastMovement(x1, y1, z1 float64, yaw, pitch floa
 	}
 }
 
-func (p *PlayerController) Spawn() {
-	x1, y1, z1 := p.player.Position()
-	p.Server.mu.RLock()
-	defer p.Server.mu.RUnlock()
-	vd := p.ClientSettings().ViewDistance
-	for _, pl := range p.Server.Players {
-		x2, y2, z2 := pl.player.Position()
-		if pl.UUID == p.UUID {
-			continue
-		}
-
-		distance := math.Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1))
-		if float64(vd)*16 >= distance {
-			// notify the new player of the existing players
-			p.SpawnPlayer(pl)
-			//fmt.Println("Player", p.Name(), p.player.EntityId(), "joined, can see", pl.Name())
-			//fmt.Println(p.spawnedEntities)
-		} else {
-			//fmt.Println("Player", p.Name(), p.player.EntityId(), "joined, cannot see", pl.Name())
-		}
-		if float64(pl.ClientSettings().ViewDistance)*16 >= distance {
-			// notify existing players that a new player has joined
-			pl.SpawnPlayer(p)
-			//fmt.Println("Player", p.Name(), p.player.EntityId(), "joined,", pl.Name(), "can see")
-			//fmt.Println(pl.spawnedEntities)
-		} else {
-			//fmt.Println("Player", p.Name(), p.player.EntityId(), "joined,", pl.Name(), "cannot see")
-		}
-	}
-}
-
 func (srv *Server) PlayerlistUpdate() {
 	var players []player.Info
 	srv.mu.RLock()
