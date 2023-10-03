@@ -4,20 +4,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"os"
+
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/dynamitemc/dynamite/server/world/anvil"
-	"os"
 )
-
-type worldData struct {
-	Data struct {
-		WorldGenSettings struct {
-			Seed int64 `nbt:"seed"`
-		}
-		DataVersion int32
-		GameRules   map[string]interface{}
-	}
-}
 
 type World struct {
 	nbt worldData
