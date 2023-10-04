@@ -13,10 +13,6 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
-var plugins = map[string]*Plugin{
-	//
-}
-
 func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, commandGraph *commands.Graph) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
 		Status: minecraft.NewStatus(minecraft.Version{
@@ -52,7 +48,7 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
 		CommandGraph: commandGraph,
-		Plugins:      plugins,
+		Plugins:      make(map[string]*Plugin),
 	}
 
 	logger.Info("Loading player info")
