@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -56,12 +57,15 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 		Data:    []byte("Dynamite"),
 	})
 
-	p.SetGameMode(p.player.GameMode())
-	p.SendSpawnChunks()
-
 	x1, y1, z1 := p.player.SavedPosition()
 	yaw, pitch := p.player.SavedRotation()
 	p.Teleport(x1, y1, z1, yaw, pitch)
+
+	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
+	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
+
+	p.SetGameMode(p.player.GameMode())
+	p.SendSpawnChunks()
 
 	x, y, z, a := p.Server.world.Spawn()
 
@@ -224,21 +228,26 @@ func (p *PlayerController) SendChunks() {
 
 func (p *PlayerController) SendSpawnChunks() {
 	ow := p.Server.world.Overworld()
-	max := int32(p.Server.Config.ViewDistance)
+	max := float64(p.Server.Config.ViewDistance)
 	if p.loadedChunks == nil {
 		p.loadedChunks = make(map[[2]int32]struct{})
 	}
 
-	for x := -max; x <= max; x++ {
-		for z := -max; z <= max; z++ {
-			if _, ok := p.loadedChunks[[2]int32{x, z}]; ok {
+	x1, _, z1 := p.player.Position()
+
+	chunkX := math.Abs(math.Floor(x1/16)) + max
+	chunkZ := math.Abs(math.Floor(z1/16)) + max
+
+	for x := -chunkX; x <= chunkX; x++ {
+		for z := -chunkZ; z <= chunkZ; z++ {
+			if _, ok := p.loadedChunks[[2]int32{int32(x), int32(z)}]; ok {
 				continue
 			}
-			c, err := ow.Chunk(x, z)
+			c, err := ow.Chunk(int32(x), int32(z))
 			if err != nil {
 				continue
 			}
-			p.loadedChunks[[2]int32{x, z}] = struct{}{}
+			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
 			p.session.SendPacket(c.Data())
 		}
 	}
@@ -268,11 +277,12 @@ func (p *PlayerController) HandleCenterChunk(x1, z1, x2, z2 float64) {
 	newChunkZ := int(math.Floor(z2 / 16))
 
 	if newChunkX != oldChunkX || newChunkZ != oldChunkZ {
-		p.SendChunks()
+		//p.SendChunks()
 		p.session.SendPacket(&packet.SetCenterChunk{
 			ChunkX: int32(newChunkX),
 			ChunkZ: int32(newChunkZ),
 		})
+		fmt.Println(newChunkX, newChunkZ, "you are here!")
 	}
 }
 
