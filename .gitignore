@@ -11,4 +11,3 @@ whitelist.json
 /world
 /plugins
 *.bin
-*.nbt

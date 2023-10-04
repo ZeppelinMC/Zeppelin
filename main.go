@@ -25,7 +25,6 @@ func start(cfg *config.ServerConfig) {
 		log.Error("Failed to open TCP server: %s", err)
 		os.Exit(1)
 	}
-	srv.LoadPlugins()
 	log.Info("Done! (%ds)", time.Now().Unix()-startTime)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

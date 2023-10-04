@@ -13,6 +13,10 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
+var plugins = map[string]*Plugin{
+	//
+}
+
 func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, commandGraph *commands.Graph) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
 		Status: minecraft.NewStatus(minecraft.Version{
@@ -48,9 +52,10 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
 		CommandGraph: commandGraph,
-		//Plugins:      make(map[string]*plugins.Plugin),
+		Plugins:      plugins,
 	}
 
+	logger.Info("Loading player info")
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
 	var addresses = []*[]user{&srv.WhitelistedPlayers, &srv.BannedPlayers, &srv.Operators, &srv.BannedIPs}
 	for i, file := range files {
@@ -62,10 +67,14 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 		*addresses[i] = u
 	}
 
-	logger.Debug("Loaded player info")
-
+	logger.Info("Loading spawn chunks")
 	w.LoadSpawnChunks(int32(cfg.ViewDistance))
 
-	logger.Info("Loaded spawn chunks")
+	logger.Info("Loading plugins")
+
+	for _, p := range srv.Plugins {
+		p.OnLoad(srv)
+	}
+
 	return srv, nil
 }

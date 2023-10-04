@@ -28,7 +28,7 @@ type Server struct {
 	Logger       logger.Logger
 	CommandGraph *commands.Graph
 
-	//Plugins map[string]*plugins.Plugin
+	Plugins map[string]*Plugin
 
 	// Players mapped by UUID
 	Players map[string]*PlayerController
