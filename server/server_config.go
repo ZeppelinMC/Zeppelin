@@ -61,5 +61,9 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 	}
 
 	logger.Debug("Loaded player info")
+
+	w.LoadSpawnChunks(int32(cfg.ViewDistance))
+
+	logger.Info("Loaded spawn chunks")
 	return srv, nil
 }

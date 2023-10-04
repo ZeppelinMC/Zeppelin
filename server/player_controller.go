@@ -19,6 +19,7 @@ type PlayerController struct {
 	Server  *Server
 
 	spawnedEntities []int32
+	loadedChunks    [][2]int32
 
 	UUID string
 }
@@ -54,15 +55,18 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	}
 	p.session.SendPacket(&packet.PluginMessage{
 		Channel: "minecraft:brand",
-		Data:    []byte("Dynamite 1.20.1"),
+		Data:    []byte("Dynamite"),
 	})
 
-	p.session.SendPacket(&packet.SetCenterChunk{})
 	p.SetGameMode(p.player.GameMode())
-	p.SendSpawnChunks()
+	x1, y1, z1 := p.player.SavedPosition()
+	yaw, pitch := p.player.SavedRotation()
+	p.Teleport(x1, y1, z1, yaw, pitch)
 
+	x, y, z, a := p.Server.world.Spawn()
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{
-		//Location: ,
+		Location: ((uint64(x) & 0x3FFFFFF) << 38) | ((uint64(z) & 0x3FFFFFF) << 12) | (uint64(y) & 0xFFF),
+		Angle:    a,
 	})
 }
 
@@ -135,17 +139,38 @@ func (p *PlayerController) Disconnect(reason string) {
 	p.session.SendPacket(pk)
 }
 
-func (p *PlayerController) SendSpawnChunks() {
-	for x := int32(-10); x < 10; x++ {
-		for z := int32(-10); z < 10; z++ {
-			x, z = 0, 0
-			c, err := p.Server.world.Overworld().Chunk(x, z)
-			if err != nil {
-				panic(err)
-			}
+func distance2i(x, z int32) float64 {
+	return math.Sqrt(float64(x*x) + float64(z*z))
+}
 
+func (p *PlayerController) CalculateUnusedChunks() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for i, c := range p.loadedChunks {
+		in := i
+		x, _, z := p.Position()
+		px, pz := int32(x)/16, int32(z)/16
+		if distance2i(c[0]-px, c[1]-pz) > float64(p.ClientSettings().ViewDistance) {
+			p.session.SendPacket(&packet.UnloadChunk{
+				ChunkX: c[0],
+				ChunkZ: c[1],
+			})
+			p.loadedChunks = slices.Delete(p.loadedChunks, in, in)
+		}
+	}
+}
+
+func (p *PlayerController) SendSpawnChunks() {
+	ow := p.Server.world.Overworld()
+	max := int32(p.player.ClientSettings().ViewDistance)
+	for x := -max; x <= max; x++ {
+		for z := -max; z <= max; z++ {
+			c, err := ow.Chunk(x, z)
+			if err != nil {
+				continue
+			}
+			p.loadedChunks = append(p.loadedChunks, [2]int32{x, z})
 			p.session.SendPacket(c.Data())
-			return
 		}
 	}
 }

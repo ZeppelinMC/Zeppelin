@@ -1,9 +1,10 @@
 package world
 
 import (
+	"sync"
+
 	"github.com/dynamitemc/dynamite/server/world/anvil"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
-	"sync"
 )
 
 type Dimension struct {

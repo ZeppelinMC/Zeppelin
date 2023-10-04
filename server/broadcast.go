@@ -63,6 +63,7 @@ func angle(x0, y0, z0 float64) (yaw float64, pitch float64) {
 }
 
 func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool) {
+	p.CalculateUnusedChunks()
 	oldx, oldy, oldz := p.player.Position()
 	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
 	inArea, notInArea := p.PlayersInArea(x1, y1, z1)

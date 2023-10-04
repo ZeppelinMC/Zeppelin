@@ -40,8 +40,8 @@ func (w *World) Seed() int64 {
 	return w.nbt.Data.WorldGenSettings.Seed
 }
 
-func (w *World) Spawn() (x, y, z int32) {
-	return w.nbt.Data.SpawnX, w.nbt.Data.SpawnY, w.nbt.Data.SpawnZ
+func (w *World) Spawn() (x, y, z int32, angle float32) {
+	return w.nbt.Data.SpawnX, w.nbt.Data.SpawnY, w.nbt.Data.SpawnZ, w.nbt.Data.SpawnAngle
 }
 
 func (w *World) Overworld() *Dimension {
@@ -54,6 +54,15 @@ func (w *World) Nether() *Dimension {
 
 func (w *World) TheEnd() *Dimension {
 	return w.theEnd
+}
+
+func (w *World) LoadSpawnChunks(rd int32) {
+	ow := w.Overworld()
+	for x := -rd; x <= rd; x++ {
+		for z := -rd; z <= rd; z++ {
+			ow.Chunk(x, z)
+		}
+	}
 }
 
 func loadWorldData(f *os.File, wNbt *worldData) error {
