@@ -19,14 +19,12 @@ type PlayerController struct {
 	Server  *Server
 
 	spawnedEntities []int32
-	loadedChunks    [][2]int32
+	loadedChunks    map[[2]int32]struct{}
 
 	UUID string
 }
 
 func (p *PlayerController) Name() string {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
 	return p.session.conn.Info.Name
 }
 
@@ -100,6 +98,8 @@ func (p *PlayerController) SetGameMode(gm byte) {
 		Event: 3,
 		Value: float32(gm),
 	})
+	p.session.conn.Info.GameMode = int32(gm)
+	p.Server.PlayerlistUpdate()
 }
 
 func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
@@ -116,7 +116,11 @@ func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 
 // for now ig
 
-func (p *PlayerController) SendCommands(graph commands.Graph) {
+func (p *PlayerController) SendCommands(g *commands.Graph) {
+	graph := commands.Graph{
+		Commands: make([]*commands.Command, len(g.Commands)),
+	}
+	copy(graph.Commands, g.Commands)
 	for i, command := range graph.Commands {
 		if command == nil {
 			continue
@@ -146,8 +150,7 @@ func distance2i(x, z int32) float64 {
 func (p *PlayerController) CalculateUnusedChunks() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	for i, c := range p.loadedChunks {
-		in := i
+	for c := range p.loadedChunks {
 		x, _, z := p.Position()
 		px, pz := int32(x)/16, int32(z)/16
 		if distance2i(c[0]-px, c[1]-pz) > float64(p.ClientSettings().ViewDistance) {
@@ -155,7 +158,32 @@ func (p *PlayerController) CalculateUnusedChunks() {
 				ChunkX: c[0],
 				ChunkZ: c[1],
 			})
-			p.loadedChunks = slices.Delete(p.loadedChunks, in, in)
+			delete(p.loadedChunks, c)
+		}
+	}
+}
+
+func (p *PlayerController) SendChunks() {
+	ow := p.Server.world.Overworld()
+	max := int32(p.player.ClientSettings().ViewDistance)
+	px, _, pz := p.Position()
+	cx, cz := int32(px)/16, int32(pz)/16
+
+	if p.loadedChunks == nil {
+		p.loadedChunks = make(map[[2]int32]struct{})
+	}
+
+	for x := -(cx + max); x <= cx+max; x++ {
+		for z := -(cz + max); x <= cz+max; x++ {
+			if _, ok := p.loadedChunks[[2]int32{x, z}]; ok {
+				continue
+			}
+			c, err := ow.Chunk(x, z)
+			if err != nil {
+				continue
+			}
+			p.loadedChunks[[2]int32{x, z}] = struct{}{}
+			p.session.SendPacket(c.Data())
 		}
 	}
 }
@@ -163,13 +191,20 @@ func (p *PlayerController) CalculateUnusedChunks() {
 func (p *PlayerController) SendSpawnChunks() {
 	ow := p.Server.world.Overworld()
 	max := int32(p.player.ClientSettings().ViewDistance)
+	if p.loadedChunks == nil {
+		p.loadedChunks = make(map[[2]int32]struct{})
+	}
+
 	for x := -max; x <= max; x++ {
 		for z := -max; z <= max; z++ {
+			if _, ok := p.loadedChunks[[2]int32{x, z}]; ok {
+				continue
+			}
 			c, err := ow.Chunk(x, z)
 			if err != nil {
 				continue
 			}
-			p.loadedChunks = append(p.loadedChunks, [2]int32{x, z})
+			p.loadedChunks[[2]int32{x, z}] = struct{}{}
 			p.session.SendPacket(c.Data())
 		}
 	}
@@ -199,6 +234,7 @@ func (p *PlayerController) HandleCenterChunk(x1, z1, x2, z2 float64) {
 	newChunkZ := int(math.Floor(z2 / 16))
 
 	if newChunkX != oldChunkX || newChunkZ != oldChunkZ {
+		p.SendChunks()
 		p.session.SendPacket(&packet.SetCenterChunk{
 			ChunkX: int32(newChunkX),
 			ChunkZ: int32(newChunkZ),

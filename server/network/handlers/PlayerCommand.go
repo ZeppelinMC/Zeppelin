@@ -10,5 +10,13 @@ func PlayerCommand(controller controller, action int32) {
 		{
 			controller.BroadcastPose(0)
 		}
+	case 3:
+		{
+			controller.BroadcastSprinting(true)
+		}
+	case 4:
+		{
+			controller.BroadcastSprinting(false)
+		}
 	}
 }

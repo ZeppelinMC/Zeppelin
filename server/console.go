@@ -28,7 +28,7 @@ func (srv *Server) ScanConsole() {
 	}
 
 	defer srv.ScanConsole()
-	command := srv.FindCommand(cmd)
+	command := srv.CommandGraph.FindCommand(cmd)
 	if command == nil {
 		fmt.Println(commands.ParseChat(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", cmd)))
 		return

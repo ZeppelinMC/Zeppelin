@@ -15,6 +15,7 @@ type controller interface {
 	HandleCenterChunk(x1, z1, x2, z2 float64)
 	BroadcastPose(pose int32)
 	SendSpawnChunks()
+	BroadcastSprinting(val bool)
 }
 
 func ChatCommandPacket(controller controller, graph *commands.Graph, content string) {

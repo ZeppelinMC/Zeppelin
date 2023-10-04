@@ -9,10 +9,8 @@ import (
 )
 
 type Player struct {
-	isHardCore       bool
-	gameMode         byte
-	previousGameMode int8
-	joined           bool
+	isHardCore bool
+	gameMode   byte
 
 	data *world.PlayerData
 
@@ -45,18 +43,6 @@ type ClientInformation struct {
 
 func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
 	return &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd, data: data}
-}
-
-func (p *Player) Joined() bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.joined
-}
-
-func (p *Player) SetJoined() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.joined = true
 }
 
 func (p *Player) ClientSettings() ClientInformation {
@@ -95,6 +81,7 @@ func (p *Player) Save() {
 		o = 1
 	}
 	p.data.Pos[0], p.data.Pos[1], p.data.Pos[2], p.data.Rotation[0], p.data.Rotation[1], p.data.OnGround = p.x, p.y, p.z, p.yaw, p.pitch, o
+	p.data.PlayerGameType = int32(p.gameMode)
 	p.data.Save()
 }
 
@@ -113,13 +100,13 @@ func (p *Player) IsHardcore() bool {
 func (p *Player) SetGameMode(gm byte) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.data.PlayerGameType = int32(gm)
+	p.gameMode = gm
 }
 
 func (p *Player) GameMode() byte {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return byte(p.data.PlayerGameType)
+	return p.gameMode
 }
 
 func (p *Player) Position() (x, y, z float64) {

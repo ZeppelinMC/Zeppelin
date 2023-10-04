@@ -100,7 +100,7 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 					HeadYaw:  uint8(yaw),
 				})
 			case 0x16: // rotation
-				yaw, pitch := angle(x1, y1, z1)
+				//yaw, pitch := angle(x1, y1, z1)
 				pl.session.SendPacket(&packet.EntityRotation{
 					EntityID: p.player.EntityId(),
 					Yaw:      byte(yaw),
@@ -123,6 +123,13 @@ func (p *PlayerController) BroadcastPose(pose int32) {
 	for _, pl := range inArea {
 		pl.session.SendPacket(&PacketSetPose{EntityID: p.player.EntityId(), Pose: pose})
 	}
+}
+
+func (p *PlayerController) BroadcastSprinting(val bool) {
+	//inArea, _ := p.PlayersInArea(p.Position())
+	//for _, pl := range inArea {
+	//	//pl.session.SendPacket(&PacketSetPose{EntityID: p.player.EntityId(), Pose: pose})
+	//}
 }
 
 func (srv *Server) PlayerlistUpdate() {

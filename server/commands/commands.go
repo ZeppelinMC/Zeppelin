@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/aimjel/minecraft/chat"
@@ -171,4 +172,44 @@ func (graph Graph) Data() *pk.DeclareCommands {
 
 func RegisterCommands(commands ...*Command) *pk.DeclareCommands {
 	return Graph{Commands: commands}.Data()
+}
+
+func (graph *Graph) FindCommand(name string) (cmd *Command) {
+	for _, c := range graph.Commands {
+		if c == nil {
+			continue
+		}
+		if c.Name == name {
+			cmd = c
+			return
+		}
+
+		for _, a := range c.Aliases {
+			if a == name {
+				cmd = c
+				return
+			}
+		}
+	}
+	return
+}
+
+func (graph *Graph) DeleteCommand(name string) (found bool) {
+	for i, c := range graph.Commands {
+		if c == nil {
+			continue
+		}
+		if c.Name == name {
+			graph.Commands = slices.Delete(graph.Commands, i, i+1)
+			return true
+		}
+
+		for _, a := range c.Aliases {
+			if a == name {
+				graph.Commands = slices.Delete(graph.Commands, i, i+1)
+				return true
+			}
+		}
+	}
+	return false
 }

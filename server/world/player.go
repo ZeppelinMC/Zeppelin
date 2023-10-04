@@ -121,6 +121,7 @@ func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
 	var d PlayerData
 	f, err := os.Open(fmt.Sprintf("world/playerdata/%s.dat", uuid))
 	if err != nil {
+		data = world.GeneratePlayerData(uuid)
 		return
 	}
 	gzipRd, err := gzip.NewReader(f)
@@ -169,6 +170,7 @@ func NBTToUUID(u []int32) (uuid.UUID, error) {
 
 	return uuid, nil
 }
+
 func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 	return &PlayerData{
 		Pos: []float64{

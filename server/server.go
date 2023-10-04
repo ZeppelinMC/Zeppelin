@@ -94,7 +94,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 			plyr.SetOperator(true)
 		}
 	}
-	cntrl.SendCommands(*srv.CommandGraph)
+	cntrl.SendCommands(srv.CommandGraph)
 
 	srv.addPlayer(cntrl)
 	if err := cntrl.Login(srv.world.Overworld()); err != nil {
@@ -146,26 +146,6 @@ func (srv *Server) Translate(msg string, data map[string]string) string {
 	return msg
 }
 
-func (srv *Server) FindCommand(name string) (cmd *commands.Command) {
-	for _, c := range srv.CommandGraph.Commands {
-		if c == nil {
-			continue
-		}
-		if c.Name == name {
-			cmd = c
-			return
-		}
-
-		for _, a := range c.Aliases {
-			if a == name {
-				cmd = c
-				return
-			}
-		}
-	}
-	return
-}
-
 func (srv *Server) Reload() error {
 	// load player data
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
@@ -183,14 +163,14 @@ func (srv *Server) Reload() error {
 	config.LoadConfig("config.toml", srv.Config)
 
 	for _, p := range srv.Players {
-		p.SendCommands(*srv.CommandGraph)
+		p.SendCommands(srv.CommandGraph)
 	}
 	return nil
 }
 
 func (srv *Server) FindPlayer(username string) *PlayerController {
 	for _, p := range srv.Players {
-		if p.Name() == username {
+		if strings.EqualFold(p.Name(), username) {
 			return p
 		}
 	}
@@ -200,6 +180,7 @@ func (srv *Server) FindPlayer(username string) *PlayerController {
 func (srv *Server) Close() {
 	srv.Logger.Info("Closing server...")
 	for _, p := range srv.Players {
+		p.player.Save()
 		p.Disconnect(srv.Config.Messages.ServerClosed)
 	}
 	os.Exit(0)
