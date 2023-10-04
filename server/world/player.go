@@ -193,5 +193,6 @@ func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 		FoodSaturationLevel: 5,
 		OnGround:            1,
 		UUID:                UUIDToNBT(uuid),
+		PlayerGameType:      int32(world.Gamemode),
 	}
 }

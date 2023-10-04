@@ -11,7 +11,8 @@ import (
 )
 
 type World struct {
-	nbt worldData
+	nbt      worldData
+	Gamemode byte
 
 	overworld *Dimension
 	nether    *Dimension

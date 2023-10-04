@@ -57,6 +57,8 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	})
 
 	p.SetGameMode(p.player.GameMode())
+	p.SendSpawnChunks()
+
 	x1, y1, z1 := p.player.SavedPosition()
 	yaw, pitch := p.player.SavedRotation()
 	p.Teleport(x1, y1, z1, yaw, pitch)
@@ -219,7 +221,7 @@ func (p *PlayerController) SendChunks() {
 
 func (p *PlayerController) SendSpawnChunks() {
 	ow := p.Server.world.Overworld()
-	max := int32(p.player.ClientSettings().ViewDistance)
+	max := int32(p.Server.Config.ViewDistance)
 	if p.loadedChunks == nil {
 		p.loadedChunks = make(map[[2]int32]struct{})
 	}

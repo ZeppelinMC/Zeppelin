@@ -47,6 +47,8 @@ type ClientInformation struct {
 
 func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
 	pl := &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd, data: data}
+	pl.gameMode = byte(data.PlayerGameType)
+	pl.x, pl.y, pl.z, pl.yaw, pl.pitch = data.Pos[0], data.Pos[1], data.Pos[2], data.Rotation[0], data.Rotation[1]
 	pl.health, pl.food, pl.foodSaturation = data.Health, data.FoodLevel, data.FoodSaturationLevel
 	return pl
 }

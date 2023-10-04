@@ -9,6 +9,7 @@ import (
 	"github.com/dynamitemc/dynamite/config"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -33,6 +34,7 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 		return nil, err
 	}
 	w, err := world.OpenWorld("world")
+	w.Gamemode = byte(player.Gamemode(cfg.Gamemode))
 	if err != nil {
 		world.CreateWorld(cfg.Hardcore)
 		logger.Error("Failed to load world: %s", err)

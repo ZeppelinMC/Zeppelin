@@ -148,7 +148,6 @@ func (srv *Server) Translate(msg string, data map[string]string) string {
 }
 
 func (srv *Server) Reload() error {
-	// load player data
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
 	var addresses = []*[]user{&srv.WhitelistedPlayers, &srv.BannedPlayers, &srv.Operators, &srv.BannedIPs}
 	for i, file := range files {
@@ -162,6 +161,8 @@ func (srv *Server) Reload() error {
 
 	config.LoadConfig("config.toml", srv.Config)
 
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
 		p.SendCommands(srv.CommandGraph)
 	}
