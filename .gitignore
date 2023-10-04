@@ -10,3 +10,5 @@ whitelist.json
 .DS_Store
 /world
 /plugins
+*.bin
+*.nbt
