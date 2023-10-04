@@ -49,22 +49,19 @@ func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerCo
 	return inArea, notInArea
 }
 
-func angle(x0, y0, z0 float64) (yaw float64, pitch float64) {
-	dx := x0 - x0
-	dy := y0 - y0
-	dz := z0 - z0
-	r := math.Sqrt(dx*dx + dy*dy + dz*dz)
-	yaw = -math.Atan2(dx, dz) / math.Pi * 180
-	if yaw < 0 {
-		yaw = 360 + yaw
-	}
-	pitch = -math.Asin(dy/r) / math.Pi * 180
-	return
+func degreesToAngle(degrees float32) byte {
+	return byte(math.Round(float64(degrees) * (256.0 / 360.0)))
 }
 
 func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool) {
 	p.CalculateUnusedChunks()
 	oldx, oldy, oldz := p.player.Position()
+	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
+	if distance > 100 {
+		p.Teleport(oldx, oldy, oldz, yaw, pitch)
+		return
+	}
+
 	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
 	inArea, notInArea := p.PlayersInArea(x1, y1, z1)
 
@@ -85,14 +82,14 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 					OnGround: ong,
 				})
 			case 0x15: // position + rotation
-				yaw, pitch := angle(x1, y1, z1)
+				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
 				pl.session.SendPacket(&packet.EntityPositionRotation{
 					EntityID: p.player.EntityId(),
 					X:        int16(((x1 * 32) - oldx*32) * 128),
 					Y:        int16(((y1 * 32) - oldy*32) * 128),
 					Z:        int16(((z1 * 32) - oldz*32) * 128),
-					Yaw:      byte(yaw),
-					Pitch:    byte(pitch),
+					Yaw:      yaw,
+					Pitch:    pitch,
 					OnGround: ong,
 				})
 				pl.session.SendPacket(&packet.EntityHeadRotation{
@@ -100,11 +97,11 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 					HeadYaw:  uint8(yaw),
 				})
 			case 0x16: // rotation
-				//yaw, pitch := angle(x1, y1, z1)
+				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
 				pl.session.SendPacket(&packet.EntityRotation{
 					EntityID: p.player.EntityId(),
-					Yaw:      byte(yaw),
-					Pitch:    byte(pitch),
+					Yaw:      yaw,
+					Pitch:    pitch,
 					OnGround: ong,
 				})
 				pl.session.SendPacket(&packet.EntityHeadRotation{
