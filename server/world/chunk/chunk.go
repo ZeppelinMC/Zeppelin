@@ -75,5 +75,5 @@ func (c *Chunk) Data() *packet.ChunkData {
 }
 
 func HashXZ(x, z int32) uint64 {
-	return (uint64(x) << 32) | uint64(z)
+	return uint64(uint32(x))<<32 | uint64(uint32(z))
 }
