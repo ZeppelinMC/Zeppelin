@@ -117,7 +117,7 @@ type WorldData struct {
 	BorderWarningTime          float64          `nbt:"BorderWarningTime"`
 	WanderingTraderSpawnDelay  int32            `nbt:"WanderingTraderSpawnDelay"`
 	CustomBossEvents           struct{}         `nbt:"CustomBossEvents"`
-	Player                     playerData       `nbt:"Player"`
+	Player                     PlayerData       `nbt:"Player"`
 	ClearWeatherTime           int32            `nbt:"clearWeatherTime"`
 	Thundering                 int8             `nbt:"thundering"`
 	SpawnAngle                 float32          `nbt:"SpawnAngle"`

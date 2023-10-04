@@ -29,12 +29,12 @@ func (p *PlayerController) Name() string {
 	return p.session.conn.Info.Name
 }
 
-func (p *PlayerController) JoinDimension(d *world.Dimension) error {
+func (p *PlayerController) Login(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
 		EntityID:            p.player.EntityId(),
 		IsHardcore:          p.player.IsHardcore(),
 		GameMode:            p.player.GameMode(),
-		PreviousGameMode:    p.player.PreviousGameMode(),
+		PreviousGameMode:    -1,
 		DimensionNames:      []string{d.Type()},
 		DimensionType:       d.Type(),
 		DimensionName:       d.Type(),
@@ -57,14 +57,13 @@ func (p *PlayerController) JoinDimension(d *world.Dimension) error {
 		Data:    []byte("Dynamite 1.20.1"),
 	})
 
-	p.Teleport(9, 86, 8, 0, 0)
-
 	p.session.SendPacket(&packet.SetCenterChunk{})
+	p.SetGameMode(p.player.GameMode())
 	p.SendSpawnChunks()
 
-	p.SetGameMode(1)
-
-	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{})
+	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{
+		//Location: ,
+	})
 }
 
 func (p *PlayerController) SystemChatMessage(s string) error {
@@ -137,11 +136,10 @@ func (p *PlayerController) Disconnect(reason string) {
 }
 
 func (p *PlayerController) SendSpawnChunks() {
-
 	for x := int32(-10); x < 10; x++ {
 		for z := int32(-10); z < 10; z++ {
 			x, z = 0, 0
-			c, err := p.Server.world.DefaultDimension().Chunk(x, z)
+			c, err := p.Server.world.Overworld().Chunk(x, z)
 			if err != nil {
 				panic(err)
 			}

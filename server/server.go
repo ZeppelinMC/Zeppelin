@@ -77,11 +77,16 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 	srv.entityCounter++
 
-	plyr := player.New(srv.entityCounter, int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance))
-	sesh := New(conn, plyr)
-	sesh.conn.Info.UUID = NameToUUID(sesh.conn.Info.Name)
-	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
+
+	data := srv.world.GetPlayerData(uuid.String())
+
+	plyr := player.New(srv.entityCounter, int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance), data)
+	sesh := New(conn, plyr)
+	if !srv.Config.Online {
+		sesh.conn.Info.UUID = NameToUUID(sesh.conn.Info.Name)
+	}
+	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	cntrl.UUID = uuid.String()
 
 	for _, op := range srv.Operators {
@@ -92,7 +97,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	cntrl.SendCommands(*srv.CommandGraph)
 
 	srv.addPlayer(cntrl)
-	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {
+	if err := cntrl.Login(srv.world.Overworld()); err != nil {
 		//TODO log error
 		conn.Close(err)
 		srv.Logger.Error("Failed to join player to dimension %s", err)

@@ -27,9 +27,5 @@ func PlayerMovement(
 		{
 			controller.BroadcastMovement(pk.ID(), x, y, z, pk.Yaw, pk.Pitch, pk.OnGround)
 		}
-	case *packet.PlayerMovement:
-		{
-			controller.BroadcastMovement(pk.ID(), x, y, z, yaw, pitch, pk.OnGround)
-		}
 	}
 }

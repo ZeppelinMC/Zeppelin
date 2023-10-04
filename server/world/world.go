@@ -13,7 +13,9 @@ import (
 type World struct {
 	nbt worldData
 
-	dimensions []*Dimension
+	overworld *Dimension
+	nether    *Dimension
+	theEnd    *Dimension
 }
 
 func OpenWorld(name string) (*World, error) {
@@ -29,8 +31,7 @@ func OpenWorld(name string) (*World, error) {
 	}
 
 	rd := anvil.NewReader(name + "/region/")
-	ow := NewDimension("minecraft:overworld", rd)
-	wrld.dimensions = append(wrld.dimensions, ow)
+	wrld.overworld = NewDimension("minecraft:overworld", rd)
 
 	return &wrld, nil
 }
@@ -39,8 +40,20 @@ func (w *World) Seed() int64 {
 	return w.nbt.Data.WorldGenSettings.Seed
 }
 
-func (w *World) DefaultDimension() *Dimension {
-	return w.dimensions[0]
+func (w *World) Spawn() (x, y, z int32) {
+	return w.nbt.Data.SpawnX, w.nbt.Data.SpawnY, w.nbt.Data.SpawnZ
+}
+
+func (w *World) Overworld() *Dimension {
+	return w.overworld
+}
+
+func (w *World) Nether() *Dimension {
+	return w.nether
+}
+
+func (w *World) TheEnd() *Dimension {
+	return w.theEnd
 }
 
 func loadWorldData(f *os.File, wNbt *worldData) error {

@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"math"
 	"sync"
+
+	"github.com/dynamitemc/dynamite/server/world"
 )
 
 type Player struct {
-	isHardCore       bool
-	gameMode         byte
-	previousGameMode int8
+	isHardCore bool
+
+	data *world.PlayerData
+
+	dimension int
 
 	viewDistance       int32
 	simulationDistance int32
@@ -19,12 +23,7 @@ type Player struct {
 	operator bool
 
 	clientSettings ClientInformation
-
-	x, y, z    float64
-	yaw, pitch float32
-	onGround   bool
-
-	mu sync.RWMutex
+	mu             sync.RWMutex
 }
 
 type ClientInformation struct {
@@ -38,9 +37,10 @@ type ClientInformation struct {
 	AllowServerListings  bool
 }
 
-func New(entityID int32, vd, sd int32) *Player {
-	return &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd}
+func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
+	return &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd, data: data}
 }
+
 func (p *Player) ClientSettings() ClientInformation {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -52,10 +52,39 @@ func (p *Player) SetClientSettings(information ClientInformation) {
 	defer p.mu.Unlock()
 	p.clientSettings = information
 }
+
+func (p *Player) SetDimension(dim int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.dimension = dim
+}
+
+func (p *Player) Dimension() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.dimension
+}
+
 func (p *Player) ViewDistance() int32 {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.viewDistance
+}
+
+func (p *Player) SavedPosition() (x, y, z float64) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.data.Pos[0], p.data.Pos[1], p.data.Pos[2]
+}
+
+func (p *Player) SavedRotation() (yaw, pitch float32) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.data.Rotation[0], p.data.Rotation[1]
+}
+
+func (p *Player) SaveData() {
+	p.data.Save()
 }
 
 func (p *Player) SimulationDistance() int32 {
@@ -73,50 +102,51 @@ func (p *Player) IsHardcore() bool {
 func (p *Player) SetGameMode(gm byte) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.previousGameMode = int8(p.gameMode)
-	p.gameMode = gm
+	p.data.PlayerGameType = int32(gm)
 }
 
 func (p *Player) GameMode() byte {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.gameMode
-}
-
-func (p *Player) PreviousGameMode() int8 {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.previousGameMode
+	return byte(p.data.PlayerGameType)
 }
 
 func (p *Player) Position() (x, y, z float64) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.x, p.y, p.z
+	return p.data.Pos[0], p.data.Pos[1], p.data.Pos[2]
 }
 
 func (p *Player) Rotation() (yaw, pitch float32) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.yaw, p.pitch
+	return p.data.Rotation[0], p.data.Rotation[1]
 }
 
 func (p *Player) OnGround() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.onGround
+	ong := false
+	if p.data.OnGround == 1 {
+		ong = true
+	}
+	return ong
 }
 
 func (p *Player) SetPosition(x, y, z float64, yaw, pitch float32, ong bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.x, p.y, p.z, p.yaw, p.pitch, p.onGround = x, y, z, yaw, pitch, ong
+	o := int8(0)
+	if ong {
+		o = 1
+	}
+	p.data.Pos[0], p.data.Pos[1], p.data.Pos[2], p.data.Rotation[0], p.data.Rotation[1], p.data.OnGround = x, y, z, yaw, pitch, o
 }
 
 func (p *Player) GetPosition2() uint64 {
-	x := int64(math.Float64bits(p.x))
-	y := int64(math.Float64bits(p.y))
-	z := int64(math.Float64bits(p.z))
+	x := int64(math.Float64bits(p.data.Pos[0]))
+	y := int64(math.Float64bits(p.data.Pos[1]))
+	z := int64(math.Float64bits(p.data.Pos[2]))
 	fmt.Println(x, y, z)
 	return uint64((x << 38) | (z << 12) | (y))
 }

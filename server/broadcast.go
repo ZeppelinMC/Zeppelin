@@ -49,6 +49,19 @@ func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerCo
 	return inArea, notInArea
 }
 
+func angle(x0, y0, z0 float64) (yaw float64, pitch float64) {
+	dx := x0 - x0
+	dy := y0 - y0
+	dz := z0 - z0
+	r := math.Sqrt(dx*dx + dy*dy + dz*dz)
+	yaw = -math.Atan2(dx, dz) / math.Pi * 180
+	if yaw < 0 {
+		yaw = 360 + yaw
+	}
+	pitch = -math.Asin(dy/r) / math.Pi * 180
+	return
+}
+
 func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool) {
 	oldx, oldy, oldz := p.player.Position()
 	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
@@ -62,8 +75,7 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 	for _, pl := range inArea {
 		if pl.IsSpawned(p.player.EntityId()) {
 			switch id {
-			case 0x14:
-				fmt.Println(p.Name(), "moved!")
+			case 0x14: // position
 				pl.session.SendPacket(&packet.EntityPosition{
 					EntityID: p.player.EntityId(),
 					X:        int16(((x1 * 32) - oldx*32) * 128),
@@ -71,8 +83,8 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 					Z:        int16(((z1 * 32) - oldz*32) * 128),
 					OnGround: ong,
 				})
-			case 0x15:
-				fmt.Println(p.Name(), "moved and rotated!")
+			case 0x15: // position + rotation
+				yaw, pitch := angle(x1, y1, z1)
 				pl.session.SendPacket(&packet.EntityPositionRotation{
 					EntityID: p.player.EntityId(),
 					X:        int16(((x1 * 32) - oldx*32) * 128),
@@ -82,13 +94,21 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 					Pitch:    byte(pitch),
 					OnGround: ong,
 				})
-			case 0x16:
-				fmt.Println(p.Name(), "rotated!")
+				pl.session.SendPacket(&packet.EntityHeadRotation{
+					EntityID: p.player.EntityId(),
+					HeadYaw:  uint8(yaw),
+				})
+			case 0x16: // rotation
+				yaw, pitch := angle(x1, y1, z1)
 				pl.session.SendPacket(&packet.EntityRotation{
 					EntityID: p.player.EntityId(),
 					Yaw:      byte(yaw),
 					Pitch:    byte(pitch),
 					OnGround: ong,
+				})
+				pl.session.SendPacket(&packet.EntityHeadRotation{
+					EntityID: p.player.EntityId(),
+					HeadYaw:  uint8(yaw),
 				})
 			}
 		} else {
