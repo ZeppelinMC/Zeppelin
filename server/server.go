@@ -114,6 +114,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, cntrl.UUID)
 		srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerLeave, map[string]string{"player": conn.Info.Name}), nil)
 		srv.PlayerlistRemove(conn.Info.UUID)
+		cntrl.Despawn()
 
 		//todo consider moving logic of removing player to a separate function
 		srv.mu.Lock()
@@ -159,7 +160,6 @@ func (srv *Server) Reload() error {
 		*addresses[i] = u
 	}
 
-	// load config
 	config.LoadConfig("config.toml", srv.Config)
 
 	for _, p := range srv.Players {
@@ -169,8 +169,21 @@ func (srv *Server) Reload() error {
 }
 
 func (srv *Server) FindPlayer(username string) *PlayerController {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
 		if strings.EqualFold(p.Name(), username) {
+			return p
+		}
+	}
+	return nil
+}
+
+func (srv *Server) FindPlayerByID(id int32) *PlayerController {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, p := range srv.Players {
+		if p.player.EntityId() == id {
 			return p
 		}
 	}

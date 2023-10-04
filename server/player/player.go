@@ -12,6 +12,10 @@ type Player struct {
 	isHardCore bool
 	gameMode   byte
 
+	health         float32
+	food           int32
+	foodSaturation float32
+
 	data *world.PlayerData
 
 	viewDistance       int32
@@ -42,7 +46,9 @@ type ClientInformation struct {
 }
 
 func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
-	return &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd, data: data}
+	pl := &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd, data: data}
+	pl.health, pl.food, pl.foodSaturation = data.Health, data.FoodLevel, data.FoodSaturationLevel
+	return pl
 }
 
 func (p *Player) ClientSettings() ClientInformation {
@@ -55,6 +61,42 @@ func (p *Player) SetClientSettings(information ClientInformation) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.clientSettings = information
+}
+
+func (p *Player) Health() float32 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.health
+}
+
+func (p *Player) SetHealth(health float32) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.health = health
+}
+
+func (p *Player) FoodLevel() int32 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.food
+}
+
+func (p *Player) SetFoodLevel(level int32) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.food = level
+}
+
+func (p *Player) FoodSaturationLevel() float32 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.foodSaturation
+}
+
+func (p *Player) SetFoodSaturationLevel(level float32) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.foodSaturation = level
 }
 
 func (p *Player) ViewDistance() int32 {

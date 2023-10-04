@@ -2,7 +2,7 @@ package chunk
 
 import (
 	"errors"
-	//"fmt"
+
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/aimjel/minecraft/packet"
 )
@@ -44,7 +44,6 @@ func NewAnvilChunk(b []byte) (*Chunk, error) {
 	c.sections = make([]*section, 0, len(ac.Sections))
 	for _, s := range ac.Sections {
 		if s.Y < 0 && s.Y < int8(ac.YPos) {
-			//fmt.Println("skipped section", s.Y)
 			continue
 		}
 

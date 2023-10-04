@@ -72,6 +72,35 @@ func (p *PlayerController) SystemChatMessage(s string) error {
 	return p.session.SendPacket(&packet.SystemChatMessage{Content: s})
 }
 
+func (p *PlayerController) SetHealth(health float32) {
+	p.player.SetHealth(health)
+	food, saturation := p.player.FoodLevel(), p.player.FoodSaturationLevel()
+	p.session.SendPacket(&packet.SetHealth{
+		Health:         health,
+		Food:           food,
+		FoodSaturation: saturation,
+	})
+	if health == 0 {
+		p.Respawn("died :skull:")
+	}
+}
+
+func (p *PlayerController) Respawn(message string) {
+	//p.player.SetHealth(20)
+	//p.player.SetFoodLevel(20)
+	//p.player.SetFoodSaturationLevel(5)
+	p.BroadcastHealth()
+	p.BroadcastPose(7)
+	p.session.SendPacket(&packet.GameEvent{
+		Event: 11,
+		Value: 0,
+	})
+	p.session.SendPacket(&packet.CombatDeath{
+		Message:  message,
+		PlayerID: p.player.EntityId(),
+	})
+}
+
 func (p *PlayerController) ClientSettings() player.ClientInformation {
 	return p.player.ClientSettings()
 }

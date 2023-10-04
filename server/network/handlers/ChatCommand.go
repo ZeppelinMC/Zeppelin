@@ -16,6 +16,7 @@ type controller interface {
 	BroadcastPose(pose int32)
 	SendSpawnChunks()
 	BroadcastSprinting(val bool)
+	Hit(entityId int32)
 }
 
 func ChatCommandPacket(controller controller, graph *commands.Graph, content string) {

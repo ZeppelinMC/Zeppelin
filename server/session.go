@@ -40,6 +40,8 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 			handlers.PlayerMovement(controller, s.state, p)
 		case *packet.PlayerActionServer:
 			handlers.PlayerAction(controller, pk)
+		case *packet.InteractServer:
+			handlers.Interact(controller, pk)
 		}
 	}
 }
