@@ -9,13 +9,11 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0
 )
 
-require (
-	github.com/aimjel/minecraft v0.0.0-20231004182010-3ce667c53ab5
-	github.com/hashicorp/go-hclog v0.14.1
-)
+require github.com/aimjel/minecraft v0.0.0-20231004182010-3ce667c53ab5
 
 require (
 	github.com/golang/protobuf v1.5.0 // indirect
+	github.com/hashicorp/go-hclog v0.14.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 // indirect
 	github.com/oklog/run v1.0.0 // indirect

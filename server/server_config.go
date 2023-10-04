@@ -72,7 +72,12 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 
 	logger.Info("Loading plugins")
 
-	for _, p := range srv.Plugins {
+	for k, p := range srv.Plugins {
+		if p.Identifier == "" {
+			logger.Error("Failed to load plugin %s: no identifier specified", k)
+			continue
+		}
+		logger.Debug("Loading plugin %s", p.Identifier)
 		p.OnLoad(srv)
 	}
 
