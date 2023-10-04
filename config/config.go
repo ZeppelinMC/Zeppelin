@@ -52,6 +52,7 @@ type ServerConfig struct {
 	ServerPort           int       `toml:"server_port"`
 	ViewDistance         int       `toml:"view_distance"`
 	SimulationDistance   int       `toml:"simulation_distance"`
+	Superflat            bool      `toml:"superflat"`
 	MOTD                 string    `toml:"motd"`
 	Whitelist            Whitelist `toml:"whitelist"`
 	Web                  Web       `toml:"web"`

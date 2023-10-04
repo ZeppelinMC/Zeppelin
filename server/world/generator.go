@@ -4,6 +4,10 @@ import (
 	"math"
 	"math/rand"
 	"os"
+
+	_ "embed"
+
+	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
 func booltoint(b bool) int {
@@ -37,8 +41,8 @@ func GenerateWorldData(hardcore int8) worldData {
 								Preset: "",
 								Type:   "minecraft:the_end",
 							},
-							Type:     "minecraft:noise",
-							Settings: "minecraft:end",
+							Type: "minecraft:noise",
+							//Settings: "minecraft:end",
 						}, Type: "minecraft:the_end",
 					},
 					Overworld: DimensionData{
@@ -47,8 +51,8 @@ func GenerateWorldData(hardcore int8) worldData {
 								Preset: "minecraft:overworld",
 								Type:   "minecraft:multi_noise",
 							},
-							Type:     "minecraft:noise",
-							Settings: "minecraft:overworld",
+							Type: "minecraft:noise",
+							//Settings: "minecraft:overworld",
 						}, Type: "minecraft:overworld"},
 					Nether: DimensionData{
 						Generator: DimensionGenerator{
@@ -56,8 +60,8 @@ func GenerateWorldData(hardcore int8) worldData {
 								Preset: "minecraft:nether",
 								Type:   "minecraft:multi_noise",
 							},
-							Type:     "minecraft:noise",
-							Settings: "minecraft:nether",
+							Type: "minecraft:noise",
+							//Settings: "minecraft:nether",
 						},
 						Type: "minecraft:the_nether",
 					},
@@ -175,4 +179,17 @@ func CreateWorld(hardcore bool) {
 	f, _ := nbt.Marshal(data)
 	writer.Write(f)
 	lvl.Close()*/
+}
+
+type Generator interface {
+	Generate(x, z int32) (*chunk.Chunk, error)
+}
+
+type FlatGenerator struct{}
+
+//go:embed flatchunk.nbt
+var flatchunk []byte
+
+func (f *FlatGenerator) Generate(x, z int32) (*chunk.Chunk, error) {
+	return chunk.NewAnvilChunk(flatchunk)
 }

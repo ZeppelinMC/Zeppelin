@@ -11,6 +11,8 @@ type Dimension struct {
 	typ string
 
 	rd *anvil.Reader
+
+	generator Generator
 	//TODO chunk generator and chunk writer
 
 	seed int64
@@ -40,8 +42,10 @@ func (d *Dimension) Chunk(x, z int32) (*chunk.Chunk, error) {
 
 	ch, err := d.rd.ReadChunk(x, z)
 	if err != nil {
-		//todo generate chunk
-		return nil, err
+		ch, err = d.generator.Generate(x, z)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	d.mu.Lock()

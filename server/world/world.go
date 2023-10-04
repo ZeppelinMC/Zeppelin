@@ -19,7 +19,7 @@ type World struct {
 	theEnd    *Dimension
 }
 
-func OpenWorld(name string) (*World, error) {
+func OpenWorld(name string, flat bool) (*World, error) {
 	f, err := os.Open(name + "/level.dat")
 	if err != nil {
 		return nil, err
@@ -33,6 +33,9 @@ func OpenWorld(name string) (*World, error) {
 
 	rd := anvil.NewReader(name + "/region/")
 	wrld.overworld = NewDimension("minecraft:overworld", rd)
+	if flat {
+		wrld.overworld.generator = &FlatGenerator{}
+	}
 
 	return &wrld, nil
 }

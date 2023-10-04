@@ -72,10 +72,23 @@ type BiomeSource struct {
 	Type   string `nbt:"type"`
 }
 
+type DimensionGeneratorLayer struct {
+	Block  string `nbt:"block"`
+	Height int32  `nbt:"height"`
+}
+
+type DimensionGeneratorSettings struct {
+	Biome              string                    `nbt:"biome"`
+	Features           int32                     `nbt:"features"`
+	Lakes              int32                     `nbt:"lakes"`
+	Layers             []DimensionGeneratorLayer `nbt:"layers"`
+	StructureOverrides []string                  `nbt:"structure_overrides"`
+}
+
 type DimensionGenerator struct {
 	BiomeSource BiomeSource `nbt:"biome_source"`
 	Type        string      `nbt:"type"`
-	Settings    string      `nbt:"settings"`
+	//Settings    string `nbt:"settings"` // string or DimensionGeneratorSettings
 }
 
 type DimensionData struct {

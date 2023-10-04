@@ -33,13 +33,13 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 	if err != nil {
 		return nil, err
 	}
-	w, err := world.OpenWorld("world")
-	w.Gamemode = byte(player.Gamemode(cfg.Gamemode))
+	w, err := world.OpenWorld("world", cfg.Superflat)
 	if err != nil {
 		world.CreateWorld(cfg.Hardcore)
 		logger.Error("Failed to load world: %s", err)
 		os.Exit(1)
 	}
+	w.Gamemode = byte(player.Gamemode(cfg.Gamemode))
 	srv := &Server{
 		Config:       cfg,
 		listener:     ln,

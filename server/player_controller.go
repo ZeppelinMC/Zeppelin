@@ -245,6 +245,7 @@ func (p *PlayerController) SendSpawnChunks() {
 			}
 			c, err := ow.Chunk(int32(x), int32(z))
 			if err != nil {
+				fmt.Println("bad chunk", x, z)
 				continue
 			}
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
@@ -277,12 +278,10 @@ func (p *PlayerController) HandleCenterChunk(x1, z1, x2, z2 float64) {
 	newChunkZ := int(math.Floor(z2 / 16))
 
 	if newChunkX != oldChunkX || newChunkZ != oldChunkZ {
-		//p.SendChunks()
 		p.session.SendPacket(&packet.SetCenterChunk{
 			ChunkX: int32(newChunkX),
 			ChunkZ: int32(newChunkZ),
 		})
-		fmt.Println(newChunkX, newChunkZ, "you are here!")
 	}
 }
 
