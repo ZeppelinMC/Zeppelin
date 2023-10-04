@@ -64,6 +64,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	p.Teleport(x1, y1, z1, yaw, pitch)
 
 	x, y, z, a := p.Server.world.Spawn()
+
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{
 		Location: ((uint64(x) & 0x3FFFFFF) << 38) | ((uint64(z) & 0x3FFFFFF) << 12) | (uint64(y) & 0xFFF),
 		Angle:    a,
@@ -135,6 +136,7 @@ func (p *PlayerController) SetGameMode(gm byte) {
 
 func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 	p.Server.teleportCounter++
+	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
 	p.session.SendPacket(&packet.PlayerPositionLook{
 		X:          x,
 		Y:          y,
@@ -143,6 +145,7 @@ func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 		Pitch:      pitch,
 		TeleportID: p.Server.teleportCounter,
 	})
+	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
 }
 
 // for now ig

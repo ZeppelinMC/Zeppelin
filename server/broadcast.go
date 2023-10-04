@@ -64,6 +64,17 @@ func (p *PlayerController) AllPlayersInArea(x1, y1, z1 float64) (inArea []*Playe
 	return inArea, notInArea
 }
 
+func (p *PlayerController) BroadcastAnimation(animation uint8) {
+	inarea, _ := p.PlayersInArea(p.Position())
+	id := p.player.EntityId()
+	for _, pl := range inarea {
+		pl.session.SendPacket(&packet.EntityAnimation{
+			EntityID:  id,
+			Animation: animation,
+		})
+	}
+}
+
 func degreesToAngle(degrees float32) byte {
 	return byte(math.Round(float64(degrees) * (256.0 / 360.0)))
 }
@@ -100,11 +111,13 @@ func (p *PlayerController) Despawn() {
 	}
 }
 
-func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool) {
-	p.CalculateUnusedChunks()
+func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool) {
+	if !teleport {
+		p.CalculateUnusedChunks()
+	}
 	oldx, oldy, oldz := p.player.Position()
 	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
-	if distance > 100 {
+	if distance > 100 && !teleport {
 		p.Disconnect("You moved too quickly :( (Hacking?)")
 		return
 	}
@@ -159,8 +172,21 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 					EntityID: p.player.EntityId(),
 					HeadYaw:  uint8(yaw),
 				})
+			default:
+				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
+
+				pl.session.SendPacket(&packet.TeleportEntity{
+					EntityID: p.player.EntityId(),
+					X:        x1,
+					Y:        y1,
+					Z:        z1,
+					Yaw:      yaw,
+					Pitch:    pitch,
+					OnGround: ong,
+				})
 			}
 		} else {
+			fmt.Println("spawning", p.Name(), "for", pl.Name(), x1, y1, z1)
 			pl.SpawnPlayer(p)
 		}
 	}

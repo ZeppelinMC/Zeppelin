@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/aimjel/minecraft v0.0.0-20231004134939-d4b537459f78
+	github.com/aimjel/minecraft v0.0.0-20231004182010-3ce667c53ab5
 	github.com/hashicorp/go-hclog v0.14.1
 )
 
