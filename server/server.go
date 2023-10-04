@@ -156,7 +156,7 @@ func (srv *Server) Reload() error {
 			return err
 		}
 
-		*addresses[i] = u
+		*addresses[i] = append(*addresses[i], u...)
 	}
 
 	config.LoadConfig("config.toml", srv.Config)
@@ -193,6 +193,13 @@ func (srv *Server) FindPlayerByID(id int32) *PlayerController {
 
 func (srv *Server) Close() {
 	srv.Logger.Info("Closing server...")
+
+	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
+	var lists = [][]user{srv.WhitelistedPlayers, srv.BannedPlayers, srv.Operators, srv.BannedIPs}
+	for i, file := range files {
+		WritePlayerList(file, lists[i])
+	}
+
 	for _, p := range srv.Players {
 		p.player.Save()
 		p.Disconnect(srv.Config.Messages.ServerClosed)
