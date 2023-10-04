@@ -3,17 +3,19 @@ package server
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"net"
+	"os"
+
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
-	"net"
-	"os"
 )
 
 type user struct {
 	Ip string `json:"ip,omitempty"`
 
-	UUID string `json:"uuid,omitempty"`
+	UUID string `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 
 	Created string `json:"created,omitempty"`
@@ -25,7 +27,12 @@ type user struct {
 func loadUsers(path string) ([]user, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		os.WriteFile(path, []byte("[]"), 0755)
+		file, err = os.Open(path)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
 	}
 	defer file.Close()
 
