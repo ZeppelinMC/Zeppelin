@@ -6,9 +6,5 @@ import (
 )
 
 func ClientSettings(controller controller, state *player.Player, pk *packet.ClientSettings) {
-	old := state.ClientSettings()
 	state.SetClientSettings(player.ClientInformation(*pk))
-	if old.ViewDistance != pk.ViewDistance {
-		controller.SendSpawnChunks()
-	}
 }
