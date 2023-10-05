@@ -67,15 +67,7 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 	w.LoadSpawnChunks(int32(cfg.ViewDistance))
 
 	logger.Info("Loading plugins")
-
-	for k, p := range srv.Plugins {
-		if p.Identifier == "" {
-			logger.Error("Failed to load plugin %s: no identifier specified", k)
-			continue
-		}
-		logger.Debug("Loading plugin %s", p.Identifier)
-		p.OnLoad(srv)
-	}
+	srv.LoadPlugins()
 
 	return srv, nil
 }
