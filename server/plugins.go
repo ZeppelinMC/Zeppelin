@@ -15,7 +15,7 @@ type Plugin struct {
 }
 
 func (srv *Server) LoadPlugins() {
-	if runtime.GOOS != "darwin" && runtime.GOOS == "linux" {
+	if runtime.GOOS != "darwin" && runtime.GOOS == "linux" && runtime.GOOS != "freebsd" {
 		srv.Logger.Error("Plugins are not supported on your platform yet. Come back tomorrow.")
 		return
 	}
@@ -45,7 +45,6 @@ func (srv *Server) LoadPlugins() {
 }
 
 func (srv *Server) LoadPlugin(path string) (*Plugin, error) {
-	fmt.Println(path)
 	p, err := plugin.Open(path)
 	if err != nil {
 		return nil, err

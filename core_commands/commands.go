@@ -8,5 +8,6 @@ var Commands = &commands.Graph{
 		reload_cmd,
 		gamemode_cmd,
 		restart_cmd,
+		ram_cmd,
 	},
 }

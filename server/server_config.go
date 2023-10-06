@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"math"
 	"os"
 	"sync"
 
@@ -63,8 +64,12 @@ func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, comm
 		*addresses[i] = u
 	}
 
-	logger.Info("Loading spawn chunks")
-	w.LoadSpawnChunks(int32(cfg.ViewDistance))
+	if cfg.CacheSpawnChunks {
+		count := 4 * math.Pow(float64(cfg.ViewDistance), 2)
+		logger.Info("Caching spawn chunks (%v)", count)
+		s := w.LoadSpawnChunks(int32(cfg.ViewDistance))
+		logger.Debug("Cached spawn chunks (%d/%v)", s, count)
+	}
 
 	logger.Info("Loading plugins")
 	srv.LoadPlugins()

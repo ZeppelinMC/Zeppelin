@@ -64,7 +64,7 @@ func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
 	}
 
 	if srv.Config.Whitelist.Enable {
-		if !srv.IsWhitelisted(conn.Info.Name) {
+		if !srv.IsWhitelisted(conn.Info.UUID) {
 			reason = srv.Config.Messages.NotInWhitelist
 		}
 	}
@@ -98,9 +98,10 @@ func (srv *Server) IsIPBanned(ip string) bool {
 	return false
 }
 
-func (srv *Server) IsWhitelisted(name string) bool {
+func (srv *Server) IsWhitelisted(uuid [16]byte) bool {
+	suuid := hex.EncodeToString(uuid[:])
 	for _, u := range srv.WhitelistedPlayers {
-		if u.Name == name {
+		if u.UUID == suuid {
 			return true
 		}
 	}

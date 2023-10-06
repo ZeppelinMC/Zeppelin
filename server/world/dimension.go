@@ -42,6 +42,9 @@ func (d *Dimension) Chunk(x, z int32) (*chunk.Chunk, error) {
 
 	ch, err := d.rd.ReadChunk(x, z)
 	if err != nil {
+		if d.generator == nil {
+			return nil, err
+		}
 		ch, err = d.generator.Generate(x, z)
 		if err != nil {
 			return nil, err

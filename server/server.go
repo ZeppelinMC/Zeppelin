@@ -77,6 +77,10 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 	srv.entityCounter++
 
+	if !srv.Config.Online {
+		conn.Info.UUID = NameToUUID(conn.Info.Name)
+	}
+
 	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
 
 	data := srv.world.GetPlayerData(uuid.String())
@@ -94,7 +98,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 			plyr.SetOperator(true)
 		}
 	}
+
 	cntrl.SendCommands(srv.CommandGraph)
+	cntrl.InitializeInventory()
 
 	srv.addPlayer(cntrl)
 	if err := cntrl.Login(srv.world.Overworld()); err != nil {
@@ -164,6 +170,10 @@ func (srv *Server) Reload() error {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
+		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.session.Info().UUID) {
+			p.Disconnect(srv.Config.Messages.NotInWhitelist)
+			continue
+		}
 		p.SendCommands(srv.CommandGraph)
 	}
 	return nil

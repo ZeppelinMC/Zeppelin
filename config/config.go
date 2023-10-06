@@ -53,6 +53,7 @@ type ServerConfig struct {
 	ViewDistance         int       `toml:"view_distance"`
 	SimulationDistance   int       `toml:"simulation_distance"`
 	Superflat            bool      `toml:"superflat"`
+	CacheSpawnChunks     bool      `toml:"cache_spawn_chunks"`
 	MOTD                 string    `toml:"motd"`
 	Whitelist            Whitelist `toml:"whitelist"`
 	Web                  Web       `toml:"web"`
@@ -101,9 +102,10 @@ func defaultConfig() ServerConfig {
 			Enforce: false,
 			Enable:  false,
 		},
-		Gamemode:   "survival",
-		Hardcore:   false,
-		MaxPlayers: 20,
+		Gamemode:         "survival",
+		CacheSpawnChunks: true,
+		Hardcore:         false,
+		MaxPlayers:       20,
 		Messages: Messages{
 			NotInWhitelist:          "You are not whitelisted.",
 			Banned:                  "You are banned from this server.",

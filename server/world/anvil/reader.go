@@ -66,7 +66,6 @@ func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
 			return nil, err
 		}
 	}
-	os.WriteFile("chunks/"+fmt.Sprint(x)+"-"+fmt.Sprint(z)+".nbt", buf.Bytes(), 0755)
 	return chunk.NewAnvilChunk(buf.Bytes())
 }
 

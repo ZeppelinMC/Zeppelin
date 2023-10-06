@@ -53,6 +53,12 @@ func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
 	return pl
 }
 
+func (p *Player) GetSavedInventory() []world.Slot {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.data.Inventory
+}
+
 func (p *Player) ClientSettings() ClientInformation {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

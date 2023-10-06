@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/dynamitemc/dynamite/util"
@@ -53,7 +54,7 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 	time := getDateString()
 	str := fmt.Sprintf(format, a...)
 	logger.append(fmt.Sprintf("[%s ERROR]: %s", time, str))
-	fmt.Printf("[%s %s]: %s\n", time, red("ERROR"), str)
+	fmt.Fprintf(os.Stderr, "[%s %s]: %s\n", time, red("ERROR"), str)
 }
 
 func (logger *Logger) Warn(format string, a ...interface{}) {

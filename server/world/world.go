@@ -60,13 +60,17 @@ func (w *World) TheEnd() *Dimension {
 	return w.theEnd
 }
 
-func (w *World) LoadSpawnChunks(rd int32) {
+func (w *World) LoadSpawnChunks(rd int32) (success int) {
 	ow := w.Overworld()
-	for x := -rd; x <= rd; x++ {
-		for z := -rd; z <= rd; z++ {
-			ow.Chunk(x, z)
+	s := 0
+	for x := -rd; x < rd; x++ {
+		for z := -rd; z < rd; z++ {
+			if _, err := ow.Chunk(x, z); err == nil {
+				s++
+			}
 		}
 	}
+	return s
 }
 
 func loadWorldData(f *os.File, wNbt *worldData) error {

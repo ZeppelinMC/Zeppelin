@@ -9,6 +9,7 @@ import (
 
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/item"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 )
@@ -33,7 +34,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
 		EntityID:            p.player.EntityId(),
 		IsHardcore:          p.player.IsHardcore(),
-		GameMode:            p.player.GameMode(),
+		GameMode:            0, //p.player.GameMode(),
 		PreviousGameMode:    -1,
 		DimensionNames:      []string{d.Type()},
 		DimensionType:       d.Type(),
@@ -63,8 +64,6 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
 	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
-
-	p.SetGameMode(p.player.GameMode())
 	p.SendSpawnChunks()
 
 	x, y, z, a := p.Server.world.Spawn()
@@ -245,7 +244,6 @@ func (p *PlayerController) SendSpawnChunks() {
 			}
 			c, err := ow.Chunk(int32(x), int32(z))
 			if err != nil {
-				fmt.Println("bad chunk", x, z)
 				continue
 			}
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
@@ -332,4 +330,92 @@ func (p *PlayerController) DespawnPlayer(pl *PlayerController) {
 	if index > -1 {
 		p.spawnedEntities = slices.Delete(p.spawnedEntities, index, index+1)
 	}
+}
+
+func (p *PlayerController) InitializeInventory() {
+	p.session.SendPacket(&SetContainerContent{
+		WindowID: 0,
+		StateID:  0,
+		Slots:    p.player.GetSavedInventory(),
+	})
+}
+
+type SetContainerContent struct {
+	WindowID uint8
+	StateID  int32
+	Slots    []world.Slot
+}
+
+func (m SetContainerContent) ID() int32 {
+	return 0x12
+}
+
+func (m *SetContainerContent) Decode(r *packet.Reader) error {
+	//todo reader
+	return nil
+}
+
+func (m SetContainerContent) Encode(w packet.Writer) error {
+	w.Uint8(m.WindowID)
+	w.VarInt(m.StateID)
+	if m.WindowID == 0 {
+		m.Slots = sortInventory(m.Slots)
+	}
+	w.VarInt(int32(len(m.Slots)))
+	//var heldItem *world.Slot
+	for d, s := range m.Slots {
+		i, ok := item.GetItem(s.Id)
+		fmt.Printf("Slot %d: %s (%d) - %d\n", d+1, s.Id, i.ProtocolID, s.Count)
+		if !ok {
+			w.Bool(false)
+			continue
+		}
+		w.Bool(true)
+		w.VarInt(i.ProtocolID)
+		w.Int8(s.Count)
+		w.Int8(0)
+	}
+	/*if heldItem != nil {
+		w.Bool(false)
+	} else {
+		i, ok := item.GetItem(heldItem.Id)
+		if !ok {
+			w.Bool(false)
+		} else {
+			w.Bool(true)
+			w.VarInt(i.ProtocolID)
+			w.Int8(heldItem.Count)
+			w.Int8(0)
+		}
+	}*/
+	w.Bool(false)
+	return nil
+}
+
+func dataSlotToNetworkSlot(index int) int {
+	switch {
+	case index == 100:
+		index = 8
+	case index == 101:
+		index = 7
+	case index == 102:
+		index = 6
+	case index == 103:
+		index = 5
+	case index == -106:
+		index = 45
+	case index <= 8:
+		index += 36
+	case index >= 80 && index <= 83:
+		index -= 79
+	}
+	return index
+}
+
+func sortInventory(slots []world.Slot) []world.Slot {
+	a := make([]world.Slot, 45)
+	for i, s := range slots {
+		a[dataSlotToNetworkSlot(i)] = s
+	}
+	return a
 }
