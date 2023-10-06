@@ -10,6 +10,20 @@ import (
 	"github.com/fatih/color"
 )
 
+type SuggestionsContext struct {
+	Executor    interface{} `js:"executor"`
+	Arguments   []string    `js:"arguments"`
+	FullCommand string      `js:"fullCommand"`
+}
+
+type Suggestion struct {
+	Match   string
+	Tooltip string
+}
+
+func (c *SuggestionsContext) Return(suggestions []Suggestion) {
+}
+
 type CommandContext struct {
 	Executor    interface{} `js:"executor"`
 	Arguments   []string    `js:"arguments"`
@@ -90,11 +104,11 @@ const (
 )
 
 type Command struct {
-	Name                string                   `js:"name"`
-	Arguments           []Argument               `js:"arguments"`
-	Aliases             []string                 `js:"aliases"`
-	Execute             func(ctx CommandContext) `js:"execute"`
-	RequiredPermissions []string                 `js:"requiredPermissions"`
+	Name                string
+	Arguments           []Argument
+	Aliases             []string
+	Execute             func(ctx CommandContext)
+	RequiredPermissions []string
 }
 
 type Properties struct {
@@ -104,14 +118,14 @@ type Properties struct {
 }
 
 type Parser struct {
-	ID         int32      `js:"id"`
-	Properties Properties `js:"properties"`
+	ID         int32
+	Properties Properties
 }
 
 type Argument struct {
-	Name           string `js:"name"`
-	SuggestionType string `js:"suggestionType"`
-	Parser         Parser `js:"parser"`
+	Name    string
+	Suggest func(ctx SuggestionsContext)
+	Parser  Parser
 }
 
 type Graph struct {
@@ -159,9 +173,9 @@ func (graph Graph) Data() *pk.DeclareCommands {
 			parent := len(packet.Nodes) - 1
 			packet.Nodes[parent].Children = append(packet.Nodes[parent].Children, int32(len(packet.Nodes)))
 			node := pk.Node{Flags: 2, Name: argument.Name, Properties: argument.Parser.Properties, ParserID: argument.Parser.ID}
-			if argument.SuggestionType != "" {
+			if argument.Suggest != nil {
 				node.Flags |= 0x10
-				node.SuggestionsType = argument.SuggestionType
+				node.SuggestionsType = "minecraft:ask_server"
 			}
 			packet.Nodes = append(packet.Nodes, node)
 		}

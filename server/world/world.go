@@ -73,6 +73,10 @@ func (w *World) LoadSpawnChunks(rd int32) (success int) {
 	return s
 }
 
+func (w *World) Gamerules() map[string]GameRule {
+	return w.nbt.Data.GameRules
+}
+
 func loadWorldData(f *os.File, wNbt *worldData) error {
 	gzipRd, err := gzip.NewReader(f)
 	if err != nil {

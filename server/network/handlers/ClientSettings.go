@@ -5,6 +5,6 @@ import (
 	"github.com/dynamitemc/dynamite/server/player"
 )
 
-func ClientSettings(controller controller, state *player.Player, pk *packet.ClientSettings) {
+func ClientSettings(controller Controller, state *player.Player, pk *packet.ClientSettings) {
 	state.SetClientSettings(player.ClientInformation(*pk))
 }

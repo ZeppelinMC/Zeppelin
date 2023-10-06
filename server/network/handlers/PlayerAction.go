@@ -4,7 +4,7 @@ import (
 	"github.com/aimjel/minecraft/packet"
 )
 
-func PlayerAction(controller controller, pk *packet.PlayerActionServer) {
+func PlayerAction(controller Controller, pk *packet.PlayerActionServer) {
 	switch pk.Status {
 	case 0:
 		controller.BroadcastPose(14)

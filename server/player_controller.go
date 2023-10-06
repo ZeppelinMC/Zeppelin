@@ -34,7 +34,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
 		EntityID:            p.player.EntityId(),
 		IsHardcore:          p.player.IsHardcore(),
-		GameMode:            0, //p.player.GameMode(),
+		GameMode:            p.player.GameMode(),
 		PreviousGameMode:    -1,
 		DimensionNames:      []string{d.Type()},
 		DimensionType:       d.Type(),
@@ -92,15 +92,14 @@ func (p *PlayerController) SetHealth(health float32) {
 }
 
 func (p *PlayerController) Respawn(message string) {
-	//p.player.SetHealth(20)
-	//p.player.SetFoodLevel(20)
-	//p.player.SetFoodSaturationLevel(5)
 	p.BroadcastHealth()
 	p.BroadcastPose(7)
-	p.session.SendPacket(&packet.GameEvent{
-		Event: 11,
-		Value: 0,
-	})
+	if f, _ := p.Server.world.Gamerules()["doImmediateRespawn"].Bool(); !f {
+		p.session.SendPacket(&packet.GameEvent{
+			Event: 11,
+			Value: 0,
+		})
+	}
 	p.session.SendPacket(&packet.CombatDeath{
 		Message:  message,
 		PlayerID: p.player.EntityId(),

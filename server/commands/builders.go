@@ -191,10 +191,3 @@ func NewChatComponentArgument(name string) Argument {
 		},
 	}
 }
-
-func NewLiteralArgument(name string) Argument {
-	return Argument{
-		Name:           name,
-		SuggestionType: "",
-	}
-}

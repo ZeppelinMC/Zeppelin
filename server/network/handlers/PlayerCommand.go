@@ -1,6 +1,6 @@
 package handlers
 
-func PlayerCommand(controller controller, action int32) {
+func PlayerCommand(controller Controller, action int32) {
 	switch action {
 	case 0:
 		{

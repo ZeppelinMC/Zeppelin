@@ -6,7 +6,7 @@ import (
 )
 
 func PlayerMovement(
-	controller controller,
+	controller Controller,
 	state *player.Player,
 	p packet.Packet,
 ) {
