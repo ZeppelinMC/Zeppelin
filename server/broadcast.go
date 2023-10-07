@@ -186,7 +186,6 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 				})
 			}
 		} else {
-			fmt.Println("spawning", p.Name(), "for", pl.Name(), x1, y1, z1)
 			pl.SpawnPlayer(p)
 		}
 	}
