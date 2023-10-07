@@ -31,6 +31,20 @@ func (srv *Server) GlobalMessage(message string, sender *PlayerController) {
 	fmt.Println(commands.ParseChat(message))
 }
 
+func (srv *Server) OperatorMessage(message string) {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, p := range srv.Players {
+		if p.ClientSettings().ChatMode == 2 || !p.player.Operator() {
+			continue
+		}
+		p.session.SendPacket(&packet.SystemChatMessage{
+			Content: message,
+		})
+	}
+	fmt.Println(commands.ParseChat(message))
+}
+
 func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerController, notInArea []*PlayerController) {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()

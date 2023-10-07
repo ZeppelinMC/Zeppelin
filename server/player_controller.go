@@ -88,11 +88,11 @@ func (p *PlayerController) SetHealth(health float32) {
 		FoodSaturation: saturation,
 	})
 	if health == 0 {
-		p.Respawn("died :skull:")
+		p.Kill("died :skull:")
 	}
 }
 
-func (p *PlayerController) Respawn(message string) {
+func (p *PlayerController) Kill(message string) {
 	p.BroadcastHealth()
 	p.BroadcastPose(7)
 	if f, _ := world.GameRule(p.Server.world.Gamerules()["doImmediateRespawn"]).Bool(); !f {
