@@ -73,7 +73,7 @@ func (w *World) LoadSpawnChunks(rd int32) (success int) {
 	return s
 }
 
-func (w *World) Gamerules() map[string]GameRule {
+func (w *World) Gamerules() map[string]string {
 	return w.nbt.Data.GameRules
 }
 

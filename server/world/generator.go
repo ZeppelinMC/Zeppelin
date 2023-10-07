@@ -1,12 +1,16 @@
 package world
 
 import (
+	"bytes"
+	"compress/gzip"
+	"fmt"
 	"math"
 	"math/rand"
 	"os"
 
 	_ "embed"
 
+	"github.com/aimjel/minecraft/nbt"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
@@ -99,7 +103,7 @@ func GenerateWorldData(hardcore int8) worldData {
 			},
 			BorderDamagePerBlock: 0.2,
 			Initialized:          1,
-			GameRules: map[string]GameRule{
+			GameRules: map[string]string{
 				"doDaylightCycle":               "true",
 				"doInsomnia":                    "true",
 				"doEntityDrops":                 "true",
@@ -162,7 +166,7 @@ func GenerateWorldData(hardcore int8) worldData {
 
 func CreateWorld(hardcore bool) {
 	hc := int8(booltoint(hardcore))
-	_ = GenerateWorldData(hc)
+	world := GenerateWorldData(hc)
 
 	os.Mkdir("world", 0755)
 	os.Mkdir("world/data", 0755)
@@ -172,13 +176,27 @@ func CreateWorld(hardcore bool) {
 	os.Mkdir("world/poi", 0755)
 	os.Mkdir("world/region", 0755)
 
-	_, _ = os.Create("world/level.nbt")
 	os.WriteFile("world/session.lock", nil, 0755)
 
-	/*writer := gzip.NewWriter(lvl)
-	f, _ := nbt.Marshal(data)
-	writer.Write(f)
-	lvl.Close()*/
+	file, _ := os.Create("world/level.dat")
+
+	buf := bytes.NewBuffer(nil)
+	enc := nbt.NewEncoder(buf)
+	err := enc.Encode(world)
+	fmt.Println(err)
+
+	writer := gzip.NewWriter(file)
+	writer.Write(buf.Bytes())
+	writer.Close()
+	file.Close()
+}
+
+func (w *World) Save() {
+	buf := bytes.NewBuffer(nil)
+	writer := gzip.NewWriter(buf)
+	enc := nbt.NewEncoder(writer)
+	enc.Encode(w.nbt)
+	os.WriteFile("world/level.dat", buf.Bytes(), 0755)
 }
 
 type Generator interface {

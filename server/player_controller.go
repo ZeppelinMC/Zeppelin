@@ -60,11 +60,12 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 
 	x1, y1, z1 := p.player.SavedPosition()
 	yaw, pitch := p.player.SavedRotation()
-	p.Teleport(x1, y1, z1, yaw, pitch)
 
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
 	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
+	p.Teleport(x1, y1, z1, yaw, pitch)
 	p.SendSpawnChunks()
+	p.Teleport(x1, y1, z1, yaw, pitch)
 
 	x, y, z, a := p.Server.world.Spawn()
 
@@ -94,7 +95,7 @@ func (p *PlayerController) SetHealth(health float32) {
 func (p *PlayerController) Respawn(message string) {
 	p.BroadcastHealth()
 	p.BroadcastPose(7)
-	if f, _ := p.Server.world.Gamerules()["doImmediateRespawn"].Bool(); !f {
+	if f, _ := world.GameRule(p.Server.world.Gamerules()["doImmediateRespawn"]).Bool(); !f {
 		p.session.SendPacket(&packet.GameEvent{
 			Event: 11,
 			Value: 0,
@@ -298,7 +299,8 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 	defer p.mu.Unlock()
 	entityId := pl.player.EntityId()
 	x, y, z := pl.player.Position()
-	yaw, pitch := pl.player.Rotation()
+	ya, pi := pl.player.Rotation()
+	yaw, pitch := degreesToAngle(ya), degreesToAngle(pi)
 
 	p.session.SendPacket(&packet.SpawnPlayer{
 		EntityID:   entityId,
@@ -306,8 +308,8 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 		X:          x,
 		Y:          y,
 		Z:          z,
-		Yaw:        byte(yaw),
-		Pitch:      byte(pitch),
+		Yaw:        yaw,
+		Pitch:      pitch,
 	})
 	p.spawnedEntities = append(p.spawnedEntities, entityId)
 }

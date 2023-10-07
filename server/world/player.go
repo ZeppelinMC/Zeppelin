@@ -68,7 +68,7 @@ type Brain struct {
 }
 
 type PlayerData struct {
-	file                *os.File
+	path                string             `nbt:"-"`
 	Invulnerable        int8               `nbt:"Invulnerable"`
 	FoodSaturationLevel float32            `nbt:"foodSaturationLevel"`
 	UUID                []int32            `nbt:"UUID"`
@@ -110,11 +110,11 @@ type PlayerData struct {
 }
 
 func (data *PlayerData) Save() {
-	/*buf := bytes.NewBuffer(nil)
+	buf := bytes.NewBuffer(nil)
 	writer := gzip.NewWriter(buf)
-	f, _ := nbt.Marshal(data)
-	writer.Write(f)
-	os.WriteFile(fmt.Sprintf("world/playerdata/%s", data.file.Name()), buf.Bytes(), 0755)*/
+	enc := nbt.NewEncoder(writer)
+	enc.Encode(data)
+	os.WriteFile(data.path, buf.Bytes(), 0755)
 }
 
 func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
@@ -138,7 +138,6 @@ func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
 	data = &d
 	if err != nil {
 		data = world.GeneratePlayerData(uuid)
-		//data.file, _ = os.Create(fmt.Sprintf("world/playerdata/%s.dat", uuid))
 	}
 	return
 }
@@ -173,6 +172,7 @@ func NBTToUUID(u []int32) (uuid.UUID, error) {
 
 func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 	return &PlayerData{
+		path: fmt.Sprintf("world/playerdata/%s.dat", uuid),
 		Pos: []float64{
 			float64(world.nbt.Data.SpawnX),
 			float64(world.nbt.Data.SpawnY),
