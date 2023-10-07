@@ -33,6 +33,6 @@ var kill_cmd = &commands.Command{
 		name := player.Name()
 		player.Kill(name + " was killed")
 		ctx.Reply(fmt.Sprintf("Killed %s", name))
-		player.Server.GlobalMessage(name+"was killed", nil)
+		player.Server.GlobalMessage(name+" was killed", nil)
 	},
 }
