@@ -32,9 +32,9 @@ func (p *PlayerController) Name() string {
 
 func (p *PlayerController) Login(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
-		EntityID:            p.player.EntityId(),
-		IsHardcore:          p.player.IsHardcore(),
-		GameMode:            p.player.GameMode(),
+		EntityID:   p.player.EntityId(),
+		IsHardcore: p.player.IsHardcore(),
+		//GameMode:            p.player.GameMode(),
 		PreviousGameMode:    -1,
 		DimensionNames:      []string{d.Type()},
 		DimensionType:       d.Type(),
@@ -336,7 +336,7 @@ func (p *PlayerController) DespawnPlayer(pl *PlayerController) {
 func (p *PlayerController) InitializeInventory() {
 	p.session.SendPacket(&SetContainerContent{
 		WindowID: 0,
-		StateID:  0,
+		StateID:  1,
 		Slots:    p.player.GetSavedInventory(),
 	})
 }
@@ -366,7 +366,7 @@ func (m SetContainerContent) Encode(w packet.Writer) error {
 	//var heldItem *world.Slot
 	for d, s := range m.Slots {
 		i, ok := item.GetItem(s.Id)
-		fmt.Printf("Slot %d: %s (%d) - %d\n", d+1, s.Id, i.ProtocolID, s.Count)
+		fmt.Printf("Slot %d: %s (%d) - %d\n", d, s.Id, i.ProtocolID, s.Count)
 		if !ok {
 			w.Bool(false)
 			continue
@@ -376,6 +376,7 @@ func (m SetContainerContent) Encode(w packet.Writer) error {
 		w.Int8(s.Count)
 		w.Int8(0)
 	}
+	w.Bool(false)
 	/*if heldItem != nil {
 		w.Bool(false)
 	} else {
@@ -389,7 +390,6 @@ func (m SetContainerContent) Encode(w packet.Writer) error {
 			w.Int8(0)
 		}
 	}*/
-	w.Bool(false)
 	return nil
 }
 

@@ -25,7 +25,7 @@ import (
 
 type Server struct {
 	Config       *config.ServerConfig
-	Logger       logger.Logger
+	Logger       *logger.Logger
 	CommandGraph *commands.Graph
 
 	Plugins map[string]*Plugin
@@ -169,10 +169,20 @@ func (srv *Server) Reload() error {
 
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
+
 	for _, p := range srv.Players {
 		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.session.Info().UUID) {
 			p.Disconnect(srv.Config.Messages.NotInWhitelist)
 			continue
+		}
+		for i, op := range srv.Operators {
+			if op.UUID == p.UUID {
+				p.player.SetOperator(true)
+				continue
+			}
+			if i == len(srv.Operators)-1 {
+				p.player.SetOperator(false)
+			}
 		}
 		p.SendCommands(srv.CommandGraph)
 	}

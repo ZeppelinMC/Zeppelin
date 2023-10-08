@@ -14,7 +14,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
-func Listen(cfg *config.ServerConfig, address string, logger logger.Logger, commandGraph *commands.Graph) (*Server, error) {
+func Listen(cfg *config.ServerConfig, address string, logger *logger.Logger, commandGraph *commands.Graph) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
 		Status: minecraft.NewStatus(minecraft.Version{
 			Text:     "DynamiteMC 1.20.1",

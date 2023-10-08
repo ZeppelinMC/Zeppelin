@@ -15,7 +15,7 @@ import (
 	"github.com/dynamitemc/dynamite/web"
 )
 
-var log logger.Logger
+var log = logger.New()
 var startTime = time.Now().Unix()
 
 func start(cfg *config.ServerConfig) {
@@ -52,7 +52,7 @@ func main() {
 
 	if cfg.Web.Enable {
 		if !util.HasArg("-nogui") {
-			go web.LaunchWebPanel(fmt.Sprintf("%s:%d", cfg.Web.ServerIP, cfg.Web.ServerPort), cfg.Web.Password, &log)
+			go web.LaunchWebPanel(fmt.Sprintf("%s:%d", cfg.Web.ServerIP, cfg.Web.ServerPort), cfg.Web.Password, log)
 		} else {
 			log.Warn("Remove the -nogui argument to load the web panel")
 		}

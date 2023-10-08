@@ -11,3 +11,4 @@ whitelist.json
 /world
 /plugins
 *.bin
+log
