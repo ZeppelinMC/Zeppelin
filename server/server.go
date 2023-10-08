@@ -100,7 +100,6 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 
 	cntrl.SendCommands(srv.CommandGraph)
-	cntrl.InitializeInventory()
 
 	srv.addPlayer(cntrl)
 	if err := cntrl.Login(srv.world.Overworld()); err != nil {
@@ -115,6 +114,8 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 			cntrl.Keepalive()
 		}
 	}()
+
+	cntrl.InitializeInventory()
 
 	if err := sesh.HandlePackets(cntrl); err != nil {
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, cntrl.UUID)
