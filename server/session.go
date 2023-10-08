@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+	"io"
 	"net"
 
 	"github.com/aimjel/minecraft"
@@ -23,7 +25,7 @@ func New(c *minecraft.Conn, s *player.Player) *Session {
 func (s *Session) HandlePackets(controller *PlayerController) error {
 	for {
 		p, err := s.conn.ReadPacket()
-		if err != nil {
+		if errors.Is(err, io.EOF) {
 			return err
 		}
 

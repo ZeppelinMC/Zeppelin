@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -32,9 +31,9 @@ func (p *PlayerController) Name() string {
 
 func (p *PlayerController) Login(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
-		EntityID:   p.player.EntityId(),
-		IsHardcore: p.player.IsHardcore(),
-		//GameMode:            p.player.GameMode(),
+		EntityID:            p.player.EntityId(),
+		IsHardcore:          p.player.IsHardcore(),
+		GameMode:            p.player.GameMode(),
 		PreviousGameMode:    -1,
 		DimensionNames:      []string{d.Type()},
 		DimensionType:       d.Type(),
@@ -363,10 +362,8 @@ func (m SetContainerContent) Encode(w packet.Writer) error {
 		m.Slots = sortInventory(m.Slots)
 	}
 	w.VarInt(int32(len(m.Slots)))
-	//var heldItem *world.Slot
-	for d, s := range m.Slots {
+	for _, s := range m.Slots {
 		i, ok := item.GetItem(s.Id)
-		fmt.Printf("Slot %d: %s (%d) - %d\n", d, s.Id, i.ProtocolID, s.Count)
 		if !ok {
 			w.Bool(false)
 			continue
@@ -377,19 +374,6 @@ func (m SetContainerContent) Encode(w packet.Writer) error {
 		w.Int8(0)
 	}
 	w.Bool(false)
-	/*if heldItem != nil {
-		w.Bool(false)
-	} else {
-		i, ok := item.GetItem(heldItem.Id)
-		if !ok {
-			w.Bool(false)
-		} else {
-			w.Bool(true)
-			w.VarInt(i.ProtocolID)
-			w.Int8(heldItem.Count)
-			w.Int8(0)
-		}
-	}*/
 	return nil
 }
 
@@ -414,7 +398,7 @@ func dataSlotToNetworkSlot(index int) int {
 }
 
 func sortInventory(slots []world.Slot) []world.Slot {
-	a := make([]world.Slot, 45)
+	a := make([]world.Slot, 46)
 	for i, s := range slots {
 		a[dataSlotToNetworkSlot(i)] = s
 	}
