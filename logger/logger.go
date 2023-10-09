@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -72,8 +73,18 @@ func (logger *Logger) Close() {
 
 func New() *Logger {
 	os.Mkdir("log", 0755)
-	file, _ := os.Create(fmt.Sprintf("log/%s.log", formatDay()))
-	return &Logger{file: file}
+	file, err := os.Open(fmt.Sprintf("log/%s.log", formatDay()))
+	var text string
+	if err != nil {
+		file, _ = os.Create(fmt.Sprintf("log/%s.log", formatDay()))
+	} else {
+		t, _ := io.ReadAll(file)
+		text = string(t)
+		if text != "" {
+			text += "\n\n"
+		}
+	}
+	return &Logger{file: file, text: text}
 }
 
 func (logger *Logger) reset() {
