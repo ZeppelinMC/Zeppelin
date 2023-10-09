@@ -66,7 +66,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	p.SendSpawnChunks()
 	p.Teleport(x1, y1, z1, yaw, pitch)
 
-	x, y, z, a := p.Server.world.Spawn()
+	x, y, z, a := p.Server.World.Spawn()
 
 	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{
 		Location: ((uint64(x) & 0x3FFFFFF) << 38) | ((uint64(z) & 0x3FFFFFF) << 12) | (uint64(y) & 0xFFF),
@@ -94,7 +94,7 @@ func (p *PlayerController) SetHealth(health float32) {
 func (p *PlayerController) Kill(message string) {
 	p.BroadcastHealth()
 	p.BroadcastPose(7)
-	if f, _ := world.GameRule(p.Server.world.Gamerules()["doImmediateRespawn"]).Bool(); !f {
+	if f, _ := world.GameRule(p.Server.World.Gamerules()["doImmediateRespawn"]).Bool(); !f {
 		p.session.SendPacket(&packet.GameEvent{
 			Event: 11,
 			Value: 0,
@@ -200,7 +200,7 @@ func (p *PlayerController) CalculateUnusedChunks() {
 }
 
 func (p *PlayerController) SendChunks() {
-	ow := p.Server.world.Overworld()
+	ow := p.Server.World.Overworld()
 	max := int32(p.player.ClientSettings().ViewDistance)
 	px, _, pz := p.Position()
 	cx, cz := int32(px)/16, int32(pz)/16
@@ -225,7 +225,7 @@ func (p *PlayerController) SendChunks() {
 }
 
 func (p *PlayerController) SendSpawnChunks() {
-	ow := p.Server.world.Overworld()
+	ow := p.Server.World.Overworld()
 	max := float64(p.Server.Config.ViewDistance)
 	if p.loadedChunks == nil {
 		p.loadedChunks = make(map[[2]int32]struct{})
@@ -403,4 +403,13 @@ func sortInventory(slots []world.Slot) []world.Slot {
 		a[dataSlotToNetworkSlot(i)] = s
 	}
 	return a
+}
+
+func (p *PlayerController) SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []packet.SuggestionMatch) {
+	p.session.SendPacket(&packet.CommandSuggestionsResponse{
+		TransactionId: id,
+		Start:         start,
+		Length:        length,
+		Matches:       matches,
+	})
 }

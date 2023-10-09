@@ -11,23 +11,33 @@ import (
 )
 
 type SuggestionsContext struct {
-	Executor    interface{} `js:"executor"`
-	Arguments   []string    `js:"arguments"`
-	FullCommand string      `js:"fullCommand"`
+	Executor      interface{}
+	TransactionId int32
+	Arguments     []string
+	FullCommand   string
 }
 
-type Suggestion struct {
-	Match   string
-	Tooltip string
-}
-
-func (c *SuggestionsContext) Return(suggestions []Suggestion) {
+func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
+	if p, ok := c.Executor.(interface {
+		SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []pk.SuggestionMatch)
+	}); ok {
+		var start, length int32
+		if len(c.Arguments) > 0 {
+			arg := c.Arguments[len(c.Arguments)-1]
+			start = int32(strings.Index(c.FullCommand, arg))
+			length = int32(len(arg))
+		} else {
+			start = int32(len(c.FullCommand))
+			length = int32(len(c.FullCommand))
+		}
+		p.SendCommandSuggestionsResponse(c.TransactionId, start, length, suggestions)
+	}
 }
 
 type CommandContext struct {
-	Executor    interface{} `js:"executor"`
-	Arguments   []string    `js:"arguments"`
-	FullCommand string      `js:"fullCommand"`
+	Executor    interface{}
+	Arguments   []string
+	FullCommand string
 }
 
 var colors = map[string]color.Attribute{

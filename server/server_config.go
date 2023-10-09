@@ -45,7 +45,7 @@ func Listen(cfg *config.ServerConfig, address string, logger *logger.Logger, com
 		Config:       cfg,
 		listener:     ln,
 		Logger:       logger,
-		world:        w,
+		World:        w,
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
 		CommandGraph: commandGraph,

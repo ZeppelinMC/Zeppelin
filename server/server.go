@@ -44,7 +44,7 @@ type Server struct {
 
 	entityCounter int32
 
-	world *world.World
+	World *world.World
 
 	mu *sync.RWMutex
 }
@@ -83,7 +83,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
 
-	data := srv.world.GetPlayerData(uuid.String())
+	data := srv.World.GetPlayerData(uuid.String())
 
 	plyr := player.New(srv.entityCounter, int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance), data)
 	sesh := New(conn, plyr)
@@ -102,7 +102,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	cntrl.SendCommands(srv.CommandGraph)
 
 	srv.addPlayer(cntrl)
-	if err := cntrl.Login(srv.world.Overworld()); err != nil {
+	if err := cntrl.Login(srv.World.Overworld()); err != nil {
 		//TODO log error
 		conn.Close(err)
 		srv.Logger.Error("Failed to join player to dimension %s", err)

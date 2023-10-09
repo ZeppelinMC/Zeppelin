@@ -9,7 +9,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0
 )
 
-require github.com/aimjel/minecraft v0.0.0-20231004182010-3ce667c53ab5
+require github.com/aimjel/minecraft v0.0.0-20231009162531-d6d25f41b74e
 
 require (
 	github.com/golang/protobuf v1.5.0 // indirect

@@ -10,5 +10,6 @@ var Commands = &commands.Graph{
 		restart_cmd,
 		ram_cmd,
 		kill_cmd,
+		gamerule_cmd,
 	},
 }

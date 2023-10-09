@@ -46,6 +46,8 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 			handlers.Interact(controller, pk)
 		case *packet.SwingArmServer:
 			handlers.SwingArm(controller, pk.Hand)
+		case *packet.CommandSuggestionsRequest:
+			handlers.CommandSuggestionsRequest(pk.TransactionId, pk.Text, controller.Server.CommandGraph, controller)
 		}
 	}
 }

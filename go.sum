@@ -2,6 +2,16 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/aimjel/minecraft v0.0.0-20231004182010-3ce667c53ab5 h1:M+TuhNtjaqDYWsRG1pa7nOjaHPorHiZC4GPGbVM3/88=
 github.com/aimjel/minecraft v0.0.0-20231004182010-3ce667c53ab5/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231009160525-d017119b6561 h1:Ta2kll10rDbATT6Lc53Y/20NTsdAfj9aYoRhRUl8LCE=
+github.com/aimjel/minecraft v0.0.0-20231009160525-d017119b6561/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231009161005-5802eb48420a h1:XbuXQGFwpSCcZRES4WMuZid8YBOOicQePt9k0mpe7t0=
+github.com/aimjel/minecraft v0.0.0-20231009161005-5802eb48420a/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231009161131-e664b5953200 h1:b3+eZMwOqcINprl+e9PYJDG9aKmDCSZvXMucG3c/7xY=
+github.com/aimjel/minecraft v0.0.0-20231009161131-e664b5953200/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231009162446-3b39f5c0c47a h1:dnT+HWzpAm59H2zguwt0oQ6cBu4cikC6o9uRtHZwhXY=
+github.com/aimjel/minecraft v0.0.0-20231009162446-3b39f5c0c47a/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231009162531-d6d25f41b74e h1:wYRqwfYRe45uX4I0fVHZWt7DED9cw875IMalI3RXSb8=
+github.com/aimjel/minecraft v0.0.0-20231009162531-d6d25f41b74e/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZlaQsNA=
 github.com/bufbuild/protocompile v0.4.0/go.mod h1:3v93+mbWn/v3xzN+31nwkJfrEpAUwp+BagBSZWx+TP8=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
