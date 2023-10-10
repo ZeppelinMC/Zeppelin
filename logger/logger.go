@@ -18,16 +18,11 @@ type Message struct {
 }
 
 type Logger struct {
-<<<<<<< HEAD
-	text *strings.Builder
-	file *os.File
-=======
 	text     *strings.Builder
-	messages []Message
-	c        chan Message
-	file     *os.File
 	chane    bool
->>>>>>> b81c193 (web)
+	c        chan Message
+	messages []Message
+	file     *os.File
 }
 
 func getDateString() string {
@@ -104,6 +99,8 @@ func (logger *Logger) EnableChannel() {
 func (logger *Logger) send(message Message) {
 	if logger.chane {
 		logger.c <- message
+	} else {
+		logger.messages = append(logger.messages, message)
 	}
 }
 
@@ -134,7 +131,7 @@ func New() *Logger {
 			text.WriteString("\n\n")
 		}
 	}
-	return &Logger{file: file, text: &text, c: make(chan Message, 1)}
+	return &Logger{file: file, text: text, c: make(chan Message, 1)}
 }
 
 func (logger *Logger) reset() {
