@@ -12,7 +12,7 @@ import (
 )
 
 type Logger struct {
-	text strings.Builder
+	text *strings.Builder
 	file *os.File
 }
 
@@ -73,7 +73,7 @@ func (logger *Logger) Close() {
 func New() *Logger {
 	os.Mkdir("log", 0755)
 	file, err := os.Open(fmt.Sprintf("log/%s.log", formatDay()))
-	var text strings.Builder
+	text := &strings.Builder{}
 	if err != nil {
 		file, _ = os.Create(fmt.Sprintf("log/%s.log", formatDay()))
 	} else {
