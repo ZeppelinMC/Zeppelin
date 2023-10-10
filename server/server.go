@@ -166,15 +166,9 @@ func (srv *Server) Reload() error {
 			p.Disconnect(srv.Config.Messages.NotInWhitelist)
 			continue
 		}
-		for i, op := range srv.Operators {
-			if op.UUID == p.UUID {
-				p.player.SetOperator(true)
-				continue
-			}
-			if i == len(srv.Operators)-1 {
-				p.player.SetOperator(false)
-			}
-		}
+		
+		p.player.SetOperator(srv.IsOperator(p.session.Info().UUID))
+
 		p.SendCommands(srv.CommandGraph)
 	}
 	return nil

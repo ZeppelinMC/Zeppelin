@@ -108,3 +108,14 @@ func (srv *Server) IsWhitelisted(uuid [16]byte) bool {
 
 	return false
 }
+
+func (srv *Server) IsOperator(uuid [16]byte) bool {
+	suuid := hex.EncodeToString(uuid[:])
+	for _, u := range srv.WhitelistedPlayers {
+		if u.UUID == suuid {
+			return true
+		}
+	}
+
+	return false
+}
