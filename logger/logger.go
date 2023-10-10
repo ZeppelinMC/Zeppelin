@@ -12,7 +12,7 @@ import (
 )
 
 type Logger struct {
-	text string
+	text strings.Builder
 	file *os.File
 }
 
@@ -20,8 +20,12 @@ func getDateString() string {
 	return time.Now().Format("15:04:05")
 }
 
+var blue = color.New(color.FgBlue).Add(color.Bold).SprintFunc()
+var cyan = color.New(color.FgCyan).Add(color.Bold).SprintFunc()
+var red = color.New(color.FgRed).Add(color.Bold).SprintFunc()
+var yellow = color.New(color.FgYellow).Add(color.Bold).SprintFunc()
+
 func (logger *Logger) Info(format string, a ...interface{}) {
-	blue := color.New(color.FgBlue).Add(color.Bold).SprintFunc()
 	time := getDateString()
 	str := fmt.Sprintf(format, a...)
 	logger.write(fmt.Sprintf("[%s INFO]: %s\n", time, str))
@@ -32,7 +36,6 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 	if !util.HasArg("-debug") {
 		return
 	}
-	cyan := color.New(color.FgCyan).Add(color.Bold).SprintFunc()
 	str := fmt.Sprintf(format, a...)
 	time := getDateString()
 	logger.write(fmt.Sprintf("[%s DEBUG]: %s\n", time, str))
@@ -40,8 +43,6 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 }
 
 func (logger *Logger) Error(format string, a ...interface{}) {
-	red := color.New(color.FgRed).Add(color.Bold).SprintFunc()
-
 	time := getDateString()
 	str := fmt.Sprintf(format, a...)
 	logger.write(fmt.Sprintf("[%s ERROR]: %s\n", time, str))
@@ -49,8 +50,6 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 }
 
 func (logger *Logger) Warn(format string, a ...interface{}) {
-	yellow := color.New(color.FgYellow).Add(color.Bold).SprintFunc()
-
 	time := getDateString()
 	str := fmt.Sprintf(format, a...)
 	logger.write(fmt.Sprintf("[%s WARN]: %s\n", time, str))
@@ -58,13 +57,13 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 }
 
 func (logger *Logger) write(str string) {
-	logger.text += str
+	logger.text.WriteString(str)
 	t, _ := time.Parse("02-01-2006", strings.TrimSuffix(logger.file.Name(), ".log"))
 	now := time.Now()
 	if t.Day() != now.Day() {
 		logger.reset()
 	}
-	logger.file.WriteString(logger.text)
+	logger.file.WriteString(logger.text.String())
 }
 
 func (logger *Logger) Close() {
@@ -74,14 +73,14 @@ func (logger *Logger) Close() {
 func New() *Logger {
 	os.Mkdir("log", 0755)
 	file, err := os.Open(fmt.Sprintf("log/%s.log", formatDay()))
-	var text string
+	var text strings.Builder
 	if err != nil {
 		file, _ = os.Create(fmt.Sprintf("log/%s.log", formatDay()))
 	} else {
 		t, _ := io.ReadAll(file)
-		text = string(t)
-		if text != "" {
-			text += "\n\n"
+		text.Write(t)
+		if text.Len() != 0 {
+			text.WriteString("\n\n")
 		}
 	}
 	return &Logger{file: file, text: text}
