@@ -61,6 +61,10 @@ func (c *Chunk) Data() *packet.ChunkData {
 
 	pk.Sections = make([]packet.Section, 0, len(c.sections)+2)
 	for _, s := range c.sections {
+		if s == nil {
+			continue
+		}
+
 		var sec packet.Section
 
 		sec.BlockStates.Entries = s.ids
