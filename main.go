@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dynamitemc/dynamite/config"
 	"github.com/dynamitemc/dynamite/core_commands"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server"
@@ -18,7 +17,7 @@ import (
 var log = logger.New()
 var startTime = time.Now().Unix()
 
-func start(cfg *config.ServerConfig) {
+func start(cfg *server.Config) {
 	srv, err := server.Listen(cfg, cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
 	log.Info("Opened TCP server on %s:%d", cfg.ServerIP, cfg.ServerPort)
 	if err != nil {
@@ -42,8 +41,12 @@ func start(cfg *config.ServerConfig) {
 
 func main() {
 	log.Info("Starting Dynamite 1.20.1 Server")
-	var cfg config.ServerConfig
-	config.LoadConfig("config.toml", &cfg)
+
+	var cfg server.Config
+	if err := server.LoadConfig("config.toml", &cfg); err != nil {
+		log.Info("%v loading config.toml. Using default config", err)
+		cfg = server.DefaultConfig
+	}
 	log.Debug("Loaded config")
 
 	if !cfg.Online && !util.HasArg("-no_offline_warn") {

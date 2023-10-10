@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/go-plugin"
 
 	//"github.com/dynamitemc/dynamite/web"
-	"github.com/dynamitemc/dynamite/config"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
@@ -24,7 +23,7 @@ import (
 )
 
 type Server struct {
-	Config       *config.ServerConfig
+	Config       *Config
 	Logger       *logger.Logger
 	CommandGraph *commands.Graph
 
@@ -155,18 +154,9 @@ func (srv *Server) Translate(msg string, data map[string]string) string {
 }
 
 func (srv *Server) Reload() error {
-	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
-	var addresses = []*[]user{&srv.WhitelistedPlayers, &srv.BannedPlayers, &srv.Operators, &srv.BannedIPs}
-	for i, file := range files {
-		u, err := loadUsers(file)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
+	srv.loadFiles()
 
-		*addresses[i] = append(*addresses[i], u...)
-	}
-
-	config.LoadConfig("config.toml", srv.Config)
+	LoadConfig("config.toml", srv.Config)
 
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
@@ -226,6 +216,19 @@ func (srv *Server) Close() {
 		p.Disconnect(srv.Config.Messages.ServerClosed)
 	}
 	os.Exit(0)
+}
+
+func (srv *Server) loadFiles() {
+	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
+	var addresses = []*[]user{&srv.WhitelistedPlayers, &srv.BannedPlayers, &srv.Operators, &srv.BannedIPs}
+	for i, file := range files {
+		u, err := loadUsers(file)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			srv.Logger.Warn("%v loading %v", err, file)
+		}
+
+		*addresses[i] = u
+	}
 }
 
 func (srv *Server) Server(*plugin.MuxBroker) (interface{}, error) {
