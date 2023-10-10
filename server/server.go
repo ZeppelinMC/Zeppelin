@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"net/rpc"
 	"os"
 	"strings"
 	"sync"
@@ -11,8 +10,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aimjel/minecraft"
-
-	"github.com/hashicorp/go-plugin"
 
 	//"github.com/dynamitemc/dynamite/web"
 	"github.com/dynamitemc/dynamite/logger"
@@ -203,12 +200,4 @@ func (srv *Server) loadFiles() {
 
 		*addresses[i] = u
 	}
-}
-
-func (srv *Server) Server(*plugin.MuxBroker) (interface{}, error) {
-	return srv, nil
-}
-
-func (srv *Server) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
-	return srv, nil
 }
