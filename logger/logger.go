@@ -11,9 +11,23 @@ import (
 	"github.com/fatih/color"
 )
 
+type Message struct {
+	Type    string `json:"type"`
+	Time    string `json:"time"`
+	Message string `json:"message"`
+}
+
 type Logger struct {
+<<<<<<< HEAD
 	text *strings.Builder
 	file *os.File
+=======
+	text     *strings.Builder
+	messages []Message
+	c        chan Message
+	file     *os.File
+	chane    bool
+>>>>>>> b81c193 (web)
 }
 
 func getDateString() string {
@@ -25,10 +39,19 @@ var cyan = color.New(color.FgCyan).Add(color.Bold).SprintFunc()
 var red = color.New(color.FgRed).Add(color.Bold).SprintFunc()
 var yellow = color.New(color.FgYellow).Add(color.Bold).SprintFunc()
 
+func (logger *Logger) Channel() chan Message {
+	return logger.c
+}
+
 func (logger *Logger) Info(format string, a ...interface{}) {
 	time := getDateString()
 	str := fmt.Sprintf(format, a...)
 	logger.write(fmt.Sprintf("[%s INFO]: %s\n", time, str))
+	logger.send(Message{
+		Type:    "info",
+		Time:    time,
+		Message: str,
+	})
 	fmt.Printf("[%s %s]: %s\n", time, blue("INFO"), str)
 }
 
@@ -39,6 +62,11 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 	str := fmt.Sprintf(format, a...)
 	time := getDateString()
 	logger.write(fmt.Sprintf("[%s DEBUG]: %s\n", time, str))
+	logger.send(Message{
+		Type:    "debug",
+		Time:    time,
+		Message: str,
+	})
 	fmt.Printf("[%s %s]: %s\n", time, cyan("DEBUG"), str)
 }
 
@@ -46,6 +74,11 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 	time := getDateString()
 	str := fmt.Sprintf(format, a...)
 	logger.write(fmt.Sprintf("[%s ERROR]: %s\n", time, str))
+	logger.send(Message{
+		Type:    "error",
+		Time:    time,
+		Message: str,
+	})
 	fmt.Fprintf(os.Stderr, "[%s %s]: %s\n", time, red("ERROR"), str)
 }
 
@@ -53,7 +86,25 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 	time := getDateString()
 	str := fmt.Sprintf(format, a...)
 	logger.write(fmt.Sprintf("[%s WARN]: %s\n", time, str))
+	logger.send(Message{
+		Type:    "warn",
+		Time:    time,
+		Message: str,
+	})
 	fmt.Printf("[%s %s]: %s\n", time, yellow("WARN"), str)
+}
+
+func (logger *Logger) EnableChannel() {
+	logger.chane = true
+	for _, m := range logger.messages {
+		logger.c <- m
+	}
+}
+
+func (logger *Logger) send(message Message) {
+	if logger.chane {
+		logger.c <- message
+	}
 }
 
 func (logger *Logger) write(str string) {
@@ -83,7 +134,7 @@ func New() *Logger {
 			text.WriteString("\n\n")
 		}
 	}
-	return &Logger{file: file, text: text}
+	return &Logger{file: file, text: &text, c: make(chan Message, 1)}
 }
 
 func (logger *Logger) reset() {
