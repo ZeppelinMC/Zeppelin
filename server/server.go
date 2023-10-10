@@ -1,7 +1,6 @@
 package server
 
 import (
-	"crypto/md5"
 	"errors"
 	"net/rpc"
 	"os"
@@ -58,27 +57,11 @@ func (srv *Server) Start() error {
 	}
 }
 
-func NameToUUID(name string) uuid.UUID {
-	version := 3
-	h := md5.New()
-	h.Write([]byte("OfflinePlayer:"))
-	h.Write([]byte(name))
-	var id uuid.UUID
-	h.Sum(id[:0])
-	id[6] = (id[6] & 0x0f) | uint8((version&0xf)<<4)
-	id[8] = (id[8] & 0x3f) | 0x80 // RFC 4122 variant
-	return id
-}
-
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	if srv.ValidateConn(conn) {
 		return
 	}
 	srv.entityCounter++
-
-	if !srv.Config.Online {
-		conn.Info.UUID = NameToUUID(conn.Info.Name)
-	}
 
 	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
 
@@ -86,9 +69,6 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	plyr := player.New(srv.entityCounter, int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance), data)
 	sesh := New(conn, plyr)
-	if !srv.Config.Online {
-		sesh.conn.Info.UUID = NameToUUID(sesh.conn.Info.Name)
-	}
 	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	cntrl.UUID = uuid.String()
 
@@ -166,7 +146,7 @@ func (srv *Server) Reload() error {
 			p.Disconnect(srv.Config.Messages.NotInWhitelist)
 			continue
 		}
-		
+
 		p.player.SetOperator(srv.IsOperator(p.session.Info().UUID))
 
 		p.SendCommands(srv.CommandGraph)
