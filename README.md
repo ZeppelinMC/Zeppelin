@@ -18,4 +18,3 @@ Feel free to contribute by making an issue or pull request
 - [x] Player list / Chat
 - [x] Player movement
 - [x] (Work In Progress) Inventory
-- [x] Commands
