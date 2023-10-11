@@ -4,79 +4,60 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"net/rpc"
 	"os"
-	"os/exec"
-
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
+	"plugin"
+	"runtime"
 )
-
-var handshakeConfig = plugin.HandshakeConfig{
-	MagicCookieKey:   "Plugin",
-	MagicCookieValue: "Plugin",
-	ProtocolVersion:  1,
-}
 
 type Plugin struct {
 	Identifier string
 	OnLoad     func(*Server)
 }
 
-func (p *Plugin) Server(*plugin.MuxBroker) (interface{}, error) {
-	return p, nil
-}
-
-func (p *Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
-	return p, nil
-}
-
-func (srv *Server) LoadPlugins() error {
+func (srv *Server) LoadPlugins() {
+	if runtime.GOOS != "darwin" && runtime.GOOS == "linux" && runtime.GOOS != "freebsd" {
+		srv.Logger.Error("Plugins are not supported on your platform yet. Come back tomorrow.")
+		return
+	}
 	err := os.Mkdir("plugins", 0755)
 	if err != nil {
 		if !errors.Is(err, fs.ErrExist) {
-			return err
+			srv.Logger.Error("Failed to load plugins.")
+			return
 		}
 	}
 	dir, err := os.ReadDir("plugins")
 	if err != nil {
-		fmt.Println(err)
-		return err
+		srv.Logger.Error("Failed to load plugins.")
+		return
 	}
 	for _, file := range dir {
 		srv.Logger.Debug("Loading plugin %s", file.Name())
 		if plugin, err := srv.LoadPlugin("plugins/" + file.Name()); err != nil {
-			return err
+			srv.Logger.Error("Failed to load plugin %s: %s", file.Name(), err)
+			return
 		} else {
-			if plugin == nil {
-				continue
-			}
-			//srv.Plugins[plugin.Identifier] = plugin
-			//srv.Logger.Debug("Finished loading plugin %s", plugin.Identifier)
+			fmt.Println(plugin)
+			srv.Plugins[plugin.Identifier] = plugin
+			srv.Logger.Debug("Finished loading plugin %s", plugin.Identifier)
 		}
 	}
-	return nil
 }
 
-func (srv *Server) LoadPlugin(path string) (interface{}, error) {
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
-		Cmd:             exec.Command(path),
-		Logger: hclog.New(&hclog.LoggerOptions{
-			Level: -1,
-		}),
-	})
-	defer client.Kill()
-
-	rpcClient, _ := client.Client()
-
-	p, err := rpcClient.Dispense("plugin")
-	fmt.Println("yeah!", p.(*Plugin).Identifier, err)
-
-	return nil, nil
+func (srv *Server) LoadPlugin(path string) (*Plugin, error) {
+	p, err := plugin.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	data, err := p.Lookup("Plugin")
+	if err != nil {
+		return nil, err
+	}
+	pl, ok := data.(*Plugin)
+	if !ok {
+		return nil, ErrPluginCantGetData
+	}
+	return pl, nil
 }
 
-var pluginMap = map[string]plugin.Plugin{
-	"plugin": &Plugin{},
-}
+var ErrPluginCantGetData = errors.New("couldn't get plugin data")

@@ -11,6 +11,38 @@ const (
 	EntityPlayerOnly
 )
 
+type argumentType int
+
+const (
+	Bool argumentType = iota
+	Float
+	Double
+	Integer
+	Long
+	String
+)
+
+func NewArgument(name string, t argumentType) Argument {
+	return Argument{
+		Name:   name,
+		Parser: Parser{ID: int32(t)},
+	}
+}
+
+func (a Argument) Min(min uint64) Argument {
+	//todo add checks, dont allow arguments that arent numbers to access this
+	a.Parser.Properties.Flags |= 1
+	a.Parser.Properties.Min = min
+	return a
+}
+
+func (a Argument) Max(max uint64) Argument {
+	//todo add checks, dont allow arguments that arent numbers to access this
+	a.Parser.Properties.Flags |= 2
+	a.Parser.Properties.Max = max
+	return a
+}
+
 func NewBoolArgument(name string) Argument {
 	return Argument{
 		Name: name,
@@ -33,6 +65,18 @@ func NewFloatArgument(name string, properties struct {
 		props.Flags |= 2
 		props.Max = *properties.Max
 	}
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID:         1,
+			Properties: props,
+		},
+	}
+}
+
+func NewFloatArgument2(name string, min, max float32) Argument {
+	props := Properties{Flags: 0x02}
+
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -135,6 +179,15 @@ func NewGamemodeArgument(name string) Argument {
 		Name: name,
 		Parser: Parser{
 			ID: 39,
+		},
+	}
+}
+
+func NewChatComponentArgument(name string) Argument {
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID: 17,
 		},
 	}
 }

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+	"io"
 	"net"
 
 	"github.com/aimjel/minecraft"
@@ -23,29 +25,34 @@ func New(c *minecraft.Conn, s *player.Player) *Session {
 func (s *Session) HandlePackets(controller *PlayerController) error {
 	for {
 		p, err := s.conn.ReadPacket()
-		if err != nil {
+		if errors.Is(err, io.EOF) {
 			return err
 		}
 
 		switch pk := p.(type) {
+		case *packet.PlayerCommandServer:
+			handlers.PlayerCommand(controller, pk.ActionID)
 		case *packet.ChatMessageServer:
-			handlers.ChatMessagePacket(pk.Message)
+			handlers.ChatMessagePacket(controller, pk.Message)
 		case *packet.ChatCommandServer:
 			handlers.ChatCommandPacket(controller, controller.Server.CommandGraph, pk.Command)
 		case *packet.ClientSettings:
-			handlers.ClientSettings(s.state, pk)
-		}
-		switch p.ID() {
-		case 0x14, 0x15, 0x16, 0x17:
-			{
-				handlers.PlayerMovement(controller, s.state, p)
-			}
+			handlers.ClientSettings(controller, s.state, pk)
+		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation:
+			handlers.PlayerMovement(controller, s.state, p)
+		case *packet.PlayerActionServer:
+			handlers.PlayerAction(controller, pk)
+		case *packet.InteractServer:
+			handlers.Interact(controller, pk)
+		case *packet.SwingArmServer:
+			handlers.SwingArm(controller, pk.Hand)
+		case *packet.CommandSuggestionsRequest:
+			handlers.CommandSuggestionsRequest(pk.TransactionId, pk.Text, controller.Server.CommandGraph, controller)
 		}
 	}
 }
 
 func (s *Session) SendPacket(p packet.Packet) error {
-
 	return s.conn.SendPacket(p)
 }
 

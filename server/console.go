@@ -14,28 +14,30 @@ type ConsoleExecutor struct {
 }
 
 func (srv *Server) ScanConsole() {
-	fmt.Print("> ")
+	scanner := bufio.NewScanner(os.Stdin)
 
-	reader := bufio.NewReader(os.Stdin)
-	content, _ := reader.ReadString('\n')
-	content = strings.TrimSpace(content)
+	for scanner.Scan() {
+		txt := scanner.Text()
+		if txt == "" {
+			continue
+		}
 
-	args := strings.Split(content, " ")
-	cmd := args[0]
+		content := strings.TrimSpace(txt)
+		args := strings.Split(content, " ")
 
-	if cmd == "" {
-		return
+		command := srv.CommandGraph.FindCommand(args[0])
+		if command == nil {
+			srv.Logger.Print(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n&n%s&r&c&o<--[HERE]", args[0]))
+			return
+		}
+		command.Execute(commands.CommandContext{
+			Arguments:   args[1:],
+			Executor:    &ConsoleExecutor{Server: srv},
+			FullCommand: content,
+		})
 	}
 
-	defer srv.ScanConsole()
-	command := srv.FindCommand(cmd)
-	if command == nil {
-		fmt.Println(commands.ParseChat(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", cmd)))
-		return
+	if err := scanner.Err(); err != nil {
+		srv.Logger.Error("%v scanning console", err)
 	}
-	command.Execute(commands.CommandContext{
-		Arguments:   args[1:],
-		Executor:    &ConsoleExecutor{Server: srv},
-		FullCommand: content,
-	})
 }

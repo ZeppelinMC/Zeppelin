@@ -10,3 +10,7 @@ whitelist.json
 .DS_Store
 /world
 /plugins
+*.bin
+log
+/cpu.out
+/ram.out

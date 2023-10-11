@@ -2,61 +2,41 @@ package commands
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
-	"github.com/aimjel/minecraft/chat"
 	pk "github.com/aimjel/minecraft/packet"
-	"github.com/fatih/color"
+	"github.com/dynamitemc/dynamite/logger"
 )
 
-type CommandContext struct {
-	Executor    interface{} `js:"executor"`
-	Arguments   []string    `js:"arguments"`
-	FullCommand string      `js:"fullCommand"`
+type SuggestionsContext struct {
+	Executor      interface{}
+	TransactionId int32
+	Arguments     []string
+	FullCommand   string
 }
 
-var colors = map[string]color.Attribute{
-	"black":        color.FgBlack,
-	"dark_blue":    color.FgBlue,
-	"dark_green":   color.FgGreen,
-	"dark_aqua":    color.FgCyan,
-	"dark_red":     color.FgRed,
-	"dark_purple":  color.FgMagenta,
-	"gold":         color.FgYellow,
-	"gray":         color.FgWhite,
-	"dark_gray":    color.FgHiBlack,
-	"blue":         color.FgHiBlue,
-	"green":        color.FgHiGreen,
-	"aqua":         color.FgHiCyan,
-	"red":          color.FgHiRed,
-	"light_purple": color.FgHiMagenta,
-	"yellow":       color.FgHiYellow,
-	"white":        color.FgHiWhite,
-}
-
-func ParseChat(content string) string {
-	content = strings.ReplaceAll(content, "§", "&")
-	msg := chat.NewMessage(content)
-
-	var str string
-	texts := []chat.Message{msg}
-	texts = append(texts, msg.Extra...)
-
-	for _, text := range texts {
-		attrs := []color.Attribute{colors[text.Color]}
-		if text.Bold {
-			attrs = append(attrs, color.Bold)
+func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
+	if p, ok := c.Executor.(interface {
+		SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []pk.SuggestionMatch)
+	}); ok {
+		var start, length int32
+		if len(c.Arguments) > 0 {
+			arg := c.Arguments[len(c.Arguments)-1]
+			start = int32(strings.Index(c.FullCommand, arg))
+			length = int32(len(arg))
+		} else {
+			start = int32(len(c.FullCommand))
+			length = int32(len(c.FullCommand))
 		}
-		if text.Italic {
-			attrs = append(attrs, color.Italic)
-		}
-		if text.Underlined {
-			attrs = append(attrs, color.Underline)
-		}
-		str += color.New(attrs...).SprintFunc()(text.Text)
+		p.SendCommandSuggestionsResponse(c.TransactionId, start, length, suggestions)
 	}
+}
 
-	return str
+type CommandContext struct {
+	Executor    interface{}
+	Arguments   []string
+	FullCommand string
 }
 
 func (ctx *CommandContext) Reply(content string) {
@@ -65,7 +45,7 @@ func (ctx *CommandContext) Reply(content string) {
 	}); ok {
 		p.SystemChatMessage(content)
 	} else {
-		fmt.Println(ParseChat(content))
+		fmt.Println(logger.ParseChat(content))
 	}
 }
 
@@ -89,11 +69,11 @@ const (
 )
 
 type Command struct {
-	Name                string                   `js:"name"`
-	Arguments           []Argument               `js:"arguments"`
-	Aliases             []string                 `js:"aliases"`
-	Execute             func(ctx CommandContext) `js:"execute"`
-	RequiredPermissions []string                 `js:"requiredPermissions"`
+	Name                string
+	Arguments           []Argument
+	Aliases             []string
+	Execute             func(ctx CommandContext)
+	RequiredPermissions []string
 }
 
 type Properties struct {
@@ -103,14 +83,14 @@ type Properties struct {
 }
 
 type Parser struct {
-	ID         int32      `js:"id"`
-	Properties Properties `js:"properties"`
+	ID         int32
+	Properties Properties
 }
 
 type Argument struct {
-	Name           string `js:"name"`
-	SuggestionType string `js:"suggestionType"`
-	Parser         Parser `js:"parser"`
+	Name    string
+	Suggest func(ctx SuggestionsContext)
+	Parser  Parser
 }
 
 type Graph struct {
@@ -152,15 +132,15 @@ func (graph Graph) Data() *pk.DeclareCommands {
 		rootChildren = append(rootChildren, int32(len(packet.Nodes)))
 		packet.Nodes = append(packet.Nodes, pk.Node{
 			Name:  command.Name,
-			Flags: 1,
+			Flags: 1 | 0x04,
 		})
 		for _, argument := range command.Arguments {
 			parent := len(packet.Nodes) - 1
 			packet.Nodes[parent].Children = append(packet.Nodes[parent].Children, int32(len(packet.Nodes)))
 			node := pk.Node{Flags: 2, Name: argument.Name, Properties: argument.Parser.Properties, ParserID: argument.Parser.ID}
-			if argument.SuggestionType != "" {
+			if argument.Suggest != nil {
 				node.Flags |= 0x10
-				node.SuggestionsType = argument.SuggestionType
+				node.SuggestionsType = "minecraft:ask_server"
 			}
 			packet.Nodes = append(packet.Nodes, node)
 		}
@@ -171,4 +151,44 @@ func (graph Graph) Data() *pk.DeclareCommands {
 
 func RegisterCommands(commands ...*Command) *pk.DeclareCommands {
 	return Graph{Commands: commands}.Data()
+}
+
+func (graph *Graph) FindCommand(name string) (cmd *Command) {
+	for _, c := range graph.Commands {
+		if c == nil {
+			continue
+		}
+		if c.Name == name {
+			cmd = c
+			return
+		}
+
+		for _, a := range c.Aliases {
+			if a == name {
+				cmd = c
+				return
+			}
+		}
+	}
+	return
+}
+
+func (graph *Graph) DeleteCommand(name string) (found bool) {
+	for i, c := range graph.Commands {
+		if c == nil {
+			continue
+		}
+		if c.Name == name {
+			graph.Commands = slices.Delete(graph.Commands, i, i+1)
+			return true
+		}
+
+		for _, a := range c.Aliases {
+			if a == name {
+				graph.Commands = slices.Delete(graph.Commands, i, i+1)
+				return true
+			}
+		}
+	}
+	return false
 }

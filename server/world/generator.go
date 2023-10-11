@@ -1,9 +1,17 @@
 package world
 
 import (
+	"bytes"
+	"compress/gzip"
+	"fmt"
 	"math"
 	"math/rand"
 	"os"
+
+	_ "embed"
+
+	"github.com/aimjel/minecraft/nbt"
+	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
 func booltoint(b bool) int {
@@ -37,8 +45,8 @@ func GenerateWorldData(hardcore int8) worldData {
 								Preset: "",
 								Type:   "minecraft:the_end",
 							},
-							Type:     "minecraft:noise",
-							Settings: "minecraft:end",
+							Type: "minecraft:noise",
+							//Settings: "minecraft:end",
 						}, Type: "minecraft:the_end",
 					},
 					Overworld: DimensionData{
@@ -47,8 +55,8 @@ func GenerateWorldData(hardcore int8) worldData {
 								Preset: "minecraft:overworld",
 								Type:   "minecraft:multi_noise",
 							},
-							Type:     "minecraft:noise",
-							Settings: "minecraft:overworld",
+							Type: "minecraft:noise",
+							//Settings: "minecraft:overworld",
 						}, Type: "minecraft:overworld"},
 					Nether: DimensionData{
 						Generator: DimensionGenerator{
@@ -56,8 +64,8 @@ func GenerateWorldData(hardcore int8) worldData {
 								Preset: "minecraft:nether",
 								Type:   "minecraft:multi_noise",
 							},
-							Type:     "minecraft:noise",
-							Settings: "minecraft:nether",
+							Type: "minecraft:noise",
+							//Settings: "minecraft:nether",
 						},
 						Type: "minecraft:the_nether",
 					},
@@ -95,52 +103,52 @@ func GenerateWorldData(hardcore int8) worldData {
 			},
 			BorderDamagePerBlock: 0.2,
 			Initialized:          1,
-			GameRules: GameRules{
-				DoDaylightCycle:               "true",
-				DoInsomnia:                    "true",
-				DoEntityDrops:                 "true",
-				SpectatorsGenerateChunks:      "true",
-				DisableElytraMovementCheck:    "false",
-				DisableRaids:                  "false",
-				CommandModificationBlockLimit: "32768",
-				ForgiveDeadPlayers:            "true",
-				MaxEntityCramming:             "24",
-				SpawnRadius:                   "10",
-				AnnounceAdvancements:          "true",
-				UniversalAnger:                "false",
-				FallDamage:                    "true",
-				RandomTickSpeed:               "3",
-				DoTraderSpawning:              "true",
-				DrowningDamage:                "true",
-				ShowDeathMessages:             "true",
-				PlayersSleepingPercentage:     "100",
-				DoImmediateRespawn:            "false",
-				NaturalRegeneration:           "true",
-				KeepInventory:                 "false",
-				DoVinesSpread:                 "true",
-				DoTileDrops:                   "true",
-				MaxCommandChainLength:         "65536",
-				FireDamage:                    "true",
-				WaterSourceConversion:         "true",
-				CommandBlockOutput:            "true",
-				DoWeatherCycle:                "true",
-				SnowAccumulationHeight:        "1",
-				DoWardenSpawning:              "true",
-				DoFireTick:                    "true",
-				DoPatrolSpawning:              "true",
-				DoMobLoot:                     "true",
-				SendCommandFeedback:           "true",
-				DoMobSpawning:                 "true",
-				MobExplosionDropDecay:         "true",
-				MobGriefing:                   "true",
-				FreezeDamage:                  "true",
-				LogAdminCommands:              "true",
-				GlobalSoundEvents:             "true",
-				TntExplosionDropDecay:         "false",
-				BlockExplosionDropDecay:       "true",
-				DoLimitedCrafting:             "false",
-				ReducedDebugInfo:              "false",
-				LavaSourceConversion:          "false",
+			GameRules: map[string]string{
+				"doDaylightCycle":               "true",
+				"doInsomnia":                    "true",
+				"doEntityDrops":                 "true",
+				"spectatorsGenerateChunks":      "true",
+				"disableElytraMovementCheck":    "false",
+				"disableRaids":                  "false",
+				"commandModificationBlockLimit": "32768",
+				"forgiveDeadPlayers":            "true",
+				"maxEntityCramming":             "24",
+				"spawnRadius":                   "10",
+				"announceAdvancements":          "true",
+				"universalAnger":                "false",
+				"fallDamage":                    "true",
+				"randomTickSpeed":               "3",
+				"doTraderSpawning":              "true",
+				"drowningDamage":                "true",
+				"showDeathMessages":             "true",
+				"playersSleepingPercentage":     "100",
+				"doImmediateRespawn":            "false",
+				"naturalRegeneration":           "true",
+				"keepInventory":                 "false",
+				"doVinesSpread":                 "true",
+				"doTileDrops":                   "true",
+				"maxCommandChainLength":         "65536",
+				"fireDamage":                    "true",
+				"waterSourceConversion":         "true",
+				"commandBlockOutput":            "true",
+				"doWeatherCycle":                "true",
+				"snowAccumulationHeight":        "1",
+				"doWardenSpawning":              "true",
+				"doFireTick":                    "true",
+				"doPatrolSpawning":              "true",
+				"doMobLoot":                     "true",
+				"sendCommandFeedback":           "true",
+				"doMobSpawning":                 "true",
+				"mobExplosionDropDecay":         "true",
+				"mobGriefing":                   "true",
+				"freezeDamage":                  "true",
+				"logAdminCommands":              "true",
+				"globalSoundEvents":             "true",
+				"tntExplosionDropDecay":         "false",
+				"blockExplosionDropDecay":       "true",
+				"doLimitedCrafting":             "false",
+				"reducedDebugInfo":              "false",
+				"lavaSourceConversion":          "false",
 			},
 			//SpawnZ:         208,
 			BorderSafeZone: 5,
@@ -158,7 +166,7 @@ func GenerateWorldData(hardcore int8) worldData {
 
 func CreateWorld(hardcore bool) {
 	hc := int8(booltoint(hardcore))
-	_ = GenerateWorldData(hc)
+	world := GenerateWorldData(hc)
 
 	os.Mkdir("world", 0755)
 	os.Mkdir("world/data", 0755)
@@ -168,11 +176,38 @@ func CreateWorld(hardcore bool) {
 	os.Mkdir("world/poi", 0755)
 	os.Mkdir("world/region", 0755)
 
-	_, _ = os.Create("world/level.nbt")
 	os.WriteFile("world/session.lock", nil, 0755)
 
-	/*writer := gzip.NewWriter(lvl)
-	f, _ := nbt.Marshal(data)
-	writer.Write(f)
-	lvl.Close()*/
+	file, _ := os.Create("world/level.dat")
+
+	buf := bytes.NewBuffer(nil)
+	enc := nbt.NewEncoder(buf)
+	err := enc.Encode(world)
+	fmt.Println(err)
+
+	writer := gzip.NewWriter(file)
+	writer.Write(buf.Bytes())
+	writer.Close()
+	file.Close()
+}
+
+func (w *World) Save() {
+	buf := bytes.NewBuffer(nil)
+	writer := gzip.NewWriter(buf)
+	enc := nbt.NewEncoder(writer)
+	enc.Encode(w.nbt)
+	os.WriteFile("world/level.dat", buf.Bytes(), 0755)
+}
+
+type Generator interface {
+	Generate(x, z int32) (*chunk.Chunk, error)
+}
+
+type FlatGenerator struct{}
+
+//go:embed flatchunk.nbt
+var flatchunk []byte
+
+func (f *FlatGenerator) Generate(x, z int32) (*chunk.Chunk, error) {
+	return chunk.NewAnvilChunk(flatchunk)
 }

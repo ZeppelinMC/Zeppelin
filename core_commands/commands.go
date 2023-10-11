@@ -7,5 +7,9 @@ var Commands = &commands.Graph{
 		test_cmd,
 		reload_cmd,
 		gamemode_cmd,
+		restart_cmd,
+		ram_cmd,
+		kill_cmd,
+		gamerule_cmd,
 	},
 }

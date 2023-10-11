@@ -51,12 +51,12 @@ var gamemode_cmd = &commands.Command{
 			}
 			player = p
 		}
-		if player.GameMode() == byte(gm) {
+		if int(player.GameMode()) == gm {
 			return
 		}
 		player.SetGameMode(byte(gm))
 		msg := fmt.Sprintf("Set %s's game mode to %s Mode", player.Name(), pascalify(ctx.Arguments[0]))
-		if player.UUID == ctx.Executor.(*server.PlayerController).UUID {
+		if exe, ok := ctx.Executor.(*server.PlayerController); ok && player.UUID == exe.UUID {
 			msg = fmt.Sprintf("Set own game mode to %s Mode", pascalify(ctx.Arguments[0]))
 		}
 		ctx.Reply(msg)
