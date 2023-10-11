@@ -24,7 +24,7 @@ function connect() {
     switch (msg.type) {
       case "sync": {
         clear();
-        sync(msg.data);
+        syncLog(msg.data.log);
         break;
       }
       case "log": {
@@ -38,7 +38,7 @@ function connect() {
   };
 }
 
-function sync(text) {
+function syncLog(text) {
   const msgs = text.split("\n");
   msgs.forEach(function (m) {
     const msg = JSON.parse(m);
@@ -47,26 +47,43 @@ function sync(text) {
 }
 
 function log(msg) {
-  let type = "";
-  switch (msg.type) {
-    case "info": {
-      type += `<a class="consoletext" style="color: #1F74E2">INFO</a>`;
-      break;
+  if (msg.type == "chat") {
+    msg = JSON.parse(msg.message);
+    const msgs = [msg];
+    if (msg.extra) {
+      for (const m of msg.extra) {
+        msgs.push(m);
+      }
     }
-    case "debug": {
-      type += `<a class="consoletext" style="color: cyan">DEBUG</a>`;
-      break;
+    let txt = "";
+    for (const m of msgs) {
+      txt += `<a class="consoletext" style="color: ${
+        m.color || "white"
+      }">${m.text.replaceAll("<", "&lt;")}</a>`;
     }
-    case "error": {
-      type += `<a class="consoletext" style="color: red">ERROR</a>`;
-      break;
+    c.innerHTML += txt + "<br/>";
+  } else {
+    let type = "";
+    switch (msg.type) {
+      case "info": {
+        type += `<a class="consoletext" style="color: #1F74E2">INFO</a>`;
+        break;
+      }
+      case "debug": {
+        type += `<a class="consoletext" style="color: cyan">DEBUG</a>`;
+        break;
+      }
+      case "error": {
+        type += `<a class="consoletext" style="color: red">ERROR</a>`;
+        break;
+      }
+      case "warn": {
+        type += `<a class="consoletext" style="color: yellow">ERROR</a>`;
+        break;
+      }
     }
-    case "warn": {
-      type += `<a class="consoletext" style="color: yellow">ERROR</a>`;
-      break;
-    }
+    c.innerHTML += `<a class="consoletext" style="color: gray">${msg.time}</a> ${type}<a class="consoletext" style="color: white">: ${msg.message}</a><br/>`;
   }
-  c.innerHTML += `<a class="consoletext" style="color: gray">${msg.time}</a> ${type}<a class="consoletext" style="color: white">: ${msg.message}</a><br/>`;
 }
 
 function clear() {

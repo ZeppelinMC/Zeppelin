@@ -1,12 +1,9 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
-	"runtime/pprof"
 	"strconv"
 	"time"
 
@@ -19,8 +16,6 @@ import (
 
 var log = logger.New()
 var startTime = time.Now().Unix()
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
-var memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 
 func start(cfg *server.Config) {
 	srv, err := server.Listen(cfg, cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
@@ -32,24 +27,13 @@ func start(cfg *server.Config) {
 	log.Info("Done! (%ds)", time.Now().Unix()-startTime)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+
 	go func() {
 		<-c
 		srv.Close()
-
-		if *memprofile != "" {
-			f, err := os.Create(*memprofile)
-			if err != nil {
-				log.Warn("could not create memory profile: ", err)
-			}
-			defer f.Close() // error handling omitted for example
-			runtime.GC()    // get up-to-date statistics
-			if err := pprof.WriteHeapProfile(f); err != nil {
-				log.Warn("could not write memory profile: ", err)
-			}
-		}
-
 		os.Exit(0)
 	}()
+
 	go srv.ScanConsole()
 	err = srv.Start()
 	if err != nil {
@@ -59,7 +43,6 @@ func start(cfg *server.Config) {
 }
 
 func main() {
-	handleCpuProfile()
 	log.Info("Starting Dynamite 1.20.1 Server")
 
 	var cfg server.Config
@@ -81,19 +64,4 @@ func main() {
 		}
 	}
 	start(&cfg)
-}
-
-func handleCpuProfile() {
-	flag.Parse()
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Warn("could not create CPU profile: ", err)
-		}
-		defer f.Close() // error handling omitted for example
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Warn("could not start CPU profile: ", err)
-		}
-		defer pprof.StopCPUProfile()
-	}
 }

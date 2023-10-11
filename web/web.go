@@ -71,7 +71,7 @@ func (h *handler) HandleConn(c *conn) {
 				return
 			}
 			c.auth = true
-			c.conn.WriteJSON(syncLog(strings.Join(messages, "\n")))
+			c.conn.WriteJSON(sync(strings.Join(messages, "\n")))
 		}
 	}
 }
@@ -147,11 +147,19 @@ func logMessage(m string) map[string]interface{} {
 	}
 }
 
-func syncLog(m string) map[string]interface{} {
+func sync(m string) map[string]interface{} {
 	return map[string]interface{}{
 		"type": "sync",
-		"data": m,
+		"data": map[string]interface{}{
+			"log":     m,
+			"players": []player{},
+		},
 	}
+}
+
+type player struct {
+	UUID string `json:"id"`
+	Name string `json:"name"`
 }
 
 var messages []string

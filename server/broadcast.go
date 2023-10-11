@@ -1,12 +1,11 @@
 package server
 
 import (
-	"fmt"
 	"math"
+	"strings"
 
 	"github.com/aimjel/minecraft/packet"
 	"github.com/aimjel/minecraft/player"
-	"github.com/dynamitemc/dynamite/server/commands"
 )
 
 func (srv *Server) GlobalBroadcast(pk packet.Packet) {
@@ -28,7 +27,7 @@ func (srv *Server) GlobalMessage(message string, sender *PlayerController) {
 			Content: message,
 		})
 	}
-	fmt.Println(commands.ParseChat(message))
+	srv.Logger.Print(message)
 }
 
 func (srv *Server) OperatorMessage(message string) {
@@ -42,7 +41,8 @@ func (srv *Server) OperatorMessage(message string) {
 			Content: message,
 		})
 	}
-	fmt.Println(commands.ParseChat(message))
+	message = strings.ReplaceAll(message, "§", "&")
+	srv.Logger.Print(message)
 }
 
 func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerController, notInArea []*PlayerController) {

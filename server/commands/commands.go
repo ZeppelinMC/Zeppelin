@@ -5,9 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/aimjel/minecraft/chat"
 	pk "github.com/aimjel/minecraft/packet"
-	"github.com/fatih/color"
+	"github.com/dynamitemc/dynamite/logger"
 )
 
 type SuggestionsContext struct {
@@ -40,57 +39,13 @@ type CommandContext struct {
 	FullCommand string
 }
 
-var colors = map[string]color.Attribute{
-	"black":        color.FgBlack,
-	"dark_blue":    color.FgBlue,
-	"dark_green":   color.FgGreen,
-	"dark_aqua":    color.FgCyan,
-	"dark_red":     color.FgRed,
-	"dark_purple":  color.FgMagenta,
-	"gold":         color.FgYellow,
-	"gray":         color.FgWhite,
-	"dark_gray":    color.FgHiBlack,
-	"blue":         color.FgHiBlue,
-	"green":        color.FgHiGreen,
-	"aqua":         color.FgHiCyan,
-	"red":          color.FgHiRed,
-	"light_purple": color.FgHiMagenta,
-	"yellow":       color.FgHiYellow,
-	"white":        color.FgHiWhite,
-}
-
-func ParseChat(content string) string {
-	content = strings.ReplaceAll(content, "§", "&")
-	msg := chat.NewMessage(content)
-
-	var str string
-	texts := []chat.Message{msg}
-	texts = append(texts, msg.Extra...)
-
-	for _, text := range texts {
-		attrs := []color.Attribute{colors[text.Color]}
-		if text.Bold {
-			attrs = append(attrs, color.Bold)
-		}
-		if text.Italic {
-			attrs = append(attrs, color.Italic)
-		}
-		if text.Underlined {
-			attrs = append(attrs, color.Underline)
-		}
-		str += color.New(attrs...).SprintFunc()(text.Text)
-	}
-
-	return str
-}
-
 func (ctx *CommandContext) Reply(content string) {
 	if p, ok := ctx.Executor.(interface {
 		SystemChatMessage(s string) error
 	}); ok {
 		p.SystemChatMessage(content)
 	} else {
-		fmt.Println(ParseChat(content))
+		fmt.Println(logger.ParseChat(content))
 	}
 }
 
