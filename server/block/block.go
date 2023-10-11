@@ -1,7 +1,5 @@
 package block
 
-import "reflect"
-
 type Block interface {
 	EncodedName() string
 
@@ -18,11 +16,29 @@ func GetBlockId(b Block) (int, bool) {
 	block := jsonBlocks[b.EncodedName()]
 
 	for _, state := range block.States {
-		if reflect.DeepEqual(state.Properties, b.Properties()) {
+		//if reflect.DeepEqual(state.Properties, b.Properties()) {
+		//	return state.Id, true
+		//}
+
+		if eq(state.Properties, b.Properties()) {
 			return state.Id, true
 		}
 	}
 	return 0, false
+}
+
+func eq(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for k, v := range a {
+		if w, ok := b[k]; !ok || v != w {
+			return false
+		}
+	}
+
+	return true
 }
 
 type UnknownBlock struct {

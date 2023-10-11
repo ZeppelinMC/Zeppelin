@@ -186,7 +186,6 @@ func (srv *Server) Close() {
 		p.player.Save()
 		p.Disconnect(srv.Config.Messages.ServerClosed)
 	}
-	os.Exit(0)
 }
 
 func (srv *Server) loadFiles() {

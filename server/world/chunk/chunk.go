@@ -2,7 +2,6 @@ package chunk
 
 import (
 	"errors"
-
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/aimjel/minecraft/packet"
 )

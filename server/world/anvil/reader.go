@@ -1,18 +1,23 @@
 package anvil
 
 import (
+	"bytes"
 	"compress/zlib"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
+	"sync"
 
-	"github.com/aimjel/minecraft/protocol"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
-var buffers = protocol.NewBufferPool()
+var buffers = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(make([]byte, 0, 1024*10))
+	},
+}
 
 type Reader struct {
 	//path to the folder where the anvil files are stored
@@ -33,7 +38,7 @@ func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
 
 	defer f.Close()
 
-	offset, sector, err := r.decodeChunkLocation(f, x, z)
+	offset, _, err := r.decodeChunkLocation(f, x, z)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +49,8 @@ func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
 	}
 
 	//will hold the uncompressed nbt data
-	buf := buffers.Get(int(sector))
+	buf := buffers.Get().(*bytes.Buffer)
 	buf.Reset()
-	buffers.Put(buf)
 
 	switch compressionScheme {
 	//todo implement gzip decompression
@@ -66,7 +70,10 @@ func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
 			return nil, err
 		}
 	}
-	return chunk.NewAnvilChunk(buf.Bytes())
+
+	ch, err := chunk.NewAnvilChunk(buf.Bytes())
+	buffers.Put(buf)
+	return ch, err
 }
 
 // decodeChunkLocation decodes the location entry for the x z Chunk coordinates passed.
