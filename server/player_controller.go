@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -233,16 +234,17 @@ func (p *PlayerController) SendSpawnChunks() {
 
 	x1, _, z1 := p.player.Position()
 
-	chunkX := math.Abs(math.Floor(x1/16)) + max
-	chunkZ := math.Abs(math.Floor(z1/16)) + max
+	chunkX := math.Floor(x1 / 16)
+	chunkZ := math.Floor(z1 / 16)
 
-	for x := -chunkX; x <= chunkX; x++ {
-		for z := -chunkZ; z <= chunkZ; z++ {
+	for x := chunkX - max; x <= chunkX+max; x++ {
+		for z := chunkZ - max; z <= chunkZ+max; z++ {
 			if _, ok := p.loadedChunks[[2]int32{int32(x), int32(z)}]; ok {
 				continue
 			}
 			c, err := ow.Chunk(int32(x), int32(z))
 			if err != nil {
+				fmt.Println(err)
 				continue
 			}
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}

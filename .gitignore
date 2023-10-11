@@ -12,3 +12,4 @@ whitelist.json
 /plugins
 *.bin
 log
+/mem.out
