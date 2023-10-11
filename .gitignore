@@ -12,4 +12,5 @@ whitelist.json
 /plugins
 *.bin
 log
-/mem.out
+/cpu.out
+/ram.out

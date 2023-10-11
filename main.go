@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/pprof"
 	"strconv"
 	"time"
 
@@ -16,6 +18,19 @@ import (
 
 var log = logger.New()
 var startTime = time.Now().Unix()
+
+func startProfile() {
+	file, _ := os.Create("cpu.out")
+	pprof.StartCPUProfile(file)
+}
+
+func stopProfile() {
+	pprof.StopCPUProfile()
+	file, _ := os.Create("ram.out")
+	runtime.GC()
+	pprof.WriteHeapProfile(file)
+	file.Close()
+}
 
 func start(cfg *server.Config) {
 	srv, err := server.Listen(cfg, cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
@@ -30,6 +45,9 @@ func start(cfg *server.Config) {
 
 	go func() {
 		<-c
+		if util.HasArg("-prof") {
+			stopProfile()
+		}
 		srv.Close()
 		os.Exit(0)
 	}()
@@ -44,6 +62,10 @@ func start(cfg *server.Config) {
 
 func main() {
 	log.Info("Starting Dynamite 1.20.1 Server")
+	if util.HasArg("-prof") {
+		log.Info("Starting CPU/RAM profiler")
+		startProfile()
+	}
 
 	var cfg server.Config
 	if err := server.LoadConfig("config.toml", &cfg); err != nil {
