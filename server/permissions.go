@@ -6,16 +6,6 @@ import (
 	"os"
 )
 
-/*
-	Permissions:
-		server.command.stop - /stop command
-		server.command.reload - /reload command
-		server.command.op - /op command
-		server.command.gamemode - /gamemode command
-		server.chat - Use chat
-		server.chat.colors - Use chat colors
-*/
-
 var groupCache = make(map[string]GroupPermissions)
 var playerCache = make(map[string]PlayerPermissions)
 
@@ -31,14 +21,35 @@ type GroupPermissions struct {
 	Permissions map[string]bool `json:"permissions"`
 }
 
+func saveCache() {
+	for p, d := range playerCache {
+		j, _ := json.Marshal(d)
+		os.WriteFile(fmt.Sprintf("permissions/players/%s.json", p), j, 0755)
+	}
+	for g, d := range groupCache {
+		j, _ := json.Marshal(d)
+		os.WriteFile(fmt.Sprintf("permissions/groups/%s.json", g), j, 0755)
+	}
+}
+
+func clearCache() {
+	clear(playerCache)
+	clear(groupCache)
+}
+
 func getPlayer(playerId string) PlayerPermissions {
 	if playerCache[playerId].Permissions != nil {
 		return playerCache[playerId]
 	}
 	d, err := os.ReadFile(fmt.Sprintf("permissions/players/%s.json", playerId))
 	if err != nil {
-		os.WriteFile(fmt.Sprintf("permissions/players/%s.json", playerId), []byte(`{"group":"default"}`), 0755)
-		return PlayerPermissions{}
+		os.WriteFile(fmt.Sprintf("permissions/players/%s.json", playerId), []byte(`{"group":"default", "permissions": {"server.chat": true}}`), 0755)
+		return PlayerPermissions{
+			Group: "default",
+			Permissions: map[string]bool{
+				"server.chat": true,
+			},
+		}
 	}
 	var data PlayerPermissions
 	json.Unmarshal(d, &data)

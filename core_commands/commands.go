@@ -11,5 +11,7 @@ var Commands = &commands.Graph{
 		ram_cmd,
 		kill_cmd,
 		gamerule_cmd,
+		ban_cmd,
+		banlist_cmd,
 	},
 }

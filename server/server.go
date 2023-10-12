@@ -135,6 +135,8 @@ func (srv *Server) Reload() error {
 
 	LoadConfig("config.toml", srv.Config)
 
+	clearCache()
+
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 
@@ -181,6 +183,8 @@ func (srv *Server) Close() {
 	for i, file := range files {
 		WritePlayerList(file, lists[i])
 	}
+
+	saveCache()
 
 	for _, p := range srv.Players {
 		p.player.Save()

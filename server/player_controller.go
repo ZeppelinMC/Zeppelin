@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/aimjel/minecraft/packet"
@@ -178,6 +179,7 @@ func (p *PlayerController) Disconnect(reason string) {
 	pk := &packet.DisconnectPlay{}
 	pk.Reason = reason
 	p.session.SendPacket(pk)
+	p.session.conn.Close(nil)
 }
 
 func distance2i(x, z int32) float64 {
@@ -254,6 +256,9 @@ func (p *PlayerController) SendSpawnChunks() {
 }
 
 func (p *PlayerController) Chat(message string) {
+	if !p.HasPermissions([]string{"server.chat"}) {
+		return
+	}
 	prefix, suffix := p.GetPrefixSuffix()
 	msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
 		"player":        p.Name(),
@@ -261,6 +266,20 @@ func (p *PlayerController) Chat(message string) {
 		"player_suffix": suffix,
 		"message":       message,
 	})
+
+	if !p.HasPermissions([]string{"server.chat.colors"}) {
+		// strip colors
+		sp := strings.Split(msg, "")
+		for i, c := range sp {
+			if c == "&" {
+				if sp[i+1] != " " {
+					sp = slices.Delete(sp, i, i+2)
+				}
+			}
+		}
+		msg = strings.Join(sp, "")
+	}
+
 	p.Server.GlobalMessage(msg, p)
 }
 

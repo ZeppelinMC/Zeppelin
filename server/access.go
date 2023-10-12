@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
+	"time"
 
 	"github.com/aimjel/minecraft"
-	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
+	"github.com/google/uuid"
 )
 
 type user struct {
@@ -70,17 +72,16 @@ func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
 	}
 
 	if reason != "" {
-		msg := chat.NewMessage(reason)
-		conn.SendPacket(&packet.DisconnectLogin{Reason: msg.String()})
+		conn.SendPacket(&packet.DisconnectPlay{DisconnectLogin: packet.DisconnectLogin{Reason: reason}})
 	}
 
 	return reason != ""
 }
 
-func (srv *Server) IsPlayerBanned(uuid [16]byte) bool {
-	suuid := hex.EncodeToString(uuid[:])
+func (srv *Server) IsPlayerBanned(u [16]byte) bool {
+	suuid, _ := uuid.FromBytes(u[:])
 	for _, u := range srv.BannedPlayers {
-		if u.UUID == suuid {
+		if u.UUID == suuid.String() {
 			return true
 		}
 	}
@@ -98,10 +99,10 @@ func (srv *Server) IsIPBanned(ip string) bool {
 	return false
 }
 
-func (srv *Server) IsWhitelisted(uuid [16]byte) bool {
-	suuid := hex.EncodeToString(uuid[:])
+func (srv *Server) IsWhitelisted(u [16]byte) bool {
+	suuid, _ := uuid.FromBytes(u[:])
 	for _, u := range srv.WhitelistedPlayers {
-		if u.UUID == suuid {
+		if u.UUID == suuid.String() {
 			return true
 		}
 	}
@@ -118,4 +119,55 @@ func (srv *Server) IsOperator(uuid [16]byte) bool {
 	}
 
 	return false
+}
+
+func (srv *Server) Ban(p *PlayerController, reason string) {
+	t, _ := time.Now().MarshalJSON()
+	srv.BannedPlayers = append(srv.BannedPlayers, user{
+		UUID:    p.UUID,
+		Name:    p.Name(),
+		Created: string(t),
+		Reason:  reason,
+	})
+}
+
+func (srv *Server) Unban(p *PlayerController) {
+	for i, b := range srv.BannedPlayers {
+		if b.UUID == p.UUID {
+			srv.BannedPlayers = slices.Delete(srv.BannedPlayers, i, i+1)
+			return
+		}
+	}
+}
+
+func (srv *Server) MakeOperator(p *PlayerController) {
+	srv.Operators = append(srv.Operators, user{
+		UUID: p.UUID,
+		Name: p.Name(),
+	})
+}
+
+func (srv *Server) MakeNotOperator(p *PlayerController) {
+	for i, op := range srv.Operators {
+		if op.UUID == p.UUID {
+			srv.Operators = slices.Delete(srv.Operators, i, i+1)
+			return
+		}
+	}
+}
+
+func (srv *Server) AddToWhitelist(p *PlayerController) {
+	srv.WhitelistedPlayers = append(srv.WhitelistedPlayers, user{
+		UUID: p.UUID,
+		Name: p.Name(),
+	})
+}
+
+func (srv *Server) RemoveFromWhitelist(p *PlayerController) {
+	for i, w := range srv.WhitelistedPlayers {
+		if w.UUID == p.UUID {
+			srv.WhitelistedPlayers = slices.Delete(srv.WhitelistedPlayers, i, i+1)
+			return
+		}
+	}
 }
