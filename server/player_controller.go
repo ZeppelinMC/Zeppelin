@@ -80,6 +80,13 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 
 	p.session.SendPacket(abps)
 
+	if p.player.Operator() {
+		p.session.SendPacket(&packet.EntityEvent{
+			EntityID: p.player.EntityId(),
+			Status:   28,
+		})
+	}
+
 	p.Teleport(x1, y1, z1, yaw, pitch)
 
 	x, y, z, a := p.Server.World.Spawn()
