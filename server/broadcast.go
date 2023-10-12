@@ -89,6 +89,19 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 	}
 }
 
+func (p *PlayerController) BroadcastSkinData() {
+	cl := p.ClientSettings()
+	var m int32
+	if cl.MainHand == 0 {
+		m = 1
+	}
+	p.Server.GlobalBroadcast(&PacketSetPlayerMetadata{
+		EntityID:           p.player.EntityId(),
+		DisplayedSkinParts: &cl.DisplayedSkinParts,
+		MainHand:           &m,
+	})
+}
+
 func degreesToAngle(degrees float32) byte {
 	return byte(math.Round(float64(degrees) * (256.0 / 360.0)))
 }
@@ -212,7 +225,7 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 func (p *PlayerController) BroadcastPose(pose int32) {
 	inArea, _ := p.PlayersInArea(p.Position())
 	for _, pl := range inArea {
-		pl.session.SendPacket(&PacketSetPose{EntityID: p.player.EntityId(), Pose: pose})
+		pl.session.SendPacket(&PacketSetPlayerMetadata{EntityID: p.player.EntityId(), Pose: &pose})
 	}
 }
 
@@ -225,16 +238,21 @@ func (p *PlayerController) BroadcastPacketAll(pk packet.Packet) {
 
 func (p *PlayerController) BroadcastHealth() {
 	inArea, _ := p.PlayersInArea(p.Position())
+	h := p.player.Health()
 	for _, pl := range inArea {
-		pl.session.SendPacket(&PacketSetHealth{EntityID: p.player.EntityId(), Health: p.player.Health()})
+		pl.session.SendPacket(&PacketSetPlayerMetadata{EntityID: p.player.EntityId(), Health: &h})
 	}
 }
 
 func (p *PlayerController) BroadcastSprinting(val bool) {
-	//inArea, _ := p.PlayersInArea(p.Position())
-	//for _, pl := range inArea {
-	//	//pl.session.SendPacket(&PacketSetPose{EntityID: p.player.EntityId(), Pose: pose})
-	//}
+	inArea, _ := p.PlayersInArea(p.Position())
+	for _, pl := range inArea {
+		data := byte(0)
+		if val {
+			data |= 0x08
+		}
+		pl.session.SendPacket(&PacketSetPlayerMetadata{EntityID: p.player.EntityId(), Data: &data})
+	}
 }
 
 func (srv *Server) PlayerlistUpdate() {
@@ -257,44 +275,49 @@ func (srv *Server) PlayerlistRemove(players ...[16]byte) {
 	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDS: players})
 }
 
-type PacketSetPose struct {
-	EntityID int32
-	Pose     int32
+type PacketSetPlayerMetadata struct {
+	EntityID           int32
+	Pose               *int32
+	Data               *byte
+	Health             *float32
+	DisplayedSkinParts *uint8
+	MainHand           *int32
 }
 
-func (*PacketSetPose) ID() int32 {
+func (*PacketSetPlayerMetadata) ID() int32 {
 	return 0x52
 }
 
-func (*PacketSetPose) Decode(*packet.Reader) error {
+func (*PacketSetPlayerMetadata) Decode(*packet.Reader) error {
 	return nil
 }
 
-func (s PacketSetPose) Encode(w packet.Writer) error {
+func (s PacketSetPlayerMetadata) Encode(w packet.Writer) error {
 	w.VarInt(s.EntityID)
-	w.Uint8(6)
-	w.VarInt(20)
-	w.VarInt(s.Pose)
-	return w.Uint8(0xFF)
-}
-
-type PacketSetHealth struct {
-	EntityID int32
-	Health   float32
-}
-
-func (*PacketSetHealth) ID() int32 {
-	return 0x52
-}
-
-func (*PacketSetHealth) Decode(*packet.Reader) error {
-	return nil
-}
-
-func (s PacketSetHealth) Encode(w packet.Writer) error {
-	w.VarInt(s.EntityID)
-	w.Uint8(9)
-	w.VarInt(1)
-	w.Float32(s.Health)
+	if s.Pose != nil {
+		w.Uint8(6)
+		w.VarInt(20)
+		w.VarInt(*s.Pose)
+	}
+	if s.Data != nil {
+		w.Uint8(0)
+		w.Uint8(0)
+		w.Uint8(*s.Data)
+	}
+	if s.Health != nil {
+		w.Uint8(9)
+		w.VarInt(1)
+		w.Float32(*s.Health)
+	}
+	if s.DisplayedSkinParts != nil {
+		w.Uint8(17)
+		w.VarInt(0)
+		w.Uint8(*s.DisplayedSkinParts)
+	}
+	if s.MainHand != nil {
+		w.Uint8(18)
+		w.VarInt(0)
+		w.Uint8(uint8(*s.MainHand))
+	}
 	return w.Uint8(0xFF)
 }

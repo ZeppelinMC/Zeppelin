@@ -19,6 +19,7 @@ type Controller interface {
 	Hit(entityId int32)
 	BroadcastAnimation(animation uint8)
 	SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []packet.SuggestionMatch)
+	BroadcastSkinData()
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

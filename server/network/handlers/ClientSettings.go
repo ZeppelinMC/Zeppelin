@@ -6,5 +6,6 @@ import (
 )
 
 func ClientSettings(controller Controller, state *player.Player, pk *packet.ClientSettings) {
+	controller.BroadcastSkinData()
 	state.SetClientSettings(player.ClientInformation(*pk))
 }

@@ -69,10 +69,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	abs := p.player.SavedAbilities()
 	abps := &packet.PlayerAbilities{FlyingSpeed: abs.FlySpeed, FieldOfViewModifier: 0.1}
 	if abs.Flying != 0 {
-		abps.Flags |= 0x02
-	}
-	if abs.Mayfly != 0 {
-		abps.Flags |= 0x04
+		abps.Flags |= 0x06
 	}
 	if p.player.GameMode() == 1 {
 		abps.Flags |= 0x08
@@ -489,4 +486,42 @@ func (p *PlayerController) SendCommandSuggestionsResponse(id int32, start int32,
 		Length:        length,
 		Matches:       matches,
 	})
+}
+
+type Tag struct {
+	Name    string
+	Entries []int32
+}
+
+type TagType struct {
+	Type string
+	Tags []Tag
+}
+
+type UpdateTags struct {
+	Tags []TagType
+}
+
+func (*UpdateTags) ID() int32 {
+	return 0x6E
+}
+
+func (*UpdateTags) Decode(*packet.Reader) error {
+	return nil
+}
+
+func (s UpdateTags) Encode(w packet.Writer) error {
+	w.VarInt(int32(len(s.Tags)))
+	for _, t := range s.Tags {
+		w.String(t.Type)
+		w.VarInt(int32(len(t.Tags)))
+		for _, tag := range t.Tags {
+			w.String(tag.Name)
+			w.VarInt(int32(len(tag.Entries)))
+			for _, e := range tag.Entries {
+				w.VarInt(e)
+			}
+		}
+	}
+	return nil
 }
