@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/pelletier/go-toml/v2"
 	"os"
 	"os/signal"
 	"runtime"
@@ -71,6 +72,9 @@ func main() {
 	if err := server.LoadConfig("config.toml", &cfg); err != nil {
 		log.Info("%v loading config.toml. Using default config", err)
 		cfg = server.DefaultConfig
+
+		f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
+		toml.NewEncoder(f).Encode(cfg)
 	}
 	log.Debug("Loaded config")
 
