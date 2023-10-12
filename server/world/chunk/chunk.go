@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"errors"
+
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/aimjel/minecraft/packet"
 )
@@ -16,6 +17,8 @@ type Chunk struct {
 	x, z int32
 
 	heightMap *HeightMap
+
+	Entities []Entity
 
 	sections []*section
 }

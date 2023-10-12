@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/aimjel/minecraft/nbt"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
@@ -19,13 +20,77 @@ var buffers = sync.Pool{
 	},
 }
 
-type Reader struct {
-	//path to the folder where the anvil files are stored
-	path string
+var buffers1 = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(make([]byte, 0, 1024*10))
+	},
 }
 
-func NewReader(path string) *Reader {
-	return &Reader{path: path}
+type Reader struct {
+	//path to the folder where the anvil files are stored
+	path         string
+	entitiespath string
+}
+
+func NewReader(path, entitiespath string) *Reader {
+	return &Reader{path: path, entitiespath: entitiespath}
+}
+
+type anvilChunkEntities struct {
+	Position    []int32        `nbt:"Position"`
+	DataVersion int32          `nbt:"DataVersion"`
+	Entities    []chunk.Entity `nbt:"Entities"`
+}
+
+func (r *Reader) ReadChunkEntities(x, z int32) ([]chunk.Entity, error) {
+	chunkFile := "r." + strconv.FormatInt(int64(x>>5), 10) + "." + strconv.FormatInt(int64(z>>5), 10) + ".mca"
+
+	f, err := os.Open(r.entitiespath + chunkFile)
+	if err != nil {
+		return nil, fmt.Errorf("%v reading chunk %v %v", err, x, z)
+	}
+
+	defer f.Close()
+
+	offset, _, err := r.decodeChunkLocation(f, x, z)
+	if err != nil {
+		return nil, err
+	}
+
+	chunkLength, compressionScheme, err := r.decodeChunkHeader(f, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	//will hold the uncompressed nbt data
+	buf := buffers1.Get().(*bytes.Buffer)
+	buf.Reset()
+
+	switch compressionScheme {
+	//todo implement gzip decompression
+
+	//zlib decompression
+	case 2:
+		//todo handle error
+		//chunk header takes up 5 bytes
+		f.Seek(int64(offset+5), io.SeekStart)
+
+		rd, err := zlib.NewReader(io.LimitReader(f, int64(chunkLength)))
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err = buf.ReadFrom(rd); err != nil {
+			return nil, err
+		}
+	}
+	var e anvilChunkEntities
+	err = nbt.Unmarshal(buf.Bytes(), &e)
+	if err != nil {
+		return nil, err
+	}
+	buffers1.Put(buf)
+	return e.Entities, nil
 }
 
 func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {

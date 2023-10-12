@@ -50,6 +50,8 @@ func (d *Dimension) Chunk(x, z int32) (*chunk.Chunk, error) {
 			return nil, err
 		}
 	}
+	ents, _ := d.rd.ReadChunkEntities(x, z)
+	ch.Entities = ents
 
 	d.mu.Lock()
 	defer d.mu.Unlock()

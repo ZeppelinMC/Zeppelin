@@ -31,8 +31,7 @@ func OpenWorld(name string, flat bool) (*World, error) {
 		return nil, fmt.Errorf("%v loading world level data", err)
 	}
 
-	rd := anvil.NewReader(name + "/region/")
-	wrld.overworld = NewDimension("minecraft:overworld", rd)
+	wrld.overworld = NewDimension("minecraft:overworld", anvil.NewReader(name+"/region/", name+"/entities/"))
 	if flat {
 		wrld.overworld.generator = &FlatGenerator{}
 	}

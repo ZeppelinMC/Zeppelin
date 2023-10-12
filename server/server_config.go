@@ -1,9 +1,10 @@
 package server
 
 import (
-	"github.com/pelletier/go-toml/v2"
 	"os"
 	"sync"
+
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/aimjel/minecraft"
 	"github.com/dynamitemc/dynamite/logger"
@@ -55,6 +56,7 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		World:        w,
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
+		Entities:     make(map[int32]*Entity),
 		CommandGraph: commandGraph,
 		Plugins:      make(map[string]*Plugin),
 	}

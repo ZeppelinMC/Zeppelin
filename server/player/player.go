@@ -125,6 +125,16 @@ func (p *Player) SavedRotation() (yaw, pitch float32) {
 	return p.data.Rotation[0], p.data.Rotation[1]
 }
 
+func (p *Player) SavedOnGround() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.data.OnGround != 0
+}
+
+func (p *Player) SavedAbilities() world.Abilities {
+	return p.data.Abilities
+}
+
 func (p *Player) Save() {
 	o := int8(0)
 	if p.onGround {

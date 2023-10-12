@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -10,8 +9,8 @@ import (
 
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
-	"github.com/dynamitemc/dynamite/server/item"
 	"github.com/dynamitemc/dynamite/server/player"
+	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -66,6 +65,21 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 	p.Teleport(x1, y1, z1, yaw, pitch)
 	p.SendSpawnChunks()
+
+	abs := p.player.SavedAbilities()
+	abps := &packet.PlayerAbilities{FlyingSpeed: abs.FlySpeed, FieldOfViewModifier: 0.1}
+	if abs.Flying != 0 {
+		abps.Flags |= 0x02
+	}
+	if abs.Mayfly != 0 {
+		abps.Flags |= 0x04
+	}
+	if p.player.GameMode() == 1 {
+		abps.Flags |= 0x08
+	}
+
+	p.session.SendPacket(abps)
+
 	p.Teleport(x1, y1, z1, yaw, pitch)
 
 	x, y, z, a := p.Server.World.Spawn()
@@ -95,13 +109,16 @@ func (p *PlayerController) SetHealth(health float32) {
 
 func (p *PlayerController) Kill(message string) {
 	p.BroadcastHealth()
-	p.BroadcastPose(7)
 	if f, _ := world.GameRule(p.Server.World.Gamerules()["doImmediateRespawn"]).Bool(); !f {
 		p.session.SendPacket(&packet.GameEvent{
 			Event: 11,
 			Value: 0,
 		})
 	}
+	p.BroadcastPacketAll(&packet.DamageEvent{
+		EntityID:     p.player.EntityId(),
+		SourceTypeID: 0,
+	})
 	p.session.SendPacket(&packet.CombatDeath{
 		Message:  message,
 		PlayerID: p.player.EntityId(),
@@ -246,11 +263,43 @@ func (p *PlayerController) SendSpawnChunks() {
 			}
 			c, err := ow.Chunk(int32(x), int32(z))
 			if err != nil {
-				fmt.Println(err)
 				continue
 			}
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
 			p.session.SendPacket(c.Data())
+
+			for _, en := range c.Entities {
+				u, _ := world.NBTToUUID(en.UUID)
+
+				var e *Entity
+
+				if f := p.Server.FindEntityByUUID(u); f != nil {
+					if d, ok := f.(*Entity); ok {
+						e = d
+					}
+				} else {
+					e = p.Server.NewEntity(en)
+				}
+
+				t, ok := registry.GetEntity(e.data.Id)
+				if !ok {
+					continue
+				}
+
+				p.session.SendPacket(&packet.SpawnEntity{
+					EntityID:  e.ID,
+					UUID:      u,
+					X:         e.data.Pos[0],
+					Y:         e.data.Pos[1],
+					Z:         e.data.Pos[2],
+					Pitch:     degreesToAngle(e.data.Rotation[1]),
+					Yaw:       degreesToAngle(e.data.Rotation[0]),
+					VelocityX: int16(e.data.Motion[0]),
+					VelocityY: int16(e.data.Motion[1]),
+					VelocityZ: int16(e.data.Motion[2]),
+					Type:      t.ProtocolID,
+				})
+			}
 		}
 	}
 }
@@ -384,7 +433,7 @@ func (m SetContainerContent) Encode(w packet.Writer) error {
 	}
 	w.VarInt(int32(len(m.Slots)))
 	for _, s := range m.Slots {
-		i, ok := item.GetItem(s.Id)
+		i, ok := registry.GetItem(s.Id)
 		if !ok {
 			w.Bool(false)
 			continue

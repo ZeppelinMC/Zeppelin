@@ -39,6 +39,8 @@ type Server struct {
 
 	entityCounter int32
 
+	Entities map[int32]*Entity
+
 	World *world.World
 
 	mu *sync.RWMutex
@@ -149,6 +151,32 @@ func (srv *Server) Reload() error {
 		p.player.SetOperator(srv.IsOperator(p.session.Info().UUID))
 
 		p.SendCommands(srv.CommandGraph)
+	}
+	return nil
+}
+
+func (srv *Server) FindEntity(id int32) interface{} {
+	if p := srv.FindPlayerByID(id); p != nil {
+		return p
+	} else {
+		srv.mu.RLock()
+		defer srv.mu.RUnlock()
+		return srv.Entities[id]
+	}
+}
+
+func (srv *Server) FindEntityByUUID(id [16]byte) interface{} {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, p := range srv.Players {
+		if p.session.conn.Info.UUID == id {
+			return p
+		}
+	}
+	for _, e := range srv.Entities {
+		if e.UUID == id {
+			return e
+		}
 	}
 	return nil
 }

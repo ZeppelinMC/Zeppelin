@@ -1,5 +1,17 @@
 github.com/aimjel/minecraft v0.0.0-20231009162531-d6d25f41b74e h1:wYRqwfYRe45uX4I0fVHZWt7DED9cw875IMalI3RXSb8=
 github.com/aimjel/minecraft v0.0.0-20231009162531-d6d25f41b74e/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231012155713-aa3967b606bb h1:o6i0pGrVCerIo1Se1PRMbLFxo8skN7UZ6kcRUXL4k1w=
+github.com/aimjel/minecraft v0.0.0-20231012155713-aa3967b606bb/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231012161134-e3978bfc09d1 h1:7z5N7TcPJ5jxBvShXxxM9x2+iHbu1O22HohY/NkHaJo=
+github.com/aimjel/minecraft v0.0.0-20231012161134-e3978bfc09d1/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231012164606-3d2b075a9ec2 h1:/zF2GPLJ2HzXSqiD3CwgqaGGb490jA98P9ljxadGvpk=
+github.com/aimjel/minecraft v0.0.0-20231012164606-3d2b075a9ec2/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231012193531-5891f87e12c7 h1:c2tm6fNRNPm3WGffusCirRopB9mBHJLywwBi8bkSE9k=
+github.com/aimjel/minecraft v0.0.0-20231012193531-5891f87e12c7/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231012201851-bb2ae56a84e0 h1:fvkUWwHLrEf7FAMYB++hDqnLXAfLLxq+B9Er+qkI3eo=
+github.com/aimjel/minecraft v0.0.0-20231012201851-bb2ae56a84e0/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231012202156-de114431b695 h1:G0UOqFBeACIqvcX0uNfdROVmdL1pixbwT2u3NX8DErs=
+github.com/aimjel/minecraft v0.0.0-20231012202156-de114431b695/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

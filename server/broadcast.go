@@ -99,21 +99,25 @@ func positionIsValid(x, y, z float64) bool {
 }
 
 func (p *PlayerController) Hit(entityId int32) {
-	pl := p.Server.FindPlayerByID(entityId)
-	if pl.GameMode() == 1 {
-		return
+	e := p.Server.FindEntity(entityId)
+	if pl, ok := e.(*PlayerController); ok {
+		if pl.GameMode() == 1 {
+			return
+		}
+		//p.BroadcastPose(4)
+		health := pl.player.Health()
+		pl.SetHealth(health - 1)
 	}
-	//p.BroadcastPose(4)
-	health := pl.player.Health()
-	pl.SetHealth(health - 1)
-	inarea, _ := p.AllPlayersInArea(p.Position())
-	yaw, _ := p.Rotation()
-	for _, v := range inarea {
-		v.session.SendPacket(&packet.HurtAnimation{
-			EntityID: pl.player.EntityId(),
-			Yaw:      yaw,
-		})
-	}
+	x, y, z := p.Position()
+	p.BroadcastPacketAll(&packet.DamageEvent{
+		EntityID:        entityId,
+		SourceTypeID:    1,
+		SourceCauseID:   p.player.EntityId() + 1,
+		SourceDirectID:  p.player.EntityId() + 1,
+		SourcePositionX: &x,
+		SourcePositionY: &y,
+		SourcePositionZ: &z,
+	})
 }
 
 func (p *PlayerController) Despawn() {
@@ -209,6 +213,13 @@ func (p *PlayerController) BroadcastPose(pose int32) {
 	inArea, _ := p.PlayersInArea(p.Position())
 	for _, pl := range inArea {
 		pl.session.SendPacket(&PacketSetPose{EntityID: p.player.EntityId(), Pose: pose})
+	}
+}
+
+func (p *PlayerController) BroadcastPacketAll(pk packet.Packet) {
+	inArea, _ := p.AllPlayersInArea(p.Position())
+	for _, pl := range inArea {
+		pl.session.SendPacket(pk)
 	}
 }
 

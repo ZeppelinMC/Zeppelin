@@ -126,6 +126,7 @@ func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
 	}
 	gzipRd, err := gzip.NewReader(f)
 	if err != nil {
+		data = world.GeneratePlayerData(uuid)
 		return
 	}
 
