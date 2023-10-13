@@ -140,6 +140,15 @@ func (srv *Server) Unban(p *PlayerController) {
 	}
 }
 
+func (srv *Server) UnbanName(name string) {
+	for i, b := range srv.BannedPlayers {
+		if b.Name == name {
+			srv.BannedPlayers = slices.Delete(srv.BannedPlayers, i, i+1)
+			return
+		}
+	}
+}
+
 func (srv *Server) MakeOperator(p *PlayerController) {
 	p.player.SetOperator(true)
 	srv.Operators = append(srv.Operators, user{
