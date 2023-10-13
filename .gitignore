@@ -1,6 +1,6 @@
 resources
 configs/config.toml
-dynamite
+/dynamite*
 .idea
 banned_ips.json
 banned_players.json

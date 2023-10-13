@@ -10,6 +10,9 @@ import (
 var ram_cmd = &commands.Command{
 	Name:    "ram",
 	Aliases: []string{"mem"},
+	RequiredPermissions: []string{
+		"server.command.ram",
+	},
 	Execute: func(ctx commands.CommandContext) {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
