@@ -22,6 +22,8 @@ type GroupPermissions struct {
 }
 
 func saveCache() {
+	os.MkdirAll("permissions/players", 0755)
+	os.Mkdir("permissions/groups", 0755)
 	for p, d := range playerCache {
 		j, _ := json.Marshal(d)
 		os.WriteFile(fmt.Sprintf("permissions/players/%s.json", p), j, 0755)
@@ -43,13 +45,11 @@ func getPlayer(playerId string) PlayerPermissions {
 	}
 	d, err := os.ReadFile(fmt.Sprintf("permissions/players/%s.json", playerId))
 	if err != nil {
-		os.WriteFile(fmt.Sprintf("permissions/players/%s.json", playerId), []byte(`{"group":"default", "permissions": {"server.chat": true}}`), 0755)
-		return PlayerPermissions{
+		p := PlayerPermissions{
 			Group: "default",
-			Permissions: map[string]bool{
-				"server.chat": true,
-			},
 		}
+		playerCache[playerId] = p
+		return p
 	}
 	var data PlayerPermissions
 	json.Unmarshal(d, &data)
@@ -62,7 +62,9 @@ func getGroup(group string) GroupPermissions {
 	}
 	d, err := os.ReadFile(fmt.Sprintf("permissions/groups/%s.json", group))
 	if err != nil {
-		return GroupPermissions{}
+		p := GroupPermissions{Permissions: map[string]bool{"server.chat": true}}
+		groupCache[group] = p
+		return p
 	}
 	var data GroupPermissions
 	json.Unmarshal(d, &data)
