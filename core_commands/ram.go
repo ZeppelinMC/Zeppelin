@@ -16,10 +16,10 @@ var ram_cmd = &commands.Command{
 	Execute: func(ctx commands.CommandContext) {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
-		ctx.Reply(fmt.Sprintf("Allocated: %v MiB, Total Allocated: %v MiB, Heap in Use: %v MiB", bToMb(m.Alloc), bToMb(m.TotalAlloc), bToMb(m.HeapInuse)))
+		ctx.Reply(fmt.Sprintf("Allocated: %v MiB, Total Allocated: %v MiB, Heap in Use: %v MiB", bytesToMegabytes(m.Alloc), bytesToMegabytes(m.TotalAlloc), bytesToMegabytes(m.HeapInuse)))
 	},
 }
 
-func bToMb(b uint64) uint64 {
+func bytesToMegabytes(b uint64) uint64 {
 	return b / 1024 / 1024
 }
