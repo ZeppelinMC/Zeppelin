@@ -25,7 +25,7 @@ func (srv *Server) ScanConsole() {
 		content := strings.TrimSpace(txt)
 		args := strings.Split(content, " ")
 
-		command := srv.CommandGraph.FindCommand(args[0])
+		command := srv.commandGraph.FindCommand(args[0])
 		if command == nil {
 			srv.Logger.Print(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n&n%s&r&c&o<--[HERE]", args[0]))
 			return

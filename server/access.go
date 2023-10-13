@@ -141,6 +141,7 @@ func (srv *Server) Unban(p *PlayerController) {
 }
 
 func (srv *Server) MakeOperator(p *PlayerController) {
+	p.player.SetOperator(true)
 	srv.Operators = append(srv.Operators, user{
 		UUID: p.UUID,
 		Name: p.Name(),
@@ -148,6 +149,7 @@ func (srv *Server) MakeOperator(p *PlayerController) {
 }
 
 func (srv *Server) MakeNotOperator(p *PlayerController) {
+	p.player.SetOperator(false)
 	for i, op := range srv.Operators {
 		if op.UUID == p.UUID {
 			srv.Operators = slices.Delete(srv.Operators, i, i+1)

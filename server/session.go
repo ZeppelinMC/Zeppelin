@@ -35,7 +35,7 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 		case *packet.ChatMessageServer:
 			handlers.ChatMessagePacket(controller, pk.Message)
 		case *packet.ChatCommandServer:
-			handlers.ChatCommandPacket(controller, controller.Server.CommandGraph, pk.Command)
+			handlers.ChatCommandPacket(controller, controller.Server.commandGraph, pk.Command)
 		case *packet.ClientSettings:
 			handlers.ClientSettings(controller, s.state, pk)
 		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation:
@@ -47,7 +47,7 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 		case *packet.SwingArmServer:
 			handlers.SwingArm(controller, pk.Hand)
 		case *packet.CommandSuggestionsRequest:
-			handlers.CommandSuggestionsRequest(pk.TransactionId, pk.Text, controller.Server.CommandGraph, controller)
+			handlers.CommandSuggestionsRequest(pk.TransactionId, pk.Text, controller.Server.commandGraph, controller)
 		}
 	}
 }

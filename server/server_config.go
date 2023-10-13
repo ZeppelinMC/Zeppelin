@@ -57,7 +57,7 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		mu:           &sync.RWMutex{},
 		Players:      make(map[string]*PlayerController),
 		Entities:     make(map[int32]*Entity),
-		CommandGraph: commandGraph,
+		commandGraph: commandGraph,
 		Plugins:      make(map[string]*Plugin),
 	}
 

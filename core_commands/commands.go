@@ -13,5 +13,7 @@ var Commands = &commands.Graph{
 		gamerule_cmd,
 		ban_cmd,
 		banlist_cmd,
+		op_cmd,
+		deop_cmd,
 	},
 }

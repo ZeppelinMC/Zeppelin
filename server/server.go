@@ -21,7 +21,7 @@ import (
 type Server struct {
 	Config       *Config
 	Logger       *logger.Logger
-	CommandGraph *commands.Graph
+	commandGraph *commands.Graph
 
 	Plugins map[string]*Plugin
 
@@ -77,7 +77,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		}
 	}
 
-	cntrl.SendCommands(srv.CommandGraph)
+	cntrl.SendCommands(srv.commandGraph)
 
 	srv.addPlayer(cntrl)
 	if err := cntrl.Login(srv.World.Overworld()); err != nil {
@@ -122,7 +122,7 @@ func (srv *Server) addPlayer(p *PlayerController) {
 }
 
 func (srv *Server) GetCommandGraph() *commands.Graph {
-	return srv.CommandGraph
+	return srv.commandGraph
 }
 
 func (srv *Server) Translate(msg string, data map[string]string) string {
@@ -150,7 +150,7 @@ func (srv *Server) Reload() error {
 
 		p.player.SetOperator(srv.IsOperator(p.session.Info().UUID))
 
-		p.SendCommands(srv.CommandGraph)
+		p.SendCommands(srv.commandGraph)
 	}
 	return nil
 }
