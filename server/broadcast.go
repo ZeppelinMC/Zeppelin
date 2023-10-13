@@ -160,6 +160,10 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
 	inArea, notInArea := p.PlayersInArea(x1, y1, z1)
 
+	if distance > 8 {
+		id = 0
+	}
+
 	for _, pl := range notInArea {
 		if pl.IsSpawned(p.player.EntityId()) {
 			pl.DespawnPlayer(p)

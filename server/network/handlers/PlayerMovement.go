@@ -10,6 +10,9 @@ func PlayerMovement(
 	state *player.Player,
 	p packet.Packet,
 ) {
+	if state.IsDead() {
+		return
+	}
 	x, y, z := state.Position()
 	yaw, pitch := state.Rotation()
 	switch pk := p.(type) {

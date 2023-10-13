@@ -95,6 +95,7 @@ var DefaultConfig = Config{
 		ReloadComplete:          "§aReload complete.",
 		ServerClosed:            "Server closed.",
 		OnlineMode:              "The server is in online mode.",
+		Slain:                   "%player% was slain by %killer%",
 	},
 	Web: Web{
 		ServerIP:   "0.0.0.0",
@@ -135,6 +136,7 @@ type Messages struct {
 	ReloadComplete          string `toml:"reload_complete"`
 	ServerClosed            string `toml:"server_closed"`
 	OnlineMode              string `toml:"online_mode"`
+	Slain                   string `toml:"slain"`
 }
 
 type Chat struct {

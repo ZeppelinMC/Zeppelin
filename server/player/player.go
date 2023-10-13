@@ -12,6 +12,7 @@ type Player struct {
 	isHardCore bool
 	gameMode   byte
 
+	dead           bool
 	health         float32
 	food           int32
 	foodSaturation float32
@@ -62,6 +63,18 @@ func (p *Player) Dimension() *world.Dimension {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.dimension
+}
+
+func (p *Player) IsDead() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.dead
+}
+
+func (p *Player) SetDead(a bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.dead = a
 }
 
 func (p *Player) SetDimension(d *world.Dimension) {

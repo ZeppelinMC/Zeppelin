@@ -31,6 +31,7 @@ func (p *PlayerController) Name() string {
 }
 
 func (p *PlayerController) Respawn(d *world.Dimension) {
+	p.player.SetDead(false)
 	p.session.SendPacket(&packet.Respawn{
 		GameMode:         p.player.GameMode(),
 		PreviousGameMode: -1,
@@ -150,6 +151,7 @@ func (p *PlayerController) SetHealth(health float32) {
 }
 
 func (p *PlayerController) Kill(message string) {
+	p.player.SetDead(true)
 	p.BroadcastHealth()
 	if f, _ := world.GameRule(p.Server.World.Gamerules()["doImmediateRespawn"]).Bool(); !f {
 		p.session.SendPacket(&packet.GameEvent{
@@ -161,6 +163,7 @@ func (p *PlayerController) Kill(message string) {
 		EntityID:     p.player.EntityId(),
 		SourceTypeID: 0,
 	})
+	p.Despawn()
 	p.session.SendPacket(&packet.CombatDeath{
 		Message:  message,
 		PlayerID: p.player.EntityId(),

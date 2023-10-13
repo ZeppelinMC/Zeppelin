@@ -14,3 +14,4 @@ whitelist.json
 log
 /cpu.out
 /ram.out
+/permissions
