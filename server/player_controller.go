@@ -30,29 +30,53 @@ func (p *PlayerController) Name() string {
 	return p.session.conn.Info.Name
 }
 
+func (p *PlayerController) Respawn(d *world.Dimension) {
+	p.session.SendPacket(&packet.Respawn{
+		GameMode:         p.player.GameMode(),
+		PreviousGameMode: -1,
+		DimensionType:    d.Type(),
+		DimensionName:    d.Type(),
+		HashedSeed:       d.Seed(),
+	})
+	p.player.SetDimension(d)
+
+	x1, y1, z1, a := p.Server.World.Spawn()
+	yaw, pitch := p.player.SavedRotation()
+
+	if b, _ := world.GameRule(p.Server.World.Gamerules()["keepInventory"]).Bool(); b {
+		p.InitializeInventory()
+	}
+
+	chunkX, chunkZ := math.Floor(float64(x1)/16), math.Floor(float64(z1)/16)
+	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
+	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
+	p.SendSpawnChunks()
+
+	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
+
+	p.session.SendPacket(&packet.SetDefaultSpawnPosition{
+		Location: ((uint64(x1) & 0x3FFFFFF) << 38) | ((uint64(z1) & 0x3FFFFFF) << 12) | (uint64(y1) & 0xFFF),
+		Angle:    a,
+	})
+}
+
 func (p *PlayerController) Login(d *world.Dimension) error {
 	if err := p.session.SendPacket(&packet.JoinGame{
-		EntityID:            p.player.EntityId(),
-		IsHardcore:          p.player.IsHardcore(),
-		GameMode:            p.player.GameMode(),
-		PreviousGameMode:    -1,
-		DimensionNames:      []string{d.Type()},
-		DimensionType:       d.Type(),
-		DimensionName:       d.Type(),
-		HashedSeed:          d.Seed(),
-		MaxPlayers:          0,
-		ViewDistance:        p.player.ViewDistance(),
-		SimulationDistance:  p.player.SimulationDistance(),
-		ReducedDebugInfo:    false,
-		EnableRespawnScreen: false,
-		IsDebug:             false,
-		IsFlat:              false,
-		DeathDimensionName:  "",
-		DeathLocation:       0,
-		PartialCooldown:     0,
+		EntityID:           p.player.EntityId(),
+		IsHardcore:         p.player.IsHardcore(),
+		GameMode:           p.player.GameMode(),
+		PreviousGameMode:   -1,
+		DimensionNames:     []string{d.Type()},
+		DimensionType:      d.Type(),
+		DimensionName:      d.Type(),
+		HashedSeed:         d.Seed(),
+		MaxPlayers:         0,
+		ViewDistance:       p.player.ViewDistance(),
+		SimulationDistance: p.player.SimulationDistance(),
 	}); err != nil {
 		return err
 	}
+	p.player.SetDimension(d)
 	p.session.SendPacket(&packet.PluginMessage{
 		Channel: "minecraft:brand",
 		Data:    []byte("Dynamite"),
@@ -76,6 +100,20 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	}
 
 	p.session.SendPacket(abps)
+
+	p.session.SendPacket(&UpdateTags{
+		Tags: []TagType{
+			{
+				Type: "minecraft:fluid",
+				Tags: []Tag{
+					{
+						Name:    "water",
+						Entries: []int32{80},
+					},
+				},
+			},
+		},
+	})
 
 	if p.player.Operator() {
 		p.session.SendPacket(&packet.EntityEvent{
@@ -410,7 +448,7 @@ func (p *PlayerController) InitializeInventory() {
 	p.session.SendPacket(&SetContainerContent{
 		WindowID: 0,
 		StateID:  1,
-		Slots:    p.player.GetSavedInventory(),
+		Slots:    p.player.Inventory(),
 	})
 }
 

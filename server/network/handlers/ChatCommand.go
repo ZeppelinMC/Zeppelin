@@ -6,6 +6,7 @@ import (
 
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/world"
 )
 
 type Controller interface {
@@ -20,6 +21,7 @@ type Controller interface {
 	BroadcastAnimation(animation uint8)
 	SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []packet.SuggestionMatch)
 	BroadcastSkinData()
+	Respawn(d *world.Dimension)
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

@@ -18,6 +18,10 @@ type Player struct {
 
 	data *world.PlayerData
 
+	inventory []world.Slot
+
+	dimension *world.Dimension
+
 	viewDistance       int32
 	simulationDistance int32
 
@@ -47,16 +51,35 @@ type ClientInformation struct {
 
 func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
 	pl := &Player{entityID: entityID, viewDistance: vd, simulationDistance: sd, data: data}
+	pl.inventory = data.Inventory
 	pl.gameMode = byte(data.PlayerGameType)
 	pl.x, pl.y, pl.z, pl.yaw, pl.pitch = data.Pos[0], data.Pos[1], data.Pos[2], data.Rotation[0], data.Rotation[1]
 	pl.health, pl.food, pl.foodSaturation = data.Health, data.FoodLevel, data.FoodSaturationLevel
 	return pl
 }
 
-func (p *Player) GetSavedInventory() []world.Slot {
+func (p *Player) Dimension() *world.Dimension {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.data.Inventory
+	return p.dimension
+}
+
+func (p *Player) SetDimension(d *world.Dimension) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.dimension = d
+}
+
+func (p *Player) Inventory() []world.Slot {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.inventory
+}
+
+func (p *Player) SetInventory(i []world.Slot) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.inventory = i
 }
 
 func (p *Player) ClientSettings() ClientInformation {
@@ -142,6 +165,7 @@ func (p *Player) Save() {
 	}
 	p.data.Pos[0], p.data.Pos[1], p.data.Pos[2], p.data.Rotation[0], p.data.Rotation[1], p.data.OnGround = p.x, p.y, p.z, p.yaw, p.pitch, o
 	p.data.PlayerGameType = int32(p.gameMode)
+	p.data.Inventory = p.inventory
 	p.data.Save()
 }
 
