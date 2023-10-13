@@ -13,7 +13,7 @@ func point[T any](t T) *T {
 }
 
 var banlist_cmd = &commands.Command{
-	Name:                "ban",
+	Name:                "banlist",
 	RequiredPermissions: []string{"server.command.banlist"},
 	Arguments: []commands.Argument{
 		commands.NewIntegerArgument("page", struct {
