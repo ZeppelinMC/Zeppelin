@@ -15,5 +15,6 @@ var Commands = &commands.Graph{
 		banlist_cmd,
 		op_cmd,
 		deop_cmd,
+		unban_cmd,
 	},
 }

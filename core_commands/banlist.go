@@ -13,7 +13,7 @@ func point[T any](t T) *T {
 }
 
 var banlist_cmd = &commands.Command{
-	Name:                "ban",
+	Name:                "banlist",
 	RequiredPermissions: []string{"server.command.banlist"},
 	Arguments: []commands.Argument{
 		commands.NewIntegerArgument("page", struct {
@@ -31,7 +31,7 @@ var banlist_cmd = &commands.Command{
 				page = i
 			}
 		}
-		fmt.Sprint(page) // todo add paging
+		_ = fmt.Sprint(page) // todo add paging
 		str := "§lBan list:\n"
 		for i, b := range server.BannedPlayers {
 			str += fmt.Sprintf("§l%d§r%s", i+1, b.Name)
