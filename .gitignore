@@ -15,3 +15,4 @@ log
 /cpu.out
 /ram.out
 /permissions
+go.sum

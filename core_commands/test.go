@@ -1,8 +1,9 @@
 package core_commands
 
 import (
-	"github.com/dynamitemc/dynamite/server/commands"
 	"math"
+
+	"github.com/dynamitemc/dynamite/server/commands"
 )
 
 var m, ma uint64 = math.Float64bits(1), math.Float64bits(2)
