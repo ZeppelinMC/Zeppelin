@@ -9,6 +9,7 @@ jobs:
       matrix:
         go-version: ["1.21.x"]
         os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [amd64, arm64] # Add ARM64 architecture
 
     steps:
       - uses: actions/checkout@v3
@@ -16,16 +17,19 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
-      - name: Get dependencies
-        run: sudo apt-get update && sudo apt-get install gcc libgl1-mesa-dev libx11-dev xorg-dev libwayland-dev libxkbcommon-dev bc
-        if: ${{ runner.os == 'Linux' }}
       - name: Build
         run: go build -v
       - name: Upload Go build results linux
         uses: actions/upload-artifact@v3
-        if: ${{ runner.os == 'Linux' }}
+        if: ${{ runner.os == 'Linux' && matrix.arch == 'amd64' }}
         with:
           name: Dynamite-Linux
+          path: dynamite
+      - name: Upload Go build results arm64-linux
+        uses: actions/upload-artifact@v3
+        if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
+        with:
+          name: Dynamite-ARM64-Linux
           path: dynamite
       - name: Upload Go build results windows
         uses: actions/upload-artifact@v3
@@ -35,7 +39,13 @@ jobs:
           path: dynamite.exe
       - name: Upload Go build results macos
         uses: actions/upload-artifact@v3
-        if: ${{ runner.os == 'macOS' }}
+        if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
         with:
           name: Dynamite-macOS
+          path: dynamite
+      - name: Upload Go build results arm64-macos
+        uses: actions/upload-artifact@v3
+        if: ${{ runner.os == 'macOS' && matrix.arch == 'arm64' }}
+        with:
+          name: Dynamite-ARM64-macOS
           path: dynamite
