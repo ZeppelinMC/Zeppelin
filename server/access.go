@@ -131,16 +131,7 @@ func (srv *Server) Ban(p *PlayerController, reason string) {
 	})
 }
 
-func (srv *Server) Unban(p *PlayerController) {
-	for i, b := range srv.BannedPlayers {
-		if b.UUID == p.UUID {
-			srv.BannedPlayers = slices.Delete(srv.BannedPlayers, i, i+1)
-			return
-		}
-	}
-}
-
-func (srv *Server) UnbanName(name string) {
+func (srv *Server) Unban(name string) {
 	for i, b := range srv.BannedPlayers {
 		if b.Name == name {
 			srv.BannedPlayers = slices.Delete(srv.BannedPlayers, i, i+1)
