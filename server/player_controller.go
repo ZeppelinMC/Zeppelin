@@ -14,6 +14,24 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
+var tags = &UpdateTags{
+	Tags: []TagType{
+		{
+			Type: "minecraft:fluid",
+			Tags: []Tag{
+				{
+					Name:    "minecraft:water",
+					Entries: []int32{02, 01},
+				},
+				{
+					Name:    "minecraft:lava",
+					Entries: []int32{04, 03},
+				},
+			},
+		},
+	},
+}
+
 type PlayerController struct {
 	mu      sync.RWMutex
 	player  *player.Player
@@ -102,19 +120,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 
 	p.session.SendPacket(abps)
 
-	p.session.SendPacket(&UpdateTags{
-		Tags: []TagType{
-			{
-				Type: "minecraft:fluid",
-				Tags: []Tag{
-					{
-						Name:    "water",
-						Entries: []int32{80},
-					},
-				},
-			},
-		},
-	})
+	p.session.SendPacket(tags)
 
 	if p.player.Operator() {
 		p.session.SendPacket(&packet.EntityEvent{
@@ -198,6 +204,21 @@ func (p *PlayerController) SetGameMode(gm byte) {
 	})
 	p.session.conn.Info.GameMode = int32(gm)
 	p.Server.PlayerlistUpdate()
+}
+
+func (p *PlayerController) Push(x, y, z float64) {
+	p.Server.teleportCounter++
+	yaw, pitch := p.player.Rotation()
+	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
+	p.session.SendPacket(&packet.PlayerPositionLook{
+		X:          x,
+		Y:          y,
+		Z:          z,
+		Yaw:        yaw,
+		Pitch:      pitch,
+		TeleportID: p.Server.teleportCounter,
+	})
+	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
 }
 
 func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
@@ -285,6 +306,39 @@ func (p *PlayerController) SendChunks() {
 			}
 			p.loadedChunks[[2]int32{x, z}] = struct{}{}
 			p.session.SendPacket(c.Data())
+
+			for _, en := range c.Entities {
+				u, _ := world.NBTToUUID(en.UUID)
+
+				var e *Entity
+
+				if f := p.Server.FindEntityByUUID(u); f != nil {
+					if d, ok := f.(*Entity); ok {
+						e = d
+					}
+				} else {
+					e = p.Server.NewEntity(en)
+				}
+
+				t, ok := registry.GetEntity(e.data.Id)
+				if !ok {
+					continue
+				}
+
+				p.session.SendPacket(&packet.SpawnEntity{
+					EntityID:  e.ID,
+					UUID:      u,
+					X:         e.data.Pos[0],
+					Y:         e.data.Pos[1],
+					Z:         e.data.Pos[2],
+					Pitch:     degreesToAngle(e.data.Rotation[1]),
+					Yaw:       degreesToAngle(e.data.Rotation[0]),
+					VelocityX: int16(e.data.Motion[0]),
+					VelocityY: int16(e.data.Motion[1]),
+					VelocityZ: int16(e.data.Motion[2]),
+					Type:      t.ProtocolID,
+				})
+			}
 		}
 	}
 }
@@ -394,6 +448,8 @@ func (p *PlayerController) HandleCenterChunk(x1, z1, x2, z2 float64) {
 			ChunkX: int32(newChunkX),
 			ChunkZ: int32(newChunkZ),
 		})
+		p.CalculateUnusedChunks()
+		//p.SendChunks()
 	}
 }
 
@@ -418,7 +474,7 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 
 	p.session.SendPacket(&packet.SpawnPlayer{
 		EntityID:   entityId,
-		PlayerUUID: pl.session.Info().UUID,
+		PlayerUUID: pl.session.conn.Info.UUID,
 		X:          x,
 		Y:          y,
 		Z:          z,

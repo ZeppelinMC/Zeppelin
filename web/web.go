@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/dynamitemc/dynamite/logger"
@@ -35,7 +34,7 @@ var upgrader = websocket.Upgrader{}
 var conns = make([]*conn, 0)
 
 func (h *handler) Render(w http.ResponseWriter, name string, vars map[string]string) (int, error) {
-	f, err := os.ReadFile("web/pages/" + name) //guifs.ReadFile("pages/" + name)
+	f, err := guifs.ReadFile("pages/" + name)
 	if err != nil {
 		return 0, err
 	}
@@ -99,7 +98,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		uri, _ := url.ParseRequestURI(r.RequestURI)
 		var code int
 		if strings.HasPrefix(r.RequestURI, "/cdn") {
-			file, err := os.ReadFile("web/cdn/" + strings.TrimPrefix(uri.Path, "/cdn/")) //guifs.ReadFile("cdn/" + strings.TrimPrefix(uri.Path, "/cdn/"))
+			file, err := guifs.ReadFile("cdn/" + strings.TrimPrefix(uri.Path, "/cdn/"))
 			if err != nil {
 				if errors.Is(err, fs.ErrNotExist) {
 					io.WriteString(w, "Unknown file!")

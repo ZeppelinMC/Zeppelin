@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aimjel/minecraft"
+	"github.com/aimjel/minecraft/packet"
 
 	//"github.com/dynamitemc/dynamite/web"
 	"github.com/dynamitemc/dynamite/logger"
@@ -79,6 +81,11 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	cntrl.SendCommands(srv.commandGraph)
 
+	cntrl.session.SendPacket(&packet.SetTablistHeaderFooter{
+		Header: strings.Join(srv.Config.Tablist.Header, "\n"),
+		Footer: strings.Join(srv.Config.Tablist.Footer, "\n"),
+	})
+
 	srv.addPlayer(cntrl)
 	if err := cntrl.Login(srv.World.Overworld()); err != nil {
 		//TODO log error
@@ -89,6 +96,10 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		for range ticker.C {
+			if _, ok := cntrl.Server.Players[cntrl.UUID]; !ok {
+				fmt.Println("player left! stopped sending keepalive")
+				break
+			}
 			cntrl.Keepalive()
 		}
 	}()
@@ -117,7 +128,7 @@ func (srv *Server) addPlayer(p *PlayerController) {
 	srv.PlayerlistUpdate()
 	//gui.AddPlayer(p.session.Info().Name, p.UUID)
 
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.Info().Name, p.UUID)
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.conn.Info.Name, p.UUID)
 	srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerJoin, map[string]string{"player": p.Name()}), nil)
 }
 
@@ -143,12 +154,12 @@ func (srv *Server) Reload() error {
 	defer srv.mu.RUnlock()
 
 	for _, p := range srv.Players {
-		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.session.Info().UUID) {
+		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.session.conn.Info.UUID) {
 			p.Disconnect(srv.Config.Messages.NotInWhitelist)
 			continue
 		}
 
-		p.player.SetOperator(srv.IsOperator(p.session.Info().UUID))
+		p.player.SetOperator(srv.IsOperator(p.session.conn.Info.UUID))
 
 		p.SendCommands(srv.commandGraph)
 	}

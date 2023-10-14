@@ -78,7 +78,7 @@ function log(msg) {
         break;
       }
       case "warn": {
-        type += `<a class="consoletext" style="color: yellow">ERROR</a>`;
+        type += `<a class="consoletext" style="color: yellow">WARN</a>`;
         break;
       }
     }

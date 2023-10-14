@@ -1,6 +1,7 @@
 package server
 
 import (
+	"C"
 	"math"
 	"strings"
 
@@ -91,14 +92,10 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 
 func (p *PlayerController) BroadcastSkinData() {
 	cl := p.ClientSettings()
-	var m int32
-	if cl.MainHand == 0 {
-		m = 1
-	}
 	p.Server.GlobalBroadcast(&PacketSetPlayerMetadata{
 		EntityID:           p.player.EntityId(),
 		DisplayedSkinParts: &cl.DisplayedSkinParts,
-		MainHand:           &m,
+		MainHand:           &cl.MainHand,
 	})
 }
 
@@ -111,17 +108,42 @@ func positionIsValid(x, y, z float64) bool {
 		!math.IsInf(x, 0) && !math.IsInf(y, 0) && !math.IsInf(z, 0)
 }
 
+func direction(ya, pi float32) (x, y, z float64) {
+	yaw, pitch := float64(ya), float64(pi)
+	x = -math.Cos(pitch) * math.Sin(yaw)
+	y = -math.Sin(pitch)
+	z = math.Cos(pitch) * math.Cos(yaw)
+	return x, y, z
+}
+
 func (p *PlayerController) Hit(entityId int32) {
 	e := p.Server.FindEntity(entityId)
+	x, y, z := p.Position()
+	//yaw, pitch := p.Rotation()
+	//d := direction(yaw, pitch)
 	if pl, ok := e.(*PlayerController); ok {
 		if pl.GameMode() == 1 {
 			return
 		}
-		//p.BroadcastPose(4)
 		health := pl.player.Health()
 		pl.SetHealth(health - 1)
+		x1, y1, z1 := pl.Position()
+		/*switch d {
+		case 0:
+			x1 += 0.5
+			z1 += 0.5
+		case 1:
+			x1 += 0.5
+			z1 -= 0.5
+		case 2:
+			x1 -= 0.5
+			z1 += 0.5
+		case 3:
+			x1 -= 0.5
+			z1 -= 0.5
+		}*/
+		pl.Push(x1, y1, z1)
 	}
-	x, y, z := p.Position()
 	p.BroadcastPacketAll(&packet.DamageEvent{
 		EntityID:        entityId,
 		SourceTypeID:    1,
@@ -143,17 +165,15 @@ func (p *PlayerController) Despawn() {
 }
 
 func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool) {
-	if !teleport {
-		p.CalculateUnusedChunks()
-	}
 	oldx, oldy, oldz := p.player.Position()
 	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
 	if distance > 100 && !teleport {
-		p.Disconnect("You moved too quickly :( (Hacking?)")
+		p.Teleport(oldx, oldy, oldz, yaw, pitch)
+		p.Server.Logger.Info("%s moved too quickly!", p.Name())
 		return
 	}
 	if !positionIsValid(x1, y1, z1) {
-		p.Disconnect("Illegal position")
+		p.Disconnect("Invalid move player packet received")
 		return
 	}
 
@@ -264,8 +284,8 @@ func (srv *Server) PlayerlistUpdate() {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
-		p.session.Info().Listed = true
-		players = append(players, *p.session.Info())
+		p.session.conn.Info.Listed = true
+		players = append(players, *p.session.conn.Info)
 	}
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
 		Actions: 0x01 | 0x08,

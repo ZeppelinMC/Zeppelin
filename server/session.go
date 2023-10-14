@@ -7,7 +7,6 @@ import (
 
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"
-	player2 "github.com/aimjel/minecraft/player"
 	"github.com/dynamitemc/dynamite/server/network/handlers"
 	"github.com/dynamitemc/dynamite/server/player"
 )
@@ -56,10 +55,6 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 
 func (s *Session) SendPacket(p packet.Packet) error {
 	return s.conn.SendPacket(p)
-}
-
-func (s *Session) Info() *player2.Info {
-	return s.conn.Info
 }
 
 func (s *Session) RemoteAddr() net.Addr {
