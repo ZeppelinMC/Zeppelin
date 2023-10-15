@@ -22,6 +22,7 @@ type Controller interface {
 	SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []packet.SuggestionMatch)
 	BroadcastSkinData()
 	Respawn(d *world.Dimension)
+	PlaylistUpdate()
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

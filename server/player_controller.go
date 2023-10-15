@@ -45,7 +45,11 @@ type PlayerController struct {
 }
 
 func (p *PlayerController) Name() string {
-	return p.session.conn.Info.Name
+	return p.session.conn.Name()
+}
+
+func (p *PlayerController) PlaylistUpdate() {
+	p.Server.PlayerlistUpdate()
 }
 
 func (p *PlayerController) Respawn(d *world.Dimension) {
@@ -202,7 +206,8 @@ func (p *PlayerController) SetGameMode(gm byte) {
 		Event: 3,
 		Value: float32(gm),
 	})
-	p.session.conn.Info.GameMode = int32(gm)
+
+	p.player.SetGameMode(byte(int32(gm)))
 	p.Server.PlayerlistUpdate()
 }
 
@@ -474,7 +479,7 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 
 	p.session.SendPacket(&packet.SpawnPlayer{
 		EntityID:   entityId,
-		PlayerUUID: pl.session.conn.Info.UUID,
+		PlayerUUID: pl.session.conn.UUID(),
 		X:          x,
 		Y:          y,
 		Z:          z,

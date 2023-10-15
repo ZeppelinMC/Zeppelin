@@ -1,11 +1,11 @@
 package server
 
 import (
+	"github.com/aimjel/minecraft/protocol/types"
 	"math"
 	"strings"
 
 	"github.com/aimjel/minecraft/packet"
-	"github.com/aimjel/minecraft/player"
 )
 
 func (srv *Server) GlobalBroadcast(pk packet.Packet) {
@@ -279,12 +279,16 @@ func (p *PlayerController) BroadcastSprinting(val bool) {
 }
 
 func (srv *Server) PlayerlistUpdate() {
-	var players []player.Info
+	players := make([]types.PlayerInfo, 0, len(srv.Players))
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
-		p.session.conn.Info.Listed = true
-		players = append(players, *p.session.conn.Info)
+		players = append(players, types.PlayerInfo{
+			UUID:       p.session.conn.UUID(),
+			Name:       p.session.conn.Name(),
+			Properties: p.session.conn.Properties(),
+			Listed:     p.ClientSettings().AllowServerListings,
+		})
 	}
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
 		Actions: 0x01 | 0x08,

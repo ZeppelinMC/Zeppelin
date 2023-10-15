@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"errors"
+	"github.com/aimjel/minecraft/protocol/types"
 
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/aimjel/minecraft/packet"
@@ -61,13 +62,13 @@ func (c *Chunk) Data() *packet.ChunkData {
 	pk.X, pk.Z = c.x, c.z
 	pk.Heightmaps = (*c.heightMap).HeightMaps
 
-	pk.Sections = make([]packet.Section, 0, len(c.Sections)+2)
+	pk.Sections = make([]types.ChunkSection, 0, len(c.Sections)+2)
 	for _, s := range c.Sections {
 		if s == nil {
 			continue
 		}
 
-		var sec packet.Section
+		var sec types.ChunkSection
 
 		sec.BlockStates.Entries = s.ids
 		sec.BlockStates.Data = s.data

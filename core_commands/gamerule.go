@@ -10,15 +10,8 @@ var gamerule_cmd = &commands.Command{
 	Name:                "gamerule",
 	RequiredPermissions: []string{"server.command.gamerule"},
 	Arguments: []commands.Argument{
-		{
-			Name: "rule",
-			Parser: commands.Parser{
-				ID: 5,
-				Properties: commands.Properties{
-					Flags: commands.StringSingleWord,
-				},
-			},
-			Suggest: func(ctx commands.SuggestionsContext) {
+		commands.NewStringArgument("rule", commands.StringSingleWord).
+			SetSuggest(func(ctx commands.SuggestionsContext) {
 				srv := ctx.Executor.(*server.PlayerController).Server
 				var matches []packet.SuggestionMatch
 				for k := range srv.World.Gamerules() {
@@ -27,8 +20,7 @@ var gamerule_cmd = &commands.Command{
 					})
 				}
 				ctx.Return(matches)
-			},
-		},
+			}),
 	},
 	Execute: func(ctx commands.CommandContext) {},
 }

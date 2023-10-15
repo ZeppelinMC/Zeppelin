@@ -51,12 +51,12 @@ func WritePlayerList(path string, user []user) error {
 	return os.WriteFile(path, data, 0755)
 }
 
-// ValidateConn checks if the connection is allowed to join the server,
+// ValidateConn checks if the connection is allowed to join the Server,
 // if not the connection is kicked with the appropriate message.
 // returns true if the connection was disconnected, false otherwise.
 func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
 	var reason string
-	if srv.IsPlayerBanned(conn.Info.UUID) {
+	if srv.IsPlayerBanned(conn.UUID()) {
 		reason = srv.Config.Messages.Banned
 	}
 
@@ -66,7 +66,7 @@ func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
 	}
 
 	if srv.Config.Whitelist.Enable {
-		if !srv.IsWhitelisted(conn.Info.UUID) {
+		if !srv.IsWhitelisted(conn.UUID()) {
 			reason = srv.Config.Messages.NotInWhitelist
 		}
 	}

@@ -64,7 +64,8 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 	srv.entityCounter++
 
-	uuid, _ := uuid.FromBytes(conn.Info.UUID[:])
+	x := conn.UUID()
+	uuid, _ := uuid.FromBytes(x[:])
 
 	data := srv.World.GetPlayerData(uuid.String())
 
@@ -107,9 +108,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	cntrl.InitializeInventory()
 
 	if err := sesh.HandlePackets(cntrl); err != nil {
-		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, cntrl.UUID)
-		srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerLeave, map[string]string{"player": conn.Info.Name}), nil)
-		srv.PlayerlistRemove(conn.Info.UUID)
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), cntrl.UUID)
+		srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerLeave, map[string]string{"player": conn.Name()}), nil)
+		srv.PlayerlistRemove(conn.UUID())
 		cntrl.Despawn()
 
 		//todo consider moving logic of removing player to a separate function
@@ -125,10 +126,9 @@ func (srv *Server) addPlayer(p *PlayerController) {
 	srv.Players[p.UUID] = p
 	srv.mu.RUnlock()
 
-	srv.PlayerlistUpdate()
 	//gui.AddPlayer(p.session.Info().Name, p.UUID)
 
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.conn.Info.Name, p.UUID)
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.conn.Name(), p.UUID)
 	srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerJoin, map[string]string{"player": p.Name()}), nil)
 }
 
@@ -154,12 +154,12 @@ func (srv *Server) Reload() error {
 	defer srv.mu.RUnlock()
 
 	for _, p := range srv.Players {
-		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.session.conn.Info.UUID) {
+		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.session.conn.UUID()) {
 			p.Disconnect(srv.Config.Messages.NotInWhitelist)
 			continue
 		}
 
-		p.player.SetOperator(srv.IsOperator(p.session.conn.Info.UUID))
+		p.player.SetOperator(srv.IsOperator(p.session.conn.UUID()))
 
 		p.SendCommands(srv.commandGraph)
 	}
@@ -180,7 +180,7 @@ func (srv *Server) FindEntityByUUID(id [16]byte) interface{} {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
-		if p.session.conn.Info.UUID == id {
+		if p.session.conn.UUID() == id {
 			return p
 		}
 	}
