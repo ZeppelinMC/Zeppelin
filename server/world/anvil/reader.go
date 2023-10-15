@@ -20,12 +20,6 @@ var buffers = sync.Pool{
 	},
 }
 
-var buffers1 = sync.Pool{
-	New: func() any {
-		return bytes.NewBuffer(make([]byte, 0, 1024*10))
-	},
-}
-
 type Reader struct {
 	//path to the folder where the anvil files are stored
 	path         string
@@ -43,79 +37,54 @@ type anvilChunkEntities struct {
 }
 
 func (r *Reader) ReadChunkEntities(x, z int32) ([]chunk.Entity, error) {
-	chunkFile := "r." + strconv.FormatInt(int64(x>>5), 10) + "." + strconv.FormatInt(int64(z>>5), 10) + ".mca"
-
-	f, err := os.Open(r.entitiespath + chunkFile)
-	if err != nil {
-		return nil, fmt.Errorf("%v reading chunk %v %v", err, x, z)
-	}
-
-	defer f.Close()
-
-	offset, _, err := r.decodeChunkLocation(f, x, z)
-	if err != nil {
-		return nil, err
-	}
-
-	chunkLength, compressionScheme, err := r.decodeChunkHeader(f, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	//will hold the uncompressed nbt data
-	buf := buffers1.Get().(*bytes.Buffer)
+	buf := buffers.Get().(*bytes.Buffer)
 	buf.Reset()
+	defer buffers.Put(buf)
 
-	switch compressionScheme {
-	//todo implement gzip decompression
-
-	//zlib decompression
-	case 2:
-		//todo handle error
-		//chunk header takes up 5 bytes
-		f.Seek(int64(offset+5), io.SeekStart)
-
-		rd, err := zlib.NewReader(io.LimitReader(f, int64(chunkLength)))
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err = buf.ReadFrom(rd); err != nil {
-			return nil, err
-		}
+	if err := r.copyChunk(buf, x, z, r.entitiespath); err != nil {
+		return nil, fmt.Errorf("%v reading entities for chunk %v %v", err, x, z)
 	}
+
 	var e anvilChunkEntities
-	err = nbt.Unmarshal(buf.Bytes(), &e)
+	err := nbt.Unmarshal(buf.Bytes(), &e)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%v unmarshaling entities nbt in chunk %v %v", x, z)
 	}
-	buffers1.Put(buf)
+
 	return e.Entities, nil
 }
 
 func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
+	buf := buffers.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer buffers.Put(buf)
+
+	if err := r.copyChunk(buf, x, z, r.path); err != nil {
+		return nil, fmt.Errorf("%v reading entities for chunk %v %v", err, x, z)
+	}
+
+	return chunk.NewAnvilChunk(buf.Bytes())
+}
+
+func (r *Reader) copyChunk(buf *bytes.Buffer, x, z int32, path string) error {
 	chunkFile := "r." + strconv.FormatInt(int64(x>>5), 10) + "." + strconv.FormatInt(int64(z>>5), 10) + ".mca"
 
-	f, err := os.Open(r.path + chunkFile)
+	f, err := os.Open(path + chunkFile)
 	if err != nil {
-		return nil, fmt.Errorf("%v reading chunk %v %v", err, x, z)
+		return fmt.Errorf("%v reading chunk %v %v", err, x, z)
 	}
 
 	defer f.Close()
 
 	offset, _, err := r.decodeChunkLocation(f, x, z)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	chunkLength, compressionScheme, err := r.decodeChunkHeader(f, offset)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	//will hold the uncompressed nbt data
-	buf := buffers.Get().(*bytes.Buffer)
-	buf.Reset()
 
 	switch compressionScheme {
 	//todo implement gzip decompression
@@ -128,17 +97,15 @@ func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
 
 		rd, err := zlib.NewReader(io.LimitReader(f, int64(chunkLength)))
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if _, err = buf.ReadFrom(rd); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	ch, err := chunk.NewAnvilChunk(buf.Bytes())
-	buffers.Put(buf)
-	return ch, err
+	return nil
 }
 
 // decodeChunkLocation decodes the location entry for the x z Chunk coordinates passed.
@@ -151,7 +118,7 @@ func (r *Reader) decodeChunkLocation(f *os.File, x, z int32) (uint32, uint32, er
 	offset := 4 * ((x & 31) + (z&31)*32)
 	n, err := f.ReadAt(loc, int64(offset))
 	if err != nil {
-		return 0, 0, fmt.Errorf("%w reading chunk(x=%v z=%v) location", err, x, z)
+		return 0, 0, err
 	}
 
 	if n != 4 {
