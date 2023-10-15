@@ -15,7 +15,6 @@ type ConsoleExecutor struct {
 
 func (srv *Server) ScanConsole() {
 	scanner := bufio.NewScanner(os.Stdin)
-
 	for scanner.Scan() {
 		txt := scanner.Text()
 		if txt == "" {

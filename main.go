@@ -62,7 +62,7 @@ func start(cfg *server.Config) {
 }
 
 func main() {
-	log.Info("Starting Dynamite 1.20.1 Server")
+	log.Info("Starting Dynamite 1.20.1 server")
 	if util.HasArg("-prof") {
 		log.Info("Starting CPU/RAM profiler")
 		startProfile()

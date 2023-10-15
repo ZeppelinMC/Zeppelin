@@ -1,5 +1,7 @@
 package commands
 
+import "github.com/aimjel/minecraft/protocol/types"
+
 const (
 	StringSingleWord = iota
 	StringQuotablePhrase
@@ -56,7 +58,7 @@ func NewFloatArgument(name string, properties struct {
 	Min *uint64
 	Max *uint64
 }) Argument {
-	props := Properties{Flags: 0}
+	props := types.CommandProperties{Flags: 0}
 	if properties.Min != nil {
 		props.Flags |= 1
 		props.Min = *properties.Min
@@ -69,40 +71,6 @@ func NewFloatArgument(name string, properties struct {
 		Name: name,
 		Parser: Parser{
 			ID:         1,
-			Properties: props,
-		},
-	}
-}
-
-func NewFloatArgument2(name string, min, max float32) Argument {
-	props := Properties{Flags: 0x02}
-
-	return Argument{
-		Name: name,
-		Parser: Parser{
-			ID:         1,
-			Properties: props,
-		},
-	}
-}
-
-func NewDoubleArgument(name string, properties struct {
-	Min *uint64
-	Max *uint64
-}) Argument {
-	props := Properties{Flags: 0}
-	if properties.Min != nil {
-		props.Flags |= 1
-		props.Min = *properties.Min
-	}
-	if properties.Max != nil {
-		props.Flags |= 2
-		props.Max = *properties.Max
-	}
-	return Argument{
-		Name: name,
-		Parser: Parser{
-			ID:         2,
 			Properties: props,
 		},
 	}
@@ -112,7 +80,7 @@ func NewIntegerArgument(name string, properties struct {
 	Min *int64
 	Max *int64
 }) Argument {
-	props := Properties{Flags: 0}
+	props := types.CommandProperties{Flags: 0}
 	if properties.Min != nil {
 		props.Flags |= 1
 		props.Min = uint64(*properties.Min)
@@ -130,30 +98,13 @@ func NewIntegerArgument(name string, properties struct {
 	}
 }
 
-func NewLongArgument(name string, properties struct {
-	Min *int64
-	Max *int64
-}) Argument {
-	props := Properties{Flags: 0}
-	if properties.Min != nil {
-		props.Flags |= 1
-		props.Min = uint64(*properties.Min)
-	}
-	if properties.Max != nil {
-		props.Flags |= 2
-		props.Max = uint64(*properties.Max)
-	}
-	return Argument{
-		Name: name,
-		Parser: Parser{
-			ID:         4,
-			Properties: props,
-		},
-	}
+func (a Argument) SetSuggest(s func(ctx SuggestionsContext)) Argument {
+	a.Suggest = s
+	return a
 }
 
 func NewStringArgument(name string, properties byte) Argument {
-	props := Properties{Flags: properties}
+	props := types.CommandProperties{Flags: properties}
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -164,7 +115,7 @@ func NewStringArgument(name string, properties byte) Argument {
 }
 
 func NewEntityArgument(name string, properties byte) Argument {
-	props := Properties{Flags: properties}
+	props := types.CommandProperties{Flags: properties}
 	return Argument{
 		Name: name,
 		Parser: Parser{

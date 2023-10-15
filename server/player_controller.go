@@ -14,6 +14,24 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
+var tags = &packet.UpdateTags{
+	Tags: []packet.TagType{
+		{
+			Type: "minecraft:fluid",
+			Tags: []packet.Tag{
+				{
+					Name:    "minecraft:water",
+					Entries: []int32{02, 01},
+				},
+				{
+					Name:    "minecraft:lava",
+					Entries: []int32{04, 03},
+				},
+			},
+		},
+	},
+}
+
 type PlayerController struct {
 	mu      sync.RWMutex
 	player  *player.Player
@@ -27,7 +45,11 @@ type PlayerController struct {
 }
 
 func (p *PlayerController) Name() string {
-	return p.session.conn.Info.Name
+	return p.session.conn.Name()
+}
+
+func (p *PlayerController) PlaylistUpdate() {
+	p.Server.PlayerlistUpdate()
 }
 
 func (p *PlayerController) Respawn(d *world.Dimension) {
@@ -100,21 +122,10 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 		abps.Flags |= 0x08
 	}
 
-	p.session.SendPacket(abps)
-
-	p.session.SendPacket(&UpdateTags{
-		Tags: []TagType{
-			{
-				Type: "minecraft:fluid",
-				Tags: []Tag{
-					{
-						Name:    "water",
-						Entries: []int32{80},
-					},
-				},
-			},
-		},
-	})
+	if abps.Flags != 0 {
+		p.session.SendPacket(abps)
+	}
+	p.session.SendPacket(tags)
 
 	if p.player.Operator() {
 		p.session.SendPacket(&packet.EntityEvent{
@@ -196,8 +207,24 @@ func (p *PlayerController) SetGameMode(gm byte) {
 		Event: 3,
 		Value: float32(gm),
 	})
-	p.session.conn.Info.GameMode = int32(gm)
+
+	p.player.SetGameMode(byte(int32(gm)))
 	p.Server.PlayerlistUpdate()
+}
+
+func (p *PlayerController) Push(x, y, z float64) {
+	p.Server.teleportCounter++
+	yaw, pitch := p.player.Rotation()
+	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
+	p.session.SendPacket(&packet.PlayerPositionLook{
+		X:          x,
+		Y:          y,
+		Z:          z,
+		Yaw:        yaw,
+		Pitch:      pitch,
+		TeleportID: p.Server.teleportCounter,
+	})
+	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
 }
 
 func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
@@ -285,6 +312,40 @@ func (p *PlayerController) SendChunks() {
 			}
 			p.loadedChunks[[2]int32{x, z}] = struct{}{}
 			p.session.SendPacket(c.Data())
+
+			for _, en := range c.Entities {
+				u, _ := world.NBTToUUID(en.UUID)
+
+				var e *Entity
+
+				if f := p.Server.FindEntityByUUID(u); f != nil {
+					if d, ok := f.(*Entity); ok {
+						e = d
+					}
+				} else {
+					e = p.Server.NewEntity(en)
+				}
+
+				t, ok := registry.GetEntity(e.data.Id)
+				if !ok {
+					continue
+				}
+
+				p.session.SendPacket(&packet.SpawnEntity{
+					EntityID:  e.ID,
+					UUID:      u,
+					X:         e.data.Pos[0],
+					Y:         e.data.Pos[1],
+					Z:         e.data.Pos[2],
+					Pitch:     degreesToAngle(e.data.Rotation[1]),
+					Yaw:       degreesToAngle(e.data.Rotation[0]),
+					VelocityX: int16(e.data.Motion[0]),
+					VelocityY: int16(e.data.Motion[1]),
+					VelocityZ: int16(e.data.Motion[2]),
+					Type:      t.ProtocolID,
+				})
+				p.spawnedEntities = append(p.spawnedEntities, e.ID)
+			}
 		}
 	}
 }
@@ -344,6 +405,7 @@ func (p *PlayerController) SendSpawnChunks() {
 					VelocityZ: int16(e.data.Motion[2]),
 					Type:      t.ProtocolID,
 				})
+				p.spawnedEntities = append(p.spawnedEntities, e.ID)
 			}
 		}
 	}
@@ -394,6 +456,8 @@ func (p *PlayerController) HandleCenterChunk(x1, z1, x2, z2 float64) {
 			ChunkX: int32(newChunkX),
 			ChunkZ: int32(newChunkZ),
 		})
+		p.CalculateUnusedChunks()
+		//p.SendChunks()
 	}
 }
 
@@ -418,7 +482,7 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 
 	p.session.SendPacket(&packet.SpawnPlayer{
 		EntityID:   entityId,
-		PlayerUUID: pl.session.Info().UUID,
+		PlayerUUID: pl.session.conn.UUID(),
 		X:          x,
 		Y:          y,
 		Z:          z,
@@ -442,7 +506,7 @@ func (p *PlayerController) DespawnPlayer(pl *PlayerController) {
 			index = i
 		}
 	}
-	if index > -1 {
+	if index != -1 {
 		p.spawnedEntities = slices.Delete(p.spawnedEntities, index, index+1)
 	}
 }
@@ -527,42 +591,4 @@ func (p *PlayerController) SendCommandSuggestionsResponse(id int32, start int32,
 		Length:        length,
 		Matches:       matches,
 	})
-}
-
-type Tag struct {
-	Name    string
-	Entries []int32
-}
-
-type TagType struct {
-	Type string
-	Tags []Tag
-}
-
-type UpdateTags struct {
-	Tags []TagType
-}
-
-func (*UpdateTags) ID() int32 {
-	return 0x6E
-}
-
-func (*UpdateTags) Decode(*packet.Reader) error {
-	return nil
-}
-
-func (s UpdateTags) Encode(w packet.Writer) error {
-	w.VarInt(int32(len(s.Tags)))
-	for _, t := range s.Tags {
-		w.String(t.Type)
-		w.VarInt(int32(len(t.Tags)))
-		for _, tag := range t.Tags {
-			w.String(tag.Name)
-			w.VarInt(int32(len(tag.Entries)))
-			for _, e := range tag.Entries {
-				w.VarInt(e)
-			}
-		}
-	}
-	return nil
 }

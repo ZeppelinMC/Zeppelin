@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/aimjel/minecraft/protocol/types"
 	"slices"
 	"strings"
 
@@ -76,15 +77,9 @@ type Command struct {
 	RequiredPermissions []string
 }
 
-type Properties struct {
-	Flags      uint8
-	Min, Max   uint64
-	Identifier string
-}
-
 type Parser struct {
 	ID         int32
-	Properties Properties
+	Properties types.CommandProperties
 }
 
 type Argument struct {
@@ -109,7 +104,7 @@ func (command *Command) AddArguments(arguments ...Argument) *Command {
 
 func (graph Graph) Data() *pk.DeclareCommands {
 	packet := &pk.DeclareCommands{}
-	packet.Nodes = append(packet.Nodes, pk.Node{
+	packet.Nodes = append(packet.Nodes, types.CommandNode{
 		Flags: 0,
 	})
 	commands := graph.Commands
@@ -130,14 +125,14 @@ func (graph Graph) Data() *pk.DeclareCommands {
 			continue
 		}
 		rootChildren = append(rootChildren, int32(len(packet.Nodes)))
-		packet.Nodes = append(packet.Nodes, pk.Node{
+		packet.Nodes = append(packet.Nodes, types.CommandNode{
 			Name:  command.Name,
 			Flags: 1 | 0x04,
 		})
 		for _, argument := range command.Arguments {
 			parent := len(packet.Nodes) - 1
 			packet.Nodes[parent].Children = append(packet.Nodes[parent].Children, int32(len(packet.Nodes)))
-			node := pk.Node{Flags: 2, Name: argument.Name, Properties: argument.Parser.Properties, ParserID: argument.Parser.ID}
+			node := types.CommandNode{Flags: 2, Name: argument.Name, Properties: argument.Parser.Properties, ParserID: argument.Parser.ID}
 			if argument.Suggest != nil {
 				node.Flags |= 0x10
 				node.SuggestionsType = "minecraft:ask_server"

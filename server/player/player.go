@@ -36,6 +36,8 @@ type Player struct {
 	yaw, pitch float32
 	onGround   bool
 
+	flying bool
+
 	mu sync.RWMutex
 }
 
@@ -56,6 +58,11 @@ func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
 	pl.gameMode = byte(data.PlayerGameType)
 	pl.x, pl.y, pl.z, pl.yaw, pl.pitch = data.Pos[0], data.Pos[1], data.Pos[2], data.Rotation[0], data.Rotation[1]
 	pl.health, pl.food, pl.foodSaturation = data.Health, data.FoodLevel, data.FoodSaturationLevel
+	fl := true
+	if data.Abilities.Flying == 0 {
+		fl = false
+	}
+	pl.flying = fl
 	return pl
 }
 
@@ -171,14 +178,27 @@ func (p *Player) SavedAbilities() world.Abilities {
 	return p.data.Abilities
 }
 
+func (p *Player) SetFlying(val bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.flying = val
+}
+
 func (p *Player) Save() {
 	o := int8(0)
 	if p.onGround {
 		o = 1
 	}
+	fl := int8(0)
+	if p.flying {
+		fl = 1
+	}
+
 	p.data.Pos[0], p.data.Pos[1], p.data.Pos[2], p.data.Rotation[0], p.data.Rotation[1], p.data.OnGround = p.x, p.y, p.z, p.yaw, p.pitch, o
 	p.data.PlayerGameType = int32(p.gameMode)
 	p.data.Inventory = p.inventory
+	p.data.Abilities.Flying = fl
+
 	p.data.Save()
 }
 
