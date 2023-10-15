@@ -48,11 +48,8 @@ func (p *PlayerController) Name() string {
 	return p.session.conn.Name()
 }
 
-func (p *PlayerController) PlaylistUpdate() {
-	p.Server.PlayerlistUpdate()
-}
-
-func (p *PlayerController) Respawn(d *world.Dimension) {
+func (p *PlayerController) Respawn(dim string) {
+	d := p.Server.GetDimension(dim)
 	p.player.SetDead(false)
 	p.session.SendPacket(&packet.Respawn{
 		GameMode:         p.player.GameMode(),
@@ -61,9 +58,19 @@ func (p *PlayerController) Respawn(d *world.Dimension) {
 		DimensionName:    d.Type(),
 		HashedSeed:       d.Seed(),
 	})
-	p.player.SetDimension(d)
+	p.player.SetDimension(d.Type())
 
-	x1, y1, z1, a := p.Server.World.Spawn()
+	var x1, y1, z1 int32
+	var a float32
+
+	switch d.Type() {
+	case "minecraft:overworld":
+		x1, y1, z1, a = p.Server.World.Spawn()
+	case "minecraft:the_nether":
+		x, y, z := p.Position()
+		x1, y1, z1 = int32(x)/8, int32(y)/8, int32(z)/8
+	}
+
 	yaw, pitch := p.player.SavedRotation()
 
 	if b, _ := world.GameRule(p.Server.World.Gamerules()["keepInventory"]).Bool(); b {
@@ -73,7 +80,7 @@ func (p *PlayerController) Respawn(d *world.Dimension) {
 	chunkX, chunkZ := math.Floor(float64(x1)/16), math.Floor(float64(z1)/16)
 	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
-	p.SendSpawnChunks()
+	p.SendSpawnChunks(d)
 
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
 
@@ -83,13 +90,14 @@ func (p *PlayerController) Respawn(d *world.Dimension) {
 	})
 }
 
-func (p *PlayerController) Login(d *world.Dimension) error {
+func (p *PlayerController) Login(dim string) error {
+	d := p.Server.GetDimension(dim)
 	if err := p.session.SendPacket(&packet.JoinGame{
 		EntityID:           p.player.EntityId(),
 		IsHardcore:         p.player.IsHardcore(),
 		GameMode:           p.player.GameMode(),
 		PreviousGameMode:   -1,
-		DimensionNames:     []string{d.Type()},
+		DimensionNames:     []string{"minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"},
 		DimensionType:      d.Type(),
 		DimensionName:      d.Type(),
 		HashedSeed:         d.Seed(),
@@ -99,7 +107,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	}); err != nil {
 		return err
 	}
-	p.player.SetDimension(d)
+	p.player.SetDimension(d.Type())
 	p.session.SendPacket(&packet.PluginMessage{
 		Channel: "minecraft:brand",
 		Data:    []byte("Dynamite"),
@@ -111,7 +119,7 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
 	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 	p.Teleport(x1, y1, z1, yaw, pitch)
-	p.SendSpawnChunks()
+	p.SendSpawnChunks(d)
 
 	abs := p.player.SavedAbilities()
 	abps := &packet.PlayerAbilities{FlyingSpeed: abs.FlySpeed, FieldOfViewModifier: 0.1}
@@ -291,8 +299,7 @@ func (p *PlayerController) CalculateUnusedChunks() {
 	}
 }
 
-func (p *PlayerController) SendChunks() {
-	ow := p.Server.World.Overworld()
+func (p *PlayerController) SendChunks(dimension *world.Dimension) {
 	max := int32(p.player.ClientSettings().ViewDistance)
 	px, _, pz := p.Position()
 	cx, cz := int32(px)/16, int32(pz)/16
@@ -306,7 +313,7 @@ func (p *PlayerController) SendChunks() {
 			if _, ok := p.loadedChunks[[2]int32{x, z}]; ok {
 				continue
 			}
-			c, err := ow.Chunk(x, z)
+			c, err := dimension.Chunk(x, z)
 			if err != nil {
 				continue
 			}
@@ -350,8 +357,7 @@ func (p *PlayerController) SendChunks() {
 	}
 }
 
-func (p *PlayerController) SendSpawnChunks() {
-	ow := p.Server.World.Overworld()
+func (p *PlayerController) SendSpawnChunks(dimension *world.Dimension) {
 	max := float64(p.Server.Config.ViewDistance)
 	if p.loadedChunks == nil {
 		p.loadedChunks = make(map[[2]int32]struct{})
@@ -367,7 +373,7 @@ func (p *PlayerController) SendSpawnChunks() {
 			if _, ok := p.loadedChunks[[2]int32{int32(x), int32(z)}]; ok {
 				continue
 			}
-			c, err := ow.Chunk(int32(x), int32(z))
+			c, err := dimension.Chunk(int32(x), int32(z))
 			if err != nil {
 				continue
 			}
@@ -489,6 +495,11 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 		Yaw:        yaw,
 		Pitch:      pitch,
 	})
+	p.session.SendPacket(&packet.EntityHeadRotation{
+		EntityID: entityId,
+		HeadYaw:  yaw,
+	})
+
 	p.spawnedEntities = append(p.spawnedEntities, entityId)
 }
 

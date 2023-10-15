@@ -57,6 +57,17 @@ func (srv *Server) Start() error {
 	}
 }
 
+func (srv *Server) GetDimension(typ string) *world.Dimension {
+	switch typ {
+	case "minecraft:the_nether":
+		return srv.World.Nether()
+	case "minecraft:the_end":
+		return srv.World.TheEnd()
+	default:
+		return srv.World.Overworld()
+	}
+}
+
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	if srv.ValidateConn(conn) {
 		return
@@ -87,7 +98,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	})
 
 	srv.addPlayer(cntrl)
-	if err := cntrl.Login(srv.World.Overworld()); err != nil {
+	if err := cntrl.Login(plyr.Dimension()); err != nil {
 		//TODO log error
 		conn.Close(err)
 		srv.Logger.Error("Failed to join player to dimension %s", err)
@@ -124,6 +135,8 @@ func (srv *Server) addPlayer(p *PlayerController) {
 	srv.mu.RLock()
 	srv.Players[p.UUID] = p
 	srv.mu.RUnlock()
+
+	srv.PlayerlistUpdate()
 
 	//gui.AddPlayer(p.session.Info().Name, p.UUID)
 

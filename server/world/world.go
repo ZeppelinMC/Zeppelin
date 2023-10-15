@@ -32,6 +32,8 @@ func OpenWorld(name string, flat bool) (*World, error) {
 	}
 
 	wrld.overworld = NewDimension("minecraft:overworld", anvil.NewReader(name+"/region/", name+"/entities/"))
+	wrld.nether = NewDimension("minecraft:the_nether", anvil.NewReader(name+"/DIM-1/region/", name+"/DIM-1/entities/"))
+	wrld.theEnd = NewDimension("minecraft:the_end", anvil.NewReader(name+"/DIM1/region/", name+"/DIM1/entities/"))
 	if flat {
 		wrld.overworld.generator = &FlatGenerator{}
 	}

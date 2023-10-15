@@ -68,45 +68,46 @@ type Brain struct {
 }
 
 type PlayerData struct {
-	path                string             `nbt:"-"`
-	Invulnerable        int8               `nbt:"Invulnerable"`
-	FoodSaturationLevel float32            `nbt:"foodSaturationLevel"`
-	UUID                []int32            `nbt:"UUID"`
-	EnderItems          []Slot             `nbt:"EnderItems"`
-	DataVersion         int32              `nbt:"DataVersion"`
-	SelectedItemSlot    int32              `nbt:"SelectedItemSlot"`
-	SleepTimer          int16              `nbt:"SleepTimer"`
-	Abilities           Abilities          `nbt:"abilities"`
-	RecipeBook          RecipeBook         `nbt:"recipeBook"`
-	XpSeed              int32              `nbt:"XpSeed"`
-	Inventory           []Slot             `nbt:"Inventory"`
-	FoodLevel           int32              `nbt:"foodLevel"`
-	HurtByTimestamp     int32              `nbt:"HurtByTimestamp"`
-	FallDistance        float32            `nbt:"FallDistance"`
-	PlayerGameType      int32              `nbt:"playerGameType"`
-	SeenCredits         int8               `nbt:"seenCredits"`
-	Pos                 []float64          `nbt:"Pos"`
-	FoodTickTimer       int32              `nbt:"foodTickTimer"`
-	Brain               Brain              `nbt:"Brain"`
-	AbsorptionAmount    float32            `nbt:"AbsorptionAmount"`
-	DeathTime           int16              `nbt:"DeathTime"`
-	XpLevel             int32              `nbt:"XpLevel"`
-	XpP                 float32            `nbt:"XpP"`
-	FallFlying          int8               `nbt:"FallFlying"`
-	Motion              []float64          `nbt:"Motion"`
-	OnGround            int8               `nbt:"OnGround"`
-	Rotation            []float32          `nbt:"Rotation"`
-	Score               int32              `nbt:"Score"`
-	Fire                int16              `nbt:"Fire"`
-	FoodExhaustionLevel float32            `nbt:"foodExhaustionLevel"`
-	Attributes          []Attribute        `nbt:"Attributes"`
-	PortalCooldown      int32              `nbt:"PortalCooldown"`
-	Health              float32            `nbt:"Health"`
-	Dimension           string             `nbt:"Dimension"`
-	XpTotal             int32              `nbt:"XpTotal"`
-	Air                 int16              `nbt:"Air"`
-	WardenSpawnTracker  WardenSpawnTracker `nbt:"warden_spawn_tracker"`
-	HurtTime            int16              `nbt:"HurtTime"`
+	path                  string             `nbt:"-"`
+	Invulnerable          int8               `nbt:"Invulnerable"`
+	FoodSaturationLevel   float32            `nbt:"foodSaturationLevel"`
+	UUID                  []int32            `nbt:"UUID"`
+	EnderItems            []Slot             `nbt:"EnderItems"`
+	DataVersion           int32              `nbt:"DataVersion"`
+	SelectedItemSlot      int32              `nbt:"SelectedItemSlot"`
+	SleepTimer            int16              `nbt:"SleepTimer"`
+	Abilities             Abilities          `nbt:"abilities"`
+	RecipeBook            RecipeBook         `nbt:"recipeBook"`
+	XpSeed                int32              `nbt:"XpSeed"`
+	Inventory             []Slot             `nbt:"Inventory"`
+	FoodLevel             int32              `nbt:"foodLevel"`
+	HurtByTimestamp       int32              `nbt:"HurtByTimestamp"`
+	FallDistance          float32            `nbt:"FallDistance"`
+	PlayerGameType        int32              `nbt:"playerGameType"`
+	SeenCredits           int8               `nbt:"seenCredits"`
+	Pos                   []float64          `nbt:"Pos"`
+	FoodTickTimer         int32              `nbt:"foodTickTimer"`
+	Brain                 Brain              `nbt:"Brain"`
+	AbsorptionAmount      float32            `nbt:"AbsorptionAmount"`
+	DeathTime             int16              `nbt:"DeathTime"`
+	XpLevel               int32              `nbt:"XpLevel"`
+	XpP                   float32            `nbt:"XpP"`
+	FallFlying            int8               `nbt:"FallFlying"`
+	Motion                []float64          `nbt:"Motion"`
+	OnGround              int8               `nbt:"OnGround"`
+	Rotation              []float32          `nbt:"Rotation"`
+	Score                 int32              `nbt:"Score"`
+	Fire                  int16              `nbt:"Fire"`
+	FoodExhaustionLevel   float32            `nbt:"foodExhaustionLevel"`
+	Attributes            []Attribute        `nbt:"Attributes"`
+	EnteredNetherPosition []float64          `nbt:"enteredNetherPosition"`
+	PortalCooldown        int32              `nbt:"PortalCooldown"`
+	Health                float32            `nbt:"Health"`
+	Dimension             string             `nbt:"Dimension"`
+	XpTotal               int32              `nbt:"XpTotal"`
+	Air                   int16              `nbt:"Air"`
+	WardenSpawnTracker    WardenSpawnTracker `nbt:"warden_spawn_tracker"`
+	HurtTime              int16              `nbt:"HurtTime"`
 }
 
 func (data *PlayerData) Save() {
@@ -114,7 +115,7 @@ func (data *PlayerData) Save() {
 	//writer := gzip.NewWriter(buf)
 	enc := nbt.NewEncoder(buf)
 	fmt.Println(enc.Encode(*data))
-	os.WriteFile(data.path, buf.Bytes(), 0666)
+	os.WriteFile(data.path, buf.Bytes(), 0755)
 }
 
 func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
@@ -196,5 +197,6 @@ func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 		OnGround:            1,
 		UUID:                UUIDToNBT(uuid),
 		PlayerGameType:      int32(world.Gamemode),
+		Dimension:           "minecraft:overworld",
 	}
 }

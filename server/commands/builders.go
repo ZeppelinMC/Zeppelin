@@ -142,3 +142,12 @@ func NewChatComponentArgument(name string) Argument {
 		},
 	}
 }
+
+func NewDimensionArgument(name string) Argument {
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID: 38,
+		},
+	}
+}

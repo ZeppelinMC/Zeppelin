@@ -102,7 +102,7 @@ func (p *PlayerController) BroadcastDigging(pos uint64) {
 	id := p.player.EntityId()
 	in, _ := p.PlayersInArea(p.Position())
 	for range time.NewTicker(time.Millisecond * 100).C {
-		if i > 9 {
+		if i > 10 {
 			break
 		}
 		for _, pl := range in {
@@ -251,7 +251,7 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 				})
 				pl.session.SendPacket(&packet.EntityHeadRotation{
 					EntityID: p.player.EntityId(),
-					HeadYaw:  uint8(yaw),
+					HeadYaw:  yaw,
 				})
 			default:
 				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)

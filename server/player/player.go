@@ -21,7 +21,7 @@ type Player struct {
 
 	inventory []world.Slot
 
-	dimension *world.Dimension
+	dimension string
 
 	viewDistance       int32
 	simulationDistance int32
@@ -63,10 +63,12 @@ func New(entityID int32, vd, sd int32, data *world.PlayerData) *Player {
 		fl = false
 	}
 	pl.flying = fl
+	pl.dimension = data.Dimension
+
 	return pl
 }
 
-func (p *Player) Dimension() *world.Dimension {
+func (p *Player) Dimension() string {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.dimension
@@ -84,7 +86,7 @@ func (p *Player) SetDead(a bool) {
 	p.dead = a
 }
 
-func (p *Player) SetDimension(d *world.Dimension) {
+func (p *Player) SetDimension(d string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.dimension = d
@@ -198,6 +200,7 @@ func (p *Player) Save() {
 	p.data.PlayerGameType = int32(p.gameMode)
 	p.data.Inventory = p.inventory
 	p.data.Abilities.Flying = fl
+	p.data.Dimension = p.dimension
 
 	p.data.Save()
 }
