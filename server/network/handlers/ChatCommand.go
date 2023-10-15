@@ -23,6 +23,8 @@ type Controller interface {
 	BroadcastSkinData()
 	Respawn(d *world.Dimension)
 	PlaylistUpdate()
+	BreakBlock(pos uint64)
+	BroadcastDigging(pos uint64)
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

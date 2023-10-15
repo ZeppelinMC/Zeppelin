@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -98,7 +97,6 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		ticker := time.NewTicker(10 * time.Second)
 		for range ticker.C {
 			if _, ok := cntrl.Server.Players[cntrl.UUID]; !ok {
-				fmt.Println("player left! stopped sending keepalive")
 				break
 			}
 			cntrl.Keepalive()
@@ -112,6 +110,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerLeave, map[string]string{"player": conn.Name()}), nil)
 		srv.PlayerlistRemove(conn.UUID())
 		cntrl.Despawn()
+		plyr.Save()
 
 		//todo consider moving logic of removing player to a separate function
 		srv.mu.Lock()

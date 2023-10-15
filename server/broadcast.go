@@ -1,9 +1,11 @@
 package server
 
 import (
-	"github.com/aimjel/minecraft/protocol/types"
 	"math"
 	"strings"
+	"time"
+
+	"github.com/aimjel/minecraft/protocol/types"
 
 	"github.com/aimjel/minecraft/packet"
 )
@@ -86,6 +88,31 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 			EntityID:  id,
 			Animation: animation,
 		})
+	}
+}
+
+func (p *PlayerController) BreakBlock(pos uint64) {
+	p.Server.GlobalBroadcast(&packet.BlockUpdate{
+		Location: int64(pos),
+	})
+}
+
+func (p *PlayerController) BroadcastDigging(pos uint64) {
+	i := byte(0)
+	id := p.player.EntityId()
+	in, _ := p.PlayersInArea(p.Position())
+	for range time.NewTicker(time.Millisecond * 100).C {
+		if i > 9 {
+			break
+		}
+		for _, pl := range in {
+			pl.session.SendPacket(&packet.SetBlockDestroyStage{
+				EntityID:     id,
+				Location:     pos,
+				DestroyStage: i,
+			})
+		}
+		i++
 	}
 }
 
@@ -212,7 +239,7 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 				})
 				pl.session.SendPacket(&packet.EntityHeadRotation{
 					EntityID: p.player.EntityId(),
-					HeadYaw:  uint8(yaw),
+					HeadYaw:  yaw,
 				})
 			case 0x16: // rotation
 				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
@@ -287,7 +314,7 @@ func (srv *Server) PlayerlistUpdate() {
 			UUID:       p.session.conn.UUID(),
 			Name:       p.session.conn.Name(),
 			Properties: p.session.conn.Properties(),
-			Listed:     p.ClientSettings().AllowServerListings,
+			Listed:     true,
 		})
 	}
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{

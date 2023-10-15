@@ -14,11 +14,11 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
-var tags = &UpdateTags{
-	Tags: []TagType{
+var tags = &packet.UpdateTags{
+	Tags: []packet.TagType{
 		{
 			Type: "minecraft:fluid",
-			Tags: []Tag{
+			Tags: []packet.Tag{
 				{
 					Name:    "minecraft:water",
 					Entries: []int32{02, 01},
@@ -122,8 +122,9 @@ func (p *PlayerController) Login(d *world.Dimension) error {
 		abps.Flags |= 0x08
 	}
 
-	p.session.SendPacket(abps)
-
+	if abps.Flags != 0 {
+		p.session.SendPacket(abps)
+	}
 	p.session.SendPacket(tags)
 
 	if p.player.Operator() {
@@ -343,6 +344,7 @@ func (p *PlayerController) SendChunks() {
 					VelocityZ: int16(e.data.Motion[2]),
 					Type:      t.ProtocolID,
 				})
+				p.spawnedEntities = append(p.spawnedEntities, e.ID)
 			}
 		}
 	}
@@ -403,6 +405,7 @@ func (p *PlayerController) SendSpawnChunks() {
 					VelocityZ: int16(e.data.Motion[2]),
 					Type:      t.ProtocolID,
 				})
+				p.spawnedEntities = append(p.spawnedEntities, e.ID)
 			}
 		}
 	}
@@ -503,7 +506,7 @@ func (p *PlayerController) DespawnPlayer(pl *PlayerController) {
 			index = i
 		}
 	}
-	if index > -1 {
+	if index != -1 {
 		p.spawnedEntities = slices.Delete(p.spawnedEntities, index, index+1)
 	}
 }
@@ -588,42 +591,4 @@ func (p *PlayerController) SendCommandSuggestionsResponse(id int32, start int32,
 		Length:        length,
 		Matches:       matches,
 	})
-}
-
-type Tag struct {
-	Name    string
-	Entries []int32
-}
-
-type TagType struct {
-	Type string
-	Tags []Tag
-}
-
-type UpdateTags struct {
-	Tags []TagType
-}
-
-func (*UpdateTags) ID() int32 {
-	return 0x6E
-}
-
-func (*UpdateTags) Decode(*packet.Reader) error {
-	return nil
-}
-
-func (s UpdateTags) Encode(w packet.Writer) error {
-	w.VarInt(int32(len(s.Tags)))
-	for _, t := range s.Tags {
-		w.String(t.Type)
-		w.VarInt(int32(len(t.Tags)))
-		for _, tag := range t.Tags {
-			w.String(tag.Name)
-			w.VarInt(int32(len(tag.Entries)))
-			for _, e := range tag.Entries {
-				w.VarInt(e)
-			}
-		}
-	}
-	return nil
 }

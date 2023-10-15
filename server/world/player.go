@@ -111,10 +111,10 @@ type PlayerData struct {
 
 func (data *PlayerData) Save() {
 	buf := bytes.NewBuffer(nil)
-	writer := gzip.NewWriter(buf)
-	enc := nbt.NewEncoder(writer)
-	enc.Encode(data)
-	os.WriteFile(data.path, buf.Bytes(), 0755)
+	//writer := gzip.NewWriter(buf)
+	enc := nbt.NewEncoder(buf)
+	fmt.Println(enc.Encode(*data))
+	os.WriteFile(data.path, buf.Bytes(), 0666)
 }
 
 func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
@@ -140,6 +140,7 @@ func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
 	if err != nil {
 		data = world.GeneratePlayerData(uuid)
 	}
+	data.path = fmt.Sprintf("world/playerdata/%s.dat", uuid)
 	return
 }
 
