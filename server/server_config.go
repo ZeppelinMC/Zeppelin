@@ -67,6 +67,8 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 	logger.Info("Loading plugins")
 	srv.LoadPlugins()
 
+	srv.World.LoadSpawnChunks(int32(cfg.ViewDistance))
+
 	return srv, nil
 }
 

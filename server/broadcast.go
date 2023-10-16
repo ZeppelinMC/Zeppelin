@@ -11,14 +11,16 @@ import (
 )
 
 func (srv *Server) GlobalBroadcast(pk packet.Packet) {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
 	for _, p := range srv.Players {
 		p.SendPacket(pk)
 	}
 }
 
 func (srv *Server) GlobalMessage(message string, sender *PlayerController) {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
 	for _, p := range srv.Players {
 		if p.clientInfo.ChatMode == 2 {
 			continue
@@ -48,8 +50,8 @@ func (srv *Server) OperatorMessage(message string) {
 }
 
 func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerController, notInArea []*PlayerController) {
-	p.Server.mu.RLock()
-	defer p.Server.mu.RUnlock()
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
 	for _, pl := range p.Server.Players {
 		if pl.UUID == p.UUID {
 			continue
@@ -92,6 +94,10 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 }
 
 func (p *PlayerController) BreakBlock(pos uint64) {
+	in, _ := p.PlayersInArea(p.Position())
+	for _, pl := range in {
+		pl.SendPacket(&packet.WorldEvent{Event: 2001, Location: pos})
+	}
 	p.Server.GlobalBroadcast(&packet.BlockUpdate{
 		Location: int64(pos),
 	})
@@ -102,7 +108,7 @@ func (p *PlayerController) BroadcastDigging(pos uint64) {
 	id := p.entityID
 	in, _ := p.PlayersInArea(p.Position())
 	for range time.NewTicker(time.Millisecond * 100).C {
-		if i > 10 {
+		if i > 9 {
 			break
 		}
 		for _, pl := range in {
@@ -192,9 +198,10 @@ func (p *PlayerController) Despawn() {
 
 func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool) {
 	oldx, oldy, oldz := p.player.Position()
+	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
 	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
 	if distance > 100 && !teleport {
-		p.Teleport(oldx, oldy, oldz, yaw, pitch)
+		//p.Teleport(oldx, oldy, oldz, yaw, pitch)
 		p.Server.Logger.Info("%s moved too quickly!", p.Name())
 		return
 	}
@@ -203,7 +210,6 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 		return
 	}
 
-	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
 	inArea, notInArea := p.PlayersInArea(x1, y1, z1)
 
 	if distance > 8 {
@@ -307,8 +313,7 @@ func (p *PlayerController) BroadcastSprinting(val bool) {
 
 func (srv *Server) PlayerlistUpdate() {
 	players := make([]types.PlayerInfo, 0, len(srv.Players))
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
+	srv.mu.Lock()
 	for _, p := range srv.Players {
 		players = append(players, types.PlayerInfo{
 			UUID:       p.conn.UUID(),
@@ -317,6 +322,7 @@ func (srv *Server) PlayerlistUpdate() {
 			Listed:     true,
 		})
 	}
+	srv.mu.Unlock()
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
 		Actions: 0x01 | 0x08,
 		Players: players,

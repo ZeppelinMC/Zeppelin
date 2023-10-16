@@ -123,9 +123,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 }
 
 func (srv *Server) addPlayer(p *PlayerController) {
-	srv.mu.RLock()
+	srv.mu.Lock()
 	srv.Players[p.UUID] = p
-	srv.mu.RUnlock()
+	srv.mu.Unlock()
 
 	srv.PlayerlistUpdate()
 

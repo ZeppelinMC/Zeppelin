@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 )
-
-var groupCache = make(map[string]GroupPermissions)
-var playerCache = make(map[string]PlayerPermissions)
 
 type PlayerPermissions struct {
 	Group       string          `json:"group"`
@@ -21,34 +19,49 @@ type GroupPermissions struct {
 	Permissions map[string]bool `json:"permissions"`
 }
 
+var cache = struct {
+	players map[string]PlayerPermissions
+	groups  map[string]GroupPermissions
+	mu      sync.RWMutex
+}{
+	players: make(map[string]PlayerPermissions),
+	groups:  make(map[string]GroupPermissions),
+}
+
 func saveCache() {
 	os.MkdirAll("permissions/players", 0755)
 	os.Mkdir("permissions/groups", 0755)
-	for p, d := range playerCache {
+	for p, d := range cache.players {
 		j, _ := json.Marshal(d)
 		os.WriteFile(fmt.Sprintf("permissions/players/%s.json", p), j, 0755)
 	}
-	for g, d := range groupCache {
+	for g, d := range cache.groups {
 		j, _ := json.Marshal(d)
 		os.WriteFile(fmt.Sprintf("permissions/groups/%s.json", g), j, 0755)
 	}
 }
 
 func clearCache() {
-	clear(playerCache)
-	clear(groupCache)
+	cache.mu.Lock()
+	clear(cache.players)
+	clear(cache.groups)
+	cache.mu.Unlock()
 }
 
 func getPlayer(playerId string) PlayerPermissions {
-	if playerCache[playerId].Permissions != nil {
-		return playerCache[playerId]
+	cache.mu.RLock()
+	if cache.players[playerId].Permissions != nil {
+		return cache.players[playerId]
 	}
+	cache.mu.RUnlock()
 	d, err := os.ReadFile(fmt.Sprintf("permissions/players/%s.json", playerId))
 	if err != nil {
 		p := PlayerPermissions{
 			Group: "default",
 		}
-		playerCache[playerId] = p
+		cache.mu.Lock()
+		cache.players[playerId] = p
+		cache.mu.Unlock()
 		return p
 	}
 	var data PlayerPermissions
@@ -57,13 +70,18 @@ func getPlayer(playerId string) PlayerPermissions {
 }
 
 func getGroup(group string) GroupPermissions {
-	if groupCache[group].Permissions != nil {
-		return groupCache[group]
+	cache.mu.RLock()
+	if cache.groups[group].Permissions != nil {
+		return cache.groups[group]
 	}
+	cache.mu.RUnlock()
+
 	d, err := os.ReadFile(fmt.Sprintf("permissions/groups/%s.json", group))
 	if err != nil {
 		p := GroupPermissions{Permissions: map[string]bool{"server.chat": true}}
-		groupCache[group] = p
+		cache.mu.Lock()
+		cache.groups[group] = p
+		cache.mu.Unlock()
 		return p
 	}
 	var data GroupPermissions

@@ -1,10 +1,8 @@
 package server
 
 import (
-	"errors"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/network/handlers"
-	"io"
 	"time"
 )
 
@@ -18,7 +16,7 @@ func (p *PlayerController) HandlePackets() error {
 		}
 
 		packt, err := p.conn.ReadPacket()
-		if errors.Is(err, io.EOF) {
+		if err != nil {
 			return err
 		}
 

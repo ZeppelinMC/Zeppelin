@@ -108,7 +108,7 @@ func (p *PlayerController) Respawn(dim string) {
 
 	chunkX, chunkZ := math.Floor(float64(x1)/16), math.Floor(float64(z1)/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
-	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
+	//p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
 	p.SendSpawnChunks(d)
 
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
@@ -397,7 +397,7 @@ func (p *PlayerController) SendSpawnChunks(dimension *world.Dimension) {
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
 			p.SendPacket(c.Data())
 
-			for _, en := range c.Entities {
+			/*for _, en := range c.Entities {
 				u, _ := world.NBTToUUID(en.UUID)
 
 				var e *Entity
@@ -429,7 +429,7 @@ func (p *PlayerController) SendSpawnChunks(dimension *world.Dimension) {
 					Type:      t.ProtocolID,
 				})
 				p.spawnedEntities = append(p.spawnedEntities, e.ID)
-			}
+			}*/
 		}
 	}
 }
