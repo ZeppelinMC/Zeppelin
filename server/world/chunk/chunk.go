@@ -21,7 +21,7 @@ type Chunk struct {
 
 	Entities []Entity
 
-	Sections []*section
+	sections []*section
 }
 
 func NewAnvilChunk(b []byte) (*Chunk, error) {
@@ -31,20 +31,19 @@ func NewAnvilChunk(b []byte) (*Chunk, error) {
 	}
 
 	if ac.Status != "minecraft:full" {
-		//TODO: create a chunk generator
 		return nil, ErrIncomplete
 	}
 
-	var c = new(Chunk)
-	c.x = ac.XPos
-	c.z = ac.ZPos
-	c.heightMap = &HeightMap{
-		HeightMaps: struct {
-			MotionBlocking []int64 `nbt:"MOTION_BLOCKING"`
-			WorldSurface   []int64 `nbt:"WORLD_SURFACE"`
-		}{ac.Heightmaps.MotionBlocking, ac.Heightmaps.WorldSurface}}
+	c := &Chunk{
+		x: ac.XPos,
+		z: ac.ZPos,
+		heightMap: &HeightMap{
+			MotionBlocking: ac.Heightmaps.MotionBlocking,
+			WorldSurface:   ac.Heightmaps.WorldSurface,
+		},
+	}
 
-	c.Sections = make([]*section, 0, len(ac.Sections))
+	c.sections = make([]*section, 0, len(ac.Sections))
 	for _, s := range ac.Sections {
 		if s.Y < 0 && s.Y < int8(ac.YPos) {
 			continue
@@ -52,7 +51,7 @@ func NewAnvilChunk(b []byte) (*Chunk, error) {
 
 		sec := newSection(s.BlockStates.Data, s.BlockStates.Palette, s.BlockLight, s.SkyLight)
 
-		c.Sections = append(c.Sections, sec)
+		c.sections = append(c.sections, sec)
 	}
 	return c, nil
 }
@@ -60,10 +59,10 @@ func NewAnvilChunk(b []byte) (*Chunk, error) {
 func (c *Chunk) Data() *packet.ChunkData {
 	var pk packet.ChunkData
 	pk.X, pk.Z = c.x, c.z
-	pk.Heightmaps = (*c.heightMap).HeightMaps
+	pk.Heightmaps = *c.heightMap
 
-	pk.Sections = make([]types.ChunkSection, 0, len(c.Sections)+2)
-	for _, s := range c.Sections {
+	pk.Sections = make([]types.ChunkSection, 0, len(c.sections)+2)
+	for _, s := range c.sections {
 		if s == nil {
 			continue
 		}

@@ -12,7 +12,7 @@ type section struct {
 
 	bitsPerEntry int
 
-	Entries []block.Block
+	entries []block.Block
 
 	ids []int32
 
@@ -27,7 +27,7 @@ func newSection(data []int64, blocks []blockEntry, bLight, sLight []int8) (s *se
 	s = new(section)
 	s.data = data
 
-	s.Entries = make([]block.Block, 0, len(blocks))
+	s.entries = make([]block.Block, 0, len(blocks))
 	for _, entry := range blocks {
 		b := block.GetBlock(entry.Name)
 		if entry.Properties != nil {
@@ -40,7 +40,7 @@ func newSection(data []int64, blocks []blockEntry, bLight, sLight []int8) (s *se
 		}
 
 		s.ids = append(s.ids, int32(id))
-		s.Entries = append(s.Entries, b)
+		s.entries = append(s.entries, b)
 	}
 
 	ln := bits.Len32(uint32(len(blocks)) - 1)

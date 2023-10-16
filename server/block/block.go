@@ -9,16 +9,17 @@ type Block interface {
 }
 
 func GetBlock(name string) Block {
+	if b, ok := registeredBlocks[name]; ok {
+		return b
+	}
+
 	return &UnknownBlock{encodedName: name}
 }
 
 func GetBlockId(b Block) (int, bool) {
-	block := jsonBlocks[b.EncodedName()]
+	block := blocks[b.EncodedName()]
 
 	for _, state := range block.States {
-		//if reflect.DeepEqual(state.Properties, b.Properties()) {
-		//	return state.Id, true
-		//}
 
 		if eq(state.Properties, b.Properties()) {
 			return state.Id, true
@@ -39,21 +40,4 @@ func eq(a, b map[string]string) bool {
 	}
 
 	return true
-}
-
-type UnknownBlock struct {
-	encodedName string
-	properties  map[string]string
-}
-
-func (u UnknownBlock) EncodedName() string {
-	return u.encodedName
-}
-
-func (u UnknownBlock) New(m map[string]string) Block {
-	return UnknownBlock{encodedName: u.encodedName, properties: m}
-}
-
-func (u UnknownBlock) Properties() map[string]string {
-	return u.properties
 }
