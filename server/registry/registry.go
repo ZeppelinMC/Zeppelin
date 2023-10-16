@@ -2,31 +2,32 @@ package registry
 
 import (
 	_ "embed"
-	"encoding/json"
+
+	"github.com/aimjel/minecraft/nbt"
 )
 
-//go:embed registries.json
+//go:embed registries.nbt
 var rg []byte
 
 type Item struct {
-	ProtocolID int32 `json:"protocol_id"`
+	ProtocolID int32 `nbt:"protocol_id"`
 }
 
 var items map[string]Item
 var entities map[string]Item
 
 type registry struct {
-	Default    string          `json:"default"`
-	Entries    map[string]Item `json:"entries"`
-	ProtocolID int32           `json:"protocol_id"`
+	Default    string          `nbt:"default"`
+	Entries    map[string]Item `nbt:"entries"`
+	ProtocolID int32           `nbt:"protocol_id"`
 }
 
 func loadregistry() {
 	var data struct {
-		Item       registry `json:"minecraft:item"`
-		EntityType registry `json:"minecraft:entity_type"`
+		Item       registry `nbt:"minecraft:item"`
+		EntityType registry `nbt:"minecraft:entity_type"`
 	}
-	json.Unmarshal(rg, &data)
+	nbt.Unmarshal(rg, &data)
 	items = data.Item.Entries
 	entities = data.EntityType.Entries
 }
