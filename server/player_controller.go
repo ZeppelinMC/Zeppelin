@@ -146,10 +146,20 @@ func (p *PlayerController) Login(dim string) error {
 
 	x, y, z, a := p.Server.World.Spawn()
 
-	return p.session.SendPacket(&packet.SetDefaultSpawnPosition{
+	v := p.session.SendPacket(&packet.SetDefaultSpawnPosition{
 		Location: ((uint64(x) & 0x3FFFFFF) << 38) | ((uint64(z) & 0x3FFFFFF) << 12) | (uint64(y) & 0xFFF),
 		Angle:    a,
 	})
+
+	if p.Server.Config.ResourcePack.Enable {
+		return p.session.SendPacket(&packet.ResourcePack{
+			URL:    p.Server.Config.ResourcePack.URL,
+			Hash:   p.Server.Config.ResourcePack.Hash,
+			Forced: p.Server.Config.ResourcePack.Force,
+			Prompt: p.Server.Config.Messages.ResourcePackPrompt,
+		})
+	}
+	return v
 }
 
 func (p *PlayerController) SystemChatMessage(s string) error {

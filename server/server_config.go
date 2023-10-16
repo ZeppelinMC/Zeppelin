@@ -93,9 +93,10 @@ var DefaultConfig = Config{
 		ProtocolOld:             "Your protocol is too old!",
 		InsufficientPermissions: "§cYou aren't permitted to use this command.",
 		ReloadComplete:          "§aReload complete.",
-		ServerClosed:            "Server closed.",
+		ServerClosed:            "Server closed",
 		OnlineMode:              "The server is in online mode.",
 		Slain:                   "%player% was slain by %killer%",
+		ResourcePackPrompt:      "Please use our resource pack!!!",
 	},
 	Web: Web{
 		ServerIP:   "0.0.0.0",
@@ -137,6 +138,7 @@ type Messages struct {
 	ServerClosed            string `toml:"server_closed"`
 	OnlineMode              string `toml:"online_mode"`
 	Slain                   string `toml:"slain"`
+	ResourcePackPrompt      string `toml:"resource_pack_prompt"`
 }
 
 type Chat struct {
@@ -150,21 +152,29 @@ type Whitelist struct {
 	Enable  bool `toml:"enable"`
 }
 
+type ResourcePack struct {
+	URL    string `toml:"url"`
+	Hash   string `toml:"hash"`
+	Force  bool   `toml:"force"`
+	Enable bool   `toml:"enable"`
+}
+
 type Config struct {
-	ServerIP             string    `toml:"server_ip"`
-	ServerPort           int       `toml:"server_port"`
-	ViewDistance         int       `toml:"view_distance"`
-	SimulationDistance   int       `toml:"simulation_distance"`
-	Superflat            bool      `toml:"superflat"`
-	MOTD                 string    `toml:"motd"`
-	Whitelist            Whitelist `toml:"whitelist"`
-	Web                  Web       `toml:"web"`
-	Gamemode             string    `toml:"gamemode"`
-	Hardcore             bool      `toml:"hardcore"`
-	MaxPlayers           int       `toml:"max_players"`
-	Online               bool      `toml:"online_mode"`
-	CompressionThreshold int       `toml:"compression_threshold"`
-	Tablist              Tablist   `toml:"tablist"`
-	Chat                 Chat      `toml:"chat"`
-	Messages             Messages  `toml:"messages"`
+	ServerIP             string       `toml:"server_ip"`
+	ServerPort           int          `toml:"server_port"`
+	ViewDistance         int          `toml:"view_distance"`
+	SimulationDistance   int          `toml:"simulation_distance"`
+	Superflat            bool         `toml:"superflat"`
+	MOTD                 string       `toml:"motd"`
+	Whitelist            Whitelist    `toml:"whitelist"`
+	Web                  Web          `toml:"web"`
+	Gamemode             string       `toml:"gamemode"`
+	Hardcore             bool         `toml:"hardcore"`
+	MaxPlayers           int          `toml:"max_players"`
+	Online               bool         `toml:"online_mode"`
+	CompressionThreshold int          `toml:"compression_threshold"`
+	Tablist              Tablist      `toml:"tablist"`
+	Chat                 Chat         `toml:"chat"`
+	ResourcePack         ResourcePack `toml:"resource_pack"`
+	Messages             Messages     `toml:"messages"`
 }
