@@ -36,7 +36,7 @@ func (s *Session) HandlePackets(controller *PlayerController) error {
 		case *packet.ChatCommandServer:
 			handlers.ChatCommandPacket(controller, controller.Server.commandGraph, pk.Command)
 		case *packet.ClientSettings:
-			handlers.ClientSettings(controller, s.state, pk)
+			handlers.ClientSettings(controller, pk)
 		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation:
 			handlers.PlayerMovement(controller, s.state, p)
 		case *packet.PlayerActionServer:

@@ -23,6 +23,7 @@ type Controller interface {
 	Respawn(dim string)
 	BreakBlock(pos uint64)
 	BroadcastDigging(pos uint64)
+	SetClientSettings(p *packet.ClientSettings)
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

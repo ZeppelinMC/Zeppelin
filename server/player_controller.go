@@ -41,11 +41,35 @@ type PlayerController struct {
 	spawnedEntities []int32
 	loadedChunks    map[[2]int32]struct{}
 
+	entityID int32
+
 	UUID string
+
+	clientInfo struct {
+		Locale               string
+		ViewDistance         int8
+		ChatMode             int32
+		ChatColors           bool
+		DisplayedSkinParts   uint8
+		MainHand             int32
+		DisableTextFiltering bool
+		AllowServerListings  bool
+	}
 }
 
 func (p *PlayerController) Name() string {
 	return p.session.conn.Name()
+}
+
+func (p *PlayerController) SetClientSettings(pk *packet.ClientSettings) {
+	p.clientInfo.Locale = pk.Locale
+	//don't set view distance but server controls it
+	p.clientInfo.ChatMode = pk.ChatMode
+	p.clientInfo.ChatColors = pk.ChatColors
+	p.clientInfo.DisplayedSkinParts = pk.DisplayedSkinParts
+	p.clientInfo.MainHand = pk.MainHand
+	p.clientInfo.DisableTextFiltering = pk.DisableTextFiltering
+	p.clientInfo.AllowServerListings = pk.AllowServerListings
 }
 
 func (p *PlayerController) Respawn(dim string) {
@@ -93,7 +117,7 @@ func (p *PlayerController) Respawn(dim string) {
 func (p *PlayerController) Login(dim string) error {
 	d := p.Server.GetDimension(dim)
 	if err := p.session.SendPacket(&packet.JoinGame{
-		EntityID:           p.player.EntityId(),
+		EntityID:           p.entityID,
 		IsHardcore:         p.player.IsHardcore(),
 		GameMode:           p.player.GameMode(),
 		PreviousGameMode:   -1,
@@ -102,8 +126,8 @@ func (p *PlayerController) Login(dim string) error {
 		DimensionName:      d.Type(),
 		HashedSeed:         d.Seed(),
 		MaxPlayers:         0,
-		ViewDistance:       p.player.ViewDistance(),
-		SimulationDistance: p.player.SimulationDistance(),
+		ViewDistance:       int32(p.clientInfo.ViewDistance),
+		SimulationDistance: int32(p.clientInfo.ViewDistance), //todo fix this
 	}); err != nil {
 		return err
 	}
@@ -137,7 +161,7 @@ func (p *PlayerController) Login(dim string) error {
 
 	if p.player.Operator() {
 		p.session.SendPacket(&packet.EntityEvent{
-			EntityID: p.player.EntityId(),
+			EntityID: p.entityID,
 			Status:   28,
 		})
 	}
@@ -189,18 +213,14 @@ func (p *PlayerController) Kill(message string) {
 		})
 	}
 	p.BroadcastPacketAll(&packet.DamageEvent{
-		EntityID:     p.player.EntityId(),
+		EntityID:     p.entityID,
 		SourceTypeID: 0,
 	})
 	p.Despawn()
 	p.session.SendPacket(&packet.CombatDeath{
 		Message:  message,
-		PlayerID: p.player.EntityId(),
+		PlayerID: p.entityID,
 	})
-}
-
-func (p *PlayerController) ClientSettings() player.ClientInformation {
-	return p.player.ClientSettings()
 }
 
 func (p *PlayerController) Position() (x, y, z float64) {
@@ -239,7 +259,7 @@ func (p *PlayerController) Push(x, y, z float64) {
 		Z:          z,
 		Yaw:        yaw,
 		Pitch:      pitch,
-		TeleportID: p.Server.teleportCounter.Add(1),
+		TeleportID: idCounter.Add(1),
 	})
 	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
 }
@@ -252,7 +272,7 @@ func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 		Z:          z,
 		Yaw:        yaw,
 		Pitch:      pitch,
-		TeleportID: p.Server.teleportCounter.Add(1),
+		TeleportID: idCounter.Add(1),
 	})
 	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
 }
@@ -291,24 +311,8 @@ func distance2i(x, z int32) float64 {
 	return math.Sqrt(float64(x*x) + float64(z*z))
 }
 
-func (p *PlayerController) CalculateUnusedChunks() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	for c := range p.loadedChunks {
-		x, _, z := p.Position()
-		px, pz := int32(x)/16, int32(z)/16
-		if distance2i(c[0]-px, c[1]-pz) > float64(p.ClientSettings().ViewDistance) {
-			p.session.SendPacket(&packet.UnloadChunk{
-				ChunkX: c[0],
-				ChunkZ: c[1],
-			})
-			delete(p.loadedChunks, c)
-		}
-	}
-}
-
 func (p *PlayerController) SendChunks(dimension *world.Dimension) {
-	max := int32(p.player.ClientSettings().ViewDistance)
+	max := int32(p.clientInfo.ViewDistance)
 	px, _, pz := p.Position()
 	cx, cz := int32(px)/16, int32(pz)/16
 
@@ -470,8 +474,6 @@ func (p *PlayerController) HandleCenterChunk(x1, z1, x2, z2 float64) {
 			ChunkX: int32(newChunkX),
 			ChunkZ: int32(newChunkZ),
 		})
-		p.CalculateUnusedChunks()
-		//p.SendChunks()
 	}
 }
 
@@ -489,7 +491,7 @@ func (p *PlayerController) IsSpawned(entityId int32) bool {
 func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	entityId := pl.player.EntityId()
+	entityId := pl.entityID
 	x, y, z := pl.player.Position()
 	ya, pi := pl.player.Rotation()
 	yaw, pitch := degreesToAngle(ya), degreesToAngle(pi)
@@ -514,7 +516,7 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 func (p *PlayerController) DespawnPlayer(pl *PlayerController) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	entityId := pl.player.EntityId()
+	entityId := pl.entityID
 
 	p.session.SendPacket(&packet.DestroyEntities{
 		EntityIds: []int32{entityId},

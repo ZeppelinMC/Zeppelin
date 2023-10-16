@@ -20,6 +20,8 @@ import (
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
+var idCounter atomic.Int32
+
 type Server struct {
 	Config       *Config
 	Logger       *logger.Logger
@@ -34,10 +36,6 @@ type Server struct {
 	BannedIPs []user
 
 	listener *minecraft.Listener
-
-	teleportCounter atomic.Int32
-
-	entityCounter atomic.Int32
 
 	Entities map[int32]*Entity
 
@@ -79,10 +77,16 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	data := srv.World.GetPlayerData(uuid.String())
 
-	plyr := player.New(srv.entityCounter.Add(1), int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance), data)
+	plyr := player.New(data)
 	sesh := New(conn, plyr)
-	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
+	cntrl := &PlayerController{
+		player:   plyr,
+		session:  sesh,
+		Server:   srv,
+		entityID: idCounter.Add(1),
+	}
 	cntrl.UUID = uuid.String()
+	cntrl.clientInfo.ViewDistance = int8(srv.Config.ViewDistance)
 
 	for _, op := range srv.Operators {
 		if op.UUID == cntrl.UUID {
@@ -219,7 +223,7 @@ func (srv *Server) FindPlayerByID(id int32) *PlayerController {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
-		if p.player.EntityId() == id {
+		if p.entityID == id {
 			return p
 		}
 	}
