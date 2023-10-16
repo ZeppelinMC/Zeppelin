@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aimjel/minecraft/chat"
@@ -19,6 +20,7 @@ type Message struct {
 }
 
 type Logger struct {
+	mu       sync.Mutex
 	text     *strings.Builder
 	chane    bool
 	c        chan Message
@@ -162,6 +164,8 @@ func (logger *Logger) send(message Message) {
 }
 
 func (logger *Logger) write(str string) {
+	logger.mu.Lock()
+	defer logger.mu.Unlock()
 	logger.text.WriteString(str)
 	t, _ := time.Parse("02-01-2006", strings.TrimSuffix(logger.file.Name(), ".log"))
 	now := time.Now()

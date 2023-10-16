@@ -1,5 +1,9 @@
 github.com/aimjel/minecraft v0.0.0-20231015195825-ddae00cc046e h1:ulnk1Qu1PQDITofm94ToK7XyymvnsyIkXJxc6JYuykI=
 github.com/aimjel/minecraft v0.0.0-20231015195825-ddae00cc046e/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231016123215-874984727d9a h1:w41oaJZW2mg3eluhjJko7XZ5pXtD3uoWBCsIM71gOAU=
+github.com/aimjel/minecraft v0.0.0-20231016123215-874984727d9a/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231016123343-3d3648ae6aeb h1:fWvc3blQ39JvmJdZlgaqOrmbCZ2Yd79jek5hSb8sNuU=
+github.com/aimjel/minecraft v0.0.0-20231016123343-3d3648ae6aeb/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

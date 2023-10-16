@@ -238,8 +238,8 @@ func (srv *Server) Close() {
 	saveCache()
 
 	for _, p := range srv.Players {
-		p.player.Save()
 		p.Disconnect(srv.Config.Messages.ServerClosed)
+		p.player.Save()
 	}
 }
 
