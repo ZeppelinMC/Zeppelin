@@ -14,9 +14,9 @@ type Entity struct {
 func (srv *Server) NewEntity(data chunk.Entity) *Entity {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
-	srv.entityCounter++
 	uuid, _ := world.NBTToUUID(data.UUID)
-	e := &Entity{data, srv.entityCounter, uuid}
-	srv.Entities[srv.entityCounter] = e
+	id := srv.entityCounter.Add(1)
+	e := &Entity{data, id, uuid}
+	srv.Entities[id] = e
 	return e
 }

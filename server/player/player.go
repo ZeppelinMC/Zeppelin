@@ -28,15 +28,11 @@ type Player struct {
 
 	entityID int32
 
-	operator bool
-
 	clientSettings ClientInformation
 
-	x, y, z    float64
-	yaw, pitch float32
-	onGround   bool
-
-	flying bool
+	x, y, z                    float64
+	yaw, pitch                 float32
+	onGround, operator, flying bool
 
 	mu sync.RWMutex
 }

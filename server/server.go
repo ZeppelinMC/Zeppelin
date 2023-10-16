@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,8 +25,6 @@ type Server struct {
 	Logger       *logger.Logger
 	commandGraph *commands.Graph
 
-	Plugins map[string]*Plugin
-
 	// Players mapped by UUID
 	Players map[string]*PlayerController
 
@@ -36,9 +35,9 @@ type Server struct {
 
 	listener *minecraft.Listener
 
-	teleportCounter int32
+	teleportCounter atomic.Int32
 
-	entityCounter int32
+	entityCounter atomic.Int32
 
 	Entities map[int32]*Entity
 
@@ -72,14 +71,13 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	if srv.ValidateConn(conn) {
 		return
 	}
-	srv.entityCounter++
 
 	x := conn.UUID()
 	uuid, _ := uuid.FromBytes(x[:])
 
 	data := srv.World.GetPlayerData(uuid.String())
 
-	plyr := player.New(srv.entityCounter, int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance), data)
+	plyr := player.New(srv.entityCounter.Add(1), int32(srv.Config.ViewDistance), int32(srv.Config.SimulationDistance), data)
 	sesh := New(conn, plyr)
 	cntrl := &PlayerController{player: plyr, session: sesh, Server: srv}
 	cntrl.UUID = uuid.String()

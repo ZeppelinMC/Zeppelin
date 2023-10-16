@@ -48,7 +48,7 @@ func (r *Reader) ReadChunkEntities(x, z int32) ([]chunk.Entity, error) {
 	var e anvilChunkEntities
 	err := nbt.Unmarshal(buf.Bytes(), &e)
 	if err != nil {
-		return nil, fmt.Errorf("%v unmarshaling entities nbt in chunk %v %v", x, z)
+		return nil, fmt.Errorf("%s, unmarshaling entities nbt in chunk %v %v", err, x, z)
 	}
 
 	return e.Entities, nil

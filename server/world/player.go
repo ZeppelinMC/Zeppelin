@@ -182,12 +182,7 @@ func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 			float64(world.nbt.Data.SpawnZ),
 		},
 		Rotation: []float32{
-			0,
-			0,
-		},
-		Motion: []float64{
-			0,
-			0,
+			90,
 			0,
 		},
 		Health:              20,

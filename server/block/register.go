@@ -3,6 +3,7 @@ package block
 import (
 	_ "embed"
 	"fmt"
+
 	"github.com/aimjel/minecraft/nbt"
 )
 

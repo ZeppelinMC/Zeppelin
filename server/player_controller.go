@@ -221,7 +221,6 @@ func (p *PlayerController) SetGameMode(gm byte) {
 }
 
 func (p *PlayerController) Push(x, y, z float64) {
-	p.Server.teleportCounter++
 	yaw, pitch := p.player.Rotation()
 	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
 	p.session.SendPacket(&packet.PlayerPositionLook{
@@ -230,13 +229,12 @@ func (p *PlayerController) Push(x, y, z float64) {
 		Z:          z,
 		Yaw:        yaw,
 		Pitch:      pitch,
-		TeleportID: p.Server.teleportCounter,
+		TeleportID: p.Server.teleportCounter.Add(1),
 	})
 	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
 }
 
 func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
-	p.Server.teleportCounter++
 	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
 	p.session.SendPacket(&packet.PlayerPositionLook{
 		X:          x,
@@ -244,7 +242,7 @@ func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 		Z:          z,
 		Yaw:        yaw,
 		Pitch:      pitch,
-		TeleportID: p.Server.teleportCounter,
+		TeleportID: p.Server.teleportCounter.Add(1),
 	})
 	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
 }
