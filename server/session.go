@@ -5,10 +5,18 @@ import (
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/network/handlers"
 	"io"
+	"time"
 )
 
 func (p *PlayerController) HandlePackets() error {
+	ticker := time.NewTicker(25 * time.Second)
 	for {
+		select {
+		case <-ticker.C:
+			p.Keepalive()
+		default:
+		}
+
 		packt, err := p.conn.ReadPacket()
 		if errors.Is(err, io.EOF) {
 			return err

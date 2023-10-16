@@ -2,13 +2,11 @@ package server
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"
@@ -106,16 +104,6 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		conn.Close(err)
 		srv.Logger.Error("Failed to join player to dimension %s", err)
 	}
-
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		for range ticker.C {
-			if _, ok := cntrl.Server.Players[cntrl.UUID]; !ok {
-				break
-			}
-			cntrl.Keepalive()
-		}
-	}()
 
 	cntrl.InitializeInventory()
 
