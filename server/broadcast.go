@@ -12,7 +12,7 @@ import (
 
 func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 	for _, p := range srv.Players {
-		p.session.SendPacket(pk)
+		p.SendPacket(pk)
 	}
 }
 
@@ -25,7 +25,7 @@ func (srv *Server) GlobalMessage(message string, sender *PlayerController) {
 		} else if p.clientInfo.ChatMode == 1 && sender != nil {
 			continue
 		}
-		p.session.SendPacket(&packet.SystemChatMessage{
+		p.SendPacket(&packet.SystemChatMessage{
 			Content: message,
 		})
 	}
@@ -39,7 +39,7 @@ func (srv *Server) OperatorMessage(message string) {
 		if p.clientInfo.ChatMode == 2 || !p.player.Operator() {
 			continue
 		}
-		p.session.SendPacket(&packet.SystemChatMessage{
+		p.SendPacket(&packet.SystemChatMessage{
 			Content: message,
 		})
 	}
@@ -84,7 +84,7 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 	inarea, _ := p.PlayersInArea(p.Position())
 	id := p.entityID
 	for _, pl := range inarea {
-		pl.session.SendPacket(&packet.EntityAnimation{
+		pl.SendPacket(&packet.EntityAnimation{
 			EntityID:  id,
 			Animation: animation,
 		})
@@ -106,7 +106,7 @@ func (p *PlayerController) BroadcastDigging(pos uint64) {
 			break
 		}
 		for _, pl := range in {
-			pl.session.SendPacket(&packet.SetBlockDestroyStage{
+			pl.SendPacket(&packet.SetBlockDestroyStage{
 				EntityID:     id,
 				Location:     pos,
 				DestroyStage: i,
@@ -219,7 +219,7 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 		if pl.IsSpawned(p.entityID) {
 			switch id {
 			case 0x14: // position
-				pl.session.SendPacket(&packet.EntityPosition{
+				pl.SendPacket(&packet.EntityPosition{
 					EntityID: p.entityID,
 					X:        int16(((x1 * 32) - oldx*32) * 128),
 					Y:        int16(((y1 * 32) - oldy*32) * 128),
@@ -228,7 +228,7 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 				})
 			case 0x15: // position + rotation
 				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
-				pl.session.SendPacket(&packet.EntityPositionRotation{
+				pl.SendPacket(&packet.EntityPositionRotation{
 					EntityID: p.entityID,
 					X:        int16(((x1 * 32) - oldx*32) * 128),
 					Y:        int16(((y1 * 32) - oldy*32) * 128),
@@ -237,26 +237,26 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 					Pitch:    pitch,
 					OnGround: ong,
 				})
-				pl.session.SendPacket(&packet.EntityHeadRotation{
+				pl.SendPacket(&packet.EntityHeadRotation{
 					EntityID: p.entityID,
 					HeadYaw:  yaw,
 				})
 			case 0x16: // rotation
 				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
-				pl.session.SendPacket(&packet.EntityRotation{
+				pl.SendPacket(&packet.EntityRotation{
 					EntityID: p.entityID,
 					Yaw:      yaw,
 					Pitch:    pitch,
 					OnGround: ong,
 				})
-				pl.session.SendPacket(&packet.EntityHeadRotation{
+				pl.SendPacket(&packet.EntityHeadRotation{
 					EntityID: p.entityID,
 					HeadYaw:  yaw,
 				})
 			default:
 				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
 
-				pl.session.SendPacket(&packet.TeleportEntity{
+				pl.SendPacket(&packet.TeleportEntity{
 					EntityID: p.entityID,
 					X:        x1,
 					Y:        y1,
@@ -275,14 +275,14 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 func (p *PlayerController) BroadcastPose(pose int32) {
 	inArea, _ := p.PlayersInArea(p.Position())
 	for _, pl := range inArea {
-		pl.session.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Pose: &pose})
+		pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Pose: &pose})
 	}
 }
 
 func (p *PlayerController) BroadcastPacketAll(pk packet.Packet) {
 	inArea, _ := p.AllPlayersInArea(p.Position())
 	for _, pl := range inArea {
-		pl.session.SendPacket(pk)
+		pl.SendPacket(pk)
 	}
 }
 
@@ -290,7 +290,7 @@ func (p *PlayerController) BroadcastHealth() {
 	inArea, _ := p.PlayersInArea(p.Position())
 	h := p.player.Health()
 	for _, pl := range inArea {
-		pl.session.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Health: &h})
+		pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Health: &h})
 	}
 }
 
@@ -301,7 +301,7 @@ func (p *PlayerController) BroadcastSprinting(val bool) {
 		if val {
 			data |= 0x08
 		}
-		pl.session.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Data: &data})
+		pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Data: &data})
 	}
 }
 
@@ -311,9 +311,9 @@ func (srv *Server) PlayerlistUpdate() {
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
 		players = append(players, types.PlayerInfo{
-			UUID:       p.session.conn.UUID(),
-			Name:       p.session.conn.Name(),
-			Properties: p.session.conn.Properties(),
+			UUID:       p.conn.UUID(),
+			Name:       p.conn.Name(),
+			Properties: p.conn.Properties(),
 			Listed:     true,
 		})
 	}

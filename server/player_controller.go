@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/aimjel/minecraft"
 	"math"
 	"math/rand"
 	"slices"
@@ -33,10 +34,10 @@ var tags = &packet.UpdateTags{
 }
 
 type PlayerController struct {
-	mu      sync.RWMutex
-	player  *player.Player
-	session *Session
-	Server  *Server
+	mu     sync.RWMutex
+	player *player.Player
+	conn   *minecraft.Conn
+	Server *Server
 
 	spawnedEntities []int32
 	loadedChunks    map[[2]int32]struct{}
@@ -58,7 +59,11 @@ type PlayerController struct {
 }
 
 func (p *PlayerController) Name() string {
-	return p.session.conn.Name()
+	return p.conn.Name()
+}
+
+func (p *PlayerController) SendPacket(pk packet.Packet) error {
+	return p.conn.SendPacket(pk)
 }
 
 func (p *PlayerController) SetClientSettings(pk *packet.ClientSettings) {
@@ -75,7 +80,7 @@ func (p *PlayerController) SetClientSettings(pk *packet.ClientSettings) {
 func (p *PlayerController) Respawn(dim string) {
 	d := p.Server.GetDimension(dim)
 	p.player.SetDead(false)
-	p.session.SendPacket(&packet.Respawn{
+	p.SendPacket(&packet.Respawn{
 		GameMode:         p.player.GameMode(),
 		PreviousGameMode: -1,
 		DimensionType:    d.Type(),
@@ -102,13 +107,13 @@ func (p *PlayerController) Respawn(dim string) {
 	}
 
 	chunkX, chunkZ := math.Floor(float64(x1)/16), math.Floor(float64(z1)/16)
-	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
+	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
 	p.SendSpawnChunks(d)
 
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
 
-	p.session.SendPacket(&packet.SetDefaultSpawnPosition{
+	p.SendPacket(&packet.SetDefaultSpawnPosition{
 		Location: ((uint64(x1) & 0x3FFFFFF) << 38) | ((uint64(z1) & 0x3FFFFFF) << 12) | (uint64(y1) & 0xFFF),
 		Angle:    a,
 	})
@@ -116,7 +121,7 @@ func (p *PlayerController) Respawn(dim string) {
 
 func (p *PlayerController) Login(dim string) error {
 	d := p.Server.GetDimension(dim)
-	if err := p.session.SendPacket(&packet.JoinGame{
+	if err := p.SendPacket(&packet.JoinGame{
 		EntityID:           p.entityID,
 		IsHardcore:         p.player.IsHardcore(),
 		GameMode:           p.player.GameMode(),
@@ -132,7 +137,7 @@ func (p *PlayerController) Login(dim string) error {
 		return err
 	}
 	p.player.SetDimension(d.Type())
-	p.session.SendPacket(&packet.PluginMessage{
+	p.SendPacket(&packet.PluginMessage{
 		Channel: "minecraft:brand",
 		Data:    []byte("Dynamite"),
 	})
@@ -141,7 +146,7 @@ func (p *PlayerController) Login(dim string) error {
 	yaw, pitch := p.player.SavedRotation()
 
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
-	p.session.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
+	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 	p.Teleport(x1, y1, z1, yaw, pitch)
 	p.SendSpawnChunks(d)
 
@@ -155,12 +160,12 @@ func (p *PlayerController) Login(dim string) error {
 	}
 
 	if abps.Flags != 0 {
-		p.session.SendPacket(abps)
+		p.SendPacket(abps)
 	}
-	p.session.SendPacket(tags)
+	p.SendPacket(tags)
 
 	if p.player.Operator() {
-		p.session.SendPacket(&packet.EntityEvent{
+		p.SendPacket(&packet.EntityEvent{
 			EntityID: p.entityID,
 			Status:   28,
 		})
@@ -170,13 +175,13 @@ func (p *PlayerController) Login(dim string) error {
 
 	x, y, z, a := p.Server.World.Spawn()
 
-	v := p.session.SendPacket(&packet.SetDefaultSpawnPosition{
+	v := p.SendPacket(&packet.SetDefaultSpawnPosition{
 		Location: ((uint64(x) & 0x3FFFFFF) << 38) | ((uint64(z) & 0x3FFFFFF) << 12) | (uint64(y) & 0xFFF),
 		Angle:    a,
 	})
 
 	if p.Server.Config.ResourcePack.Enable {
-		return p.session.SendPacket(&packet.ResourcePack{
+		return p.SendPacket(&packet.ResourcePack{
 			URL:    p.Server.Config.ResourcePack.URL,
 			Hash:   p.Server.Config.ResourcePack.Hash,
 			Forced: p.Server.Config.ResourcePack.Force,
@@ -187,13 +192,13 @@ func (p *PlayerController) Login(dim string) error {
 }
 
 func (p *PlayerController) SystemChatMessage(s string) error {
-	return p.session.SendPacket(&packet.SystemChatMessage{Content: s})
+	return p.SendPacket(&packet.SystemChatMessage{Content: s})
 }
 
 func (p *PlayerController) SetHealth(health float32) {
 	p.player.SetHealth(health)
 	food, saturation := p.player.FoodLevel(), p.player.FoodSaturationLevel()
-	p.session.SendPacket(&packet.SetHealth{
+	p.SendPacket(&packet.SetHealth{
 		Health:         health,
 		Food:           food,
 		FoodSaturation: saturation,
@@ -207,7 +212,7 @@ func (p *PlayerController) Kill(message string) {
 	p.player.SetDead(true)
 	p.BroadcastHealth()
 	if f, _ := world.GameRule(p.Server.World.Gamerules()["doImmediateRespawn"]).Bool(); !f {
-		p.session.SendPacket(&packet.GameEvent{
+		p.SendPacket(&packet.GameEvent{
 			Event: 11,
 			Value: 0,
 		})
@@ -217,7 +222,7 @@ func (p *PlayerController) Kill(message string) {
 		SourceTypeID: 0,
 	})
 	p.Despawn()
-	p.session.SendPacket(&packet.CombatDeath{
+	p.SendPacket(&packet.CombatDeath{
 		Message:  message,
 		PlayerID: p.entityID,
 	})
@@ -241,7 +246,7 @@ func (p *PlayerController) GameMode() byte {
 
 func (p *PlayerController) SetGameMode(gm byte) {
 	p.player.SetGameMode(gm)
-	p.session.SendPacket(&packet.GameEvent{
+	p.SendPacket(&packet.GameEvent{
 		Event: 3,
 		Value: float32(gm),
 	})
@@ -253,7 +258,7 @@ func (p *PlayerController) SetGameMode(gm byte) {
 func (p *PlayerController) Push(x, y, z float64) {
 	yaw, pitch := p.player.Rotation()
 	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
-	p.session.SendPacket(&packet.PlayerPositionLook{
+	p.SendPacket(&packet.PlayerPositionLook{
 		X:          x,
 		Y:          y,
 		Z:          z,
@@ -266,7 +271,7 @@ func (p *PlayerController) Push(x, y, z float64) {
 
 func (p *PlayerController) Teleport(x, y, z float64, yaw, pitch float32) {
 	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
-	p.session.SendPacket(&packet.PlayerPositionLook{
+	p.SendPacket(&packet.PlayerPositionLook{
 		X:          x,
 		Y:          y,
 		Z:          z,
@@ -292,19 +297,19 @@ func (p *PlayerController) SendCommands(g *commands.Graph) {
 			graph.Commands[i] = nil
 		}
 	}
-	p.session.SendPacket(graph.Data())
+	p.SendPacket(graph.Data())
 }
 
 func (p *PlayerController) Keepalive() {
 	id := rand.Int63() * 100
-	p.session.SendPacket(&packet.KeepAlive{PayloadID: id})
+	p.SendPacket(&packet.KeepAlive{PayloadID: id})
 }
 
 func (p *PlayerController) Disconnect(reason string) {
 	pk := &packet.DisconnectPlay{}
 	pk.Reason = reason
-	p.session.SendPacket(pk)
-	p.session.conn.Close(nil)
+	p.SendPacket(pk)
+	p.conn.Close(nil)
 }
 
 func distance2i(x, z int32) float64 {
@@ -330,7 +335,7 @@ func (p *PlayerController) SendChunks(dimension *world.Dimension) {
 				continue
 			}
 			p.loadedChunks[[2]int32{x, z}] = struct{}{}
-			p.session.SendPacket(c.Data())
+			p.SendPacket(c.Data())
 
 			for _, en := range c.Entities {
 				u, _ := world.NBTToUUID(en.UUID)
@@ -350,7 +355,7 @@ func (p *PlayerController) SendChunks(dimension *world.Dimension) {
 					continue
 				}
 
-				p.session.SendPacket(&packet.SpawnEntity{
+				p.SendPacket(&packet.SpawnEntity{
 					EntityID:  e.ID,
 					UUID:      u,
 					X:         e.data.Pos[0],
@@ -390,7 +395,7 @@ func (p *PlayerController) SendSpawnChunks(dimension *world.Dimension) {
 				continue
 			}
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
-			p.session.SendPacket(c.Data())
+			p.SendPacket(c.Data())
 
 			for _, en := range c.Entities {
 				u, _ := world.NBTToUUID(en.UUID)
@@ -410,7 +415,7 @@ func (p *PlayerController) SendSpawnChunks(dimension *world.Dimension) {
 					continue
 				}
 
-				p.session.SendPacket(&packet.SpawnEntity{
+				p.SendPacket(&packet.SpawnEntity{
 					EntityID:  e.ID,
 					UUID:      u,
 					X:         e.data.Pos[0],
@@ -470,7 +475,7 @@ func (p *PlayerController) HandleCenterChunk(x1, z1, x2, z2 float64) {
 	newChunkZ := int(math.Floor(z2 / 16))
 
 	if newChunkX != oldChunkX || newChunkZ != oldChunkZ {
-		p.session.SendPacket(&packet.SetCenterChunk{
+		p.SendPacket(&packet.SetCenterChunk{
 			ChunkX: int32(newChunkX),
 			ChunkZ: int32(newChunkZ),
 		})
@@ -496,16 +501,16 @@ func (p *PlayerController) SpawnPlayer(pl *PlayerController) {
 	ya, pi := pl.player.Rotation()
 	yaw, pitch := degreesToAngle(ya), degreesToAngle(pi)
 
-	p.session.SendPacket(&packet.SpawnPlayer{
+	p.SendPacket(&packet.SpawnPlayer{
 		EntityID:   entityId,
-		PlayerUUID: pl.session.conn.UUID(),
+		PlayerUUID: pl.conn.UUID(),
 		X:          x,
 		Y:          y,
 		Z:          z,
 		Yaw:        yaw,
 		Pitch:      pitch,
 	})
-	p.session.SendPacket(&packet.EntityHeadRotation{
+	p.SendPacket(&packet.EntityHeadRotation{
 		EntityID: entityId,
 		HeadYaw:  yaw,
 	})
@@ -518,7 +523,7 @@ func (p *PlayerController) DespawnPlayer(pl *PlayerController) {
 	defer p.mu.Unlock()
 	entityId := pl.entityID
 
-	p.session.SendPacket(&packet.DestroyEntities{
+	p.SendPacket(&packet.DestroyEntities{
 		EntityIds: []int32{entityId},
 	})
 	index := -1
@@ -533,7 +538,7 @@ func (p *PlayerController) DespawnPlayer(pl *PlayerController) {
 }
 
 func (p *PlayerController) InitializeInventory() {
-	p.session.SendPacket(&SetContainerContent{
+	p.SendPacket(&SetContainerContent{
 		WindowID: 0,
 		StateID:  1,
 		Slots:    p.player.Inventory(),
@@ -606,7 +611,7 @@ func sortInventory(slots []world.Slot) []world.Slot {
 }
 
 func (p *PlayerController) SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []packet.SuggestionMatch) {
-	p.session.SendPacket(&packet.CommandSuggestionsResponse{
+	p.SendPacket(&packet.CommandSuggestionsResponse{
 		TransactionId: id,
 		Start:         start,
 		Length:        length,
