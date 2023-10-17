@@ -21,4 +21,5 @@ Feel free to contribute by making an issue or pull request
 - [x] Commands
 
 Join our Discord for support
+
 [![Discord](https://discordapp.com/api/guilds/1141080135878070362/widget.png?style=banner3)]([https://discord.gg/4QuwYACDRX](https://discord.gg/5Yz2dR4pQj)https://discord.gg/5Yz2dR4pQj)
