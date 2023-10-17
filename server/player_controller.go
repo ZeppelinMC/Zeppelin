@@ -100,7 +100,7 @@ func (p *PlayerController) Respawn(dim string) {
 		x1, y1, z1 = int32(x)/8, int32(y)/8, int32(z)/8
 	}
 
-	yaw, pitch := p.player.SavedRotation()
+	yaw, pitch := p.player.Rotation()
 
 	if b, _ := world.GameRule(p.Server.World.Gamerules()["keepInventory"]).Bool(); b {
 		p.InitializeInventory()
@@ -142,8 +142,8 @@ func (p *PlayerController) Login(dim string) error {
 		Data:    []byte("Dynamite"),
 	})
 
-	x1, y1, z1 := p.player.SavedPosition()
-	yaw, pitch := p.player.SavedRotation()
+	x1, y1, z1 := p.player.Position()
+	yaw, pitch := p.player.Rotation()
 
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})

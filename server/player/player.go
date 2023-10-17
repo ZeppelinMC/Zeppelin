@@ -118,18 +118,6 @@ func (p *Player) SetFoodSaturationLevel(level float32) {
 	p.foodSaturation = level
 }
 
-func (p *Player) SavedPosition() (x, y, z float64) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.data.Pos[0], p.data.Pos[1], p.data.Pos[2]
-}
-
-func (p *Player) SavedRotation() (yaw, pitch float32) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.data.Rotation[0], p.data.Rotation[1]
-}
-
 func (p *Player) SavedOnGround() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
