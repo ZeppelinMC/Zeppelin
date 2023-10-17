@@ -330,8 +330,6 @@ func (srv *Server) PlayerlistUpdate() {
 }
 
 func (srv *Server) PlayerlistRemove(players ...[16]byte) {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
 	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDS: players})
 }
 

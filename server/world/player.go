@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/aimjel/minecraft/nbt"
-	"github.com/google/uuid"
+	uuid2 "github.com/google/uuid"
 )
 
 type Slot struct {
@@ -68,7 +68,7 @@ type Brain struct {
 }
 
 type PlayerData struct {
-	path                  string             `nbt:"-"`
+	path                  string
 	Invulnerable          int8               `nbt:"Invulnerable"`
 	FoodSaturationLevel   float32            `nbt:"foodSaturationLevel"`
 	UUID                  []int32            `nbt:"UUID"`
@@ -111,11 +111,15 @@ type PlayerData struct {
 }
 
 func (data *PlayerData) Save() {
+	f, _ := os.Create(data.path)
+	writer := gzip.NewWriter(f)
 	buf := bytes.NewBuffer(nil)
-	//writer := gzip.NewWriter(buf)
 	enc := nbt.NewEncoder(buf)
-	fmt.Println(enc.Encode(*data))
-	os.WriteFile(data.path, buf.Bytes(), 0755)
+	enc.Encode(*data)
+	writer.Write(buf.Bytes())
+
+	writer.Close()
+	f.Close()
 }
 
 func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
@@ -133,6 +137,7 @@ func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
 
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(gzipRd); err != nil {
+		data = world.GeneratePlayerData(uuid)
 		return
 	}
 
@@ -145,35 +150,27 @@ func (world *World) GetPlayerData(uuid string) (data *PlayerData) {
 	return
 }
 
-func UUIDToNBT(str string) (u []int32) {
-	uuid, _ := uuid.Parse(str)
-	s1 := uuid[:4]
-	s2 := uuid[4:8]
-	s3 := uuid[8:12]
-	s4 := uuid[12:]
-	u = append(u, int32(binary.BigEndian.Uint32(s1)))
-	u = append(u, int32(binary.BigEndian.Uint32(s2)))
-	u = append(u, int32(binary.BigEndian.Uint32(s3)))
-	u = append(u, int32(binary.BigEndian.Uint32(s4)))
-	return
+func ByteUUIDToIntUUID(uuid uuid2.UUID) (u []int32) {
+	return append(u,
+		int32(binary.BigEndian.Uint32(uuid[:4])),
+		int32(binary.BigEndian.Uint32(uuid[4:8])),
+		int32(binary.BigEndian.Uint32(uuid[8:12])),
+		int32(binary.BigEndian.Uint32(uuid[12:])),
+	)
 }
 
-func NBTToUUID(u []int32) (uuid.UUID, error) {
+func IntUUIDToByteUUID(u []int32) (uuid2.UUID, error) {
 	byteSlice := make([]byte, 16)
 	binary.BigEndian.PutUint32(byteSlice[:4], uint32(u[0]))
 	binary.BigEndian.PutUint32(byteSlice[4:8], uint32(u[1]))
 	binary.BigEndian.PutUint32(byteSlice[8:12], uint32(u[2]))
 	binary.BigEndian.PutUint32(byteSlice[12:], uint32(u[3]))
 
-	uuid, err := uuid.FromBytes(byteSlice)
-	if err != nil {
-		return uuid, err
-	}
-
-	return uuid, nil
+	return uuid2.FromBytes(byteSlice)
 }
 
 func (world *World) GeneratePlayerData(uuid string) *PlayerData {
+	u, _ := uuid2.Parse(uuid)
 	return &PlayerData{
 		path: fmt.Sprintf("world/playerdata/%s.dat", uuid),
 		Pos: []float64{
@@ -190,7 +187,7 @@ func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 		FoodLevel:           20,
 		FoodSaturationLevel: 5,
 		OnGround:            1,
-		UUID:                UUIDToNBT(uuid),
+		UUID:                ByteUUIDToIntUUID(u),
 		PlayerGameType:      int32(world.Gamemode),
 		Dimension:           "minecraft:overworld",
 	}

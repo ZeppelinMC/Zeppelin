@@ -2,11 +2,12 @@ package server
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/google/uuid"
 
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"

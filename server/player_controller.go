@@ -1,12 +1,13 @@
 package server
 
 import (
-	"github.com/aimjel/minecraft"
 	"math"
 	"math/rand"
 	"slices"
 	"strings"
 	"sync"
+
+	"github.com/aimjel/minecraft"
 
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
@@ -338,7 +339,7 @@ func (p *PlayerController) SendChunks(dimension *world.Dimension) {
 			p.SendPacket(c.Data())
 
 			for _, en := range c.Entities {
-				u, _ := world.NBTToUUID(en.UUID)
+				u, _ := world.IntUUIDToByteUUID(en.UUID)
 
 				var e *Entity
 

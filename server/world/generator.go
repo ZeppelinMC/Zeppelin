@@ -3,7 +3,6 @@ package world
 import (
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"math"
 	"math/rand"
 	"os"
@@ -29,7 +28,7 @@ func GenerateWorldData(hardcore int8) worldData {
 			//ThunderTime:         19779,
 			//LastPlayed:          1693159101540,
 			//BorderSize:          5.9999968e+07,
-			//DataVersion:         3465,
+			DataVersion: 3465,
 			//Time:                938,
 			Difficulty:          2,
 			Raining:             0,
@@ -182,8 +181,7 @@ func CreateWorld(hardcore bool) {
 
 	buf := bytes.NewBuffer(nil)
 	enc := nbt.NewEncoder(buf)
-	err := enc.Encode(world)
-	fmt.Println(err)
+	enc.Encode(world)
 
 	writer := gzip.NewWriter(file)
 	writer.Write(buf.Bytes())

@@ -19,7 +19,7 @@ import (
 )
 
 var log = logger.New()
-var startTime = float64(time.Now().UnixMilli())
+var startTime = time.Now()
 
 func startProfile() {
 	file, _ := os.Create("cpu.out")
@@ -41,7 +41,7 @@ func start(cfg *server.Config) {
 		log.Error("Failed to open TCP server: %s", err)
 		os.Exit(1)
 	}
-	log.Info("Done! (%vs)", (float64(time.Now().UnixMilli())-startTime)/1000)
+	log.Info("Done! (%v)", time.Since(startTime))
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 

@@ -14,7 +14,7 @@ type Entity struct {
 func (srv *Server) NewEntity(data chunk.Entity) *Entity {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
-	uuid, _ := world.NBTToUUID(data.UUID)
+	uuid, _ := world.IntUUIDToByteUUID(data.UUID)
 	id := idCounter.Add(1)
 	e := &Entity{data, id, uuid}
 	srv.Entities[id] = e
