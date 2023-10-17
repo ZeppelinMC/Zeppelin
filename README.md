@@ -13,6 +13,7 @@ Feel free to contribute by making an issue or pull request
 ## Progress
 
 - [x] Authentication/Encryption
+- [X] Compression & Decompression
 - [x] Anvil/NBT reading (+ NBT Writing)
 - [x] Chunk loading
 - [x] Player list / Chat
