@@ -109,7 +109,7 @@ func (p *PlayerController) Respawn(dim string) {
 
 	chunkX, chunkZ := math.Floor(float64(x1)/16), math.Floor(float64(z1)/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
-	//p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
+	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
 	p.SendSpawnChunks(d)
 
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
@@ -157,6 +157,9 @@ func (p *PlayerController) Login(dim string) error {
 		abps.Flags |= 0x06
 	}
 	if p.player.GameMode() == 1 {
+		if abps.Flags == 0 {
+			abps.Flags |= 0x04
+		}
 		abps.Flags |= 0x08
 	}
 
