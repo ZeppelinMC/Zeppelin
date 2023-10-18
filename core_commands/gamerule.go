@@ -10,7 +10,7 @@ var gamerule_cmd = &commands.Command{
 	Name:                "gamerule",
 	RequiredPermissions: []string{"server.command.gamerule"},
 	Arguments: []commands.Argument{
-		commands.NewStringArgument("rule", commands.StringSingleWord).
+		commands.NewStrArg("rule", commands.SingleWord).
 			SetSuggest(func(ctx commands.SuggestionsContext) {
 				srv := ctx.Executor.(*server.PlayerController).Server
 				var matches []packet.SuggestionMatch

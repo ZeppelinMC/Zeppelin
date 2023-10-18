@@ -1,35 +1,21 @@
 package commands
 
-import "github.com/aimjel/minecraft/protocol/types"
+import (
+	"github.com/aimjel/minecraft/protocol/types"
+)
+
+type stringArgType byte
 
 const (
-	StringSingleWord = iota
-	StringQuotablePhrase
-	StringGreedyPhrase
+	SingleWord stringArgType = iota
+	QuotablePhrase
+	GreedyPhrase
 )
 
 const (
 	EntitySingle = iota + 1
 	EntityPlayerOnly
 )
-
-type argumentType int
-
-const (
-	Bool argumentType = iota
-	Float
-	Double
-	Integer
-	Long
-	String
-)
-
-func NewArgument(name string, t argumentType) Argument {
-	return Argument{
-		Name:   name,
-		Parser: Parser{ID: int32(t)},
-	}
-}
 
 func (a Argument) Min(min uint64) Argument {
 	//todo add checks, dont allow arguments that arent numbers to access this
@@ -45,7 +31,14 @@ func (a Argument) Max(max uint64) Argument {
 	return a
 }
 
-func NewBoolArgument(name string) Argument {
+func (a Argument) MinMax(min, max uint64) Argument {
+	a.Parser.Properties.Flags |= 0x03
+	a.Parser.Properties.Min = min
+	a.Parser.Properties.Max = max
+	return a
+}
+
+func NewBoolArg(name string) Argument {
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -54,19 +47,8 @@ func NewBoolArgument(name string) Argument {
 	}
 }
 
-func NewFloatArgument(name string, properties struct {
-	Min *uint64
-	Max *uint64
-}) Argument {
+func NewFloatArg(name string) Argument {
 	props := types.CommandProperties{Flags: 0}
-	if properties.Min != nil {
-		props.Flags |= 1
-		props.Min = *properties.Min
-	}
-	if properties.Max != nil {
-		props.Flags |= 2
-		props.Max = *properties.Max
-	}
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -76,19 +58,8 @@ func NewFloatArgument(name string, properties struct {
 	}
 }
 
-func NewIntegerArgument(name string, properties struct {
-	Min *int64
-	Max *int64
-}) Argument {
+func NewIntArg(name string) Argument {
 	props := types.CommandProperties{Flags: 0}
-	if properties.Min != nil {
-		props.Flags |= 1
-		props.Min = uint64(*properties.Min)
-	}
-	if properties.Max != nil {
-		props.Flags |= 2
-		props.Max = uint64(*properties.Max)
-	}
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -103,8 +74,8 @@ func (a Argument) SetSuggest(s func(ctx SuggestionsContext)) Argument {
 	return a
 }
 
-func NewStringArgument(name string, properties byte) Argument {
-	props := types.CommandProperties{Flags: properties}
+func NewStrArg(name string, properties stringArgType) Argument {
+	props := types.CommandProperties{Flags: uint8(properties)}
 	return Argument{
 		Name: name,
 		Parser: Parser{

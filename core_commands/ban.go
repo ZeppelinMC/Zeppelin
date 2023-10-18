@@ -11,7 +11,7 @@ var ban_cmd = &commands.Command{
 	RequiredPermissions: []string{"server.command.ban"},
 	Arguments: []commands.Argument{
 		commands.NewEntityArgument("player", commands.EntityPlayerOnly),
-		commands.NewStringArgument("reason", commands.StringGreedyPhrase),
+		commands.NewStrArg("reason", commands.GreedyPhrase),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if len(ctx.Arguments) == 0 {

@@ -18,6 +18,7 @@ type SuggestionsContext struct {
 }
 
 func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
+
 	if p, ok := c.Executor.(interface {
 		SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []pk.SuggestionMatch)
 	}); ok {

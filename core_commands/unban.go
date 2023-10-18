@@ -9,7 +9,7 @@ var unban_cmd = &commands.Command{
 	Aliases:             []string{"pardon"},
 	RequiredPermissions: []string{"server.command.unban"},
 	Arguments: []commands.Argument{
-		commands.NewStringArgument("player", commands.StringSingleWord),
+		commands.NewStrArg("player", commands.SingleWord),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if len(ctx.Arguments) == 0 {
