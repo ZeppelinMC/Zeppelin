@@ -57,6 +57,9 @@ type PlayerController struct {
 		DisableTextFiltering bool
 		AllowServerListings  bool
 	}
+
+	//playReady means the player is ready to receive packets regarding other players
+	playReady bool
 }
 
 func (p *PlayerController) Name() string {
