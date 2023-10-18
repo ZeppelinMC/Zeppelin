@@ -8,6 +8,7 @@ import (
 )
 
 func (p *PlayerController) HandlePackets() error {
+	p.playReady = true
 	ticker := time.NewTicker(25 * time.Second)
 	for {
 		select {

@@ -11,8 +11,8 @@ import (
 )
 
 func (srv *Server) GlobalBroadcast(pk packet.Packet) {
-	srv.mu.Lock()
-	defer srv.mu.Unlock()
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
 		p.SendPacket(pk)
 	}
@@ -50,8 +50,8 @@ func (srv *Server) OperatorMessage(message string) {
 }
 
 func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerController, notInArea []*PlayerController) {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.Players {
 		if pl.UUID == p.UUID {
 			continue
@@ -86,6 +86,10 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 	inarea, _ := p.PlayersInArea(p.Position())
 	id := p.entityID
 	for _, pl := range inarea {
+		if !pl.playReady {
+			continue
+		}
+
 		pl.SendPacket(&packet.EntityAnimation{
 			EntityID:  id,
 			Animation: animation,
@@ -96,6 +100,10 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 func (p *PlayerController) BreakBlock(pos uint64) {
 	in, _ := p.PlayersInArea(p.Position())
 	for _, pl := range in {
+		if !pl.playReady {
+			continue
+		}
+
 		pl.SendPacket(&packet.WorldEvent{Event: 2001, Location: pos})
 	}
 	p.Server.GlobalBroadcast(&packet.BlockUpdate{
@@ -112,6 +120,10 @@ func (p *PlayerController) BroadcastDigging(pos uint64) {
 			break
 		}
 		for _, pl := range in {
+			if !pl.playReady {
+				continue
+			}
+
 			pl.SendPacket(&packet.SetBlockDestroyStage{
 				EntityID:     id,
 				Location:     pos,
@@ -222,6 +234,10 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 		}
 	}
 	for _, pl := range inArea {
+		if !pl.playReady {
+			continue
+		}
+
 		if pl.IsSpawned(p.entityID) {
 			switch id {
 			case 0x14: // position

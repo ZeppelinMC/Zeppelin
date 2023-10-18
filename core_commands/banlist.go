@@ -8,20 +8,11 @@ import (
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
-func point[T any](t T) *T {
-	return &t
-}
-
 var banlist_cmd = &commands.Command{
 	Name:                "banlist",
 	RequiredPermissions: []string{"server.command.banlist"},
 	Arguments: []commands.Argument{
-		commands.NewIntegerArgument("page", struct {
-			Min *int64
-			Max *int64
-		}{
-			Min: point[int64](1),
-		}),
+		commands.NewIntArg("page").Min(0),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		server := getServer(ctx.Executor)

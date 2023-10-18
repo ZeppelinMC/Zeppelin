@@ -5,14 +5,11 @@ import (
 	"math"
 )
 
-var m, ma uint64 = math.Float64bits(1), math.Float64bits(2)
+var low, high uint64 = math.Float64bits(1), math.Float64bits(2)
 var test_cmd = &commands.Command{
 	Name: "test",
 	Arguments: []commands.Argument{
-		commands.NewFloatArgument("wqeqwf", struct {
-			Min *uint64
-			Max *uint64
-		}{Min: &m, Max: &ma}),
+		commands.NewFloatArg("wqeqwf").MinMax(low, high),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		ctx.Reply("hi")
