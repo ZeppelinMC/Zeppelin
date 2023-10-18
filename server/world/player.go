@@ -182,8 +182,11 @@ func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 			90,
 			0,
 		},
-		Health:              20,
-		Fire:                -20,
+		Health: 20,
+		Fire:   -20,
+		Abilities: Abilities{
+			FlySpeed: 0.05000000074505806,
+		},
 		FoodLevel:           20,
 		FoodSaturationLevel: 5,
 		OnGround:            1,

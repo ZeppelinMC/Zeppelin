@@ -12,7 +12,7 @@ type Controller interface {
 	SystemChatMessage(s string) error
 	HasPermissions(perms []string) bool
 	BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool)
-	Chat(message string)
+	Chat(*packet.ChatMessageServer)
 	HandleCenterChunk(x1, z1, x2, z2 float64)
 	BroadcastPose(pose int32)
 	BroadcastSprinting(val bool)
@@ -24,6 +24,7 @@ type Controller interface {
 	BreakBlock(pos uint64)
 	BroadcastDigging(pos uint64)
 	SetClientSettings(p *packet.ClientSettings)
+	SetSessionID(id [16]byte, pk []byte)
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

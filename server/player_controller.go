@@ -35,10 +35,12 @@ var tags = &packet.UpdateTags{
 }
 
 type PlayerController struct {
-	mu     sync.RWMutex
-	player *player.Player
-	conn   *minecraft.Conn
-	Server *Server
+	mu        sync.RWMutex
+	player    *player.Player
+	conn      *minecraft.Conn
+	Server    *Server
+	sessionID [16]byte
+	publicKey []byte
 
 	spawnedEntities []int32
 	loadedChunks    map[[2]int32]struct{}
@@ -156,13 +158,6 @@ func (p *PlayerController) Login(dim string) error {
 	if abs.Flying != 0 {
 		abps.Flags |= 0x06
 	}
-	if p.player.GameMode() == 1 {
-		if abps.Flags == 0 {
-			abps.Flags |= 0x04
-		}
-		abps.Flags |= 0x08
-	}
-
 	if abps.Flags != 0 {
 		p.SendPacket(abps)
 	}
@@ -230,6 +225,13 @@ func (p *PlayerController) Kill(message string) {
 		Message:  message,
 		PlayerID: p.entityID,
 	})
+}
+
+func (p *PlayerController) SetSessionID(id [16]byte, pk []byte) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.sessionID = id
+	p.publicKey = pk
 }
 
 func (p *PlayerController) Position() (x, y, z float64) {
@@ -438,32 +440,44 @@ func (p *PlayerController) SendSpawnChunks(dimension *world.Dimension) {
 	}
 }
 
-func (p *PlayerController) Chat(message string) {
+func (p *PlayerController) Chat(pk *packet.ChatMessageServer) {
 	if !p.HasPermissions([]string{"server.chat"}) {
 		return
 	}
-	prefix, suffix := p.GetPrefixSuffix()
-	msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
-		"player":        p.Name(),
-		"player_prefix": prefix,
-		"player_suffix": suffix,
-		"message":       message,
-	})
 
-	if !p.HasPermissions([]string{"server.chat.colors"}) {
-		// strip colors
-		sp := strings.Split(msg, "")
-		for i, c := range sp {
-			if c == "&" {
-				if sp[i+1] != " " {
-					sp = slices.Delete(sp, i, i+2)
+	if !p.Server.Config.Chat.Secure {
+		prefix, suffix := p.GetPrefixSuffix()
+		msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
+			"player":        p.Name(),
+			"player_prefix": prefix,
+			"player_suffix": suffix,
+			"message":       pk.Message,
+		})
+
+		if !p.HasPermissions([]string{"server.chat.colors"}) {
+			// strip colors
+			sp := strings.Split(msg, "")
+			for i, c := range sp {
+				if c == "&" {
+					if sp[i+1] != " " {
+						sp = slices.Delete(sp, i, i+2)
+					}
 				}
 			}
+			msg = strings.Join(sp, "")
 		}
-		msg = strings.Join(sp, "")
-	}
 
-	p.Server.GlobalMessage(msg, p)
+		p.Server.GlobalMessage(msg, p)
+	} else {
+		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{
+			Sender: p.conn.UUID(),
+			//MessageSignature: pk.Signature,
+			Message:     pk.Message,
+			Timestamp:   pk.Timestamp,
+			Salt:        pk.Salt,
+			NetworkName: p.Name(),
+		})
+	}
 }
 
 func (p *PlayerController) GetPrefixSuffix() (prefix string, suffix string) {

@@ -142,6 +142,7 @@ func (srv *Server) Unban(name string) {
 
 func (srv *Server) MakeOperator(p *PlayerController) {
 	p.player.SetOperator(true)
+	p.SendCommands(srv.commandGraph)
 	srv.Operators = append(srv.Operators, user{
 		UUID: p.UUID,
 		Name: p.Name(),
@@ -150,6 +151,7 @@ func (srv *Server) MakeOperator(p *PlayerController) {
 
 func (srv *Server) MakeNotOperator(p *PlayerController) {
 	p.player.SetOperator(false)
+	p.SendCommands(srv.commandGraph)
 	for i, op := range srv.Operators {
 		if op.UUID == p.UUID {
 			srv.Operators = slices.Delete(srv.Operators, i, i+1)

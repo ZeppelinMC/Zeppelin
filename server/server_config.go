@@ -36,6 +36,10 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 			ProtocolTooOld: cfg.Messages.ProtocolOld,
 		},
 	}
+
+	if cfg.Chat.Secure && cfg.Chat.Format != "" {
+		logger.Warn("Secure chat overrides the chat format")
+	}
 	//web.SetMaxPlayers(cfg.MaxPlayers)
 
 	ln, err := lnCfg.Listen(address)
@@ -143,6 +147,7 @@ type Messages struct {
 
 type Chat struct {
 	Format string `toml:"format"`
+	Secure bool   `toml:"secure"`
 	Colors bool   `toml:"colors"`
 	Enable bool   `toml:"enable"`
 }

@@ -1,9 +1,10 @@
 package server
 
 import (
+	"time"
+
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/network/handlers"
-	"time"
 )
 
 func (p *PlayerController) HandlePackets() error {
@@ -24,7 +25,7 @@ func (p *PlayerController) HandlePackets() error {
 		case *packet.PlayerCommandServer:
 			handlers.PlayerCommand(p, pk.ActionID)
 		case *packet.ChatMessageServer:
-			handlers.ChatMessagePacket(p, pk.Message)
+			handlers.ChatMessagePacket(p, pk)
 		case *packet.ChatCommandServer:
 			handlers.ChatCommandPacket(p, p.Server.commandGraph, pk.Command)
 		case *packet.ClientSettings:
@@ -43,6 +44,8 @@ func (p *PlayerController) HandlePackets() error {
 			handlers.ClientCommand(p, p.player, pk.ActionID)
 		case *packet.PlayerAbilitiesServer:
 			handlers.PlayerAbilities(p.player, pk.Flags)
+		case *packet.PlayerSessionServer:
+			handlers.PlayerSession(p, pk.SessionID, pk.PublicKey.PublicKey)
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package handlers
 
-func ChatMessagePacket(controller Controller, content string) {
-	controller.Chat(content)
+import "github.com/aimjel/minecraft/packet"
+
+func ChatMessagePacket(controller Controller, pk *packet.ChatMessageServer) {
+	controller.Chat(pk)
 }
