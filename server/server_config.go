@@ -37,6 +37,10 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		},
 	}
 
+	if cfg.Chat.Secure && !cfg.Online {
+		logger.Warn("Secure chat doesn't work on offline mode")
+		cfg.Chat.Secure = false
+	}
 	if cfg.Chat.Secure && cfg.Chat.Format != "" {
 		logger.Warn("Secure chat overrides the chat format")
 	}

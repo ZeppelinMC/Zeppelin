@@ -444,6 +444,9 @@ func (p *PlayerController) SendSpawnChunks(dimension *world.Dimension) {
 }
 
 func (p *PlayerController) Chat(pk *packet.ChatMessageServer) {
+	if !p.Server.Config.Chat.Enable {
+		return
+	}
 	if !p.HasPermissions([]string{"server.chat"}) {
 		return
 	}
