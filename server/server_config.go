@@ -62,14 +62,10 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		Players:      make(map[string]*PlayerController),
 		Entities:     make(map[int32]*Entity),
 		commandGraph: commandGraph,
-		Plugins:      make(map[string]*Plugin),
 	}
 
 	logger.Info("Loading player info")
 	srv.loadFiles()
-
-	logger.Info("Loading plugins")
-	srv.LoadPlugins()
 
 	return srv, nil
 }

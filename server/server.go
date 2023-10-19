@@ -38,8 +38,6 @@ type Server struct {
 
 	Entities map[int32]*Entity
 
-	Plugins map[string]*Plugin
-
 	World *world.World
 
 	mu *sync.RWMutex
