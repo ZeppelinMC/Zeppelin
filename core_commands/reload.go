@@ -6,7 +6,7 @@ import (
 )
 
 func getServer(executor interface{}) *server.Server {
-	if p, ok := executor.(*server.PlayerController); ok {
+	if p, ok := executor.(*server.Session); ok {
 		return p.Server
 	} else if c, ok := executor.(*server.ConsoleExecutor); ok {
 		return c.Server

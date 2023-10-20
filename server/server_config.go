@@ -63,7 +63,7 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		Logger:       logger,
 		World:        w,
 		mu:           &sync.RWMutex{},
-		Players:      make(map[string]*PlayerController),
+		Players:      make(map[string]*Session),
 		Entities:     make(map[int32]*Entity),
 		commandGraph: commandGraph,
 	}

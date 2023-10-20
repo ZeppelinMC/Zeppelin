@@ -18,7 +18,7 @@ func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 	}
 }
 
-func (srv *Server) GlobalMessage(message string, sender *PlayerController) {
+func (srv *Server) GlobalMessage(message string, sender *Session) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	for _, p := range srv.Players {
@@ -49,7 +49,7 @@ func (srv *Server) OperatorMessage(message string) {
 	srv.Logger.Print(message)
 }
 
-func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerController, notInArea []*PlayerController) {
+func (p *Session) PlayersInArea(x1, y1, z1 float64) (inArea []*Session, notInArea []*Session) {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.Players {
@@ -67,7 +67,7 @@ func (p *PlayerController) PlayersInArea(x1, y1, z1 float64) (inArea []*PlayerCo
 	return inArea, notInArea
 }
 
-func (p *PlayerController) AllPlayersInArea(x1, y1, z1 float64) (inArea []*PlayerController, notInArea []*PlayerController) {
+func (p *Session) AllPlayersInArea(x1, y1, z1 float64) (inArea []*Session, notInArea []*Session) {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.Players {
@@ -82,7 +82,7 @@ func (p *PlayerController) AllPlayersInArea(x1, y1, z1 float64) (inArea []*Playe
 	return inArea, notInArea
 }
 
-func (p *PlayerController) BroadcastAnimation(animation uint8) {
+func (p *Session) BroadcastAnimation(animation uint8) {
 	inarea, _ := p.PlayersInArea(p.Position())
 	id := p.entityID
 	for _, pl := range inarea {
@@ -97,7 +97,7 @@ func (p *PlayerController) BroadcastAnimation(animation uint8) {
 	}
 }
 
-func (p *PlayerController) BreakBlock(pos uint64) {
+func (p *Session) BreakBlock(pos uint64) {
 	in, _ := p.PlayersInArea(p.Position())
 	for _, pl := range in {
 		if !pl.playReady {
@@ -111,7 +111,7 @@ func (p *PlayerController) BreakBlock(pos uint64) {
 	})
 }
 
-func (p *PlayerController) BroadcastDigging(pos uint64) {
+func (p *Session) BroadcastDigging(pos uint64) {
 	i := byte(0)
 	id := p.entityID
 	in, _ := p.PlayersInArea(p.Position())
@@ -134,7 +134,7 @@ func (p *PlayerController) BroadcastDigging(pos uint64) {
 	}
 }
 
-func (p *PlayerController) BroadcastSkinData() {
+func (p *Session) BroadcastSkinData() {
 	cl := p.clientInfo
 	p.Server.GlobalBroadcast(&PacketSetPlayerMetadata{
 		EntityID:           p.entityID,
@@ -160,12 +160,12 @@ func direction(ya, pi float32) (x, y, z float64) {
 	return x, y, z
 }
 
-func (p *PlayerController) Hit(entityId int32) {
+func (p *Session) Hit(entityId int32) {
 	e := p.Server.FindEntity(entityId)
 	x, y, z := p.Position()
 	//yaw, pitch := p.Rotation()
 	//d := direction(yaw, pitch)
-	if pl, ok := e.(*PlayerController); ok {
+	if pl, ok := e.(*Session); ok {
 		if pl.GameMode() == 1 {
 			return
 		}
@@ -199,7 +199,7 @@ func (p *PlayerController) Hit(entityId int32) {
 	})
 }
 
-func (p *PlayerController) Despawn() {
+func (p *Session) Despawn() {
 	inArea, _ := p.PlayersInArea(p.Position())
 	for _, pl := range inArea {
 		if pl.IsSpawned(p.entityID) {
@@ -208,7 +208,7 @@ func (p *PlayerController) Despawn() {
 	}
 }
 
-func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool) {
+func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool) {
 	oldx, oldy, oldz := p.player.Position()
 	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
 	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
@@ -294,21 +294,21 @@ func (p *PlayerController) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, 
 	}
 }
 
-func (p *PlayerController) BroadcastPose(pose int32) {
+func (p *Session) BroadcastPose(pose int32) {
 	inArea, _ := p.PlayersInArea(p.Position())
 	for _, pl := range inArea {
 		pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Pose: &pose})
 	}
 }
 
-func (p *PlayerController) BroadcastPacketAll(pk packet.Packet) {
+func (p *Session) BroadcastPacketAll(pk packet.Packet) {
 	inArea, _ := p.AllPlayersInArea(p.Position())
 	for _, pl := range inArea {
 		pl.SendPacket(pk)
 	}
 }
 
-func (p *PlayerController) BroadcastHealth() {
+func (p *Session) BroadcastHealth() {
 	inArea, _ := p.PlayersInArea(p.Position())
 	h := p.player.Health()
 	for _, pl := range inArea {
@@ -316,7 +316,7 @@ func (p *PlayerController) BroadcastHealth() {
 	}
 }
 
-func (p *PlayerController) BroadcastSprinting(val bool) {
+func (p *Session) BroadcastSprinting(val bool) {
 	inArea, _ := p.PlayersInArea(p.Position())
 	for _, pl := range inArea {
 		data := byte(0)

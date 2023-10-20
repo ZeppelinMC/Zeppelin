@@ -14,9 +14,9 @@ var kill_cmd = &commands.Command{
 		commands.NewEntityArgument("player", commands.EntityPlayerOnly),
 	},
 	Execute: func(ctx commands.CommandContext) {
-		var player *server.PlayerController
+		var player *server.Session
 		if len(ctx.Arguments) == 0 {
-			if p, ok := ctx.Executor.(*server.PlayerController); !ok {
+			if p, ok := ctx.Executor.(*server.Session); !ok {
 				ctx.Incomplete()
 				return
 			} else {

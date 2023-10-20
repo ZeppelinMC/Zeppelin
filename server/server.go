@@ -27,7 +27,7 @@ type Server struct {
 	commandGraph *commands.Graph
 
 	// Players mapped by UUID
-	Players map[string]*PlayerController
+	Players map[string]*Session
 
 	WhitelistedPlayers,
 	Operators,
@@ -75,7 +75,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	data := srv.World.GetPlayerData(uuid.String())
 
 	plyr := player.New(data)
-	cntrl := &PlayerController{
+	cntrl := &Session{
 		player:   plyr,
 		conn:     conn,
 		Server:   srv,
@@ -121,7 +121,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 }
 
-func (srv *Server) addPlayer(p *PlayerController) {
+func (srv *Server) addPlayer(p *Session) {
 	srv.mu.Lock()
 	srv.Players[p.UUID] = p
 	srv.mu.Unlock()
@@ -194,7 +194,7 @@ func (srv *Server) FindEntityByUUID(id [16]byte) interface{} {
 	return nil
 }
 
-func (srv *Server) FindPlayer(username string) *PlayerController {
+func (srv *Server) FindPlayer(username string) *Session {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
@@ -205,7 +205,7 @@ func (srv *Server) FindPlayer(username string) *PlayerController {
 	return nil
 }
 
-func (srv *Server) FindPlayerByID(id int32) *PlayerController {
+func (srv *Server) FindPlayerByID(id int32) *Session {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {

@@ -16,7 +16,7 @@ var dimension_cmd = &commands.Command{
 			ctx.Incomplete()
 			return
 		}
-		if p, ok := ctx.Executor.(*server.PlayerController); ok {
+		if p, ok := ctx.Executor.(*server.Session); ok {
 			p.Respawn(ctx.Arguments[0])
 			ctx.Reply("Switched dimension to " + ctx.Arguments[0])
 		} else {

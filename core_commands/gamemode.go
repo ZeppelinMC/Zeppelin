@@ -35,9 +35,9 @@ var gamemode_cmd = &commands.Command{
 			ctx.ErrorHere(fmt.Sprintf("Unknown game mode: %s", ctx.Arguments[0]))
 			return
 		}
-		var player *server.PlayerController
+		var player *server.Session
 		if len(ctx.Arguments) == 1 {
-			if p, ok := ctx.Executor.(*server.PlayerController); !ok {
+			if p, ok := ctx.Executor.(*server.Session); !ok {
 				ctx.Incomplete()
 				return
 			} else {
@@ -56,7 +56,7 @@ var gamemode_cmd = &commands.Command{
 		}
 		player.SetGameMode(byte(gm))
 		msg := fmt.Sprintf("Set %s's game mode to %s Mode", player.Name(), pascalify(ctx.Arguments[0]))
-		if exe, ok := ctx.Executor.(*server.PlayerController); ok && player.UUID == exe.UUID {
+		if exe, ok := ctx.Executor.(*server.Session); ok && player.UUID == exe.UUID {
 			msg = fmt.Sprintf("Set own game mode to %s Mode", pascalify(ctx.Arguments[0]))
 		}
 		ctx.Reply(msg)

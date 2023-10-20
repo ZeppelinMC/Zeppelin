@@ -12,7 +12,7 @@ var gamerule_cmd = &commands.Command{
 	Arguments: []commands.Argument{
 		commands.NewStrArg("rule", commands.SingleWord).
 			SetSuggest(func(ctx commands.SuggestionsContext) {
-				srv := ctx.Executor.(*server.PlayerController).Server
+				srv := ctx.Executor.(*server.Session).Server
 				var matches []packet.SuggestionMatch
 				for k := range srv.World.Gamerules() {
 					matches = append(matches, packet.SuggestionMatch{

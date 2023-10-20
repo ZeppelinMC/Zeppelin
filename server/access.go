@@ -121,7 +121,7 @@ func (srv *Server) IsOperator(uuid [16]byte) bool {
 	return false
 }
 
-func (srv *Server) Ban(p *PlayerController, reason string) {
+func (srv *Server) Ban(p *Session, reason string) {
 	t, _ := time.Now().MarshalJSON()
 	srv.BannedPlayers = append(srv.BannedPlayers, user{
 		UUID:    p.UUID,
@@ -140,7 +140,7 @@ func (srv *Server) Unban(name string) {
 	}
 }
 
-func (srv *Server) MakeOperator(p *PlayerController) {
+func (srv *Server) MakeOperator(p *Session) {
 	p.player.SetOperator(true)
 	p.SendCommands(srv.commandGraph)
 	srv.Operators = append(srv.Operators, user{
@@ -149,7 +149,7 @@ func (srv *Server) MakeOperator(p *PlayerController) {
 	})
 }
 
-func (srv *Server) MakeNotOperator(p *PlayerController) {
+func (srv *Server) MakeNotOperator(p *Session) {
 	p.player.SetOperator(false)
 	p.SendCommands(srv.commandGraph)
 	for i, op := range srv.Operators {
@@ -160,14 +160,14 @@ func (srv *Server) MakeNotOperator(p *PlayerController) {
 	}
 }
 
-func (srv *Server) AddToWhitelist(p *PlayerController) {
+func (srv *Server) AddToWhitelist(p *Session) {
 	srv.WhitelistedPlayers = append(srv.WhitelistedPlayers, user{
 		UUID: p.UUID,
 		Name: p.Name(),
 	})
 }
 
-func (srv *Server) RemoveFromWhitelist(p *PlayerController) {
+func (srv *Server) RemoveFromWhitelist(p *Session) {
 	for i, w := range srv.WhitelistedPlayers {
 		if w.UUID == p.UUID {
 			srv.WhitelistedPlayers = slices.Delete(srv.WhitelistedPlayers, i, i+1)

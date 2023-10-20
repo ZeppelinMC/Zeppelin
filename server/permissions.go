@@ -89,7 +89,7 @@ func getGroup(group string) GroupPermissions {
 	return data
 }
 
-func (p *PlayerController) HasPermissions(perms []string) bool {
+func (p *Session) HasPermissions(perms []string) bool {
 	if len(perms) == 0 {
 		return true
 	}
