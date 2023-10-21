@@ -8,7 +8,7 @@ func PlayerAction(controller Controller, pk *packet.PlayerActionServer) {
 	switch pk.Status {
 	case 0:
 		controller.BroadcastPose(14)
-		go controller.BroadcastDigging(pk.Location)
+		//go controller.BroadcastDigging(pk.Location)
 	case 1, 2:
 		if pk.Status == 2 {
 			/*pos := int64(pk.Location)

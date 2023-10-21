@@ -3,7 +3,6 @@ package server
 import (
 	"math"
 	"strings"
-	"time"
 
 	"github.com/aimjel/minecraft/protocol/types"
 
@@ -49,69 +48,37 @@ func (srv *Server) OperatorMessage(message string) {
 	srv.Logger.Print(message)
 }
 
-func (p *Session) PlayersInArea(x1, y1, z1 float64) (inArea []*Session, notInArea []*Session) {
-	p.Server.mu.RLock()
-	defer p.Server.mu.RUnlock()
-	for _, pl := range p.Server.Players {
-		if pl.UUID == p.UUID {
-			continue
-		}
-		x2, y2, z2 := pl.player.Position()
-		distance := math.Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1))
-		if float64(pl.clientInfo.ViewDistance)*16 < distance {
-			notInArea = append(notInArea, pl)
-		} else {
-			inArea = append(inArea, pl)
-		}
-	}
-	return inArea, notInArea
-}
-
-func (p *Session) AllPlayersInArea(x1, y1, z1 float64) (inArea []*Session, notInArea []*Session) {
-	p.Server.mu.RLock()
-	defer p.Server.mu.RUnlock()
-	for _, pl := range p.Server.Players {
-		x2, y2, z2 := pl.player.Position()
-		distance := math.Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1))
-		if float64(pl.clientInfo.ViewDistance)*16 < distance {
-			notInArea = append(notInArea, pl)
-		} else {
-			inArea = append(inArea, pl)
-		}
-	}
-	return inArea, notInArea
-}
-
 func (p *Session) BroadcastAnimation(animation uint8) {
-	inarea, _ := p.PlayersInArea(p.Position())
-	id := p.entityID
-	for _, pl := range inarea {
-		if !pl.playReady {
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+
+	for _, pl := range p.Server.Players {
+		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
 
 		pl.SendPacket(&packet.EntityAnimation{
-			EntityID:  id,
+			EntityID:  p.entityID,
 			Animation: animation,
 		})
 	}
 }
 
 func (p *Session) BreakBlock(pos uint64) {
-	in, _ := p.PlayersInArea(p.Position())
-	for _, pl := range in {
-		if !pl.playReady {
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+	for _, pl := range p.Server.Players {
+		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
-
 		pl.SendPacket(&packet.WorldEvent{Event: 2001, Location: pos})
+		pl.SendPacket(&packet.BlockUpdate{
+			Location: int64(pos),
+		})
 	}
-	p.Server.GlobalBroadcast(&packet.BlockUpdate{
-		Location: int64(pos),
-	})
 }
 
-func (p *Session) BroadcastDigging(pos uint64) {
+/*func (p *Session) BroadcastDigging(pos uint64) {
 	i := byte(0)
 	id := p.entityID
 	in, _ := p.PlayersInArea(p.Position())
@@ -132,7 +99,7 @@ func (p *Session) BroadcastDigging(pos uint64) {
 		}
 		i++
 	}
-}
+}*/
 
 func (p *Session) BroadcastSkinData() {
 	cl := p.clientInfo
@@ -187,30 +154,63 @@ func (p *Session) Hit(entityId int32) {
 			z1 -= 0.5
 		}*/
 		pl.Push(x1, y1, z1)
+		pl.SendPacket(&packet.DamageEvent{
+			EntityID:        entityId,
+			SourceTypeID:    1,
+			SourceCauseID:   p.entityID + 1,
+			SourceDirectID:  p.entityID + 1,
+			SourcePositionX: &x,
+			SourcePositionY: &y,
+			SourcePositionZ: &z,
+		})
 	}
-	p.BroadcastPacketAll(&packet.DamageEvent{
-		EntityID:        entityId,
-		SourceTypeID:    1,
-		SourceCauseID:   p.entityID + 1,
-		SourceDirectID:  p.entityID + 1,
-		SourcePositionX: &x,
-		SourcePositionY: &y,
-		SourcePositionZ: &z,
-	})
+
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+
+	for _, pl := range p.Server.Players {
+		if !pl.IsSpawned(p.entityID) {
+			continue
+		}
+		pl.SendPacket(&packet.DamageEvent{
+			EntityID:        entityId,
+			SourceTypeID:    1,
+			SourceCauseID:   p.entityID + 1,
+			SourceDirectID:  p.entityID + 1,
+			SourcePositionX: &x,
+			SourcePositionY: &y,
+			SourcePositionZ: &z,
+		})
+	}
 }
 
 func (p *Session) Despawn() {
-	inArea, _ := p.PlayersInArea(p.Position())
-	for _, pl := range inArea {
-		if pl.IsSpawned(p.entityID) {
-			pl.DespawnPlayer(p)
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+	for _, pl := range p.Server.Players {
+		if !pl.IsSpawned(p.entityID) {
+			continue
 		}
+		pl.DespawnPlayer(p)
 	}
 }
 
-func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool) {
+// Checks if p can see pl
+func (p *Session) InView(pl *Session) bool {
+	if !pl.playReady || p.player.Dimension() != pl.player.Dimension() {
+		return false
+	}
+
+	x1, y1, z1 := p.Position()
+	x2, y2, z2 := pl.Position()
+	distance := math.Sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))
+
+	return float64(p.clientInfo.ViewDistance) > distance
+}
+
+func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32, ong bool, teleport bool) {
 	oldx, oldy, oldz := p.player.Position()
-	p.player.SetPosition(x1, y1, z1, yaw, pitch, ong)
+	p.player.SetPosition(x1, y1, z1, ya, pi, ong)
 	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
 	if distance > 100 && !teleport {
 		//p.Teleport(oldx, oldy, oldz, yaw, pitch)
@@ -222,108 +222,121 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch flo
 		return
 	}
 
-	inArea, notInArea := p.PlayersInArea(x1, y1, z1)
-
 	if distance > 8 {
 		id = 0
 	}
 
-	for _, pl := range notInArea {
-		if pl.IsSpawned(p.entityID) {
-			pl.DespawnPlayer(p)
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+
+	yaw, pitch := degreesToAngle(ya), degreesToAngle(pi)
+
+	var pk packet.Packet
+	headRotationPacket := &packet.EntityHeadRotation{
+		EntityID: p.entityID,
+		HeadYaw:  yaw,
+	}
+	var sendHeadRotation bool
+	switch id {
+	case 0x14: // position
+		pk = &packet.EntityPosition{
+			EntityID: p.entityID,
+			X:        int16(((x1 * 32) - oldx*32) * 128),
+			Y:        int16(((y1 * 32) - oldy*32) * 128),
+			Z:        int16(((z1 * 32) - oldz*32) * 128),
+			OnGround: ong,
+		}
+	case 0x15: // position + rotation
+		pk = &packet.EntityPositionRotation{
+			EntityID: p.entityID,
+			X:        int16(((x1 * 32) - oldx*32) * 128),
+			Y:        int16(((y1 * 32) - oldy*32) * 128),
+			Z:        int16(((z1 * 32) - oldz*32) * 128),
+			Yaw:      yaw,
+			Pitch:    pitch,
+			OnGround: ong,
+		}
+		sendHeadRotation = true
+	case 0x16: // rotation
+		pk = &packet.EntityRotation{
+			EntityID: p.entityID,
+			Yaw:      yaw,
+			Pitch:    pitch,
+			OnGround: ong,
+		}
+		sendHeadRotation = true
+	default:
+		pk = &packet.TeleportEntity{
+			EntityID: p.entityID,
+			X:        x1,
+			Y:        y1,
+			Z:        z1,
+			Yaw:      yaw,
+			Pitch:    pitch,
+			OnGround: ong,
 		}
 	}
-	for _, pl := range inArea {
-		if !pl.playReady {
+
+	for _, pl := range p.Server.Players {
+		if p.UUID == pl.UUID {
 			continue
 		}
-
-		if pl.IsSpawned(p.entityID) {
-			switch id {
-			case 0x14: // position
-				pl.SendPacket(&packet.EntityPosition{
-					EntityID: p.entityID,
-					X:        int16(((x1 * 32) - oldx*32) * 128),
-					Y:        int16(((y1 * 32) - oldy*32) * 128),
-					Z:        int16(((z1 * 32) - oldz*32) * 128),
-					OnGround: ong,
-				})
-			case 0x15: // position + rotation
-				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
-				pl.SendPacket(&packet.EntityPositionRotation{
-					EntityID: p.entityID,
-					X:        int16(((x1 * 32) - oldx*32) * 128),
-					Y:        int16(((y1 * 32) - oldy*32) * 128),
-					Z:        int16(((z1 * 32) - oldz*32) * 128),
-					Yaw:      yaw,
-					Pitch:    pitch,
-					OnGround: ong,
-				})
-				pl.SendPacket(&packet.EntityHeadRotation{
-					EntityID: p.entityID,
-					HeadYaw:  yaw,
-				})
-			case 0x16: // rotation
-				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
-				pl.SendPacket(&packet.EntityRotation{
-					EntityID: p.entityID,
-					Yaw:      yaw,
-					Pitch:    pitch,
-					OnGround: ong,
-				})
-				pl.SendPacket(&packet.EntityHeadRotation{
-					EntityID: p.entityID,
-					HeadYaw:  yaw,
-				})
-			default:
-				yaw, pitch := degreesToAngle(yaw), degreesToAngle(pitch)
-
-				pl.SendPacket(&packet.TeleportEntity{
-					EntityID: p.entityID,
-					X:        x1,
-					Y:        y1,
-					Z:        z1,
-					Yaw:      yaw,
-					Pitch:    pitch,
-					OnGround: ong,
-				})
-			}
+		if !pl.InView(p) {
+			pl.DespawnPlayer(p)
 		} else {
-			pl.SpawnPlayer(p)
+			if pl.IsSpawned(p.entityID) {
+				pl.SendPacket(pk)
+				if sendHeadRotation {
+					pl.SendPacket(headRotationPacket)
+				}
+			} else {
+				pl.SpawnPlayer(p)
+			}
 		}
 	}
 }
 
 func (p *Session) BroadcastPose(pose int32) {
-	inArea, _ := p.PlayersInArea(p.Position())
-	for _, pl := range inArea {
-		pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Pose: &pose})
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+	pk := &PacketSetPlayerMetadata{
+		EntityID: p.entityID,
+		Pose:     &pose,
 	}
-}
-
-func (p *Session) BroadcastPacketAll(pk packet.Packet) {
-	inArea, _ := p.AllPlayersInArea(p.Position())
-	for _, pl := range inArea {
-		pl.SendPacket(pk)
+	for _, pl := range p.Server.Players {
+		if pl.IsSpawned(p.entityID) {
+			pl.SendPacket(pk)
+		}
 	}
 }
 
 func (p *Session) BroadcastHealth() {
-	inArea, _ := p.PlayersInArea(p.Position())
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
 	h := p.player.Health()
-	for _, pl := range inArea {
-		pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Health: &h})
+	for _, pl := range p.Server.Players {
+		if pl.IsSpawned(p.entityID) {
+			pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Health: &h})
+		}
 	}
 }
 
 func (p *Session) BroadcastSprinting(val bool) {
-	inArea, _ := p.PlayersInArea(p.Position())
-	for _, pl := range inArea {
-		data := byte(0)
-		if val {
-			data |= 0x08
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+
+	data := byte(0)
+	if val {
+		data |= 0x08
+	}
+
+	pk := &PacketSetPlayerMetadata{EntityID: p.entityID, Data: &data}
+
+	for _, pl := range p.Server.Players {
+		if !pl.IsSpawned(p.entityID) {
+			continue
 		}
-		pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Data: &data})
+		pl.SendPacket(pk)
 	}
 }
 

@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -97,8 +96,6 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		Header: strings.Join(srv.Config.Tablist.Header, "\n"),
 		Footer: strings.Join(srv.Config.Tablist.Footer, "\n"),
 	})
-
-	fmt.Println("e")
 
 	srv.addPlayer(cntrl)
 	if err := cntrl.Login(plyr.Dimension()); err != nil {

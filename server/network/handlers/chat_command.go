@@ -22,7 +22,7 @@ type Controller interface {
 	BroadcastSkinData()
 	Respawn(dim string)
 	BreakBlock(pos uint64)
-	BroadcastDigging(pos uint64)
+	//BroadcastDigging(pos uint64)
 	SetClientSettings(p *packet.ClientSettings)
 	SetSessionID(id [16]byte, pk []byte)
 }

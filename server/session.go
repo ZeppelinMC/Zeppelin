@@ -153,6 +153,8 @@ func (p *Session) Respawn(dim string) {
 		x1, y1, z1 = int32(x)/8, int32(y)/8, int32(z)/8
 	}
 
+	clear(p.spawnedEntities)
+
 	yaw, pitch := p.player.Rotation()
 
 	if b, _ := world.GameRule(p.Server.World.Gamerules()["keepInventory"]).Bool(); b {
@@ -266,7 +268,21 @@ func (p *Session) Kill(message string) {
 			Value: 0,
 		})
 	}
-	p.BroadcastPacketAll(&packet.DamageEvent{
+
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+
+	for _, pl := range p.Server.Players {
+		if !p.IsSpawned(p.entityID) {
+			continue
+		}
+		pl.SendPacket(&packet.DamageEvent{
+			EntityID:     p.entityID,
+			SourceTypeID: 0,
+		})
+	}
+
+	p.SendPacket(&packet.DamageEvent{
 		EntityID:     p.entityID,
 		SourceTypeID: 0,
 	})
