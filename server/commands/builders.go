@@ -74,6 +74,11 @@ func (a Argument) SetSuggest(s func(ctx SuggestionsContext)) Argument {
 	return a
 }
 
+func (a Argument) SetAlternative(arg Argument) Argument {
+	a.Alternative = &arg
+	return a
+}
+
 func NewStrArg(name string, properties stringArgType) Argument {
 	props := types.CommandProperties{Flags: uint8(properties)}
 	return Argument{
@@ -119,6 +124,24 @@ func NewDimensionArgument(name string) Argument {
 		Name: name,
 		Parser: Parser{
 			ID: 38,
+		},
+	}
+}
+
+func NewVector3Argument(name string) Argument {
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID: 10,
+		},
+	}
+}
+
+func NewVector2Argument(name string) Argument {
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID: 11,
 		},
 	}
 }

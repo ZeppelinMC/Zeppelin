@@ -1,13 +1,14 @@
 package server
 
 import (
-	"github.com/dynamitemc/dynamite/server/network/handlers"
 	"math"
 	"math/rand"
 	"slices"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dynamitemc/dynamite/server/network/handlers"
 
 	"github.com/aimjel/minecraft"
 
@@ -423,7 +424,9 @@ func (p *Session) SendChunks(dimension *world.Dimension) {
 					VelocityZ: int16(e.data.Motion[2]),
 					Type:      t.ProtocolID,
 				})
+				p.mu.Lock()
 				p.spawnedEntities = append(p.spawnedEntities, e.ID)
+				p.mu.Unlock()
 			}
 		}
 	}
@@ -452,8 +455,8 @@ func (p *Session) SendSpawnChunks(dimension *world.Dimension) {
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
 			p.SendPacket(c.Data())
 
-			/*for _, en := range c.Entities {
-				u, _ := world.NBTToUUID(en.UUID)
+			for _, en := range c.Entities {
+				u, _ := world.IntUUIDToByteUUID(en.UUID)
 
 				var e *Entity
 
@@ -483,8 +486,10 @@ func (p *Session) SendSpawnChunks(dimension *world.Dimension) {
 					VelocityZ: int16(e.data.Motion[2]),
 					Type:      t.ProtocolID,
 				})
+				p.mu.Lock()
 				p.spawnedEntities = append(p.spawnedEntities, e.ID)
-			}*/
+				p.mu.Unlock()
+			}
 		}
 	}
 }
@@ -506,7 +511,7 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			"message":       pk.Message,
 		})
 
-		if !p.HasPermissions([]string{"server.chat.colors"}) {
+		if !p.Server.Config.Chat.Enable || !p.HasPermissions([]string{"server.chat.colors"}) {
 			// strip colors
 			sp := strings.Split(msg, "")
 			for i, c := range sp {

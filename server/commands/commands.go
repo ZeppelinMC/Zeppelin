@@ -2,9 +2,10 @@ package commands
 
 import (
 	"fmt"
-	"github.com/aimjel/minecraft/protocol/types"
 	"slices"
 	"strings"
+
+	"github.com/aimjel/minecraft/protocol/types"
 
 	pk "github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/logger"
@@ -84,9 +85,10 @@ type Parser struct {
 }
 
 type Argument struct {
-	Name    string
-	Suggest func(ctx SuggestionsContext)
-	Parser  Parser
+	Name        string
+	Suggest     func(ctx SuggestionsContext)
+	Parser      Parser
+	Alternative *Argument
 }
 
 type Graph struct {
@@ -139,6 +141,16 @@ func (graph Graph) Data() *pk.DeclareCommands {
 				node.SuggestionsType = "minecraft:ask_server"
 			}
 			packet.Nodes = append(packet.Nodes, node)
+			if argument.Alternative != nil {
+				argument = *argument.Alternative
+				packet.Nodes[parent].Children = append(packet.Nodes[parent].Children, int32(len(packet.Nodes)))
+				node := types.CommandNode{Flags: 2, Name: argument.Name, Properties: argument.Parser.Properties, ParserID: argument.Parser.ID}
+				if argument.Suggest != nil {
+					node.Flags |= 0x10
+					node.SuggestionsType = "minecraft:ask_server"
+				}
+				packet.Nodes = append(packet.Nodes, node)
+			}
 		}
 	}
 	packet.Nodes[0].Children = rootChildren
