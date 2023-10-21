@@ -195,7 +195,7 @@ func (p *Session) Despawn() {
 	}
 }
 
-// Checks if p can see pl
+// InView Checks if p can see pl
 func (p *Session) InView(pl *Session) bool {
 	if !pl.playReady || p.player.Dimension() != pl.player.Dimension() {
 		return false
@@ -205,7 +205,7 @@ func (p *Session) InView(pl *Session) bool {
 	x2, y2, z2 := pl.Position()
 	distance := math.Sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))
 
-	return float64(p.clientInfo.ViewDistance) > distance
+	return float64(p.clientInfo.ViewDistance)*16 > distance
 }
 
 func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32, ong bool, teleport bool) {
@@ -276,7 +276,7 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 
 	p.Server.mu.Lock()
 	defer p.Server.mu.Unlock()
-	
+
 	for _, pl := range p.Server.Players {
 		if p.UUID == pl.UUID {
 			continue
