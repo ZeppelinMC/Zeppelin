@@ -226,9 +226,6 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 		id = 0
 	}
 
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
-
 	yaw, pitch := degreesToAngle(ya), degreesToAngle(pi)
 
 	var pk packet.Packet
@@ -277,6 +274,9 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 		}
 	}
 
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+	
 	for _, pl := range p.Server.Players {
 		if p.UUID == pl.UUID {
 			continue
