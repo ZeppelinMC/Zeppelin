@@ -283,15 +283,16 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 		}
 		if !pl.InView(p) {
 			pl.DespawnPlayer(p)
-		} else {
-			if pl.IsSpawned(p.entityID) {
-				pl.SendPacket(pk)
-				if sendHeadRotation {
-					pl.SendPacket(headRotationPacket)
-				}
-			} else {
-				pl.SpawnPlayer(p)
-			}
+			continue
+		}
+
+		if !pl.IsSpawned(p.entityID) {
+			pl.SpawnPlayer(p)
+		}
+
+		pl.SendPacket(pk)
+		if sendHeadRotation {
+			pl.SendPacket(headRotationPacket)
 		}
 	}
 }
