@@ -16,6 +16,8 @@ github.com/aimjel/minecraft v0.0.0-20231018023737-40c3d0984880 h1:FN6Qa4Ir6ubzlf
 github.com/aimjel/minecraft v0.0.0-20231018023737-40c3d0984880/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/aimjel/minecraft v0.0.0-20231018025249-d20382839bd6 h1:+xyfrT1ftxNnoEaL2c9PuUHaZ5HARTqCx7bBrx0iWuQ=
 github.com/aimjel/minecraft v0.0.0-20231018025249-d20382839bd6/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20231022025131-0f751f223302 h1:JREnOyRXevm06qrcUT8v8ZoCtVLUyh+5BbSPkPoPG4Q=
+github.com/aimjel/minecraft v0.0.0-20231022025131-0f751f223302/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
