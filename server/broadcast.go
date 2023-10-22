@@ -132,8 +132,6 @@ func direction(ya, pi float32) (x, y, z float64) {
 func (p *Session) Hit(entityId int32) {
 	e := p.Server.FindEntity(entityId)
 	x, y, z := p.Position()
-	//yaw, pitch := p.Rotation()
-	//d := direction(yaw, pitch)
 	soundId := int32(519)
 	if pl, ok := e.(*Session); ok {
 		if pl.GameMode() == 1 {
@@ -141,22 +139,6 @@ func (p *Session) Hit(entityId int32) {
 		}
 		health := pl.player.Health()
 		pl.SetHealth(health - 1)
-		x1, y1, z1 := pl.Position()
-		/*switch d {
-		case 0:
-			x1 += 0.5
-			z1 += 0.5
-		case 1:
-			x1 += 0.5
-			z1 -= 0.5
-		case 2:
-			x1 -= 0.5
-			z1 += 0.5
-		case 3:
-			x1 -= 0.5
-			z1 -= 0.5
-		}*/
-		pl.Push(x1, y1, z1)
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:        entityId,
 			SourceTypeID:    1,
