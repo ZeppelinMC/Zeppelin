@@ -14,7 +14,8 @@ var ram_cmd = &commands.Command{
 	Execute: func(ctx commands.CommandContext) {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
-		ctx.Reply(fmt.Sprintf("Allocated: %v MiB, Total Allocated: %v MiB, Heap in Use: %v MiB", bytesToMegabytes(m.Alloc), bytesToMegabytes(m.TotalAlloc), bytesToMegabytes(m.HeapInuse)))
+		srv := getServer(ctx.Executor)
+		ctx.Reply(fmt.Sprintf("%d MiB memory used!\nLoaded chunks: %d", bytesToMegabytes(m.Alloc), srv.World.Overworld().LoadedChunks()))
 	},
 }
 

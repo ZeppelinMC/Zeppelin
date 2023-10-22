@@ -64,6 +64,12 @@ func (d *Dimension) Type() string {
 	return d.typ
 }
 
+func (d *Dimension) LoadedChunks() int {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return len(d.chunks)
+}
+
 func (d *Dimension) Seed() int64 {
 	return d.seed
 }

@@ -31,5 +31,6 @@ var Commands = &commands.Graph{
 		list_cmd,
 		seed_cmd,
 		tp_cmd,
+		stop_cmd,
 	},
 }

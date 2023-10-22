@@ -19,7 +19,8 @@ type Player struct {
 
 	data *world.PlayerData
 
-	inventory []world.Slot
+	inventory    []world.Slot
+	selectedSlot int32
 
 	dimension string
 
@@ -36,6 +37,8 @@ func New(data *world.PlayerData) *Player {
 	pl.gameMode = byte(data.PlayerGameType)
 	pl.x, pl.y, pl.z, pl.yaw, pl.pitch = data.Pos[0], data.Pos[1], data.Pos[2], data.Rotation[0], data.Rotation[1]
 	pl.health, pl.food, pl.foodSaturation = data.Health, data.FoodLevel, data.FoodSaturationLevel
+	pl.selectedSlot = data.SelectedItemSlot
+
 	fl := true
 	if data.Abilities.Flying == 0 {
 		fl = false
@@ -149,6 +152,7 @@ func (p *Player) Save() {
 	p.data.Inventory = p.inventory
 	p.data.Abilities.Flying = fl
 	p.data.Dimension = p.dimension
+	p.data.SelectedItemSlot = p.selectedSlot
 
 	p.data.Save()
 }
@@ -213,4 +217,16 @@ func (p *Player) SetOperator(op bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.operator = op
+}
+
+func (p *Player) SetHeldItem(h int32) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.selectedSlot = h
+}
+
+func (p *Player) HeldItem() int32 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.selectedSlot
 }

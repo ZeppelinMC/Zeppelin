@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"errors"
+
 	"github.com/aimjel/minecraft/protocol/types"
 
 	"github.com/aimjel/minecraft/nbt"

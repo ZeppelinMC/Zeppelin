@@ -360,7 +360,7 @@ func (srv *Server) PlayerlistUpdate() {
 }
 
 func (srv *Server) PlayerlistRemove(players ...[16]byte) {
-	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDS: players})
+	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDs: players})
 }
 
 type PacketSetPlayerMetadata struct {

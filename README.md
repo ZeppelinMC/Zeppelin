@@ -13,14 +13,14 @@ Feel free to contribute by making an issue or pull request
 ## Progress
 
 - [x] Authentication/Encryption
-- [X] Compression & Decompression
+- [x] Compression & Decompression
 - [x] Anvil/NBT reading (+ NBT Writing)
 - [x] Chunk loading
-- [x] Player list / Chat
+- [x] Player list / Chat (+ Secure chat)
 - [x] Player movement
 - [x] (Work In Progress) Inventory
 - [x] Commands
 
 Join our Discord for support
 
-[![Discord](https://discordapp.com/api/guilds/1141080135878070362/widget.png?style=banner3)]([https://discord.gg/4QuwYACDRX](https://discord.gg/5Yz2dR4pQj)https://discord.gg/5Yz2dR4pQj)
+[![Discord](https://discordapp.com/api/guilds/1141080135878070362/widget.png?style=banner3)](<[https://discord.gg/4QuwYACDRX](https://discord.gg/5Yz2dR4pQj)https://discord.gg/5Yz2dR4pQj>)

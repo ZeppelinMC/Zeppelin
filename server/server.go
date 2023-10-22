@@ -2,11 +2,12 @@ package server
 
 import (
 	"errors"
-	"github.com/aimjel/minecraft/protocol/types"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/aimjel/minecraft/protocol/types"
 
 	"github.com/google/uuid"
 
@@ -127,17 +128,21 @@ func (srv *Server) addPlayer(p *Session) {
 	srv.mu.Lock()
 	for _, pl := range srv.Players {
 		players = append(players, types.PlayerInfo{
-			UUID:       pl.conn.UUID(),
-			Name:       pl.conn.Name(),
-			Properties: pl.conn.Properties(),
-			Listed:     true,
+			UUID:          pl.conn.UUID(),
+			Name:          pl.conn.Name(),
+			Properties:    pl.conn.Properties(),
+			Listed:        true,
+			ChatSessionID: pl.sessionID,
+			ExpiresAt:     int64(p.expires),
+			PublicKey:     p.publicKey,
+			KeySignature:  p.keySignature,
 		})
 	}
 	srv.mu.Unlock()
 
 	//updates the new session's player list
 	p.SendPacket(&packet.PlayerInfoUpdate{
-		Actions: 0x01 | 0x08,
+		Actions: 0x01 | 0x02 | 0x08,
 		Players: players,
 	})
 

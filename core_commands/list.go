@@ -2,6 +2,7 @@ package core_commands
 
 import (
 	"fmt"
+
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
@@ -9,7 +10,6 @@ import (
 var list_cmd = &commands.Command{
 	Name: "list",
 	Execute: func(ctx commands.CommandContext) {
-
 		switch ex := ctx.Executor.(type) {
 
 		case *server.Session:

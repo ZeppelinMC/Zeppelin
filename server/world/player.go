@@ -20,13 +20,13 @@ type Slot struct {
 
 type Enchantment struct {
 	Id    string `nbt:"id"`
-	Level int32  `nbt:"lvl"`
+	Level int16  `nbt:"lvl"`
 }
 
 type SlotTag struct {
 	Damage       int32         `nbt:"Damage"`
 	RepairCost   int32         `nbt:"RepairCost"`
-	Enchantments []Enchantment `nbt:"Enchantment"`
+	Enchantments []Enchantment `nbt:"Enchantments"`
 }
 
 type RecipeBook struct {

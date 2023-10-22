@@ -1,13 +1,15 @@
 package server
 
 import (
-	"github.com/aimjel/minecraft/protocol/types"
+	"fmt"
 	"math"
 	"math/rand"
 	"slices"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/aimjel/minecraft/protocol/types"
 
 	"github.com/dynamitemc/dynamite/server/network/handlers"
 
@@ -83,6 +85,7 @@ func (p *Session) HandlePackets() error {
 
 		packt, err := p.conn.ReadPacket()
 		if err != nil {
+			fmt.Println(err)
 			return err
 		}
 
@@ -111,6 +114,8 @@ func (p *Session) HandlePackets() error {
 			handlers.PlayerAbilities(p.player, pk.Flags)
 		case *packet.PlayerSessionServer:
 			handlers.PlayerSession(p, pk.SessionID, pk.PublicKey, pk.KeySignature, pk.ExpiresAt)
+		case *packet.SetHeldItemServer:
+			handlers.SetHeldItem(p.player, pk.Slot)
 		}
 	}
 }
@@ -537,8 +542,9 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 		return
 	}
 
+	prefix, suffix := p.GetPrefixSuffix()
+
 	if !p.Server.Config.Chat.Secure {
-		prefix, suffix := p.GetPrefixSuffix()
 		msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
 			"player":        p.Name(),
 			"player_prefix": prefix,
@@ -561,13 +567,20 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 
 		p.Server.GlobalMessage(msg, p)
 	} else {
+		var pr []packet.PreviousMessage
+		for _, p := range pk.AcknowledgedMessages {
+			pr = append(pr, packet.PreviousMessage{
+				MessageID: int32(p),
+			})
+		}
 		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{
 			Sender:           p.conn.UUID(),
 			MessageSignature: pk.Signature,
 			Message:          pk.Message,
 			Timestamp:        pk.Timestamp,
 			Salt:             pk.Salt,
-			NetworkName:      p.Name(),
+			PreviousMessages: pr,
+			NetworkName:      prefix + p.Name() + suffix,
 		})
 	}
 }
@@ -653,6 +666,7 @@ func (p *Session) InitializeInventory() {
 		StateID:  1,
 		Slots:    p.player.Inventory(),
 	})
+	p.SendPacket(&packet.SetHeldItem{Slot: int8(p.player.HeldItem())})
 }
 
 type SetContainerContent struct {
@@ -686,7 +700,7 @@ func (m SetContainerContent) Encode(w packet.Writer) error {
 		w.Bool(true)
 		w.VarInt(i.ProtocolID)
 		w.Int8(s.Count)
-		w.Int8(0)
+		w.Nbt2(s.Tag)
 	}
 	w.Bool(false)
 	return nil
@@ -714,8 +728,8 @@ func dataSlotToNetworkSlot(index int) int {
 
 func sortInventory(slots []world.Slot) []world.Slot {
 	a := make([]world.Slot, 46)
-	for i, s := range slots {
-		a[dataSlotToNetworkSlot(i)] = s
+	for _, s := range slots {
+		a[dataSlotToNetworkSlot(int(s.Slot))] = s
 	}
 	return a
 }
@@ -726,5 +740,18 @@ func (p *Session) SendCommandSuggestionsResponse(id int32, start int32, length i
 		Start:         start,
 		Length:        length,
 		Matches:       matches,
+	})
+}
+
+func (p *Session) SetDisplayName(name string) {
+	p.Server.GlobalBroadcast(&packet.PlayerInfoUpdate{
+		Actions: 0x20,
+		Players: []types.PlayerInfo{
+			{
+				UUID:           p.conn.UUID(),
+				HasDisplayName: name != "",
+				DisplayName:    name,
+			},
+		},
 	})
 }
