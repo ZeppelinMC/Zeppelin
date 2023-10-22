@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"github.com/aimjel/minecraft/protocol/types"
 	"os"
 	"strings"
 	"sync"
@@ -122,13 +123,45 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 }
 
 func (srv *Server) addPlayer(p *Session) {
+	players := make([]types.PlayerInfo, 0, len(srv.Players)+1)
+	srv.mu.Lock()
+	for _, pl := range srv.Players {
+		players = append(players, types.PlayerInfo{
+			UUID:       pl.conn.UUID(),
+			Name:       pl.conn.Name(),
+			Properties: pl.conn.Properties(),
+			Listed:     true,
+		})
+	}
+	srv.mu.Unlock()
+
+	//updates the new session's player list
+	p.SendPacket(&packet.PlayerInfoUpdate{
+		Actions: 0x01 | 0x08,
+		Players: players,
+	})
+
 	srv.mu.Lock()
 	srv.Players[p.UUID] = p
 	srv.mu.Unlock()
 
-	srv.PlayerlistUpdate()
+	newPlayer := types.PlayerInfo{
+		UUID:       p.conn.UUID(),
+		Name:       p.conn.Name(),
+		Properties: p.conn.Properties(),
+		Listed:     true,
+	}
 
-	//gui.AddPlayer(p.session.Info().Name, p.UUID)
+	srv.mu.RLock()
+	for _, sesh := range srv.Players {
+		sesh.SendPacket(&packet.PlayerInfoUpdate{
+			Actions: 0x01 | 0x08,
+			Players: []types.PlayerInfo{newPlayer},
+		})
+	}
+	srv.mu.RUnlock()
+
+	//gui.AddPlayer(pl.session.Info().Name, pl.UUID)
 
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.conn.RemoteAddr(), p.conn.Name(), p.UUID)
 	srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerJoin, map[string]string{"player": p.Name()}), nil)

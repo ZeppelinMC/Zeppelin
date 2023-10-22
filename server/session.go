@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/aimjel/minecraft/protocol/types"
 	"math"
 	"math/rand"
 	"slices"
@@ -38,12 +39,10 @@ var tags = &packet.UpdateTags{
 }
 
 type Session struct {
-	mu        sync.RWMutex
-	player    *player.Player
-	conn      *minecraft.Conn
-	Server    *Server
-	sessionID [16]byte
-	publicKey []byte
+	mu     sync.RWMutex
+	player *player.Player
+	conn   *minecraft.Conn
+	Server *Server
 
 	spawnedEntities []int32
 	loadedChunks    map[[2]int32]struct{}
@@ -65,6 +64,11 @@ type Session struct {
 
 	//playReady means the player is ready to receive packets regarding other players
 	playReady bool
+
+	sessionID    [16]byte
+	publicKey    []byte
+	keySignature []byte
+	expires      uint64
 }
 
 func (p *Session) HandlePackets() error {
@@ -106,7 +110,7 @@ func (p *Session) HandlePackets() error {
 		case *packet.PlayerAbilitiesServer:
 			handlers.PlayerAbilities(p.player, pk.Flags)
 		case *packet.PlayerSessionServer:
-			handlers.PlayerSession(p, pk.SessionID, pk.PublicKey.PublicKey)
+			handlers.PlayerSession(p, pk.SessionID, pk.PublicKey, pk.KeySignature, pk.ExpiresAt)
 		}
 	}
 }
@@ -293,11 +297,26 @@ func (p *Session) Kill(message string) {
 	})
 }
 
-func (p *Session) SetSessionID(id [16]byte, pk []byte) {
+func (p *Session) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.sessionID = id
 	p.publicKey = pk
+	p.keySignature = ks
+	p.expires = uint64(expires)
+
+	p.Server.GlobalBroadcast(&packet.PlayerInfoUpdate{
+		Actions: 0x02,
+		Players: []types.PlayerInfo{
+			{
+				UUID:          p.conn.UUID(),
+				ChatSessionID: id,
+				PublicKey:     pk,
+				KeySignature:  ks,
+				ExpiresAt:     expires,
+			},
+		},
+	})
 }
 
 func (p *Session) Position() (x, y, z float64) {
@@ -543,12 +562,12 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 		p.Server.GlobalMessage(msg, p)
 	} else {
 		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{
-			Sender: p.conn.UUID(),
-			//MessageSignature: pk.Signature,
-			Message:     pk.Message,
-			Timestamp:   pk.Timestamp,
-			Salt:        pk.Salt,
-			NetworkName: p.Name(),
+			Sender:           p.conn.UUID(),
+			MessageSignature: pk.Signature,
+			Message:          pk.Message,
+			Timestamp:        pk.Timestamp,
+			Salt:             pk.Salt,
+			NetworkName:      p.Name(),
 		})
 	}
 }

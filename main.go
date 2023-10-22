@@ -51,6 +51,9 @@ func start(cfg *server.Config) {
 			stopProfile()
 		}
 		srv.Close()
+
+		f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
+		_ = toml.NewEncoder(f).Encode(cfg)
 		os.Exit(0)
 	}()
 
@@ -62,6 +65,8 @@ func start(cfg *server.Config) {
 	}
 }
 
+var cfg server.Config
+
 func main() {
 	log.Info("Starting Dynamite 1.20.1 server")
 	if util.HasArg("-prof") {
@@ -69,7 +74,6 @@ func main() {
 		startProfile()
 	}
 
-	var cfg server.Config
 	if err := server.LoadConfig("config.toml", &cfg); err != nil {
 		log.Info("%v loading config.toml. Using default config", err)
 		cfg = server.DefaultConfig
