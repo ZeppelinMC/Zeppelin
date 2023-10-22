@@ -1,10 +1,12 @@
 package server
 
 import (
+	"fmt"
 	"math"
 	"strings"
 
 	"github.com/aimjel/minecraft/protocol/types"
+	"github.com/dynamitemc/dynamite/server/registry"
 
 	"github.com/aimjel/minecraft/packet"
 )
@@ -132,6 +134,7 @@ func (p *Session) Hit(entityId int32) {
 	x, y, z := p.Position()
 	//yaw, pitch := p.Rotation()
 	//d := direction(yaw, pitch)
+	soundId := int32(519)
 	if pl, ok := e.(*Session); ok {
 		if pl.GameMode() == 1 {
 			return
@@ -163,13 +166,18 @@ func (p *Session) Hit(entityId int32) {
 			SourcePositionY: &y,
 			SourcePositionZ: &z,
 		})
+	} else {
+		entity := e.(*Entity)
+		sound, ok := registry.GetSound(fmt.Sprintf("minecraft:entity.%s.hurt", strings.TrimPrefix(entity.data.Id, "minecraft:")))
+		if ok {
+			soundId = sound.ProtocolID
+		}
 	}
 
 	p.Server.mu.Lock()
 	defer p.Server.mu.Unlock()
-
 	for _, pl := range p.Server.Players {
-		if !pl.IsSpawned(p.entityID) {
+		if !pl.IsSpawned(entityId) {
 			continue
 		}
 		pl.SendPacket(&packet.DamageEvent{
@@ -181,6 +189,15 @@ func (p *Session) Hit(entityId int32) {
 			SourcePositionY: &y,
 			SourcePositionZ: &z,
 		})
+		pl.SendPacket(&packet.EntitySoundEffect{
+			Category: 8,
+			SoundID:  soundId,
+			EntityID: entityId,
+			Seed:     p.Server.World.Seed(),
+			Volume:   1,
+			Pitch:    1,
+		})
+
 	}
 }
 

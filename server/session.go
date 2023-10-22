@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -85,7 +84,6 @@ func (p *Session) HandlePackets() error {
 
 		packt, err := p.conn.ReadPacket()
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 

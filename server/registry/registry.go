@@ -13,8 +13,11 @@ type Item struct {
 	ProtocolID int32 `nbt:"protocol_id"`
 }
 
-var items map[string]Item
-var entities map[string]Item
+var data struct {
+	SoundEvent registry `nbt:"minecraft:sound_event"`
+	Item       registry `nbt:"minecraft:item"`
+	EntityType registry `nbt:"minecraft:entity_type"`
+}
 
 type registry struct {
 	Default    string          `nbt:"default"`
@@ -23,27 +26,29 @@ type registry struct {
 }
 
 func loadregistry() {
-	var data struct {
-		Item       registry `nbt:"minecraft:item"`
-		EntityType registry `nbt:"minecraft:entity_type"`
-	}
 	nbt.Unmarshal(rg, &data)
-	items = data.Item.Entries
-	entities = data.EntityType.Entries
 }
 
 func GetItem(name string) (item Item, ok bool) {
-	if items == nil {
+	if data.Item.Entries == nil {
 		loadregistry()
 	}
-	it, ok := items[name]
+	it, ok := data.Item.Entries[name]
 	return it, ok
 }
 
 func GetEntity(name string) (item Item, ok bool) {
-	if entities == nil {
+	if data.EntityType.Entries == nil {
 		loadregistry()
 	}
-	it, ok := entities[name]
+	it, ok := data.EntityType.Entries[name]
+	return it, ok
+}
+
+func GetSound(name string) (item Item, ok bool) {
+	if data.SoundEvent.Entries == nil {
+		loadregistry()
+	}
+	it, ok := data.SoundEvent.Entries[name]
 	return it, ok
 }
