@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"slices"
@@ -119,6 +120,8 @@ func (p *Session) HandlePackets() error {
 			handlers.SetCreativeModeSlot(p, p.player, int16(networkSlotToDataSlot(int(pk.Slot))), pk.ClickedItem)
 		case *packet.TeleportToEntityServer:
 			handlers.TeleportToEntity(p, p.player, pk.Player)
+		case *packet.MessageAcknowledgment:
+			fmt.Println(pk.MessageCount)
 		}
 	}
 }
@@ -573,19 +576,12 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 
 		p.Server.GlobalMessage(msg, p)
 	} else {
-		var pr []packet.PreviousMessage
-		for _, p := range pk.AcknowledgedMessages {
-			pr = append(pr, packet.PreviousMessage{
-				MessageID: int32(p),
-			})
-		}
 		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{
 			Sender:           p.conn.UUID(),
 			MessageSignature: pk.Signature,
 			Message:          pk.Message,
 			Timestamp:        pk.Timestamp,
 			Salt:             pk.Salt,
-			PreviousMessages: pr,
 			NetworkName:      prefix + p.Name() + suffix,
 		})
 	}
