@@ -336,6 +336,75 @@ func (p *Session) BroadcastHealth() {
 	}
 }
 
+func (p *Session) SendEquipment(pl *Session) {
+	slots := make(map[int8]world.Slot)
+	inv := p.player.Inventory()
+	sel := p.player.HeldItem()
+
+	for _, s := range inv {
+		switch s.Slot {
+		case int8(sel):
+			slots[0] = s
+		case -106:
+			slots[1] = s
+		case 100:
+			slots[2] = s
+		case 101:
+			slots[3] = s
+		case 102:
+			slots[4] = s
+		case 103:
+			slots[5] = s
+		}
+	}
+
+	for s, i := range slots {
+		pl.SendPacket(&SetEquipment{
+			EntityID: p.entityID,
+			Slot:     s,
+			Item:     i,
+		})
+	}
+}
+
+func (p *Session) BroadcastEquipment() {
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+	slots := make(map[int8]world.Slot)
+	inv := p.player.Inventory()
+	sel := p.player.HeldItem()
+
+	for _, s := range inv {
+		switch s.Slot {
+		case int8(sel):
+			slots[0] = s
+		case -106:
+			slots[1] = s
+		case 100:
+			slots[2] = s
+		case 101:
+			slots[3] = s
+		case 102:
+			slots[4] = s
+		case 103:
+			slots[5] = s
+		}
+	}
+
+	for _, pl := range p.Server.Players {
+		if !pl.IsSpawned(p.entityID) {
+			continue
+		}
+		for s, i := range slots {
+			pl.SendPacket(&SetEquipment{
+				EntityID: p.entityID,
+				Slot:     s,
+				Item:     i,
+			})
+		}
+	}
+}
+
 func (p *Session) BroadcastSprinting(val bool) {
 	p.Server.mu.Lock()
 	defer p.Server.mu.Unlock()
@@ -385,6 +454,7 @@ type PacketSetPlayerMetadata struct {
 	DisplayedSkinParts *uint8
 	MainHand           *int32
 	Slot               *world.Slot
+	HandState          *int8
 }
 
 func (*PacketSetPlayerMetadata) ID() int32 {
@@ -433,5 +503,39 @@ func (s PacketSetPlayerMetadata) Encode(w packet.Writer) error {
 			w.Nbt2(s.Slot.Tag)
 		}
 	}
+	if s.HandState != nil {
+		w.Uint8(8)
+		w.Uint8(0)
+		w.Int8(*s.HandState)
+	}
 	return w.Uint8(0xFF)
+}
+
+type SetEquipment struct {
+	EntityID int32
+	Slot     int8
+	Item     world.Slot
+}
+
+func (m SetEquipment) ID() int32 {
+	return 0x55
+}
+
+func (m *SetEquipment) Decode(r *packet.Reader) error {
+	return nil
+}
+
+func (m SetEquipment) Encode(w packet.Writer) error {
+	w.VarInt(m.EntityID)
+	w.Int8(m.Slot)
+	id, ok := registry.GetItem(m.Item.Id)
+	if !ok {
+		w.Bool(false)
+		return nil
+	}
+	w.Bool(true)
+	w.VarInt(id.ProtocolID)
+	w.Int8(m.Item.Count)
+	w.Nbt2(m.Item.Tag)
+	return nil
 }

@@ -282,8 +282,6 @@ func (p *Session) Kill(message string) {
 	}
 
 	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
-
 	for _, pl := range p.Server.Players {
 		if !p.IsSpawned(p.entityID) {
 			continue
@@ -292,7 +290,12 @@ func (p *Session) Kill(message string) {
 			EntityID:     p.entityID,
 			SourceTypeID: 0,
 		})
+		pl.SendPacket(&packet.EntityEvent{
+			EntityID: p.entityID,
+			Status:   3,
+		})
 	}
+	p.Server.mu.Unlock()
 
 	p.SendPacket(&packet.DamageEvent{
 		EntityID:     p.entityID,
@@ -642,6 +645,9 @@ func (p *Session) SpawnPlayer(pl *Session) {
 	})
 
 	p.spawnedEntities = append(p.spawnedEntities, entityId)
+
+	pl.SendEquipment(p)
+	p.SendEquipment(pl)
 }
 
 func (p *Session) DespawnPlayer(pl *Session) {
