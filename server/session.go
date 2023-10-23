@@ -114,6 +114,8 @@ func (p *Session) HandlePackets() error {
 			handlers.PlayerSession(p, pk.SessionID, pk.PublicKey, pk.KeySignature, pk.ExpiresAt)
 		case *packet.SetHeldItemServer:
 			handlers.SetHeldItem(p.player, pk.Slot)
+		case *packet.SetCreativeModeSlot:
+			handlers.SetCreativeModeSlot(p, p.player, pk.Slot, pk.ClickedItem)
 		}
 	}
 }
@@ -667,6 +669,28 @@ func (p *Session) InitializeInventory() {
 	p.SendPacket(&packet.SetHeldItem{Slot: int8(p.player.HeldItem())})
 }
 
+func (p *Session) ClearItem(slot int16) {
+	p.SendPacket(&packet.SetContainerSlot{
+		WindowID: 0,
+		StateID:  1,
+		Slot:     slot,
+	})
+	p.player.DeleteInventorySlot(networkSlotToDataSlot(int(slot)))
+}
+
+func (p *Session) SetSlot(slot int16, data packet.Slot) {
+	p.SendPacket(&packet.SetContainerSlot{
+		WindowID: 0,
+		StateID:  1,
+		Slot:     slot,
+		Data:     data,
+	})
+	p.player.SetInventorySlot(networkSlotToDataSlot(int(slot)), world.Slot{
+		Count: data.Count,
+		Slot:  int8(networkSlotToDataSlot(int(slot))),
+	})
+}
+
 type SetContainerContent struct {
 	WindowID uint8
 	StateID  int32
@@ -720,6 +744,26 @@ func dataSlotToNetworkSlot(index int) int {
 		index += 36
 	case index >= 80 && index <= 83:
 		index -= 79
+	}
+	return index
+}
+
+func networkSlotToDataSlot(index int) int {
+	switch {
+	case index == 8:
+		index = 100
+	case index == 7:
+		index = 101
+	case index == 6:
+		index = 102
+	case index == 5:
+		index = 103
+	case index == 45:
+		index = -106
+	case index >= 36 && index <= 43:
+		index -= 36
+	case index >= 1 && index <= 4:
+		index += 79
 	}
 	return index
 }

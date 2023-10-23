@@ -22,9 +22,11 @@ type Controller interface {
 	BroadcastSkinData()
 	Respawn(dim string)
 	BreakBlock(pos uint64)
-	//BroadcastDigging(pos uint64)
+	ClearItem(slot int16)
+	Disconnect(reason string)
 	SetClientSettings(p *packet.ClientSettings)
 	SetSessionID(id [16]byte, pk, ks []byte, expires int64)
+	SetSlot(slot int16, data packet.Slot)
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

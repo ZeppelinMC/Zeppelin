@@ -3,6 +3,7 @@ package player
 import (
 	"fmt"
 	"math"
+	"slices"
 	"sync"
 
 	"github.com/dynamitemc/dynamite/server/world"
@@ -83,6 +84,23 @@ func (p *Player) SetInventory(i []world.Slot) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.inventory = i
+}
+
+func (p *Player) SetInventorySlot(i int, s world.Slot) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.inventory[i] = s
+}
+
+func (p *Player) DeleteInventorySlot(i int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for in, s := range p.inventory {
+		if int(s.Slot) == i {
+			p.inventory = slices.Delete(p.inventory, in, in+1)
+			return
+		}
+	}
 }
 
 func (p *Player) Health() float32 {
