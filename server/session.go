@@ -682,9 +682,9 @@ func (p *Session) ClearItem(slot int16) {
 	p.SendPacket(&packet.SetContainerSlot{
 		WindowID: 0,
 		StateID:  1,
-		Slot:     slot,
+		Slot:     int16(dataSlotToNetworkSlot(int(slot))),
 	})
-	p.player.DeleteInventorySlot(networkSlotToDataSlot(int(slot)))
+	p.player.DeleteInventorySlot(int(slot))
 }
 
 func (p *Session) SetSlot(slot int16, data packet.Slot) {
