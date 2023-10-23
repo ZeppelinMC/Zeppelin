@@ -29,6 +29,18 @@ func loadregistry() {
 	nbt.Unmarshal(rg, &data)
 }
 
+func FindItem(id int32) string {
+	if data.Item.Entries == nil {
+		loadregistry()
+	}
+	for k, e := range data.Item.Entries {
+		if e.ProtocolID == id {
+			return k
+		}
+	}
+	return ""
+}
+
 func GetItem(name string) (item Item, ok bool) {
 	if data.Item.Entries == nil {
 		loadregistry()

@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
-func PlayerAction(controller Controller, pk *packet.PlayerActionServer) {
+func PlayerAction(controller Controller, state *player.Player, pk *packet.PlayerActionServer) {
 	switch pk.Status {
 	case 0:
 		controller.BroadcastPose(14)
@@ -19,5 +20,11 @@ func PlayerAction(controller Controller, pk *packet.PlayerActionServer) {
 			controller.BreakBlock(pk.Location)
 		}
 		controller.BroadcastPose(0)
+	case 3, 4:
+		if s, ok := state.InventorySlot(int(state.HeldItem())); ok {
+			state.SetPreviousSelectedSlot(s)
+			state.DeleteInventorySlot(int(state.HeldItem()))
+		}
+		controller.DropSlot()
 	}
 }

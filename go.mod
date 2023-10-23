@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/aimjel/minecraft v0.0.0-20231023030701-33b875c0e68b
+	github.com/aimjel/minecraft v0.0.0-20231023082923-00b4e048f657
 	github.com/gorilla/websocket v1.5.0
 )
 

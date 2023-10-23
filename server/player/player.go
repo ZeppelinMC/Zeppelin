@@ -20,8 +20,9 @@ type Player struct {
 
 	data *world.PlayerData
 
-	inventory    []world.Slot
-	selectedSlot int32
+	inventory            []world.Slot
+	previousSelectedSlot world.Slot
+	selectedSlot         int32
 
 	dimension string
 
@@ -86,10 +87,29 @@ func (p *Player) SetInventory(i []world.Slot) {
 	p.inventory = i
 }
 
+func (p *Player) InventorySlot(i int) (world.Slot, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for _, s := range p.inventory {
+		if int(s.Slot) == i {
+			return s, true
+		}
+	}
+	return world.Slot{}, false
+}
+
 func (p *Player) SetInventorySlot(i int, s world.Slot) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.inventory[i] = s
+
+	for in, s := range p.inventory {
+		if int(s.Slot) == i {
+			p.inventory[in] = s
+			return
+		}
+	}
+	p.inventory = append(p.inventory, s)
 }
 
 func (p *Player) DeleteInventorySlot(i int) {
@@ -247,4 +267,16 @@ func (p *Player) HeldItem() int32 {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.selectedSlot
+}
+
+func (p *Player) PreviousSelectedSlot() world.Slot {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.previousSelectedSlot
+}
+
+func (p *Player) SetPreviousSelectedSlot(s world.Slot) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.previousSelectedSlot = s
 }

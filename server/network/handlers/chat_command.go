@@ -27,6 +27,8 @@ type Controller interface {
 	SetClientSettings(p *packet.ClientSettings)
 	SetSessionID(id [16]byte, pk, ks []byte, expires int64)
 	SetSlot(slot int16, data packet.Slot)
+	DropSlot()
+	TeleportToEntity(uuid [16]byte)
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {

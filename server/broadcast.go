@@ -7,6 +7,7 @@ import (
 
 	"github.com/aimjel/minecraft/protocol/types"
 	"github.com/dynamitemc/dynamite/server/registry"
+	"github.com/dynamitemc/dynamite/server/world"
 
 	"github.com/aimjel/minecraft/packet"
 )
@@ -296,6 +297,20 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 	}
 }
 
+func (p *Session) BroadcastGamemode() {
+	p.Server.mu.RLock()
+	for _, sesh := range p.Server.Players {
+		sesh.SendPacket(&packet.PlayerInfoUpdate{
+			Actions: 0x04,
+			Players: []types.PlayerInfo{{
+				UUID:     p.conn.UUID(),
+				GameMode: int32(p.GameMode()),
+			}},
+		})
+	}
+	p.Server.mu.RUnlock()
+}
+
 func (p *Session) BroadcastPose(pose int32) {
 	p.Server.mu.Lock()
 	defer p.Server.mu.Unlock()
@@ -369,6 +384,7 @@ type PacketSetPlayerMetadata struct {
 	Health             *float32
 	DisplayedSkinParts *uint8
 	MainHand           *int32
+	Slot               *world.Slot
 }
 
 func (*PacketSetPlayerMetadata) ID() int32 {
@@ -405,6 +421,17 @@ func (s PacketSetPlayerMetadata) Encode(w packet.Writer) error {
 		w.Uint8(18)
 		w.VarInt(0)
 		w.Uint8(uint8(*s.MainHand))
+	}
+	if s.Slot != nil {
+		sl, ok := registry.GetItem(s.Slot.Id)
+		if ok {
+			w.Uint8(8)
+			w.Uint8(7)
+			w.Bool(true)
+			w.VarInt(sl.ProtocolID)
+			w.Int8(s.Slot.Count)
+			w.Nbt2(s.Slot.Tag)
+		}
 	}
 	return w.Uint8(0xFF)
 }

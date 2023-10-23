@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aimjel/minecraft/protocol/types"
+	"github.com/google/uuid"
 
 	"github.com/dynamitemc/dynamite/server/network/handlers"
 
@@ -99,7 +100,7 @@ func (p *Session) HandlePackets() error {
 		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation:
 			handlers.PlayerMovement(p, p.player, pk)
 		case *packet.PlayerActionServer:
-			handlers.PlayerAction(p, pk)
+			handlers.PlayerAction(p, p.player, pk)
 		case *packet.InteractServer:
 			handlers.Interact(p, pk)
 		case *packet.SwingArmServer:
@@ -115,7 +116,9 @@ func (p *Session) HandlePackets() error {
 		case *packet.SetHeldItemServer:
 			handlers.SetHeldItem(p.player, pk.Slot)
 		case *packet.SetCreativeModeSlot:
-			handlers.SetCreativeModeSlot(p, p.player, pk.Slot, pk.ClickedItem)
+			handlers.SetCreativeModeSlot(p, p.player, int16(networkSlotToDataSlot(int(pk.Slot))), pk.ClickedItem)
+		case *packet.TeleportToEntityServer:
+			handlers.TeleportToEntity(p, p.player, pk.Player)
 		}
 	}
 }
@@ -348,7 +351,7 @@ func (p *Session) SetGameMode(gm byte) {
 	})
 
 	p.player.SetGameMode(byte(int32(gm)))
-	p.Server.PlayerlistUpdate()
+	p.BroadcastGamemode()
 }
 
 func (p *Session) Push(x, y, z float64) {
@@ -682,13 +685,42 @@ func (p *Session) SetSlot(slot int16, data packet.Slot) {
 	p.SendPacket(&packet.SetContainerSlot{
 		WindowID: 0,
 		StateID:  1,
-		Slot:     slot,
+		Slot:     int16(dataSlotToNetworkSlot(int(slot))),
 		Data:     data,
 	})
-	p.player.SetInventorySlot(networkSlotToDataSlot(int(slot)), world.Slot{
+	p.player.SetInventorySlot(int(slot), world.Slot{
 		Count: data.Count,
-		Slot:  int8(networkSlotToDataSlot(int(slot))),
+		Slot:  int8(slot),
+		Id:    registry.FindItem(data.Id),
 	})
+}
+
+func (p *Session) DropSlot() {
+	item := p.player.PreviousSelectedSlot()
+	x, y, z := p.Position()
+
+	id := idCounter.Add(1)
+	uuid := uuid.New()
+
+	p.Server.mu.Lock()
+	defer p.Server.mu.Unlock()
+	for _, pl := range p.Server.Players {
+		if !pl.InView(p) {
+			return
+		}
+		pl.SendPacket(&packet.SpawnEntity{
+			EntityID: id,
+			UUID:     uuid,
+			Type:     54,
+			X:        x,
+			Y:        y,
+			Z:        z,
+		})
+		pl.SendPacket(&PacketSetPlayerMetadata{
+			EntityID: id,
+			Slot:     &item,
+		})
+	}
 }
 
 type SetContainerContent struct {
@@ -796,4 +828,21 @@ func (p *Session) SetDisplayName(name string) {
 			},
 		},
 	})
+}
+
+func (p *Session) TeleportToEntity(uuid [16]byte) {
+	e := p.Server.FindEntityByUUID(uuid)
+	if e == nil {
+		return
+	}
+	if pl, ok := e.(*Session); ok {
+		x, y, z := pl.Position()
+		yaw, pitch := pl.Rotation()
+		p.Teleport(x, y, z, yaw, pitch)
+	} else {
+		e := e.(*Entity)
+		x, y, z := e.data.Pos[0], e.data.Pos[1], e.data.Pos[2]
+		yaw, pitch := e.data.Rotation[0], e.data.Rotation[1]
+		p.Teleport(x, y, z, yaw, pitch)
+	}
 }
