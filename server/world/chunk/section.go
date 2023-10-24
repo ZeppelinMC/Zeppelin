@@ -54,3 +54,21 @@ func newSection(data []int64, blocks []blockEntry, bLight, sLight []int8) (s *se
 	s.skyLight = sLight
 	return s
 }
+
+func (s *section) getBlockAt(x, y, z int) block.Block {
+	usedBitsPerLong := (64 / s.bitsPerEntry) * s.bitsPerEntry
+
+	blockNumber := (((y * 16) + z) * 16) + x
+
+	startLong := (blockNumber * s.bitsPerEntry) / usedBitsPerLong
+
+	stateOffset := (blockNumber * s.bitsPerEntry) % usedBitsPerLong
+
+	states := s.data[startLong]
+
+	states >>= stateOffset
+
+	data := states & (1<<s.bitsPerEntry - 1)
+
+	return s.entries[data]
+}

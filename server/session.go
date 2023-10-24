@@ -12,6 +12,7 @@ import (
 	"github.com/aimjel/minecraft/protocol/types"
 	"github.com/google/uuid"
 
+	"github.com/dynamitemc/dynamite/server/inventory"
 	"github.com/dynamitemc/dynamite/server/network/handlers"
 
 	"github.com/aimjel/minecraft"
@@ -117,7 +118,7 @@ func (p *Session) HandlePackets() error {
 		case *packet.SetHeldItemServer:
 			handlers.SetHeldItem(p.player, pk.Slot)
 		case *packet.SetCreativeModeSlot:
-			handlers.SetCreativeModeSlot(p, p.player, int16(networkSlotToDataSlot(int(pk.Slot))), pk.ClickedItem)
+			handlers.SetCreativeModeSlot(p, p.player, int8(inventory.NetworkToData(int(pk.Slot))), pk.ClickedItem)
 		case *packet.TeleportToEntityServer:
 			handlers.TeleportToEntity(p, p.player, pk.Player)
 		case *packet.MessageAcknowledgment:
@@ -666,31 +667,31 @@ func (p *Session) DespawnPlayer(pl *Session) {
 }
 
 func (p *Session) InitializeInventory() {
-	p.SendPacket(&SetContainerContent{
+	p.SendPacket(&packet.SetContainerContent{
 		WindowID: 0,
 		StateID:  1,
-		Slots:    p.player.Inventory(),
+		Slots:    p.player.Inventory().Packet(),
 	})
 	p.SendPacket(&packet.SetHeldItem{Slot: int8(p.player.HeldItem())})
 }
 
-func (p *Session) ClearItem(slot int16) {
+func (p *Session) ClearItem(slot int8) {
 	p.SendPacket(&packet.SetContainerSlot{
 		WindowID: 0,
 		StateID:  1,
-		Slot:     int16(dataSlotToNetworkSlot(int(slot))),
+		Slot:     int16(inventory.DataToNetwork(int(slot))),
 	})
-	p.player.DeleteInventorySlot(int(slot))
+	p.player.Inventory().DeleteSlot(slot)
 }
 
-func (p *Session) SetSlot(slot int16, data packet.Slot) {
+func (p *Session) SetSlot(slot int8, data packet.Slot) {
 	p.SendPacket(&packet.SetContainerSlot{
 		WindowID: 0,
 		StateID:  1,
-		Slot:     int16(dataSlotToNetworkSlot(int(slot))),
+		Slot:     int16(inventory.DataToNetwork(int(slot))),
 		Data:     data,
 	})
-	p.player.SetInventorySlot(int(slot), world.Slot{
+	p.player.Inventory().SetSlot(slot, world.Slot{
 		Count: data.Count,
 		Slot:  int8(slot),
 		Id:    registry.FindItem(data.Id),
@@ -724,92 +725,6 @@ func (p *Session) DropSlot() {
 		})
 	}
 }
-
-type SetContainerContent struct {
-	WindowID uint8
-	StateID  int32
-	Slots    []world.Slot
-}
-
-func (m SetContainerContent) ID() int32 {
-	return 0x12
-}
-
-func (m *SetContainerContent) Decode(r *packet.Reader) error {
-	//todo reader
-	return nil
-}
-
-func (m SetContainerContent) Encode(w packet.Writer) error {
-	w.Uint8(m.WindowID)
-	w.VarInt(m.StateID)
-	if m.WindowID == 0 {
-		m.Slots = sortInventory(m.Slots)
-	}
-	w.VarInt(int32(len(m.Slots)))
-	for _, s := range m.Slots {
-		i, ok := registry.GetItem(s.Id)
-		if !ok {
-			w.Bool(false)
-			continue
-		}
-		w.Bool(true)
-		w.VarInt(i.ProtocolID)
-		w.Int8(s.Count)
-		w.Nbt2(s.Tag)
-	}
-	w.Bool(false)
-	return nil
-}
-
-func dataSlotToNetworkSlot(index int) int {
-	switch {
-	case index == 100:
-		index = 8
-	case index == 101:
-		index = 7
-	case index == 102:
-		index = 6
-	case index == 103:
-		index = 5
-	case index == -106:
-		index = 45
-	case index <= 8:
-		index += 36
-	case index >= 80 && index <= 83:
-		index -= 79
-	}
-	return index
-}
-
-func networkSlotToDataSlot(index int) int {
-	switch {
-	case index == 8:
-		index = 100
-	case index == 7:
-		index = 101
-	case index == 6:
-		index = 102
-	case index == 5:
-		index = 103
-	case index == 45:
-		index = -106
-	case index >= 36 && index <= 43:
-		index -= 36
-	case index >= 1 && index <= 4:
-		index += 79
-	}
-	return index
-}
-
-func sortInventory(slots []world.Slot) []world.Slot {
-	a := make([]world.Slot, 46)
-	for _, s := range slots {
-		a[dataSlotToNetworkSlot(int(s.Slot))] = s
-	}
-	return a
-}
-
 func (p *Session) SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []packet.SuggestionMatch) {
 	p.SendPacket(&packet.CommandSuggestionsResponse{
 		TransactionId: id,

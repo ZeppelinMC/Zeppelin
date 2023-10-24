@@ -3,9 +3,9 @@ package player
 import (
 	"fmt"
 	"math"
-	"slices"
 	"sync"
 
+	"github.com/dynamitemc/dynamite/server/inventory"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -20,7 +20,7 @@ type Player struct {
 
 	data *world.PlayerData
 
-	inventory            []world.Slot
+	inventory            *inventory.Inventory
 	previousSelectedSlot world.Slot
 	selectedSlot         int32
 
@@ -35,7 +35,7 @@ type Player struct {
 
 func New(data *world.PlayerData) *Player {
 	pl := &Player{data: data}
-	pl.inventory = data.Inventory
+	pl.inventory = inventory.From(data.Inventory)
 	pl.gameMode = byte(data.PlayerGameType)
 	pl.x, pl.y, pl.z, pl.yaw, pl.pitch = data.Pos[0], data.Pos[1], data.Pos[2], data.Rotation[0], data.Rotation[1]
 	pl.health, pl.food, pl.foodSaturation = data.Health, data.FoodLevel, data.FoodSaturationLevel
@@ -75,52 +75,10 @@ func (p *Player) SetDimension(d string) {
 	p.dimension = d
 }
 
-func (p *Player) Inventory() []world.Slot {
+func (p *Player) Inventory() *inventory.Inventory {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.inventory
-}
-
-func (p *Player) SetInventory(i []world.Slot) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.inventory = i
-}
-
-func (p *Player) InventorySlot(i int) (world.Slot, bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	for _, s := range p.inventory {
-		if int(s.Slot) == i {
-			return s, true
-		}
-	}
-	return world.Slot{}, false
-}
-
-func (p *Player) SetInventorySlot(i int, s world.Slot) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	for in, s := range p.inventory {
-		if int(s.Slot) == i {
-			p.inventory[in] = s
-			return
-		}
-	}
-	p.inventory = append(p.inventory, s)
-}
-
-func (p *Player) DeleteInventorySlot(i int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	for in, s := range p.inventory {
-		if int(s.Slot) == i {
-			p.inventory = slices.Delete(p.inventory, in, in+1)
-			return
-		}
-	}
 }
 
 func (p *Player) Health() float32 {
@@ -187,7 +145,7 @@ func (p *Player) Save() {
 
 	p.data.Pos[0], p.data.Pos[1], p.data.Pos[2], p.data.Rotation[0], p.data.Rotation[1], p.data.OnGround = p.x, p.y, p.z, p.yaw, p.pitch, o
 	p.data.PlayerGameType = int32(p.gameMode)
-	p.data.Inventory = p.inventory
+	p.data.Inventory = p.inventory.Data()
 	p.data.Abilities.Flying = fl
 	p.data.Dimension = p.dimension
 	p.data.SelectedItemSlot = p.selectedSlot

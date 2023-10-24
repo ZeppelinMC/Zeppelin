@@ -4,7 +4,7 @@
 
 ![i111mage-removebg-preview](https://github.com/DynamiteMC/Dynamite/assets/84847714/299c803e-ff30-46fb-ba56-a752e365307d)
 
-Minecraft server software written in Go
+Minecraft: Java Edition server software written in Go
 
 This is a very experimental software and it's not yet usable
 

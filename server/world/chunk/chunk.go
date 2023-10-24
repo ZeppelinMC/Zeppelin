@@ -2,8 +2,10 @@ package chunk
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/aimjel/minecraft/protocol/types"
+	"github.com/dynamitemc/dynamite/server/block"
 
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/aimjel/minecraft/packet"
@@ -83,4 +85,14 @@ func (c *Chunk) Data() *packet.ChunkData {
 
 func HashXZ(x, z int32) uint64 {
 	return uint64(uint32(x))<<32 | uint64(uint32(z))
+}
+
+func (c *Chunk) Block(x, y, z int64) block.Block {
+	y1 := int(y/16) + 4
+	relx, rely, relz := x&0x0f, y&0x0f, z&0x0f
+
+	sec := c.sections[y1]
+	fmt.Printf("y sec: %d, y chunk: %d, %d %d %d\n", y1, y1-4, relx, rely, relz)
+	fmt.Println(sec.getBlockAt(int(relx), int(rely), int(relz)).EncodedName())
+	return nil
 }

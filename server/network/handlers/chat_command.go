@@ -22,11 +22,11 @@ type Controller interface {
 	BroadcastSkinData()
 	Respawn(dim string)
 	BreakBlock(pos uint64)
-	ClearItem(slot int16)
+	ClearItem(slot int8)
 	Disconnect(reason string)
 	SetClientSettings(p *packet.ClientSettings)
 	SetSessionID(id [16]byte, pk, ks []byte, expires int64)
-	SetSlot(slot int16, data packet.Slot)
+	SetSlot(slot int8, data packet.Slot)
 	DropSlot()
 	TeleportToEntity(uuid [16]byte)
 }

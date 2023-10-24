@@ -70,6 +70,7 @@ func (p *Session) BroadcastAnimation(animation uint8) {
 func (p *Session) BreakBlock(pos uint64) {
 	p.Server.mu.Lock()
 	defer p.Server.mu.Unlock()
+	p.Server.GetDimension(p.player.Dimension()).Block(world.ParsePosition(pos))
 	for _, pl := range p.Server.Players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
@@ -341,7 +342,7 @@ func (p *Session) SendEquipment(pl *Session) {
 	inv := p.player.Inventory()
 	sel := p.player.HeldItem()
 
-	for _, s := range inv {
+	for _, s := range inv.Data() {
 		switch s.Slot {
 		case int8(sel):
 			slots[0] = s
@@ -374,7 +375,7 @@ func (p *Session) BroadcastEquipment() {
 	inv := p.player.Inventory()
 	sel := p.player.HeldItem()
 
-	for _, s := range inv {
+	for _, s := range inv.Data() {
 		switch s.Slot {
 		case int8(sel):
 			slots[0] = s

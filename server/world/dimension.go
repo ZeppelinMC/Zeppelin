@@ -73,3 +73,19 @@ func (d *Dimension) LoadedChunks() int {
 func (d *Dimension) Seed() int64 {
 	return d.seed
 }
+
+func (d *Dimension) Block(x, y, z int64) {
+	chunk, err := d.Chunk(int32(x/16), int32(z/16))
+	if err != nil {
+		return
+	}
+	chunk.Block(x, y, z)
+}
+
+func ParsePosition(p uint64) (x, y, z int64) {
+	pos := int64(p)
+	x = pos >> 38
+	y = pos << 52 >> 52
+	z = pos << 26 >> 38
+	return
+}
