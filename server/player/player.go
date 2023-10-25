@@ -134,6 +134,8 @@ func (p *Player) SetFlying(val bool) {
 }
 
 func (p *Player) Save() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	o := int8(0)
 	if p.onGround {
 		o = 1

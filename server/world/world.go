@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"math"
+	"math/rand"
 	"os"
+	"sync"
 
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/dynamitemc/dynamite/server/world/anvil"
 )
 
 type World struct {
+	mu       sync.RWMutex
 	nbt      worldData
 	Gamemode byte
 
@@ -90,4 +94,16 @@ func loadWorldData(f *os.File, wNbt *worldData) error {
 	}
 
 	return nbt.Unmarshal(buf.Bytes(), wNbt)
+}
+
+func RandomSeed() int64 {
+	return int64(rand.Float64() * float64(math.MaxInt64))
+}
+
+func (w *World) IncrementTime() (worldAge int64, dayTime int64) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.nbt.Data.Time++
+	w.nbt.Data.DayTime++
+	return w.nbt.Data.Time, w.nbt.Data.DayTime
 }

@@ -93,7 +93,7 @@ func (p *Session) HasPermissions(perms []string) bool {
 	if len(perms) == 0 {
 		return true
 	}
-	if p.player.Operator() {
+	if p.Player.Operator() {
 		return true
 	}
 	permissionsPlayer := getPlayer(p.UUID)

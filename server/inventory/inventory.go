@@ -35,12 +35,11 @@ func (inv *Inventory) Packet() (i []packet.Slot) {
 		if !ok {
 			continue
 		}
-		tag := *(*packet.SlotTag)(unsafe.Pointer(&slot.Tag))
 		i[DataToNetwork(int(slot.Slot))] = packet.Slot{
 			Present: true,
 			Count:   slot.Count,
 			Id:      item.ProtocolID,
-			Tag:     tag,
+			Tag:     *(*packet.SlotTag)(unsafe.Pointer(&slot.Tag)),
 		}
 	}
 	return

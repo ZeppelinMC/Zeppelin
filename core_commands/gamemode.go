@@ -51,7 +51,7 @@ var gamemode_cmd = &commands.Command{
 			}
 			player = p
 		}
-		if int(player.GameMode()) == gm {
+		if int(player.Player.GameMode()) == gm {
 			return
 		}
 		player.SetGameMode(byte(gm))

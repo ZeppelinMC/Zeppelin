@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/aimjel/minecraft/packet"
 	"github.com/aimjel/minecraft/protocol/types"
 
 	pk "github.com/aimjel/minecraft/packet"
@@ -19,7 +20,6 @@ type SuggestionsContext struct {
 }
 
 func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
-
 	if p, ok := c.Executor.(interface {
 		SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []pk.SuggestionMatch)
 	}); ok {
@@ -37,9 +37,11 @@ func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
 }
 
 type CommandContext struct {
-	Executor    interface{}
-	Arguments   []string
-	FullCommand string
+	Executor           interface{}
+	Arguments          []string
+	Salt, Timestamp    int64
+	ArgumentSignatures []packet.Argument
+	FullCommand        string
 }
 
 func (ctx *CommandContext) Reply(content string) {

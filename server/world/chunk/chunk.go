@@ -92,7 +92,6 @@ func (c *Chunk) Block(x, y, z int64) block.Block {
 	relx, rely, relz := x&0x0f, y&0x0f, z&0x0f
 
 	sec := c.sections[y1]
-	fmt.Printf("y sec: %d, y chunk: %d, %d %d %d\n", y1, y1-4, relx, rely, relz)
 	fmt.Println(sec.getBlockAt(int(relx), int(rely), int(relz)).EncodedName())
 	return nil
 }

@@ -16,7 +16,6 @@ func getServer(executor interface{}) *server.Server {
 
 var Commands = &commands.Graph{
 	Commands: []*commands.Command{
-		test_cmd,
 		reload_cmd,
 		gamemode_cmd,
 		ram_cmd,
@@ -32,5 +31,6 @@ var Commands = &commands.Graph{
 		seed_cmd,
 		tp_cmd,
 		stop_cmd,
+		msg_cmd,
 	},
 }

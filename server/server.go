@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/aimjel/minecraft/protocol/types"
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/google/uuid"
 
@@ -78,7 +79,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	plyr := player.New(data)
 	cntrl := &Session{
-		player:   plyr,
+		Player:   plyr,
 		conn:     conn,
 		Server:   srv,
 		entityID: idCounter.Add(1),
@@ -100,11 +101,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	})
 
 	srv.addPlayer(cntrl)
-	if err := cntrl.Login(plyr.Dimension()); err != nil {
-		//TODO log error
-		conn.Close(err)
-		srv.Logger.Error("Failed to join player to dimension %s", err)
-	}
+	cntrl.Login(plyr.Dimension())
 
 	cntrl.InitializeInventory()
 
@@ -124,32 +121,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 }
 
 func (srv *Server) addPlayer(p *Session) {
-	players := make([]types.PlayerInfo, 0, len(srv.Players)+1)
-	srv.mu.Lock()
-	for _, pl := range srv.Players {
-		players = append(players, types.PlayerInfo{
-			UUID:          pl.conn.UUID(),
-			Name:          pl.conn.Name(),
-			Properties:    pl.conn.Properties(),
-			Listed:        true,
-			ChatSessionID: pl.sessionID,
-			ExpiresAt:     int64(p.expires),
-			PublicKey:     p.publicKey,
-			KeySignature:  p.keySignature,
-		})
-	}
-	srv.mu.Unlock()
-
-	//updates the new session's player list
-	p.SendPacket(&packet.PlayerInfoUpdate{
-		Actions: 0x01 | 0x02 | 0x08,
-		Players: players,
-	})
-
 	srv.mu.Lock()
 	srv.Players[p.UUID] = p
 	srv.mu.Unlock()
-
 	newPlayer := types.PlayerInfo{
 		UUID:       p.conn.UUID(),
 		Name:       p.conn.Name(),
@@ -158,13 +132,31 @@ func (srv *Server) addPlayer(p *Session) {
 	}
 
 	srv.mu.RLock()
-	for _, sesh := range srv.Players {
-		sesh.SendPacket(&packet.PlayerInfoUpdate{
+
+	players := make([]types.PlayerInfo, 0, len(srv.Players))
+	for _, pl := range srv.Players {
+		players = append(players, types.PlayerInfo{
+			UUID:          pl.conn.UUID(),
+			Name:          pl.conn.Name(),
+			Properties:    pl.conn.Properties(),
+			Listed:        true,
+			PublicKey:     pl.publicKey,
+			KeySignature:  pl.keySignature,
+			ChatSessionID: pl.sessionID,
+			ExpiresAt:     int64(pl.expires),
+		})
+		pl.SendPacket(&packet.PlayerInfoUpdate{
 			Actions: 0x01 | 0x08,
 			Players: []types.PlayerInfo{newPlayer},
 		})
 	}
 	srv.mu.RUnlock()
+
+	//updates the new session's player list
+	p.SendPacket(&packet.PlayerInfoUpdate{
+		Actions: 0x01 | 0x02 | 0x08,
+		Players: players,
+	})
 
 	//gui.AddPlayer(pl.session.Info().Name, pl.UUID)
 
@@ -199,7 +191,7 @@ func (srv *Server) Reload() error {
 			continue
 		}
 
-		p.player.SetOperator(srv.IsOperator(p.conn.UUID()))
+		p.Player.SetOperator(srv.IsOperator(p.conn.UUID()))
 
 		p.SendCommands(srv.commandGraph)
 	}
@@ -255,6 +247,8 @@ func (srv *Server) FindPlayerByID(id int32) *Session {
 }
 
 func (srv *Server) Close() {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
 	srv.Logger.Info("Closing server...")
 
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
@@ -267,8 +261,14 @@ func (srv *Server) Close() {
 
 	for _, p := range srv.Players {
 		p.Disconnect(srv.Config.Messages.ServerClosed)
-		p.player.Save()
+		p.Player.Save()
 	}
+	srv.Logger.Info("Saving world...")
+	srv.World.Save()
+
+	f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
+	_ = toml.NewEncoder(f).Encode(srv.Config)
+	os.Exit(0)
 }
 
 func (srv *Server) loadFiles() {

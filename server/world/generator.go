@@ -3,9 +3,8 @@ package world
 import (
 	"bytes"
 	"compress/gzip"
-	"math"
-	"math/rand"
 	"os"
+	"time"
 
 	_ "embed"
 
@@ -35,7 +34,7 @@ func GenerateWorldData(hardcore int8) worldData {
 			BorderWarningBlocks: 5,
 			WorldGenSettings: WorldGenSettings{
 				BonusChest:       0,
-				Seed:             int64(rand.Float64() * math.MaxFloat64),
+				Seed:             RandomSeed(),
 				GenerateFeatures: 1,
 				Dimensions: Dimensions{
 					End: DimensionData{
@@ -159,6 +158,8 @@ func GenerateWorldData(hardcore int8) worldData {
 			DifficultyLocked:   0,
 			BorderSizeLerpTime: 0,
 			VersionNumber:      19133,
+			DayTime:            1000,
+			Time:               0,
 		},
 	}
 }
@@ -190,11 +191,19 @@ func CreateWorld(hardcore bool) {
 }
 
 func (w *World) Save() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.nbt.Data.LastPlayed = time.Now().UnixMilli()
+
+	f, _ := os.Create("world/level.dat")
+	writer := gzip.NewWriter(f)
 	buf := bytes.NewBuffer(nil)
-	writer := gzip.NewWriter(buf)
-	enc := nbt.NewEncoder(writer)
+	enc := nbt.NewEncoder(buf)
 	enc.Encode(w.nbt)
-	os.WriteFile("world/level.dat", buf.Bytes(), 0755)
+	writer.Write(buf.Bytes())
+
+	writer.Close()
+	f.Close()
 }
 
 type Generator interface {

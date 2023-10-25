@@ -26,8 +26,8 @@ var tp_cmd = &commands.Command{
 					return
 				} else {
 					player := srv.FindPlayer(ctx.Arguments[0])
-					x, y, z := player.Position()
-					yaw, pitch := exe.Rotation()
+					x, y, z := player.Player.Position()
+					yaw, pitch := exe.Player.Rotation()
 					exe.Teleport(x, y, z, yaw, pitch)
 					ctx.Reply(fmt.Sprintf("Teleported %s to %s", exe.Name(), player.Name()))
 				}
@@ -37,8 +37,8 @@ var tp_cmd = &commands.Command{
 				// Teleport player to player
 				player1 := srv.FindPlayer(ctx.Arguments[0])
 				player2 := srv.FindPlayer(ctx.Arguments[1])
-				x, y, z := player2.Position()
-				yaw, pitch := player1.Rotation()
+				x, y, z := player2.Player.Position()
+				yaw, pitch := player1.Player.Rotation()
 				player1.Teleport(x, y, z, yaw, pitch)
 
 				ctx.Reply(fmt.Sprintf("Teleported %s to %s", player1.Name(), player2.Name()))
@@ -64,7 +64,7 @@ var tp_cmd = &commands.Command{
 						ctx.Error("Invalid x position")
 						return
 					}
-					yaw, pitch := exe.Rotation()
+					yaw, pitch := exe.Player.Rotation()
 
 					exe.Teleport(x, y, z, yaw, pitch)
 				}
@@ -89,7 +89,7 @@ var tp_cmd = &commands.Command{
 					return
 				}
 
-				yaw, pitch := player.Rotation()
+				yaw, pitch := player.Player.Rotation()
 				player.Teleport(x, y, z, yaw, pitch)
 
 				ctx.Reply(fmt.Sprintf("Teleported %s", player.Name()))

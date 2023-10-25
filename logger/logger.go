@@ -29,13 +29,14 @@ type Logger struct {
 }
 
 func getDateString() string {
-	return time.Now().Format("15:04:05")
+	return gray(time.Now().Format("15:04:05"))
 }
 
-var blue = color.New(color.FgBlue).Add(color.Bold).SprintFunc()
-var cyan = color.New(color.FgCyan).Add(color.Bold).SprintFunc()
-var red = color.New(color.FgRed).Add(color.Bold).SprintFunc()
-var yellow = color.New(color.FgYellow).Add(color.Bold).SprintFunc()
+var gray = color.New(color.FgHiBlack, color.Bold).SprintFunc()
+var blue = color.New(color.FgBlue, color.Bold).SprintFunc()
+var cyan = color.New(color.FgCyan, color.Bold).SprintFunc()
+var red = color.New(color.FgRed, color.Bold).SprintFunc()
+var yellow = color.New(color.FgYellow, color.Bold).SprintFunc()
 
 var colors = map[string]color.Attribute{
 	"black":        color.FgBlack,
@@ -106,7 +107,7 @@ func (logger *Logger) Info(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("[%s %s]: %s\n", time, blue("INFO"), str)
+	fmt.Printf("%s %s: %s\n", time, blue("INFO "), str)
 }
 
 func (logger *Logger) Debug(format string, a ...interface{}) {
@@ -121,7 +122,7 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("[%s %s]: %s\n", time, cyan("DEBUG"), str)
+	fmt.Printf("%s %s: %s\n", time, cyan("DEBUG"), str)
 }
 
 func (logger *Logger) Error(format string, a ...interface{}) {
@@ -133,7 +134,7 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Fprintf(os.Stderr, "[%s %s]: %s\n", time, red("ERROR"), str)
+	fmt.Fprintf(os.Stderr, "%s %s: %s\n", time, red("ERROR"), str)
 }
 
 func (logger *Logger) Warn(format string, a ...interface{}) {
@@ -145,7 +146,7 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("[%s %s]: %s\n", time, yellow("WARN"), str)
+	fmt.Printf("%s %s: %s\n", time, yellow("WARN "), str)
 }
 
 func (logger *Logger) EnableChannel() {
@@ -156,6 +157,8 @@ func (logger *Logger) EnableChannel() {
 }
 
 func (logger *Logger) send(message Message) {
+	logger.mu.Lock()
+	defer logger.mu.Unlock()
 	if logger.chane {
 		logger.c <- message
 	} else {

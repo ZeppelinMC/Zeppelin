@@ -5,7 +5,6 @@ import (
 	"math"
 	"math/rand"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -44,7 +43,7 @@ var tags = &packet.UpdateTags{
 
 type Session struct {
 	mu     sync.RWMutex
-	player *player.Player
+	Player *player.Player
 	conn   *minecraft.Conn
 	Server *Server
 
@@ -66,9 +65,6 @@ type Session struct {
 		AllowServerListings  bool
 	}
 
-	//playReady means the player is ready to receive packets regarding other players
-	playReady bool
-
 	sessionID    [16]byte
 	publicKey    []byte
 	keySignature []byte
@@ -76,7 +72,6 @@ type Session struct {
 }
 
 func (p *Session) HandlePackets() error {
-	p.playReady = true
 	ticker := time.NewTicker(25 * time.Second)
 	for {
 		select {
@@ -96,13 +91,13 @@ func (p *Session) HandlePackets() error {
 		case *packet.ChatMessageServer:
 			handlers.ChatMessagePacket(p, pk)
 		case *packet.ChatCommandServer:
-			handlers.ChatCommandPacket(p, p.Server.commandGraph, pk.Command)
+			handlers.ChatCommandPacket(p, p.Server.commandGraph, pk.Command, pk.Timestamp, pk.Salt, pk.ArgumentSignatures)
 		case *packet.ClientSettings:
 			handlers.ClientSettings(p, pk)
 		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation:
-			handlers.PlayerMovement(p, p.player, pk)
+			handlers.PlayerMovement(p, p.Player, pk)
 		case *packet.PlayerActionServer:
-			handlers.PlayerAction(p, p.player, pk)
+			handlers.PlayerAction(p, p.Player, pk)
 		case *packet.InteractServer:
 			handlers.Interact(p, pk)
 		case *packet.SwingArmServer:
@@ -110,17 +105,17 @@ func (p *Session) HandlePackets() error {
 		case *packet.CommandSuggestionsRequest:
 			handlers.CommandSuggestionsRequest(pk.TransactionId, pk.Text, p.Server.commandGraph, p)
 		case *packet.ClientCommandServer:
-			handlers.ClientCommand(p, p.player, pk.ActionID)
+			handlers.ClientCommand(p, p.Player, pk.ActionID)
 		case *packet.PlayerAbilitiesServer:
-			handlers.PlayerAbilities(p.player, pk.Flags)
+			handlers.PlayerAbilities(p.Player, pk.Flags)
 		case *packet.PlayerSessionServer:
 			handlers.PlayerSession(p, pk.SessionID, pk.PublicKey, pk.KeySignature, pk.ExpiresAt)
 		case *packet.SetHeldItemServer:
-			handlers.SetHeldItem(p.player, pk.Slot)
+			handlers.SetHeldItem(p.Player, pk.Slot)
 		case *packet.SetCreativeModeSlot:
-			handlers.SetCreativeModeSlot(p, p.player, int8(inventory.NetworkToData(int(pk.Slot))), pk.ClickedItem)
+			handlers.SetCreativeModeSlot(p, p.Player, int8(inventory.NetworkToData(int(pk.Slot))), pk.ClickedItem)
 		case *packet.TeleportToEntityServer:
-			handlers.TeleportToEntity(p, p.player, pk.Player)
+			handlers.TeleportToEntity(p, p.Player, pk.Player)
 		case *packet.MessageAcknowledgment:
 			fmt.Println(pk.MessageCount)
 		}
@@ -148,15 +143,15 @@ func (p *Session) SetClientSettings(pk *packet.ClientSettings) {
 
 func (p *Session) Respawn(dim string) {
 	d := p.Server.GetDimension(dim)
-	p.player.SetDead(false)
+	p.Player.SetDead(false)
 	p.SendPacket(&packet.Respawn{
-		GameMode:         p.player.GameMode(),
+		GameMode:         p.Player.GameMode(),
 		PreviousGameMode: -1,
 		DimensionType:    d.Type(),
 		DimensionName:    d.Type(),
 		HashedSeed:       d.Seed(),
 	})
-	p.player.SetDimension(d.Type())
+	p.Player.SetDimension(d.Type())
 
 	var x1, y1, z1 int32
 	var a float32
@@ -165,13 +160,13 @@ func (p *Session) Respawn(dim string) {
 	case "minecraft:overworld":
 		x1, y1, z1, a = p.Server.World.Spawn()
 	case "minecraft:the_nether":
-		x, y, z := p.Position()
+		x, y, z := p.Player.Position()
 		x1, y1, z1 = int32(x)/8, int32(y)/8, int32(z)/8
 	}
 
 	clear(p.spawnedEntities)
 
-	yaw, pitch := p.player.Rotation()
+	yaw, pitch := p.Player.Rotation()
 
 	if b, _ := world.GameRule(p.Server.World.Gamerules()["keepInventory"]).Bool(); b {
 		p.InitializeInventory()
@@ -180,7 +175,7 @@ func (p *Session) Respawn(dim string) {
 	chunkX, chunkZ := math.Floor(float64(x1)/16), math.Floor(float64(z1)/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
-	p.SendSpawnChunks(d)
+	p.SendChunks(d)
 
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
 
@@ -190,12 +185,12 @@ func (p *Session) Respawn(dim string) {
 	})
 }
 
-func (p *Session) Login(dim string) error {
+func (p *Session) Login(dim string) {
 	d := p.Server.GetDimension(dim)
-	if err := p.SendPacket(&packet.JoinGame{
+	p.SendPacket(&packet.JoinGame{
 		EntityID:           p.entityID,
-		IsHardcore:         p.player.IsHardcore(),
-		GameMode:           p.player.GameMode(),
+		IsHardcore:         p.Player.IsHardcore(),
+		GameMode:           p.Player.GameMode(),
 		PreviousGameMode:   -1,
 		DimensionNames:     []string{"minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"},
 		DimensionType:      d.Type(),
@@ -204,24 +199,22 @@ func (p *Session) Login(dim string) error {
 		MaxPlayers:         0,
 		ViewDistance:       int32(p.clientInfo.ViewDistance),
 		SimulationDistance: int32(p.clientInfo.ViewDistance), //todo fix this
-	}); err != nil {
-		return err
-	}
-	p.player.SetDimension(d.Type())
+	})
+	p.Player.SetDimension(d.Type())
 	p.SendPacket(&packet.PluginMessage{
 		Channel: "minecraft:brand",
 		Data:    []byte("Dynamite"),
 	})
 
-	x1, y1, z1 := p.player.Position()
-	yaw, pitch := p.player.Rotation()
+	x1, y1, z1 := p.Player.Position()
+	yaw, pitch := p.Player.Rotation()
 
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 	p.Teleport(x1, y1, z1, yaw, pitch)
-	p.SendSpawnChunks(d)
+	p.SendChunks(d)
 
-	abs := p.player.SavedAbilities()
+	abs := p.Player.SavedAbilities()
 	abps := &packet.PlayerAbilities{FlyingSpeed: abs.FlySpeed, FieldOfViewModifier: 0.1}
 	if abs.Flying != 0 {
 		abps.Flags |= 0x06
@@ -231,7 +224,7 @@ func (p *Session) Login(dim string) error {
 	}
 	p.SendPacket(tags)
 
-	if p.player.Operator() {
+	if p.Player.Operator() {
 		p.SendPacket(&packet.EntityEvent{
 			EntityID: p.entityID,
 			Status:   28,
@@ -242,20 +235,19 @@ func (p *Session) Login(dim string) error {
 
 	x, y, z, a := p.Server.World.Spawn()
 
-	v := p.SendPacket(&packet.SetDefaultSpawnPosition{
+	p.SendPacket(&packet.SetDefaultSpawnPosition{
 		Location: ((uint64(x) & 0x3FFFFFF) << 38) | ((uint64(z) & 0x3FFFFFF) << 12) | (uint64(y) & 0xFFF),
 		Angle:    a,
 	})
 
 	if p.Server.Config.ResourcePack.Enable {
-		return p.SendPacket(&packet.ResourcePack{
+		p.SendPacket(&packet.ResourcePack{
 			URL:    p.Server.Config.ResourcePack.URL,
 			Hash:   p.Server.Config.ResourcePack.Hash,
 			Forced: p.Server.Config.ResourcePack.Force,
 			Prompt: p.Server.Config.Messages.ResourcePackPrompt,
 		})
 	}
-	return v
 }
 
 func (p *Session) SystemChatMessage(s string) error {
@@ -263,8 +255,8 @@ func (p *Session) SystemChatMessage(s string) error {
 }
 
 func (p *Session) SetHealth(health float32) {
-	p.player.SetHealth(health)
-	food, saturation := p.player.FoodLevel(), p.player.FoodSaturationLevel()
+	p.Player.SetHealth(health)
+	food, saturation := p.Player.FoodLevel(), p.Player.FoodSaturationLevel()
 	p.SendPacket(&packet.SetHealth{
 		Health:         health,
 		Food:           food,
@@ -276,7 +268,7 @@ func (p *Session) SetHealth(health float32) {
 }
 
 func (p *Session) Kill(message string) {
-	p.player.SetDead(true)
+	p.Player.SetDead(true)
 	p.BroadcastHealth()
 	if f, _ := world.GameRule(p.Server.World.Gamerules()["doImmediateRespawn"]).Bool(); !f {
 		p.SendPacket(&packet.GameEvent{
@@ -285,7 +277,7 @@ func (p *Session) Kill(message string) {
 		})
 	}
 
-	p.Server.mu.Lock()
+	p.Server.mu.RLock()
 	for _, pl := range p.Server.Players {
 		if !p.IsSpawned(p.entityID) {
 			continue
@@ -299,7 +291,7 @@ func (p *Session) Kill(message string) {
 			Status:   3,
 		})
 	}
-	p.Server.mu.Unlock()
+	p.Server.mu.RUnlock()
 
 	p.SendPacket(&packet.DamageEvent{
 		EntityID:     p.entityID,
@@ -313,6 +305,7 @@ func (p *Session) Kill(message string) {
 }
 
 func (p *Session) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
+	fmt.Println("resetting session, expires in", (expires-time.Now().UnixMilli())/1000/1000)
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.sessionID = id
@@ -334,36 +327,20 @@ func (p *Session) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
 	})
 }
 
-func (p *Session) Position() (x, y, z float64) {
-	return p.player.Position()
-}
-
-func (p *Session) Rotation() (yaw, pitch float32) {
-	return p.player.Rotation()
-}
-
-func (p *Session) OnGround() bool {
-	return p.player.OnGround()
-}
-
-func (p *Session) GameMode() byte {
-	return p.player.GameMode()
-}
-
 func (p *Session) SetGameMode(gm byte) {
-	p.player.SetGameMode(gm)
+	p.Player.SetGameMode(gm)
 	p.SendPacket(&packet.GameEvent{
 		Event: 3,
 		Value: float32(gm),
 	})
 
-	p.player.SetGameMode(byte(int32(gm)))
+	p.Player.SetGameMode(byte(int32(gm)))
 	p.BroadcastGamemode()
 }
 
 func (p *Session) Push(x, y, z float64) {
-	yaw, pitch := p.player.Rotation()
-	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
+	yaw, pitch := p.Player.Rotation()
+	p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
 	p.SendPacket(&packet.PlayerPositionLook{
 		X:          x,
 		Y:          y,
@@ -372,11 +349,11 @@ func (p *Session) Push(x, y, z float64) {
 		Pitch:      pitch,
 		TeleportID: idCounter.Add(1),
 	})
-	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
+	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.Player.OnGround(), true)
 }
 
 func (p *Session) Teleport(x, y, z float64, yaw, pitch float32) {
-	p.player.SetPosition(x, y, z, yaw, pitch, p.player.OnGround())
+	p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
 	p.SendPacket(&packet.PlayerPositionLook{
 		X:          x,
 		Y:          y,
@@ -385,7 +362,7 @@ func (p *Session) Teleport(x, y, z float64, yaw, pitch float32) {
 		Pitch:      pitch,
 		TeleportID: idCounter.Add(1),
 	})
-	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.player.OnGround(), true)
+	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.Player.OnGround(), true)
 }
 
 // for now ig
@@ -418,84 +395,27 @@ func (p *Session) Disconnect(reason string) {
 	p.conn.Close(nil)
 }
 
-func distance2i(x, z int32) float64 {
-	return math.Sqrt(float64(x*x) + float64(z*z))
+func (p *Session) IsChunkLoaded(x, z int32) bool {
+	_, ok := p.loadedChunks[[2]int32{x, z}]
+	return ok
 }
 
 func (p *Session) SendChunks(dimension *world.Dimension) {
-	max := int32(p.clientInfo.ViewDistance)
-	px, _, pz := p.Position()
-	cx, cz := int32(px)/16, int32(pz)/16
-
-	if p.loadedChunks == nil {
-		p.loadedChunks = make(map[[2]int32]struct{})
-	}
-
-	for x := -(cx + max); x <= cx+max; x++ {
-		for z := -(cz + max); x <= cz+max; x++ {
-			if _, ok := p.loadedChunks[[2]int32{x, z}]; ok {
-				continue
-			}
-			c, err := dimension.Chunk(x, z)
-			if err != nil {
-				continue
-			}
-			p.loadedChunks[[2]int32{x, z}] = struct{}{}
-			p.SendPacket(c.Data())
-
-			for _, en := range c.Entities {
-				u, _ := world.IntUUIDToByteUUID(en.UUID)
-
-				var e *Entity
-
-				if f := p.Server.FindEntityByUUID(u); f != nil {
-					if d, ok := f.(*Entity); ok {
-						e = d
-					}
-				} else {
-					e = p.Server.NewEntity(en)
-				}
-
-				t, ok := registry.GetEntity(e.data.Id)
-				if !ok {
-					continue
-				}
-
-				p.SendPacket(&packet.SpawnEntity{
-					EntityID:  e.ID,
-					UUID:      u,
-					X:         e.data.Pos[0],
-					Y:         e.data.Pos[1],
-					Z:         e.data.Pos[2],
-					Pitch:     degreesToAngle(e.data.Rotation[1]),
-					Yaw:       degreesToAngle(e.data.Rotation[0]),
-					VelocityX: int16(e.data.Motion[0]),
-					VelocityY: int16(e.data.Motion[1]),
-					VelocityZ: int16(e.data.Motion[2]),
-					Type:      t.ProtocolID,
-				})
-				p.mu.Lock()
-				p.spawnedEntities = append(p.spawnedEntities, e.ID)
-				p.mu.Unlock()
-			}
-		}
-	}
-}
-
-func (p *Session) SendSpawnChunks(dimension *world.Dimension) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	max := float64(p.Server.Config.ViewDistance)
 	if p.loadedChunks == nil {
 		p.loadedChunks = make(map[[2]int32]struct{})
 	}
 
-	x1, _, z1 := p.player.Position()
+	x1, _, z1 := p.Player.Position()
 
 	chunkX := math.Floor(x1 / 16)
 	chunkZ := math.Floor(z1 / 16)
 
 	for x := chunkX - max; x <= chunkX+max; x++ {
 		for z := chunkZ - max; z <= chunkZ+max; z++ {
-			if _, ok := p.loadedChunks[[2]int32{int32(x), int32(z)}]; ok {
+			if p.IsChunkLoaded(int32(x), int32(z)) {
 				continue
 			}
 			c, err := dimension.Chunk(int32(x), int32(z))
@@ -536,56 +456,32 @@ func (p *Session) SendSpawnChunks(dimension *world.Dimension) {
 					VelocityZ: int16(e.data.Motion[2]),
 					Type:      t.ProtocolID,
 				})
-				p.mu.Lock()
 				p.spawnedEntities = append(p.spawnedEntities, e.ID)
-				p.mu.Unlock()
 			}
 		}
 	}
 }
 
-func (p *Session) Chat(pk *packet.ChatMessageServer) {
-	if !p.Server.Config.Chat.Enable {
-		return
-	}
-	if !p.HasPermissions([]string{"server.chat"}) {
-		return
-	}
-
-	prefix, suffix := p.GetPrefixSuffix()
-
-	if !p.Server.Config.Chat.Secure {
-		msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
-			"player":        p.Name(),
-			"player_prefix": prefix,
-			"player_suffix": suffix,
-			"message":       pk.Message,
-		})
-
-		if !p.Server.Config.Chat.Enable || !p.HasPermissions([]string{"server.chat.colors"}) {
-			// strip colors
-			sp := strings.Split(msg, "")
-			for i, c := range sp {
-				if c == "&" {
-					if sp[i+1] != " " {
-						sp = slices.Delete(sp, i, i+2)
-					}
-				}
-			}
-			msg = strings.Join(sp, "")
+func (p *Session) UnloadChunks() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	x, z := p.ChunkPosition()
+	for c := range p.loadedChunks {
+		if d := math.Sqrt(float64((x-c[0])*(x-c[0])) + float64((z-c[1])*(z-c[1]))); d > float64(p.clientInfo.ViewDistance) {
+			fmt.Println("dist", d, "vd", p.clientInfo.ViewDistance)
+			fmt.Println("unloading chunk", x, z)
+			p.SendPacket(&packet.UnloadChunk{
+				ChunkX: x,
+				ChunkZ: z,
+			})
+			delete(p.loadedChunks, c)
 		}
-
-		p.Server.GlobalMessage(msg, p)
-	} else {
-		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{
-			Sender:           p.conn.UUID(),
-			MessageSignature: pk.Signature,
-			Message:          pk.Message,
-			Timestamp:        pk.Timestamp,
-			Salt:             pk.Salt,
-			NetworkName:      prefix + p.Name() + suffix,
-		})
 	}
+}
+
+func (p *Session) ChunkPosition() (int32, int32) {
+	x, _, z := p.Player.Position()
+	return int32(x) / 16, int32(z) / 16
 }
 
 func (p *Session) GetPrefixSuffix() (prefix string, suffix string) {
@@ -609,8 +505,8 @@ func (p *Session) HandleCenterChunk(x1, z1, x2, z2 float64) {
 }
 
 func (p *Session) IsSpawned(entityId int32) bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	for _, e := range p.spawnedEntities {
 		if e == entityId {
 			return true
@@ -623,8 +519,8 @@ func (p *Session) SpawnPlayer(pl *Session) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	entityId := pl.entityID
-	x, y, z := pl.player.Position()
-	ya, pi := pl.player.Rotation()
+	x, y, z := pl.Player.Position()
+	ya, pi := pl.Player.Rotation()
 	yaw, pitch := degreesToAngle(ya), degreesToAngle(pi)
 
 	p.SendPacket(&packet.SpawnPlayer{
@@ -670,9 +566,9 @@ func (p *Session) InitializeInventory() {
 	p.SendPacket(&packet.SetContainerContent{
 		WindowID: 0,
 		StateID:  1,
-		Slots:    p.player.Inventory().Packet(),
+		Slots:    p.Player.Inventory().Packet(),
 	})
-	p.SendPacket(&packet.SetHeldItem{Slot: int8(p.player.HeldItem())})
+	p.SendPacket(&packet.SetHeldItem{Slot: int8(p.Player.HeldItem())})
 }
 
 func (p *Session) ClearItem(slot int8) {
@@ -681,7 +577,7 @@ func (p *Session) ClearItem(slot int8) {
 		StateID:  1,
 		Slot:     int16(inventory.DataToNetwork(int(slot))),
 	})
-	p.player.Inventory().DeleteSlot(slot)
+	p.Player.Inventory().DeleteSlot(slot)
 }
 
 func (p *Session) SetSlot(slot int8, data packet.Slot) {
@@ -691,7 +587,7 @@ func (p *Session) SetSlot(slot int8, data packet.Slot) {
 		Slot:     int16(inventory.DataToNetwork(int(slot))),
 		Data:     data,
 	})
-	p.player.Inventory().SetSlot(slot, world.Slot{
+	p.Player.Inventory().SetSlot(slot, world.Slot{
 		Count: data.Count,
 		Slot:  int8(slot),
 		Id:    registry.FindItem(data.Id),
@@ -699,8 +595,8 @@ func (p *Session) SetSlot(slot int8, data packet.Slot) {
 }
 
 func (p *Session) DropSlot() {
-	item := p.player.PreviousSelectedSlot()
-	x, y, z := p.Position()
+	item := p.Player.PreviousSelectedSlot()
+	x, y, z := p.Player.Position()
 
 	id := idCounter.Add(1)
 	uuid := uuid.New()
@@ -753,8 +649,8 @@ func (p *Session) TeleportToEntity(uuid [16]byte) {
 		return
 	}
 	if pl, ok := e.(*Session); ok {
-		x, y, z := pl.Position()
-		yaw, pitch := pl.Rotation()
+		x, y, z := pl.Player.Position()
+		yaw, pitch := pl.Player.Rotation()
 		p.Teleport(x, y, z, yaw, pitch)
 	} else {
 		e := e.(*Entity)

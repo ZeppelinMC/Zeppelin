@@ -44,6 +44,10 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 	if cfg.Chat.Secure && cfg.Chat.Format != "" {
 		logger.Warn("Secure chat overrides the chat format")
 	}
+	if cfg.TPS < 20 {
+		logger.Warn("TPS must be at least 20")
+		cfg.TPS = 20
+	}
 	//web.SetMaxPlayers(cfg.MaxPlayers)
 
 	ln, err := lnCfg.Listen(address)
@@ -71,6 +75,8 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 	logger.Info("Loading player info")
 	srv.loadFiles()
 
+	go srv.tickLoop()
+
 	return srv, nil
 }
 
@@ -85,6 +91,7 @@ var DefaultConfig = Config{
 	Gamemode:             "survival",
 	Hardcore:             false,
 	MaxPlayers:           20,
+	TPS:                  20,
 	Messages: Messages{
 		NotInWhitelist:          "You are not whitelisted.",
 		Banned:                  "You are banned from this server.",
@@ -176,6 +183,7 @@ type Config struct {
 	Gamemode             string       `toml:"gamemode"`
 	Hardcore             bool         `toml:"hardcore"`
 	MaxPlayers           int          `toml:"max_players"`
+	TPS                  int64        `toml:"tps"`
 	Online               bool         `toml:"online_mode"`
 	CompressionThreshold int          `toml:"compression_threshold"`
 	Tablist              Tablist      `toml:"tablist"`

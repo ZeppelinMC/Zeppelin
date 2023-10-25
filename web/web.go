@@ -47,6 +47,9 @@ func (h *handler) Render(w http.ResponseWriter, name string, vars map[string]str
 }
 
 func (h *handler) HandleConn(c *conn) {
+	if c.conn == nil {
+		return
+	}
 	var msg map[string]interface{}
 	for {
 		if c.conn.ReadJSON(&msg) != nil {

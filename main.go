@@ -51,10 +51,6 @@ func start(cfg *server.Config) {
 			stopProfile()
 		}
 		srv.Close()
-
-		f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
-		_ = toml.NewEncoder(f).Encode(cfg)
-		os.Exit(0)
 	}()
 
 	go srv.ScanConsole()

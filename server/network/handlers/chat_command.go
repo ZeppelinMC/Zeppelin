@@ -31,7 +31,7 @@ type Controller interface {
 	TeleportToEntity(uuid [16]byte)
 }
 
-func ChatCommandPacket(controller Controller, graph *commands.Graph, content string) {
+func ChatCommandPacket(controller Controller, graph *commands.Graph, content string, timestamp, salt int64, sigs []packet.Argument) {
 	args := strings.Split(content, " ")
 	cmd := args[0]
 	var command *commands.Command
@@ -54,9 +54,12 @@ func ChatCommandPacket(controller Controller, graph *commands.Graph, content str
 		return
 	}
 	ctx := commands.CommandContext{
-		Arguments:   args[1:],
-		Executor:    controller,
-		FullCommand: content,
+		Arguments:          args[1:],
+		Executor:           controller,
+		FullCommand:        content,
+		ArgumentSignatures: sigs,
+		Salt:               salt,
+		Timestamp:          timestamp,
 	}
 	command.Execute(ctx)
 }

@@ -21,8 +21,8 @@ func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 }
 
 func (srv *Server) GlobalMessage(message string, sender *Session) {
-	srv.mu.Lock()
-	defer srv.mu.Unlock()
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
 		if p.clientInfo.ChatMode == 2 {
 			continue
@@ -40,7 +40,7 @@ func (srv *Server) OperatorMessage(message string) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.Players {
-		if p.clientInfo.ChatMode == 2 || !p.player.Operator() {
+		if p.clientInfo.ChatMode == 2 || !p.Player.Operator() {
 			continue
 		}
 		p.SendPacket(&packet.SystemChatMessage{
@@ -52,8 +52,8 @@ func (srv *Server) OperatorMessage(message string) {
 }
 
 func (p *Session) BroadcastAnimation(animation uint8) {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 
 	for _, pl := range p.Server.Players {
 		if !pl.IsSpawned(p.entityID) {
@@ -68,9 +68,9 @@ func (p *Session) BroadcastAnimation(animation uint8) {
 }
 
 func (p *Session) BreakBlock(pos uint64) {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
-	p.Server.GetDimension(p.player.Dimension()).Block(world.ParsePosition(pos))
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
+	p.Server.GetDimension(p.Player.Dimension()).Block(world.ParsePosition(pos))
 	for _, pl := range p.Server.Players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
@@ -133,13 +133,13 @@ func direction(ya, pi float32) (x, y, z float64) {
 
 func (p *Session) Hit(entityId int32) {
 	e := p.Server.FindEntity(entityId)
-	x, y, z := p.Position()
+	x, y, z := p.Player.Position()
 	soundId := int32(519)
 	if pl, ok := e.(*Session); ok {
-		if pl.GameMode() == 1 {
+		if pl.Player.GameMode() == 1 {
 			return
 		}
-		health := pl.player.Health()
+		health := pl.Player.Health()
 		pl.SetHealth(health - 1)
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:        entityId,
@@ -158,8 +158,8 @@ func (p *Session) Hit(entityId int32) {
 		}
 	}
 
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.Players {
 		if !pl.IsSpawned(entityId) {
 			continue
@@ -177,7 +177,7 @@ func (p *Session) Hit(entityId int32) {
 			Category: 8,
 			SoundID:  soundId,
 			EntityID: entityId,
-			Seed:     p.Server.World.Seed(),
+			Seed:     world.RandomSeed(),
 			Volume:   1,
 			Pitch:    1,
 		})
@@ -186,8 +186,8 @@ func (p *Session) Hit(entityId int32) {
 }
 
 func (p *Session) Despawn() {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.Players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
@@ -198,20 +198,20 @@ func (p *Session) Despawn() {
 
 // InView Checks if p can see pl
 func (p *Session) InView(pl *Session) bool {
-	if !pl.playReady || p.player.Dimension() != pl.player.Dimension() {
+	if p.Player.Dimension() != pl.Player.Dimension() {
 		return false
 	}
 
-	x1, y1, z1 := p.Position()
-	x2, y2, z2 := pl.Position()
+	x1, y1, z1 := p.Player.Position()
+	x2, y2, z2 := pl.Player.Position()
 	distance := math.Sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))
 
 	return float64(p.clientInfo.ViewDistance)*16 > distance
 }
 
 func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32, ong bool, teleport bool) {
-	oldx, oldy, oldz := p.player.Position()
-	p.player.SetPosition(x1, y1, z1, ya, pi, ong)
+	oldx, oldy, oldz := p.Player.Position()
+	p.Player.SetPosition(x1, y1, z1, ya, pi, ong)
 	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
 	if distance > 100 && !teleport {
 		//p.Teleport(oldx, oldy, oldz, yaw, pitch)
@@ -275,8 +275,8 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 		}
 	}
 
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 
 	for _, pl := range p.Server.Players {
 		if p.UUID == pl.UUID {
@@ -300,21 +300,21 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 
 func (p *Session) BroadcastGamemode() {
 	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	for _, sesh := range p.Server.Players {
 		sesh.SendPacket(&packet.PlayerInfoUpdate{
 			Actions: 0x04,
 			Players: []types.PlayerInfo{{
 				UUID:     p.conn.UUID(),
-				GameMode: int32(p.GameMode()),
+				GameMode: int32(p.Player.GameMode()),
 			}},
 		})
 	}
-	p.Server.mu.RUnlock()
 }
 
 func (p *Session) BroadcastPose(pose int32) {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	pk := &PacketSetPlayerMetadata{
 		EntityID: p.entityID,
 		Pose:     &pose,
@@ -327,9 +327,9 @@ func (p *Session) BroadcastPose(pose int32) {
 }
 
 func (p *Session) BroadcastHealth() {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
-	h := p.player.Health()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
+	h := p.Player.Health()
 	for _, pl := range p.Server.Players {
 		if pl.IsSpawned(p.entityID) {
 			pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Health: &h})
@@ -339,8 +339,8 @@ func (p *Session) BroadcastHealth() {
 
 func (p *Session) SendEquipment(pl *Session) {
 	slots := make(map[int8]world.Slot)
-	inv := p.player.Inventory()
-	sel := p.player.HeldItem()
+	inv := p.Player.Inventory()
+	sel := p.Player.HeldItem()
 
 	for _, s := range inv.Data() {
 		switch s.Slot {
@@ -369,11 +369,11 @@ func (p *Session) SendEquipment(pl *Session) {
 }
 
 func (p *Session) BroadcastEquipment() {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 	slots := make(map[int8]world.Slot)
-	inv := p.player.Inventory()
-	sel := p.player.HeldItem()
+	inv := p.Player.Inventory()
+	sel := p.Player.HeldItem()
 
 	for _, s := range inv.Data() {
 		switch s.Slot {
@@ -407,8 +407,8 @@ func (p *Session) BroadcastEquipment() {
 }
 
 func (p *Session) BroadcastSprinting(val bool) {
-	p.Server.mu.Lock()
-	defer p.Server.mu.Unlock()
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
 
 	data := byte(0)
 	if val {
@@ -427,7 +427,7 @@ func (p *Session) BroadcastSprinting(val bool) {
 
 func (srv *Server) PlayerlistUpdate() {
 	players := make([]types.PlayerInfo, 0, len(srv.Players))
-	srv.mu.Lock()
+	srv.mu.RLock()
 	for _, p := range srv.Players {
 		players = append(players, types.PlayerInfo{
 			UUID:       p.conn.UUID(),
@@ -436,7 +436,7 @@ func (srv *Server) PlayerlistUpdate() {
 			Listed:     true,
 		})
 	}
-	srv.mu.Unlock()
+	srv.mu.RUnlock()
 	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
 		Actions: 0x01 | 0x08,
 		Players: players,
