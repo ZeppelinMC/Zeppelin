@@ -69,6 +69,7 @@ func (srv *Server) GetDimension(typ string) *world.Dimension {
 
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	if srv.ValidateConn(conn) {
+		conn.Close(nil)
 		return
 	}
 

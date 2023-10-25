@@ -181,7 +181,6 @@ func (p *Session) Hit(entityId int32) {
 			Volume:   1,
 			Pitch:    1,
 		})
-
 	}
 }
 
@@ -301,12 +300,13 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 func (p *Session) BroadcastGamemode() {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
+	gm := int32(p.Player.GameMode())
 	for _, sesh := range p.Server.players {
 		sesh.SendPacket(&packet.PlayerInfoUpdate{
 			Actions: 0x04,
 			Players: []types.PlayerInfo{{
 				UUID:     p.conn.UUID(),
-				GameMode: int32(p.Player.GameMode()),
+				GameMode: gm,
 			}},
 		})
 	}
@@ -369,8 +369,6 @@ func (p *Session) SendEquipment(pl *Session) {
 }
 
 func (p *Session) BroadcastEquipment() {
-	p.Server.mu.RLock()
-	defer p.Server.mu.RUnlock()
 	slots := make(map[int8]world.Slot)
 	inv := p.Player.Inventory()
 	sel := p.Player.HeldItem()
@@ -392,6 +390,9 @@ func (p *Session) BroadcastEquipment() {
 		}
 	}
 
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
+
 	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
@@ -407,9 +408,6 @@ func (p *Session) BroadcastEquipment() {
 }
 
 func (p *Session) BroadcastSprinting(val bool) {
-	p.Server.mu.RLock()
-	defer p.Server.mu.RUnlock()
-
 	data := byte(0)
 	if val {
 		data |= 0x08
@@ -417,30 +415,15 @@ func (p *Session) BroadcastSprinting(val bool) {
 
 	pk := &PacketSetPlayerMetadata{EntityID: p.entityID, Data: &data}
 
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
+
 	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
 		pl.SendPacket(pk)
 	}
-}
-
-func (srv *Server) PlayerlistUpdate() {
-	players := make([]types.PlayerInfo, 0, len(srv.players))
-	srv.mu.RLock()
-	for _, p := range srv.players {
-		players = append(players, types.PlayerInfo{
-			UUID:       p.conn.UUID(),
-			Name:       p.conn.Name(),
-			Properties: p.conn.Properties(),
-			Listed:     true,
-		})
-	}
-	srv.mu.RUnlock()
-	srv.GlobalBroadcast(&packet.PlayerInfoUpdate{
-		Actions: 0x01 | 0x08,
-		Players: players,
-	})
 }
 
 func (srv *Server) PlayerlistRemove(players ...[16]byte) {
