@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"github.com/dynamitemc/dynamite/server/commands"
 	"os"
 	"os/signal"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pelletier/go-toml/v2"
@@ -53,7 +56,7 @@ func start(cfg *server.Config) {
 		srv.Close()
 	}()
 
-	go srv.ScanConsole()
+	go scanConsole(srv)
 	err = srv.Start()
 	if err != nil {
 		log.Error("Failed to start server: %s", err)
@@ -91,4 +94,32 @@ func main() {
 		}
 	}
 	start(&cfg)
+}
+
+func scanConsole(srv *server.Server) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		txt := scanner.Text()
+		if txt == "" {
+			continue
+		}
+
+		content := strings.TrimSpace(txt)
+		args := strings.Split(content, " ")
+
+		command := srv.GetCommandGraph().FindCommand(args[0])
+		if command == nil {
+			srv.Logger.Print(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n&n%s&r&c&o<--[HERE]", args[0]))
+			continue
+		}
+		command.Execute(commands.CommandContext{
+			Arguments:   args[1:],
+			Executor:    &server.ConsoleExecutor{Server: srv},
+			FullCommand: content,
+		})
+	}
+
+	if err := scanner.Err(); err != nil {
+		srv.Logger.Error("%v scanning console", err)
+	}
 }
