@@ -30,7 +30,7 @@ type Server struct {
 	commandGraph *commands.Graph
 
 	// Players mapped by UUID
-	Players map[string]*Session
+	players map[string]*Session
 
 	WhitelistedPlayers,
 	Operators,
@@ -39,11 +39,11 @@ type Server struct {
 
 	listener *minecraft.Listener
 
-	Entities map[int32]*Entity
+	entities map[int32]*Entity
 
 	World *world.World
 
-	mu *sync.RWMutex
+	mu sync.RWMutex
 }
 
 func (srv *Server) Start() error {
@@ -114,7 +114,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 		//todo consider moving logic of removing player to a separate function
 		srv.mu.Lock()
-		delete(srv.Players, cntrl.UUID)
+		delete(srv.players, cntrl.UUID)
 		srv.mu.Unlock()
 		//gui.RemovePlayer(cntrl.UUID)
 	}
@@ -122,7 +122,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 func (srv *Server) addPlayer(p *Session) {
 	srv.mu.Lock()
-	srv.Players[p.UUID] = p
+	srv.players[p.UUID] = p
 	srv.mu.Unlock()
 	newPlayer := types.PlayerInfo{
 		UUID:       p.conn.UUID(),
@@ -133,8 +133,8 @@ func (srv *Server) addPlayer(p *Session) {
 
 	srv.mu.RLock()
 
-	players := make([]types.PlayerInfo, 0, len(srv.Players))
-	for _, pl := range srv.Players {
+	players := make([]types.PlayerInfo, 0, len(srv.players))
+	for _, pl := range srv.players {
 		players = append(players, types.PlayerInfo{
 			UUID:          pl.conn.UUID(),
 			Name:          pl.conn.Name(),
@@ -185,7 +185,7 @@ func (srv *Server) Reload() error {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.conn.UUID()) {
 			p.Disconnect(srv.Config.Messages.NotInWhitelist)
 			continue
@@ -204,19 +204,19 @@ func (srv *Server) FindEntity(id int32) interface{} {
 	} else {
 		srv.mu.RLock()
 		defer srv.mu.RUnlock()
-		return srv.Entities[id]
+		return srv.entities[id]
 	}
 }
 
 func (srv *Server) FindEntityByUUID(id [16]byte) interface{} {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		if p.conn.UUID() == id {
 			return p
 		}
 	}
-	for _, e := range srv.Entities {
+	for _, e := range srv.entities {
 		if e.UUID == id {
 			return e
 		}
@@ -224,10 +224,28 @@ func (srv *Server) FindEntityByUUID(id [16]byte) interface{} {
 	return nil
 }
 
+func (srv *Server) Player(uuid string) *Session {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	return srv.players[uuid]
+}
+
+func (srv *Server) PlayerCount() int {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	return len(srv.players)
+}
+
+func (srv *Server) Players() map[string]*Session {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	return srv.players
+}
+
 func (srv *Server) FindPlayer(username string) *Session {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		if strings.EqualFold(p.Name(), username) {
 			return p
 		}
@@ -238,7 +256,7 @@ func (srv *Server) FindPlayer(username string) *Session {
 func (srv *Server) FindPlayerByID(id int32) *Session {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		if p.entityID == id {
 			return p
 		}
@@ -259,7 +277,7 @@ func (srv *Server) Close() {
 
 	saveCache()
 
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		p.Disconnect(srv.Config.Messages.ServerClosed)
 		p.Player.Save()
 	}

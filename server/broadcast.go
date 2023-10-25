@@ -15,7 +15,7 @@ import (
 func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		p.SendPacket(pk)
 	}
 }
@@ -23,7 +23,7 @@ func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 func (srv *Server) GlobalMessage(message string, sender *Session) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		if p.clientInfo.ChatMode == 2 {
 			continue
 		} else if p.clientInfo.ChatMode == 1 && sender != nil {
@@ -39,7 +39,7 @@ func (srv *Server) GlobalMessage(message string, sender *Session) {
 func (srv *Server) OperatorMessage(message string) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		if p.clientInfo.ChatMode == 2 || !p.Player.Operator() {
 			continue
 		}
@@ -55,7 +55,7 @@ func (p *Session) BroadcastAnimation(animation uint8) {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
 
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
@@ -71,7 +71,7 @@ func (p *Session) BreakBlock(pos uint64) {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
 	p.Server.GetDimension(p.Player.Dimension()).Block(world.ParsePosition(pos))
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
@@ -160,7 +160,7 @@ func (p *Session) Hit(entityId int32) {
 
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(entityId) {
 			continue
 		}
@@ -188,7 +188,7 @@ func (p *Session) Hit(entityId int32) {
 func (p *Session) Despawn() {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
@@ -278,7 +278,7 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
 
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if p.UUID == pl.UUID {
 			continue
 		}
@@ -301,7 +301,7 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 func (p *Session) BroadcastGamemode() {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
-	for _, sesh := range p.Server.Players {
+	for _, sesh := range p.Server.players {
 		sesh.SendPacket(&packet.PlayerInfoUpdate{
 			Actions: 0x04,
 			Players: []types.PlayerInfo{{
@@ -319,7 +319,7 @@ func (p *Session) BroadcastPose(pose int32) {
 		EntityID: p.entityID,
 		Pose:     &pose,
 	}
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if pl.IsSpawned(p.entityID) {
 			pl.SendPacket(pk)
 		}
@@ -330,7 +330,7 @@ func (p *Session) BroadcastHealth() {
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
 	h := p.Player.Health()
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if pl.IsSpawned(p.entityID) {
 			pl.SendPacket(&PacketSetPlayerMetadata{EntityID: p.entityID, Health: &h})
 		}
@@ -392,7 +392,7 @@ func (p *Session) BroadcastEquipment() {
 		}
 	}
 
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
@@ -417,7 +417,7 @@ func (p *Session) BroadcastSprinting(val bool) {
 
 	pk := &PacketSetPlayerMetadata{EntityID: p.entityID, Data: &data}
 
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
@@ -426,9 +426,9 @@ func (p *Session) BroadcastSprinting(val bool) {
 }
 
 func (srv *Server) PlayerlistUpdate() {
-	players := make([]types.PlayerInfo, 0, len(srv.Players))
+	players := make([]types.PlayerInfo, 0, len(srv.players))
 	srv.mu.RLock()
-	for _, p := range srv.Players {
+	for _, p := range srv.players {
 		players = append(players, types.PlayerInfo{
 			UUID:       p.conn.UUID(),
 			Name:       p.conn.Name(),

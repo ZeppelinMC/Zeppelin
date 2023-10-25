@@ -13,10 +13,10 @@ var list_cmd = &commands.Command{
 		switch ex := ctx.Executor.(type) {
 
 		case *server.Session:
-			ctx.Reply(fmt.Sprintf("%v players online", len(ex.Server.Players)))
+			ctx.Reply(fmt.Sprintf("%v players online", ex.Server.PlayerCount()))
 
 		case *server.ConsoleExecutor:
-			ctx.Reply(fmt.Sprintf("%v players online", len(ex.Server.Players)))
+			ctx.Reply(fmt.Sprintf("%v players online", ex.Server.PlayerCount()))
 		}
 	},
 }

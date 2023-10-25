@@ -17,6 +17,6 @@ func (srv *Server) NewEntity(data chunk.Entity) *Entity {
 	uuid, _ := world.IntUUIDToByteUUID(data.UUID)
 	id := idCounter.Add(1)
 	e := &Entity{data, id, uuid}
-	srv.Entities[id] = e
+	srv.entities[id] = e
 	return e
 }

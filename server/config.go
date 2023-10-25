@@ -2,7 +2,6 @@ package server
 
 import (
 	"os"
-	"sync"
 
 	"github.com/pelletier/go-toml/v2"
 
@@ -66,9 +65,8 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		listener:     ln,
 		Logger:       logger,
 		World:        w,
-		mu:           &sync.RWMutex{},
-		Players:      make(map[string]*Session),
-		Entities:     make(map[int32]*Entity),
+		players:      make(map[string]*Session),
+		entities:     make(map[int32]*Entity),
 		commandGraph: commandGraph,
 	}
 

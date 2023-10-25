@@ -278,7 +278,7 @@ func (p *Session) Kill(message string) {
 	}
 
 	p.Server.mu.RLock()
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !p.IsSpawned(p.entityID) {
 			continue
 		}
@@ -603,7 +603,7 @@ func (p *Session) DropSlot() {
 
 	p.Server.mu.Lock()
 	defer p.Server.mu.Unlock()
-	for _, pl := range p.Server.Players {
+	for _, pl := range p.Server.players {
 		if !pl.InView(p) {
 			return
 		}

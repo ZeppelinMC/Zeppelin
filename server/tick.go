@@ -15,7 +15,9 @@ func (srv *Server) tickLoop() {
 }
 
 func (srv *Server) tick(tick uint) {
-	for _, pl := range srv.Players {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, pl := range srv.players {
 		if tick%8 == 0 {
 			pl.SendChunks(srv.GetDimension(pl.Player.Dimension()))
 			//pl.UnloadChunks()
