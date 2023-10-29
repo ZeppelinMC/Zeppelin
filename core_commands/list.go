@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aimjel/minecraft/chat"
+	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -11,7 +12,11 @@ var list_cmd = &commands.Command{
 	Name:                "list",
 	RequiredPermissions: []string{"server.command.list"},
 	Arguments: []commands.Argument{
-		commands.NewStrArg("uuids", commands.SingleWord), // should suggest the uuids string but it doesn't
+		commands.NewStrArg("uuids", commands.SingleWord).SetSuggest(func(ctx commands.SuggestionsContext) {
+			ctx.Return([]packet.SuggestionMatch{
+				{Match: "uuids"},
+			})
+		}),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		srv := getServer(ctx.Executor)
