@@ -25,13 +25,22 @@ var list_cmd = &commands.Command{
 			ctx.Reply(chat.NewMessage("No players online"))
 			return
 		}
-		msg := fmt.Sprintf("There are %d of a max of %d players online:", len(players), srv.Config.MaxPlayers)
+		msg := fmt.Sprintf("There are %d of a max of %d players online: ", len(players), srv.Config.MaxPlayers)
+		var index int
 		for _, p := range players {
 			if len(ctx.Arguments) == 1 && ctx.Arguments[0] == "uuids" {
-				msg += fmt.Sprintf("\n(%s)", p.UUID)
+				msg += fmt.Sprintf("%s (%s)", p.Name(), p.UUID)
+				if index != len(players)-1 {
+					msg += ", "
+				}
 			} else {
-				msg += fmt.Sprintf("\n - %s", p.Name())
+				// append player and append a comma if it's not the last player
+				msg += p.Name()
+				if index != len(players)-1 {
+					msg += ", "
+				}
 			}
+			index++
 		}
 		ctx.Reply(chat.NewMessage(msg))
 	},
