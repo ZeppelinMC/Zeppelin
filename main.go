@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/dynamitemc/dynamite/server/commands"
 	"os"
 	"os/signal"
 	"runtime"
@@ -11,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aimjel/minecraft/chat"
+	"github.com/dynamitemc/dynamite/server/commands"
 
 	"github.com/pelletier/go-toml/v2"
 
@@ -109,7 +111,7 @@ func scanConsole(srv *server.Server) {
 
 		command := srv.GetCommandGraph().FindCommand(args[0])
 		if command == nil {
-			srv.Logger.Print(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n&n%s&r&c&o<--[HERE]", args[0]))
+			srv.Logger.Print(chat.NewMessage(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n&n%s&r&c&o<--[HERE]", args[0])))
 			continue
 		}
 		command.Execute(commands.CommandContext{
