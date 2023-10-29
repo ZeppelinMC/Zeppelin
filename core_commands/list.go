@@ -4,20 +4,30 @@ import (
 	"fmt"
 
 	"github.com/aimjel/minecraft/chat"
-	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
 var list_cmd = &commands.Command{
-	Name: "list",
+	Name:                "list",
+	RequiredPermissions: []string{"server.command.list"},
+	Arguments: []commands.Argument{
+		commands.NewStrArg("uuids", commands.SingleWord), // should suggest the uuids string but it doesn't
+	},
 	Execute: func(ctx commands.CommandContext) {
-		switch ex := ctx.Executor.(type) {
-
-		case *server.Session:
-			ctx.Reply(chat.NewMessage(fmt.Sprintf("%v players online", ex.Server.PlayerCount())))
-
-		case *server.ConsoleExecutor:
-			ctx.Reply(chat.NewMessage(fmt.Sprintf("%v players online", ex.Server.PlayerCount())))
+		srv := getServer(ctx.Executor)
+		players := srv.Players()
+		if len(players) == 0 {
+			ctx.Reply(chat.NewMessage("No players online"))
+			return
 		}
+		msg := fmt.Sprintf("There are %d of a max of %d players online:", len(players), srv.Config.MaxPlayers)
+		for _, p := range players {
+			if len(ctx.Arguments) == 1 && ctx.Arguments[0] == "uuids" {
+				msg += fmt.Sprintf("\n(%s)", p.UUID)
+			} else {
+				msg += fmt.Sprintf("\n - %s", p.Name())
+			}
+		}
+		ctx.Reply(chat.NewMessage(msg))
 	},
 }
