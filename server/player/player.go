@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/dynamitemc/dynamite/server/inventory"
+	"github.com/dynamitemc/dynamite/server/item"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -21,7 +22,7 @@ type Player struct {
 	data *world.PlayerData
 
 	inventory            *inventory.Inventory
-	previousSelectedSlot world.Slot
+	previousSelectedSlot item.Item
 	selectedSlot         int32
 
 	dimension string
@@ -35,11 +36,11 @@ type Player struct {
 
 func New(data *world.PlayerData) *Player {
 	pl := &Player{data: data}
-	pl.inventory = inventory.From(data.Inventory)
+	pl.selectedSlot = data.SelectedItemSlot
+	pl.inventory = inventory.From(data.Inventory, pl.selectedSlot)
 	pl.gameMode = byte(data.PlayerGameType)
 	pl.x, pl.y, pl.z, pl.yaw, pl.pitch = data.Pos[0], data.Pos[1], data.Pos[2], data.Rotation[0], data.Rotation[1]
 	pl.health, pl.food, pl.foodSaturation = data.Health, data.FoodLevel, data.FoodSaturationLevel
-	pl.selectedSlot = data.SelectedItemSlot
 
 	fl := true
 	if data.Abilities.Flying == 0 {
@@ -151,6 +152,9 @@ func (p *Player) Save() {
 	p.data.Abilities.Flying = fl
 	p.data.Dimension = p.dimension
 	p.data.SelectedItemSlot = p.selectedSlot
+	p.data.Health = p.health
+	p.data.FoodSaturationLevel = p.foodSaturation
+	p.data.FoodLevel = p.food
 
 	p.data.Save()
 }
@@ -217,25 +221,26 @@ func (p *Player) SetOperator(op bool) {
 	p.operator = op
 }
 
-func (p *Player) SetHeldItem(h int32) {
+func (p *Player) SetSelectedSlot(h int32) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.selectedSlot = h
+	p.inventory.SetSelectedSlot(h)
 }
 
-func (p *Player) HeldItem() int32 {
+func (p *Player) SelectedSlot() int32 {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.selectedSlot
 }
 
-func (p *Player) PreviousSelectedSlot() world.Slot {
+func (p *Player) PreviousSelectedSlot() item.Item {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.previousSelectedSlot
 }
 
-func (p *Player) SetPreviousSelectedSlot(s world.Slot) {
+func (p *Player) SetPreviousSelectedSlot(s item.Item) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.previousSelectedSlot = s

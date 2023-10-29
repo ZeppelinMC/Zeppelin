@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
 )
 
@@ -17,6 +18,8 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 	}
 
 	prefix, suffix := p.GetPrefixSuffix()
+
+	net := chat.NewMessage(prefix + p.Name() + suffix).WithSuggestCommandClickEvent(fmt.Sprintf("/msg %s", p.Name()))
 
 	if !p.Server.Config.Chat.Secure {
 		if !p.Server.Config.Chat.Enable || !p.HasPermissions([]string{"server.chat.colors"}) {
@@ -31,14 +34,21 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			}
 			pk.Message = strings.Join(sp, "")
 		}
-		msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
-			"player":        p.Name(),
-			"player_prefix": prefix,
-			"player_suffix": suffix,
-			"message":       pk.Message,
-		})
+		if p.Server.Config.Chat.Format == "" {
+			p.Server.GlobalBroadcast(&packet.DisguisedChatMessage{
+				Message:      chat.NewMessage(pk.Message),
+				ChatTypeName: net,
+			})
+		} else {
+			msg := p.Server.ParsePlaceholders(p.Server.Config.Chat.Format, map[string]string{
+				"player":        p.Name(),
+				"player_prefix": prefix,
+				"player_suffix": suffix,
+				"message":       pk.Message,
+			})
 
-		p.Server.GlobalMessage(msg, p)
+			p.Server.GlobalMessage(chat.NewMessage(msg))
+		}
 	} else {
 		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{
 			Sender:           p.conn.UUID(),
@@ -46,7 +56,7 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			Message:          pk.Message,
 			Timestamp:        pk.Timestamp,
 			Salt:             pk.Salt,
-			NetworkName:      prefix + p.Name() + suffix,
+			NetworkName:      net,
 		})
 	}
 }
@@ -54,7 +64,7 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 func (p *Session) Whisper(pl *Session, msg string, timestamp, salt int64, sig []byte) {
 	prefix, suffix := p.GetPrefixSuffix()
 	prefix1, suffix1 := pl.GetPrefixSuffix()
-	fmt.Println(msg)
+	tgt := chat.NewMessage(prefix1 + pl.Name() + suffix1)
 	p.SendPacket(&packet.PlayerChatMessage{
 		Sender:  p.conn.UUID(),
 		Message: msg,
@@ -62,7 +72,7 @@ func (p *Session) Whisper(pl *Session, msg string, timestamp, salt int64, sig []
 		Salt:              salt,
 		Timestamp:         timestamp,
 		ChatType:          3,
-		NetworkName:       prefix + p.Name() + suffix,
-		NetworkTargetName: prefix1 + pl.Name() + suffix1,
+		NetworkName:       chat.NewMessage(prefix + p.Name() + suffix),
+		NetworkTargetName: &tgt,
 	})
 }

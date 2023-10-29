@@ -3,6 +3,7 @@ package core_commands
 import (
 	"fmt"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
@@ -13,10 +14,10 @@ var list_cmd = &commands.Command{
 		switch ex := ctx.Executor.(type) {
 
 		case *server.Session:
-			ctx.Reply(fmt.Sprintf("%v players online", ex.Server.PlayerCount()))
+			ctx.Reply(chat.NewMessage(fmt.Sprintf("%v players online", ex.Server.PlayerCount())))
 
 		case *server.ConsoleExecutor:
-			ctx.Reply(fmt.Sprintf("%v players online", ex.Server.PlayerCount()))
+			ctx.Reply(chat.NewMessage(fmt.Sprintf("%v players online", ex.Server.PlayerCount())))
 		}
 	},
 }

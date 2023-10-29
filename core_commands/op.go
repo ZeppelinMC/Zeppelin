@@ -1,8 +1,7 @@
 package core_commands
 
 import (
-	"fmt"
-
+	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -26,6 +25,6 @@ var op_cmd = &commands.Command{
 		}
 		server.MakeOperator(player)
 		player.SendCommands(server.GetCommandGraph())
-		ctx.Reply(fmt.Sprintf("Made %s a server operator", player.Name()))
+		ctx.Reply(server.Translate("commands.op.success", chat.NewMessage(player.Name())))
 	},
 }

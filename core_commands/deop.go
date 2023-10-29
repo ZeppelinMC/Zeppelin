@@ -1,8 +1,7 @@
 package core_commands
 
 import (
-	"fmt"
-
+	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -26,6 +25,6 @@ var deop_cmd = &commands.Command{
 		}
 		server.MakeNotOperator(player)
 		player.SendCommands(server.GetCommandGraph())
-		ctx.Reply(fmt.Sprintf("Made %s not a server operator", player.Name()))
+		ctx.Reply(player.Server.Translate("commands.deop.success", chat.NewMessage(player.Name())))
 	},
 }

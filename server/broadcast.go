@@ -5,7 +5,9 @@ import (
 	"math"
 	"strings"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
+	"github.com/dynamitemc/dynamite/server/item"
 	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
 
@@ -20,17 +22,16 @@ func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 	}
 }
 
-func (srv *Server) GlobalMessage(message string, sender *Session) {
+func (srv *Server) GlobalMessage(message chat.Message) {
+	fmt.Println(message.String())
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.players {
 		if p.clientInfo.ChatMode == 2 {
 			continue
-		} else if p.clientInfo.ChatMode == 1 && sender != nil {
-			continue
 		}
 		p.SendPacket(&packet.SystemChatMessage{
-			Content: message,
+			Message: message,
 		})
 	}
 	srv.Logger.Print(message)
@@ -39,16 +40,16 @@ func (srv *Server) GlobalMessage(message string, sender *Session) {
 func (srv *Server) OperatorMessage(message string) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
+	msg := chat.NewMessage(message)
 	for _, p := range srv.players {
 		if p.clientInfo.ChatMode == 2 || !p.Player.Operator() {
 			continue
 		}
 		p.SendPacket(&packet.SystemChatMessage{
-			Content: message,
+			Message: msg,
 		})
 	}
-	message = strings.ReplaceAll(message, "§", "&")
-	srv.Logger.Print(message)
+	srv.Logger.Print(msg)
 }
 
 func (p *Session) BroadcastAnimation(animation uint8) {
@@ -218,7 +219,7 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 		return
 	}
 	if !positionIsValid(x1, y1, z1) {
-		p.Disconnect("Invalid move player packet received")
+		p.Disconnect(p.Server.Translate("multiplayer.disconnect.invalid_player_movement"))
 		return
 	}
 
@@ -338,9 +339,9 @@ func (p *Session) BroadcastHealth() {
 }
 
 func (p *Session) SendEquipment(pl *Session) {
-	slots := make(map[int8]world.Slot)
+	slots := make(map[int8]item.Item)
 	inv := p.Player.Inventory()
-	sel := p.Player.HeldItem()
+	sel := p.Player.SelectedSlot()
 
 	for _, s := range inv.Data() {
 		switch s.Slot {
@@ -369,9 +370,9 @@ func (p *Session) SendEquipment(pl *Session) {
 }
 
 func (p *Session) BroadcastEquipment() {
-	slots := make(map[int8]world.Slot)
+	slots := make(map[int8]item.Item)
 	inv := p.Player.Inventory()
-	sel := p.Player.HeldItem()
+	sel := p.Player.SelectedSlot()
 
 	for _, s := range inv.Data() {
 		switch s.Slot {
@@ -437,7 +438,7 @@ type PacketSetPlayerMetadata struct {
 	Health             *float32
 	DisplayedSkinParts *uint8
 	MainHand           *int32
-	Slot               *world.Slot
+	Slot               *item.Item
 	HandState          *int8
 }
 
@@ -498,7 +499,7 @@ func (s PacketSetPlayerMetadata) Encode(w packet.Writer) error {
 type SetEquipment struct {
 	EntityID int32
 	Slot     int8
-	Item     world.Slot
+	Item     item.Item
 }
 
 func (m SetEquipment) ID() int32 {

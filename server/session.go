@@ -8,10 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
 	"github.com/google/uuid"
 
 	"github.com/dynamitemc/dynamite/server/inventory"
+	"github.com/dynamitemc/dynamite/server/item"
 	"github.com/dynamitemc/dynamite/server/network/handlers"
 
 	"github.com/aimjel/minecraft"
@@ -113,9 +115,11 @@ func (p *Session) HandlePackets() error {
 		case *packet.SetHeldItemServer:
 			handlers.SetHeldItem(p.Player, pk.Slot)
 		case *packet.SetCreativeModeSlot:
-			handlers.SetCreativeModeSlot(p, p.Player, int8(inventory.NetworkToData(int(pk.Slot))), pk.ClickedItem)
+			handlers.SetCreativeModeSlot(p, p.Player, int8(inventory.NetworkSlotToDataSlot(pk.Slot)), pk.ClickedItem)
 		case *packet.TeleportToEntityServer:
 			handlers.TeleportToEntity(p, p.Player, pk.Player)
+		case *packet.ClickContainer:
+			handlers.ClickContainer(p, p.Player, pk)
 		case *packet.MessageAcknowledgment:
 			fmt.Println(pk.MessageCount)
 		}
@@ -168,9 +172,15 @@ func (p *Session) Respawn(dim string) {
 
 	yaw, pitch := p.Player.Rotation()
 
-	if b, _ := world.GameRule(p.Server.World.Gamerules()["keepInventory"]).Bool(); b {
-		p.InitializeInventory()
+	if b, _ := world.GameRule(p.Server.World.Gamerules()["keepInventory"]).Bool(); !b {
+		p.Player.Inventory().Clear()
 	}
+
+	p.SendPacket(&packet.SetContainerContent{
+		WindowID: 0,
+		StateID:  1,
+		Slots:    p.Player.Inventory().Packet(),
+	})
 
 	chunkX, chunkZ := math.Floor(float64(x1)/16), math.Floor(float64(z1)/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
@@ -245,13 +255,13 @@ func (p *Session) Login(dim string) {
 			URL:    p.Server.Config.ResourcePack.URL,
 			Hash:   p.Server.Config.ResourcePack.Hash,
 			Forced: p.Server.Config.ResourcePack.Force,
-			Prompt: p.Server.Config.Messages.ResourcePackPrompt,
+			//Prompt: p.Server.Config.Messages.ResourcePackPrompt,
 		})
 	}
 }
 
-func (p *Session) SystemChatMessage(s string) error {
-	return p.SendPacket(&packet.SystemChatMessage{Content: s})
+func (p *Session) SystemChatMessage(message chat.Message) error {
+	return p.SendPacket(&packet.SystemChatMessage{Message: message})
 }
 
 func (p *Session) SetHealth(health float32) {
@@ -385,10 +395,10 @@ func (p *Session) SendCommands(g *commands.Graph) {
 
 func (p *Session) Keepalive() {
 	id := rand.Int63() * 100
-	p.SendPacket(&packet.KeepAlive{PayloadID: id})
+	p.SendPacket(&packet.KeepAliveClient{PayloadID: id})
 }
 
-func (p *Session) Disconnect(reason string) {
+func (p *Session) Disconnect(reason chat.Message) {
 	pk := &packet.DisconnectPlay{}
 	pk.Reason = reason
 	p.SendPacket(pk)
@@ -562,20 +572,25 @@ func (p *Session) DespawnPlayer(pl *Session) {
 	}
 }
 
-func (p *Session) InitializeInventory() {
+func (p *Session) intitializeData() {
 	p.SendPacket(&packet.SetContainerContent{
 		WindowID: 0,
 		StateID:  1,
 		Slots:    p.Player.Inventory().Packet(),
 	})
-	p.SendPacket(&packet.SetHeldItem{Slot: int8(p.Player.HeldItem())})
+	p.SendPacket(&packet.SetHeldItem{Slot: int8(p.Player.SelectedSlot())})
+	p.SendPacket(&packet.SetHealth{
+		Health:         p.Player.Health(),
+		FoodSaturation: p.Player.FoodSaturationLevel(),
+		Food:           p.Player.FoodLevel(),
+	})
 }
 
 func (p *Session) ClearItem(slot int8) {
 	p.SendPacket(&packet.SetContainerSlot{
 		WindowID: 0,
 		StateID:  1,
-		Slot:     int16(inventory.DataToNetwork(int(slot))),
+		Slot:     int16(inventory.DataSlotToNetworkSlot(slot)),
 	})
 	p.Player.Inventory().DeleteSlot(slot)
 }
@@ -584,10 +599,10 @@ func (p *Session) SetSlot(slot int8, data packet.Slot) {
 	p.SendPacket(&packet.SetContainerSlot{
 		WindowID: 0,
 		StateID:  1,
-		Slot:     int16(inventory.DataToNetwork(int(slot))),
+		Slot:     int16(inventory.DataSlotToNetworkSlot(slot)),
 		Data:     data,
 	})
-	p.Player.Inventory().SetSlot(slot, world.Slot{
+	p.Player.Inventory().SetSlot(slot, item.Item{
 		Count: data.Count,
 		Slot:  int8(slot),
 		Id:    registry.FindItem(data.Id),

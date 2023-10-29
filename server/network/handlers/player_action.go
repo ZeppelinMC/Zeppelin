@@ -16,9 +16,9 @@ func PlayerAction(controller Controller, state *player.Player, pk *packet.Player
 		}
 		controller.BroadcastPose(0)
 	case 3, 4:
-		if s, ok := state.Inventory().Slot(int8(state.HeldItem())); ok {
+		if s, ok := state.Inventory().HeldItem(); ok {
 			state.SetPreviousSelectedSlot(s)
-			state.Inventory().DeleteSlot(int8(state.HeldItem()))
+			state.Inventory().DeleteSlot(int8(s.Slot))
 		}
 		controller.DropSlot()
 	}

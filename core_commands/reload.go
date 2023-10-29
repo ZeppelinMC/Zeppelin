@@ -11,6 +11,6 @@ var reload_cmd = &commands.Command{
 	Execute: func(ctx commands.CommandContext) {
 		srv := getServer(ctx.Executor)
 		srv.Reload()
-		ctx.Reply(srv.Config.Messages.ReloadComplete)
+		ctx.Reply(srv.Translate("commands.reload.success"))
 	},
 }

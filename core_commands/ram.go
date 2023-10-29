@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -15,7 +16,7 @@ var ram_cmd = &commands.Command{
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
 		srv := getServer(ctx.Executor)
-		ctx.Reply(fmt.Sprintf("%d MiB memory used!\nLoaded chunks: %d", bytesToMegabytes(m.Alloc), srv.World.Overworld().LoadedChunks()))
+		ctx.Reply(chat.NewMessage(fmt.Sprintf("%d MiB memory used!\nLoaded chunks: %d", bytesToMegabytes(m.Alloc), srv.World.Overworld().LoadedChunks())))
 	},
 }
 

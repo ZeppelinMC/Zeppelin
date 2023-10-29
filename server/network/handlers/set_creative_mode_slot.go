@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/player"
 )
 
 func SetCreativeModeSlot(controller Controller, state *player.Player, slot int8, data packet.Slot) {
 	if state.GameMode() != 1 {
-		controller.Disconnect("bruh cant use de creative button without creative")
+		controller.Disconnect(chat.NewMessage("bruh cant use de creative button without creative"))
 		return
 	}
 	if !data.Present {

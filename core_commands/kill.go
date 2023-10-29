@@ -1,8 +1,7 @@
 package core_commands
 
 import (
-	"fmt"
-
+	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
@@ -32,7 +31,7 @@ var kill_cmd = &commands.Command{
 		}
 		name := player.Name()
 		player.Kill(name + " was killed")
-		ctx.Reply(fmt.Sprintf("Killed %s", name))
-		player.Server.GlobalMessage(name+" was killed", nil)
+		ctx.Reply(player.Server.Translate("commands.kill.success.single", chat.NewMessage(name)))
+		player.Server.GlobalMessage(chat.NewMessage(name + " was killed"))
 	},
 }

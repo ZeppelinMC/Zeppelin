@@ -8,26 +8,9 @@ import (
 	"os"
 
 	"github.com/aimjel/minecraft/nbt"
+	"github.com/dynamitemc/dynamite/server/item"
 	uuid2 "github.com/google/uuid"
 )
-
-type Slot struct {
-	Count int8    `nbt:"Count"`
-	Slot  int8    `nbt:"Slot"`
-	Id    string  `nbt:"id"`
-	Tag   SlotTag `nbt:"tag"`
-}
-
-type Enchantment struct {
-	Id    string `nbt:"id"`
-	Level int16  `nbt:"lvl"`
-}
-
-type SlotTag struct {
-	Damage       int32         `nbt:"Damage"`
-	RepairCost   int32         `nbt:"RepairCost"`
-	Enchantments []Enchantment `nbt:"Enchantments"`
-}
 
 type RecipeBook struct {
 	IsGuiOpen                           int8     `nbt:"isGuiOpen"`
@@ -72,14 +55,14 @@ type PlayerData struct {
 	Invulnerable          int8               `nbt:"Invulnerable"`
 	FoodSaturationLevel   float32            `nbt:"foodSaturationLevel"`
 	UUID                  []int32            `nbt:"UUID"`
-	EnderItems            []Slot             `nbt:"EnderItems"`
+	EnderItems            []item.Item        `nbt:"EnderItems"`
 	DataVersion           int32              `nbt:"DataVersion"`
 	SelectedItemSlot      int32              `nbt:"SelectedItemSlot"`
 	SleepTimer            int16              `nbt:"SleepTimer"`
 	Abilities             Abilities          `nbt:"abilities"`
 	RecipeBook            RecipeBook         `nbt:"recipeBook"`
 	XpSeed                int32              `nbt:"XpSeed"`
-	Inventory             []Slot             `nbt:"Inventory"`
+	Inventory             []item.Item        `nbt:"Inventory"`
 	FoodLevel             int32              `nbt:"foodLevel"`
 	HurtByTimestamp       int32              `nbt:"HurtByTimestamp"`
 	FallDistance          float32            `nbt:"FallDistance"`

@@ -57,7 +57,7 @@ var colors = map[string]color.Attribute{
 	"white":        color.FgHiWhite,
 }
 
-func parseChat(msg chat.Message) string {
+func ParseChat(msg chat.Message) string {
 	var str string
 	texts := []chat.Message{msg}
 	texts = append(texts, msg.Extra...)
@@ -79,23 +79,16 @@ func parseChat(msg chat.Message) string {
 	return str
 }
 
-func ParseChat(content string) string {
-	content = strings.ReplaceAll(content, "§", "&")
-	return parseChat(chat.NewMessage(content))
-}
-
 func (logger *Logger) Channel() chan Message {
 	return logger.c
 }
 
-func (logger *Logger) Print(message string) {
-	message = strings.ReplaceAll(message, "§", "&")
-	msg := chat.NewMessage(message)
+func (logger *Logger) Print(msg chat.Message) {
 	logger.send(Message{
 		Type:    "chat",
 		Message: msg.String(),
 	})
-	fmt.Println(parseChat(msg))
+	fmt.Println(ParseChat(msg))
 }
 
 func (logger *Logger) Info(format string, a ...interface{}) {

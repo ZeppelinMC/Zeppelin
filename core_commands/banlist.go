@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -31,6 +32,6 @@ var banlist_cmd = &commands.Command{
 				str += " - " + d.Format("Mon Jan _2 15:04:05 2006")
 			}
 		}
-		ctx.Reply(str)
+		ctx.Reply(chat.NewMessage(str))
 	},
 }

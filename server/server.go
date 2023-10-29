@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
 	"github.com/pelletier/go-toml/v2"
 
@@ -96,19 +97,21 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	cntrl.SendCommands(srv.commandGraph)
 
-	cntrl.SendPacket(&packet.SetTablistHeaderFooter{
-		Header: strings.Join(srv.Config.Tablist.Header, "\n"),
-		Footer: strings.Join(srv.Config.Tablist.Footer, "\n"),
-	})
+	//cntrl.SendPacket(&packet.SetTablistHeaderFooter{
+	//	Header: strings.Join(srv.Config.Tablist.Header, "\n"),
+	//	Footer: strings.Join(srv.Config.Tablist.Footer, "\n"),
+	//})
 
 	srv.addPlayer(cntrl)
 	cntrl.Login(plyr.Dimension())
 
-	cntrl.InitializeInventory()
+	cntrl.intitializeData()
 
 	if err := cntrl.HandlePackets(); err != nil {
+		prefix, suffix := cntrl.GetPrefixSuffix()
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), cntrl.UUID)
-		srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerLeave, map[string]string{"player": conn.Name()}), nil)
+
+		srv.GlobalMessage(srv.Translate("multiplayer.player.left", chat.NewMessage(prefix+conn.Name()+suffix)))
 		srv.PlayerlistRemove(conn.UUID())
 		cntrl.Despawn()
 		plyr.Save()
@@ -160,16 +163,22 @@ func (srv *Server) addPlayer(p *Session) {
 	})
 
 	//gui.AddPlayer(pl.session.Info().Name, pl.UUID)
+	prefix, suffix := p.GetPrefixSuffix()
 
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.conn.RemoteAddr(), p.conn.Name(), p.UUID)
-	srv.GlobalMessage(srv.Translate(srv.Config.Messages.PlayerJoin, map[string]string{"player": p.Name()}), nil)
+
+	srv.GlobalMessage(srv.Translate("multiplayer.player.joined", chat.NewMessage(prefix+p.Name()+suffix)))
 }
 
 func (srv *Server) GetCommandGraph() *commands.Graph {
 	return srv.commandGraph
 }
 
-func (srv *Server) Translate(msg string, data map[string]string) string {
+func (srv *Server) Translate(msg string, with ...chat.Message) chat.Message {
+	return chat.Translate(msg, with...)
+}
+
+func (srv *Server) ParsePlaceholders(msg string, data map[string]string) string {
 	for k, v := range data {
 		msg = strings.ReplaceAll(msg, "%"+k+"%", v)
 	}
@@ -188,7 +197,7 @@ func (srv *Server) Reload() error {
 
 	for _, p := range srv.players {
 		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.conn.UUID()) {
-			p.Disconnect(srv.Config.Messages.NotInWhitelist)
+			p.Disconnect(chat.Translate("multiplayer.disconnect.not_whitelisted"))
 			continue
 		}
 
@@ -279,7 +288,7 @@ func (srv *Server) Close() {
 	saveCache()
 
 	for _, p := range srv.players {
-		p.Disconnect(srv.Config.Messages.ServerClosed)
+		p.Disconnect(srv.Translate("multiplayer.disconnect.server_shutdown"))
 		p.Player.Save()
 	}
 	srv.Logger.Info("Saving world...")

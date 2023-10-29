@@ -29,11 +29,6 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		}, cfg.MaxPlayers, cfg.MOTD),
 		OnlineMode:           cfg.Online,
 		CompressionThreshold: int32(cfg.CompressionThreshold),
-		Messages: &minecraft.Messages{
-			OnlineMode:     cfg.Messages.OnlineMode,
-			ProtocolTooNew: cfg.Messages.ProtocolNew,
-			ProtocolTooOld: cfg.Messages.ProtocolOld,
-		},
 	}
 
 	if cfg.Chat.Secure && !cfg.Online {
@@ -90,23 +85,6 @@ var DefaultConfig = Config{
 	Hardcore:             false,
 	MaxPlayers:           20,
 	TPS:                  20,
-	Messages: Messages{
-		NotInWhitelist:          "You are not whitelisted.",
-		Banned:                  "You are banned from this server.",
-		ServerFull:              "The server is full.",
-		AlreadyPlaying:          "You are already playing on this server with a different client.",
-		PlayerJoin:              "§e%player% has joined the game",
-		PlayerLeave:             "§e%player% has left the game",
-		UnknownCommand:          "§cUnknown command. Please use '/help' for a list of commands.",
-		ProtocolNew:             "Your protocol is too new!",
-		ProtocolOld:             "Your protocol is too old!",
-		InsufficientPermissions: "§cYou aren't permitted to use this command.",
-		ReloadComplete:          "§aReload complete.",
-		ServerClosed:            "Server closed",
-		OnlineMode:              "The server is in online mode.",
-		Slain:                   "%player% was slain by %killer%",
-		ResourcePackPrompt:      "Please use our resource pack!!!",
-	},
 	Web: Web{
 		ServerIP:   "0.0.0.0",
 		ServerPort: 8080,
@@ -130,24 +108,6 @@ type Web struct {
 	ServerPort int    `toml:"server_port"`
 	Password   string `toml:"password"`
 	Enable     bool   `toml:"enable"`
-}
-
-type Messages struct {
-	NotInWhitelist          string `toml:"not_in_whitelist"`
-	Banned                  string `toml:"banned"`
-	ServerFull              string `toml:"server_full"`
-	AlreadyPlaying          string `toml:"already_playing"`
-	PlayerJoin              string `toml:"player_join"`
-	PlayerLeave             string `toml:"player_leave"`
-	UnknownCommand          string `toml:"unknown_command"`
-	ProtocolNew             string `toml:"protocol_new"`
-	ProtocolOld             string `toml:"protocol_old"`
-	InsufficientPermissions string `toml:"insufficient_permissions"`
-	ReloadComplete          string `toml:"reload_complete"`
-	ServerClosed            string `toml:"server_closed"`
-	OnlineMode              string `toml:"online_mode"`
-	Slain                   string `toml:"slain"`
-	ResourcePackPrompt      string `toml:"resource_pack_prompt"`
 }
 
 type Chat struct {
@@ -187,5 +147,4 @@ type Config struct {
 	Tablist              Tablist      `toml:"tablist"`
 	Chat                 Chat         `toml:"chat"`
 	ResourcePack         ResourcePack `toml:"resource_pack"`
-	Messages             Messages     `toml:"messages"`
 }

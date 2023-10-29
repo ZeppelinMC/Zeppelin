@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
 type Controller interface {
-	SystemChatMessage(s string) error
+	SystemChatMessage(message chat.Message) error
 	HasPermissions(perms []string) bool
 	BroadcastMovement(id int32, x1, y1, z1 float64, yaw, pitch float32, ong bool, teleport bool)
 	Chat(*packet.ChatMessageServer)
@@ -23,7 +24,7 @@ type Controller interface {
 	Respawn(dim string)
 	BreakBlock(pos uint64)
 	ClearItem(slot int8)
-	Disconnect(reason string)
+	Disconnect(reason chat.Message)
 	SetClientSettings(p *packet.ClientSettings)
 	SetSessionID(id [16]byte, pk, ks []byte, expires int64)
 	SetSlot(slot int8, data packet.Slot)
@@ -50,7 +51,7 @@ func ChatCommandPacket(controller Controller, graph *commands.Graph, content str
 		}
 	}
 	if command == nil || !controller.HasPermissions(command.RequiredPermissions) {
-		controller.SystemChatMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", content))
+		controller.SystemChatMessage(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", content)))
 		return
 	}
 	ctx := commands.CommandContext{

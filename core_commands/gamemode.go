@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 	p "github.com/dynamitemc/dynamite/server/player"
@@ -55,9 +56,9 @@ var gamemode_cmd = &commands.Command{
 			return
 		}
 		player.SetGameMode(byte(gm))
-		msg := fmt.Sprintf("Set %s's game mode to %s Mode", player.Name(), pascalify(ctx.Arguments[0]))
+		msg := player.Server.Translate("commands.gamemode.success.other", chat.NewMessage(player.Name()), chat.NewMessage(pascalify(ctx.Arguments[0])))
 		if exe, ok := ctx.Executor.(*server.Session); ok && player.UUID == exe.UUID {
-			msg = fmt.Sprintf("Set own game mode to %s Mode", pascalify(ctx.Arguments[0]))
+			msg = player.Server.Translate("commands.gamemode.success.self", chat.NewMessage(pascalify(ctx.Arguments[0])))
 		}
 		ctx.Reply(msg)
 	},
