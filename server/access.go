@@ -57,22 +57,22 @@ func WritePlayerList(path string, user []user) error {
 func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
 	var reason string
 	if srv.IsPlayerBanned(conn.UUID()) {
-		reason = "multiplayer.disconnect.banned"
+		reason = "disconnect.banned"
 	}
 
 	ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 	if srv.IsIPBanned(ip) {
-		reason = "multiplayer.disconnect.banned"
+		reason = "disconnect.banned"
 	}
 
 	if srv.Config.Whitelist.Enable {
 		if !srv.IsWhitelisted(conn.UUID()) {
-			reason = "multiplayer.disconnect.not_whitelisted"
+			reason = "disconnect.not_whitelisted"
 		}
 	}
 
 	if reason != "" {
-		conn.SendPacket(&packet.DisconnectPlay{DisconnectLogin: packet.DisconnectLogin{Reason: srv.Translate(reason)}})
+		conn.SendPacket(&packet.DisconnectPlay{DisconnectLogin: packet.DisconnectLogin{Reason: srv.Translate(reason, nil)}})
 	}
 
 	return reason != ""

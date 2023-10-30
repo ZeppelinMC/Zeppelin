@@ -1,7 +1,6 @@
 package core_commands
 
 import (
-	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -25,6 +24,11 @@ var op_cmd = &commands.Command{
 		}
 		server.MakeOperator(player)
 		player.SendCommands(server.GetCommandGraph())
-		ctx.Reply(server.Translate("commands.op.success", chat.NewMessage(player.Name())))
+		prefix, suffix := player.GetPrefixSuffix()
+		ctx.Reply(server.Translate("commands.op.success", map[string]string{
+			"player":        player.Name(),
+			"player_prefix": prefix,
+			"player_suffix": suffix,
+		}))
 	},
 }

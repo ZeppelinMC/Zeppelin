@@ -1,7 +1,6 @@
 package core_commands
 
 import (
-	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -21,6 +20,8 @@ var unban_cmd = &commands.Command{
 		server := getServer(ctx.Executor)
 
 		server.Unban(playerName)
-		ctx.Reply(server.Translate("commands.pardon.success", chat.NewMessage(playerName)))
+		ctx.Reply(server.Translate("commands.pardon.success", map[string]string{
+			"player": playerName,
+		}))
 	},
 }

@@ -23,7 +23,6 @@ func (srv *Server) GlobalBroadcast(pk packet.Packet) {
 }
 
 func (srv *Server) GlobalMessage(message chat.Message) {
-	fmt.Println(message.String())
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	for _, p := range srv.players {
@@ -219,7 +218,7 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 		return
 	}
 	if !positionIsValid(x1, y1, z1) {
-		p.Disconnect(p.Server.Translate("multiplayer.disconnect.invalid_player_movement"))
+		p.Disconnect(p.Server.Translate("disconnect.invalid_player_movement", nil))
 		return
 	}
 

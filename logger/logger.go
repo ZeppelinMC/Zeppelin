@@ -63,6 +63,9 @@ func ParseChat(msg chat.Message) string {
 	texts = append(texts, msg.Extra...)
 
 	for _, text := range texts {
+		if text.Text == nil {
+			continue
+		}
 		attrs := []color.Attribute{colors[text.Color]}
 		if text.Bold {
 			attrs = append(attrs, color.Bold)
@@ -73,7 +76,7 @@ func ParseChat(msg chat.Message) string {
 		if text.Underlined {
 			attrs = append(attrs, color.Underline)
 		}
-		str += color.New(attrs...).SprintFunc()(text.Text)
+		str += color.New(attrs...).SprintFunc()(*text.Text)
 	}
 
 	return str

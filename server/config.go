@@ -65,6 +65,11 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		commandGraph: commandGraph,
 	}
 
+	if err := loadLang(&srv.lang); err != nil {
+		srv.lang = defaultLang
+		createLang(defaultLang)
+	}
+
 	logger.Info("Loading player info")
 	srv.loadFiles()
 

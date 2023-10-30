@@ -40,14 +40,14 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 				ChatTypeName: net,
 			})
 		} else {
-			msg := p.Server.ParsePlaceholders(p.Server.Config.Chat.Format, map[string]string{
+			msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
 				"player":        p.Name(),
 				"player_prefix": prefix,
 				"player_suffix": suffix,
 				"message":       pk.Message,
 			})
 
-			p.Server.GlobalMessage(chat.NewMessage(msg))
+			p.Server.GlobalMessage(msg)
 		}
 	} else {
 		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{

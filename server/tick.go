@@ -20,6 +20,7 @@ func (srv *Server) tick(tick uint) {
 			pl.SendChunks(srv.GetDimension(pl.Player.Dimension()))
 			//pl.UnloadChunks()
 		}
+
 		worldAge, dayTime := srv.World.IncrementTime()
 		pl.SendPacket(&packet.UpdateTime{
 			WorldAge:  worldAge,

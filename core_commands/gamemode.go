@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 	p "github.com/dynamitemc/dynamite/server/player"
@@ -56,9 +55,15 @@ var gamemode_cmd = &commands.Command{
 			return
 		}
 		player.SetGameMode(byte(gm))
-		msg := player.Server.Translate("commands.gamemode.success.other", chat.NewMessage(player.Name()), chat.NewMessage(pascalify(ctx.Arguments[0])))
+		prefix, suffix := player.GetPrefixSuffix()
+		msg := player.Server.Translate("commands.gamemode.success.other", map[string]string{
+			"player":        player.Name(),
+			"player_prefix": prefix,
+			"player_suffix": suffix,
+			"gamemode":      pascalify(ctx.Arguments[0]),
+		})
 		if exe, ok := ctx.Executor.(*server.Session); ok && player.UUID == exe.UUID {
-			msg = player.Server.Translate("commands.gamemode.success.self", chat.NewMessage(pascalify(ctx.Arguments[0])))
+			msg = player.Server.Translate("commands.gamemode.success.self", map[string]string{"gamemode": pascalify(ctx.Arguments[0])})
 		}
 		ctx.Reply(msg)
 	},

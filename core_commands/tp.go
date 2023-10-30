@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
@@ -30,7 +29,16 @@ var tp_cmd = &commands.Command{
 					x, y, z := player.Player.Position()
 					yaw, pitch := exe.Player.Rotation()
 					exe.Teleport(x, y, z, yaw, pitch)
-					ctx.Reply(srv.Translate("commands.teleport.success.entity.single", chat.NewMessage(exe.Name()), chat.NewMessage(player.Name())))
+					ep, es := exe.GetPrefixSuffix()
+					pp, ps := player.GetPrefixSuffix()
+					ctx.Reply(srv.Translate("commands.teleport.success.entity.single", map[string]string{
+						"player":         exe.Name(),
+						"player_prefix":  ep,
+						"player_suffx":   es,
+						"player1":        player.Name(),
+						"player1_prefix": pp,
+						"player1_suffx":  ps,
+					}))
 				}
 			}
 		case 2:
@@ -42,7 +50,16 @@ var tp_cmd = &commands.Command{
 				yaw, pitch := player1.Player.Rotation()
 				player1.Teleport(x, y, z, yaw, pitch)
 
-				ctx.Reply(srv.Translate("commands.teleport.success.entity.single", chat.NewMessage(player1.Name()), chat.NewMessage(player2.Name())))
+				ep, es := player1.GetPrefixSuffix()
+				pp, ps := player2.GetPrefixSuffix()
+				ctx.Reply(srv.Translate("commands.teleport.success.entity.single", map[string]string{
+					"player":         player1.Name(),
+					"player_prefix":  ep,
+					"player_suffx":   es,
+					"player1":        player2.Name(),
+					"player1_prefix": pp,
+					"player1_suffx":  ps,
+				}))
 			}
 		case 3:
 			{
@@ -69,12 +86,16 @@ var tp_cmd = &commands.Command{
 
 					exe.Teleport(x, y, z, yaw, pitch)
 
+					prefix, suffix := exe.GetPrefixSuffix()
 					ctx.Reply(srv.Translate("commands.teleport.success.location.single",
-						chat.NewMessage(exe.Name()),
-						chat.NewMessage(fmt.Sprint(x)),
-						chat.NewMessage(fmt.Sprint(y)),
-						chat.NewMessage(fmt.Sprint(z))),
-					)
+						map[string]string{
+							"player":        exe.Name(),
+							"player_prefix": prefix,
+							"player_suffx":  suffix,
+							"x":             fmt.Sprint(x),
+							"y":             fmt.Sprint(y),
+							"z":             fmt.Sprint(z),
+						}))
 				}
 			}
 		case 4:
@@ -100,12 +121,16 @@ var tp_cmd = &commands.Command{
 				yaw, pitch := player.Player.Rotation()
 				player.Teleport(x, y, z, yaw, pitch)
 
+				prefix, suffix := player.GetPrefixSuffix()
 				ctx.Reply(srv.Translate("commands.teleport.success.location.single",
-					chat.NewMessage(player.Name()),
-					chat.NewMessage(fmt.Sprint(x)),
-					chat.NewMessage(fmt.Sprint(y)),
-					chat.NewMessage(fmt.Sprint(z))),
-				)
+					map[string]string{
+						"player":        player.Name(),
+						"player_prefix": prefix,
+						"player_suffx":  suffix,
+						"x":             fmt.Sprint(x),
+						"y":             fmt.Sprint(y),
+						"z":             fmt.Sprint(z),
+					}))
 			}
 		default:
 			ctx.Incomplete()

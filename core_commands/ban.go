@@ -3,7 +3,6 @@ package core_commands
 import (
 	"strings"
 
-	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -21,9 +20,9 @@ var ban_cmd = &commands.Command{
 		}
 		server := getServer(ctx.Executor)
 		playerName := ctx.Arguments[0]
-		reason := server.Translate("multiplayer.disconnect.banned")
+		reason := server.Translate("disconnect.banned", nil)
 		if len(ctx.Arguments) > 1 {
-			reason = server.Translate("multiplayer.disconnect.banned.reason", chat.NewMessage(strings.Join(ctx.Arguments[1:], " ")))
+			reason = server.Translate("disconnect.banned.reason", map[string]string{"reason": strings.Join(ctx.Arguments[1:], " ")})
 		}
 		player := server.FindPlayer(playerName)
 		if player == nil {

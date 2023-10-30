@@ -30,6 +30,8 @@ type Server struct {
 	Logger       *logger.Logger
 	commandGraph *commands.Graph
 
+	lang map[string]string
+
 	// Players mapped by UUID
 	players map[string]*Session
 
@@ -111,7 +113,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		prefix, suffix := cntrl.GetPrefixSuffix()
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), cntrl.UUID)
 
-		srv.GlobalMessage(srv.Translate("multiplayer.player.left", chat.NewMessage(prefix+conn.Name()+suffix)))
+		srv.GlobalMessage(srv.Translate("player.leave", map[string]string{"player": cntrl.Name(), "player_prefix": prefix, "player_suffix": suffix}))
 		srv.PlayerlistRemove(conn.UUID())
 		cntrl.Despawn()
 		plyr.Save()
@@ -167,22 +169,22 @@ func (srv *Server) addPlayer(p *Session) {
 
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.conn.RemoteAddr(), p.conn.Name(), p.UUID)
 
-	srv.GlobalMessage(srv.Translate("multiplayer.player.joined", chat.NewMessage(prefix+p.Name()+suffix)))
+	srv.GlobalMessage(srv.Translate("player.join", map[string]string{"player": p.Name(), "player_prefix": prefix, "player_suffix": suffix}))
 }
 
 func (srv *Server) GetCommandGraph() *commands.Graph {
 	return srv.commandGraph
 }
 
-func (srv *Server) Translate(msg string, with ...chat.Message) chat.Message {
-	return chat.Translate(msg, with...)
-}
-
-func (srv *Server) ParsePlaceholders(msg string, data map[string]string) string {
-	for k, v := range data {
-		msg = strings.ReplaceAll(msg, "%"+k+"%", v)
+func (srv *Server) Translate(msg string, data map[string]string) chat.Message {
+	txt, ok := srv.lang[msg]
+	if !ok {
+		return chat.NewMessage(msg)
 	}
-	return msg
+	for k, v := range data {
+		txt = strings.ReplaceAll(txt, "%"+k+"%", v)
+	}
+	return chat.NewMessage(txt)
 }
 
 func (srv *Server) Reload() error {
@@ -197,7 +199,7 @@ func (srv *Server) Reload() error {
 
 	for _, p := range srv.players {
 		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.conn.UUID()) {
-			p.Disconnect(chat.Translate("multiplayer.disconnect.not_whitelisted"))
+			p.Disconnect(srv.Translate("disconnect.not_whitelisted", nil))
 			continue
 		}
 
@@ -288,7 +290,7 @@ func (srv *Server) Close() {
 	saveCache()
 
 	for _, p := range srv.players {
-		p.Disconnect(srv.Translate("multiplayer.disconnect.server_shutdown"))
+		p.Disconnect(srv.Translate("disconnect.server_shutdown", nil))
 		p.Player.Save()
 	}
 	srv.Logger.Info("Saving world...")
