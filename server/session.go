@@ -73,6 +73,7 @@ type Session struct {
 	expires      uint64
 
 	acknowledgedMessages []packet.PreviousMessage
+	index                int32
 }
 
 func (p *Session) HandlePackets() error {

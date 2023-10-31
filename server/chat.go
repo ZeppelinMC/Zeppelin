@@ -59,27 +59,25 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 		for _, pl := range p.Server.players {
 			pl.mu.Lock()
 			defer pl.mu.Unlock()
-			var index = int32(len(pl.acknowledgedMessages))
-			var ack = pl.acknowledgedMessages
-			if len(ack) == 21 {
-				ack = ack[:20]
-			}
 			pl.SendPacket(&packet.PlayerChatMessage{
 				Sender:           p.conn.UUID(),
 				MessageSignature: pk.Signature,
-				Index:            index,
+				Index:            pl.index,
 				Message:          pk.Message,
 				Timestamp:        pk.Timestamp,
 				Salt:             pk.Salt,
 				NetworkName:      net,
-				PreviousMessages: ack,
+				PreviousMessages: pl.acknowledgedMessages,
 			})
-			pl.acknowledgedMessages = append([]packet.PreviousMessage{
-				{
-					MessageID: index,
-					Signature: pk.Signature,
-				},
-			}, pl.acknowledgedMessages...)
+			if len(pl.acknowledgedMessages) != 20 {
+				pl.acknowledgedMessages = append([]packet.PreviousMessage{
+					{
+						MessageID: pl.index,
+						Signature: pk.Signature,
+					},
+				}, pl.acknowledgedMessages...)
+			}
+			pl.index++
 		}
 	}
 }
