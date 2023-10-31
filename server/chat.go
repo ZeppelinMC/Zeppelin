@@ -38,6 +38,9 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			p.Server.mu.RLock()
 			defer p.Server.mu.RUnlock()
 			for _, pl := range p.Server.players {
+				if pl.clientInfo.ChatMode != 0 {
+					continue
+				}
 				pl.SendPacket(&packet.DisguisedChatMessage{
 					Message:      chat.NewMessage(pk.Message),
 					ChatTypeName: net,
@@ -57,6 +60,9 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 		p.Server.mu.RLock()
 		defer p.Server.mu.RUnlock()
 		for _, pl := range p.Server.players {
+			if pl.clientInfo.ChatMode != 0 {
+				continue
+			}
 			pl.mu.Lock()
 			defer pl.mu.Unlock()
 			pl.SendPacket(&packet.PlayerChatMessage{

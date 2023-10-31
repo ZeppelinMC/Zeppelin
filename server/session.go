@@ -72,6 +72,7 @@ type Session struct {
 	keySignature []byte
 	expires      uint64
 
+	// secure chat things, do not interfere
 	acknowledgedMessages []packet.PreviousMessage
 	index                int32
 }

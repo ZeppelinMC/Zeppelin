@@ -138,9 +138,10 @@ func (srv *Server) addPlayer(p *Session) {
 	}
 
 	srv.mu.RLock()
-
 	players := make([]types.PlayerInfo, 0, len(srv.players))
 	for _, pl := range srv.players {
+		pl.mu.RLock()
+		defer pl.mu.RUnlock()
 		players = append(players, types.PlayerInfo{
 			UUID:          pl.conn.UUID(),
 			Name:          pl.conn.Name(),
