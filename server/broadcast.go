@@ -14,14 +14,6 @@ import (
 	"github.com/aimjel/minecraft/packet"
 )
 
-func (srv *Server) GlobalBroadcast(pk packet.Packet) {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-	for _, p := range srv.players {
-		p.SendPacket(pk)
-	}
-}
-
 func (srv *Server) GlobalMessage(message chat.Message) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
@@ -107,11 +99,15 @@ func (p *Session) BreakBlock(pos uint64) {
 
 func (p *Session) BroadcastSkinData() {
 	cl := p.clientInfo
-	p.Server.GlobalBroadcast(&PacketSetPlayerMetadata{
-		EntityID:           p.entityID,
-		DisplayedSkinParts: &cl.DisplayedSkinParts,
-		MainHand:           &cl.MainHand,
-	})
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
+	for _, pl := range p.Server.players {
+		pl.SendPacket(&PacketSetPlayerMetadata{
+			EntityID:           p.entityID,
+			DisplayedSkinParts: &cl.DisplayedSkinParts,
+			MainHand:           &cl.MainHand,
+		})
+	}
 }
 
 func degreesToAngle(degrees float32) byte {
@@ -427,7 +423,11 @@ func (p *Session) BroadcastSprinting(val bool) {
 }
 
 func (srv *Server) PlayerlistRemove(players ...[16]byte) {
-	srv.GlobalBroadcast(&packet.PlayerInfoRemove{UUIDs: players})
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, p := range srv.players {
+		p.SendPacket(&packet.PlayerInfoRemove{UUIDs: players})
+	}
 }
 
 type PacketSetPlayerMetadata struct {

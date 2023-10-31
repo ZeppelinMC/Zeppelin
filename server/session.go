@@ -71,6 +71,8 @@ type Session struct {
 	publicKey    []byte
 	keySignature []byte
 	expires      uint64
+
+	acknowledgedMessages []packet.PreviousMessage
 }
 
 func (p *Session) HandlePackets() error {
@@ -135,6 +137,8 @@ func (p *Session) SendPacket(pk packet.Packet) error {
 }
 
 func (p *Session) SetClientSettings(pk *packet.ClientSettings) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.clientInfo.Locale = pk.Locale
 	//don't set view distance but server controls it
 	p.clientInfo.ChatMode = pk.ChatMode
@@ -317,24 +321,28 @@ func (p *Session) Kill(message string) {
 func (p *Session) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
 	fmt.Println("resetting session, expires in", (expires-time.Now().UnixMilli())/1000/1000)
 	p.mu.Lock()
-	defer p.mu.Unlock()
 	p.sessionID = id
 	p.publicKey = pk
 	p.keySignature = ks
 	p.expires = uint64(expires)
+	p.mu.Unlock()
 
-	p.Server.GlobalBroadcast(&packet.PlayerInfoUpdate{
-		Actions: 0x02,
-		Players: []types.PlayerInfo{
-			{
-				UUID:          p.conn.UUID(),
-				ChatSessionID: id,
-				PublicKey:     pk,
-				KeySignature:  ks,
-				ExpiresAt:     expires,
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
+	for _, pl := range p.Server.players {
+		pl.SendPacket(&packet.PlayerInfoUpdate{
+			Actions: 0x02,
+			Players: []types.PlayerInfo{
+				{
+					UUID:          p.conn.UUID(),
+					ChatSessionID: id,
+					PublicKey:     pk,
+					KeySignature:  ks,
+					ExpiresAt:     expires,
+				},
 			},
-		},
-	})
+		})
+	}
 }
 
 func (p *Session) SetGameMode(gm byte) {
@@ -646,16 +654,20 @@ func (p *Session) SendCommandSuggestionsResponse(id int32, start int32, length i
 }
 
 func (p *Session) SetDisplayName(name string) {
-	p.Server.GlobalBroadcast(&packet.PlayerInfoUpdate{
-		Actions: 0x20,
-		Players: []types.PlayerInfo{
-			{
-				UUID:           p.conn.UUID(),
-				HasDisplayName: name != "",
-				DisplayName:    name,
+	p.Server.mu.RLock()
+	defer p.Server.mu.RUnlock()
+	for _, pl := range p.Server.players {
+		pl.SendPacket(&packet.PlayerInfoUpdate{
+			Actions: 0x20,
+			Players: []types.PlayerInfo{
+				{
+					UUID:           p.conn.UUID(),
+					HasDisplayName: name != "",
+					DisplayName:    name,
+				},
 			},
-		},
-	})
+		})
+	}
 }
 
 func (p *Session) TeleportToEntity(uuid [16]byte) {

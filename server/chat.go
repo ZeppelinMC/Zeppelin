@@ -35,10 +35,14 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			pk.Message = strings.Join(sp, "")
 		}
 		if p.Server.Config.Chat.Format == "" {
-			p.Server.GlobalBroadcast(&packet.DisguisedChatMessage{
-				Message:      chat.NewMessage(pk.Message),
-				ChatTypeName: net,
-			})
+			p.Server.mu.RLock()
+			defer p.Server.mu.RUnlock()
+			for _, pl := range p.Server.players {
+				pl.SendPacket(&packet.DisguisedChatMessage{
+					Message:      chat.NewMessage(pk.Message),
+					ChatTypeName: net,
+				})
+			}
 		} else {
 			msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
 				"player":        p.Name(),
@@ -50,14 +54,33 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			p.Server.GlobalMessage(msg)
 		}
 	} else {
-		p.Server.GlobalBroadcast(&packet.PlayerChatMessage{
-			Sender:           p.conn.UUID(),
-			MessageSignature: pk.Signature,
-			Message:          pk.Message,
-			Timestamp:        pk.Timestamp,
-			Salt:             pk.Salt,
-			NetworkName:      net,
-		})
+		p.Server.mu.RLock()
+		defer p.Server.mu.RUnlock()
+		for _, pl := range p.Server.players {
+			pl.mu.Lock()
+			defer pl.mu.Unlock()
+			var index = int32(len(pl.acknowledgedMessages))
+			var ack = pl.acknowledgedMessages
+			if len(ack) == 21 {
+				ack = ack[:20]
+			}
+			pl.SendPacket(&packet.PlayerChatMessage{
+				Sender:           p.conn.UUID(),
+				MessageSignature: pk.Signature,
+				Index:            index,
+				Message:          pk.Message,
+				Timestamp:        pk.Timestamp,
+				Salt:             pk.Salt,
+				NetworkName:      net,
+				PreviousMessages: ack,
+			})
+			pl.acknowledgedMessages = append([]packet.PreviousMessage{
+				{
+					MessageID: index,
+					Signature: pk.Signature,
+				},
+			}, pl.acknowledgedMessages...)
+		}
 	}
 }
 

@@ -95,3 +95,11 @@ func (c *Chunk) Block(x, y, z int64) block.Block {
 	fmt.Println(sec.getBlockAt(int(relx), int(rely), int(relz)).EncodedName())
 	return nil
 }
+
+func (c *Chunk) SetBlock(x, y, z int64, b block.Block) {
+	y1 := int(y/16) + 4
+	relx, rely, relz := x&0x0f, y&0x0f, z&0x0f
+
+	sec := c.sections[y1]
+	sec.setBlockAt(int(relx), int(rely), int(relz), b)
+}
