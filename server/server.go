@@ -182,6 +182,10 @@ func (srv *Server) Translate(msg string, data map[string]string) chat.Message {
 	if !ok {
 		return chat.NewMessage(msg)
 	}
+	return srv.ParsePlaceholders(txt, data)
+}
+
+func (srv *Server) ParsePlaceholders(txt string, data map[string]string) chat.Message {
 	for k, v := range data {
 		txt = strings.ReplaceAll(txt, "%"+k+"%", v)
 	}

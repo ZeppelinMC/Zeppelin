@@ -47,7 +47,7 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 				})
 			}
 		} else {
-			msg := p.Server.Translate(p.Server.Config.Chat.Format, map[string]string{
+			msg := p.Server.ParsePlaceholders(p.Server.Config.Chat.Format, map[string]string{
 				"player":        p.Name(),
 				"player_prefix": prefix,
 				"player_suffix": suffix,
