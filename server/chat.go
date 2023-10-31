@@ -22,7 +22,7 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 	net := chat.NewMessage(prefix + p.Name() + suffix).WithSuggestCommandClickEvent(fmt.Sprintf("/msg %s", p.Name()))
 
 	if !p.Server.Config.Chat.Secure {
-		if !p.Server.Config.Chat.Enable || !p.HasPermissions([]string{"server.chat.colors"}) {
+		if !p.Server.Config.Chat.Colors || !p.HasPermissions([]string{"server.chat.colors"}) {
 			// strip colors
 			sp := strings.Split(pk.Message, "")
 			for i, c := range sp {
