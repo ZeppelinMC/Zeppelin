@@ -65,6 +65,7 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			}
 			pl.mu.Lock()
 			defer pl.mu.Unlock()
+
 			pl.SendPacket(&packet.PlayerChatMessage{
 				Sender:           p.conn.UUID(),
 				MessageSignature: pk.Signature,

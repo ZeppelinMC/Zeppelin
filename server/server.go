@@ -127,6 +127,10 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 }
 
 func (srv *Server) addPlayer(p *Session) {
+	p.SendPacket(&packet.ServerData{
+		MOTD:               chat.NewMessage(srv.Config.MOTD),
+		EnforcesSecureChat: true,
+	})
 	srv.mu.Lock()
 	srv.players[p.UUID] = p
 	srv.mu.Unlock()
