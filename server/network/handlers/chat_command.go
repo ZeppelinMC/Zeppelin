@@ -6,6 +6,7 @@ import (
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -30,9 +31,13 @@ type Controller interface {
 	SetSlot(slot int8, data packet.Slot)
 	DropSlot()
 	TeleportToEntity(uuid [16]byte)
+	UUID() string
+	Name() string
+	IP() string
 }
 
-func ChatCommandPacket(controller Controller, graph *commands.Graph, content string, timestamp, salt int64, sigs []packet.Argument) {
+func ChatCommandPacket(controller Controller, graph *commands.Graph, log *logger.Logger, content string, timestamp, salt int64, sigs []packet.Argument) {
+	log.Print(chat.NewMessage(fmt.Sprintf("[%s] Player %s (%s) issued server command /%s", controller.IP(), controller.Name(), controller.UUID(), content)))
 	args := strings.Split(content, " ")
 	cmd := args[0]
 	var command *commands.Command
@@ -51,7 +56,7 @@ func ChatCommandPacket(controller Controller, graph *commands.Graph, content str
 		}
 	}
 	if command == nil || !controller.HasPermissions(command.RequiredPermissions) {
-		controller.SystemChatMessage(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", content)))
+		controller.SystemChatMessage(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n\r§n%s§r§c§o<--[HERE]", content)))
 		return
 	}
 	ctx := commands.CommandContext{

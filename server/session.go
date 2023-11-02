@@ -1,6 +1,9 @@
 package server
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
@@ -54,7 +57,7 @@ type Session struct {
 
 	entityID int32
 
-	UUID string
+	uuid string
 
 	clientInfo struct {
 		Locale               string
@@ -70,14 +73,19 @@ type Session struct {
 	sessionID    [16]byte
 	publicKey    []byte
 	keySignature []byte
-	expires      uint64
+	expires      int64
 
 	// secure chat things, do not interfere
-	acknowledgedMessages []packet.PreviousMessage
-	index                int32
+	previousMessages              []packet.PreviousMessage
+	acknowledgedMessageSignatures [][]byte
+	index                         int32
 }
 
-func (p *Session) HandlePackets() error {
+func (p *Session) UUID() string {
+	return p.uuid
+}
+
+func (p *Session) handlePackets() error {
 	ticker := time.NewTicker(25 * time.Second)
 	for {
 		select {
@@ -97,7 +105,7 @@ func (p *Session) HandlePackets() error {
 		case *packet.ChatMessageServer:
 			handlers.ChatMessagePacket(p, pk)
 		case *packet.ChatCommandServer:
-			handlers.ChatCommandPacket(p, p.Server.commandGraph, pk.Command, pk.Timestamp, pk.Salt, pk.ArgumentSignatures)
+			handlers.ChatCommandPacket(p, p.Server.commandGraph, p.Server.Logger, pk.Command, pk.Timestamp, pk.Salt, pk.ArgumentSignatures)
 		case *packet.ClientSettings:
 			handlers.ClientSettings(p, pk)
 		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation:
@@ -221,7 +229,6 @@ func (p *Session) Login(dim string) {
 		Channel: "minecraft:brand",
 		Data:    []byte("Dynamite"),
 	})
-
 	x1, y1, z1 := p.Player.Position()
 	yaw, pitch := p.Player.Rotation()
 
@@ -300,7 +307,7 @@ func (p *Session) Kill(message string) {
 		}
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:     p.entityID,
-			SourceTypeID: 0,
+			SourceTypeID: 17,
 		})
 		pl.SendPacket(&packet.EntityEvent{
 			EntityID: p.entityID,
@@ -311,22 +318,24 @@ func (p *Session) Kill(message string) {
 
 	p.SendPacket(&packet.DamageEvent{
 		EntityID:     p.entityID,
-		SourceTypeID: 0,
+		SourceTypeID: 17,
 	})
 	p.Despawn()
 	p.SendPacket(&packet.CombatDeath{
 		Message:  message,
 		PlayerID: p.entityID,
 	})
+	p.Player.SetHealth(20)
+	p.Player.SetFoodLevel(20)
+	p.Player.SetFoodSaturationLevel(5)
 }
 
 func (p *Session) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
-	fmt.Println("resetting session, expires in", (expires-time.Now().UnixMilli())/1000/1000)
 	p.mu.Lock()
 	p.sessionID = id
-	p.publicKey = pk
-	p.keySignature = ks
-	p.expires = uint64(expires)
+	p.publicKey = bytes.Clone(pk)
+	p.keySignature = bytes.Clone(ks)
+	p.expires = expires
 	p.mu.Unlock()
 
 	p.Server.mu.RLock()
@@ -338,8 +347,8 @@ func (p *Session) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
 				{
 					UUID:          p.conn.UUID(),
 					ChatSessionID: id,
-					PublicKey:     pk,
-					KeySignature:  ks,
+					PublicKey:     bytes.Clone(pk),
+					KeySignature:  bytes.Clone(ks),
 					ExpiresAt:     expires,
 				},
 			},
@@ -353,25 +362,24 @@ func (p *Session) SetGameMode(gm byte) {
 		Event: 3,
 		Value: float32(gm),
 	})
-
-	p.Player.SetGameMode(byte(int32(gm)))
 	p.BroadcastGamemode()
 }
 
-func (p *Session) Push(x, y, z float64) {
-	yaw, pitch := p.Player.Rotation()
-	p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
-	p.SendPacket(&packet.PlayerPositionLook{
-		X:          x,
-		Y:          y,
-		Z:          z,
-		Yaw:        yaw,
-		Pitch:      pitch,
-		TeleportID: idCounter.Add(1),
-	})
-	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.Player.OnGround(), true)
-}
-
+/*
+	func (p *Session) Push(x, y, z float64) {
+		yaw, pitch := p.Player.Rotation()
+		p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
+		p.SendPacket(&packet.PlayerPositionLook{
+			X:          x,
+			Y:          y,
+			Z:          z,
+			Yaw:        yaw,
+			Pitch:      pitch,
+			TeleportID: idCounter.Add(1),
+		})
+		p.BroadcastMovement(0, x, y, z, yaw, pitch, p.Player.OnGround(), true)
+	}
+*/
 func (p *Session) Teleport(x, y, z float64, yaw, pitch float32) {
 	p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
 	p.SendPacket(&packet.PlayerPositionLook{
@@ -445,7 +453,7 @@ func (p *Session) SendChunks(dimension *world.Dimension) {
 			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
 			p.SendPacket(c.Data())
 
-			for _, en := range c.Entities {
+			/*for _, en := range c.Entities {
 				u, _ := world.IntUUIDToByteUUID(en.UUID)
 
 				var e *Entity
@@ -478,6 +486,7 @@ func (p *Session) SendChunks(dimension *world.Dimension) {
 				})
 				p.spawnedEntities = append(p.spawnedEntities, e.ID)
 			}
+			fmt.Println("sent chunk", x, z, "entities")*/
 		}
 	}
 }
@@ -505,7 +514,7 @@ func (p *Session) ChunkPosition() (int32, int32) {
 }
 
 func (p *Session) GetPrefixSuffix() (prefix string, suffix string) {
-	group := getGroup(getPlayer(p.UUID).Group)
+	group := getGroup(getPlayer(p.UUID()).Group)
 	return group.Prefix, group.Suffix
 }
 
@@ -525,8 +534,8 @@ func (p *Session) HandleCenterChunk(x1, z1, x2, z2 float64) {
 }
 
 func (p *Session) IsSpawned(entityId int32) bool {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	for _, e := range p.spawnedEntities {
 		if e == entityId {
 			return true
@@ -687,4 +696,38 @@ func (p *Session) TeleportToEntity(uuid [16]byte) {
 		yaw, pitch := e.data.Rotation[0], e.data.Rotation[1]
 		p.Teleport(x, y, z, yaw, pitch)
 	}
+}
+
+// SetSkin allows you to set the player's skin.
+func (p *Session) SetSkin(url string) {
+	var textures types.TexturesProperty
+	b, _ := base64.StdEncoding.DecodeString(p.conn.Properties()[0].Value)
+	json.Unmarshal(b, &textures)
+	textures.Textures.Skin.URL = url
+
+	t, _ := json.Marshal(textures)
+
+	d := base64.StdEncoding.EncodeToString(t)
+
+	p.conn.Properties()[0].Signature = ""
+	p.conn.Properties()[0].Value = d
+}
+
+// SetCape allows you to set the player's cape.
+func (p *Session) SetCape(url string) {
+	var textures types.TexturesProperty
+	b, _ := base64.StdEncoding.DecodeString(p.conn.Properties()[0].Value)
+	json.Unmarshal(b, &textures)
+	textures.Textures.Cape.URL = url
+
+	t, _ := json.Marshal(textures)
+
+	d := base64.StdEncoding.EncodeToString(t)
+
+	p.conn.Properties()[0].Signature = ""
+	p.conn.Properties()[0].Value = d
+}
+
+func (p *Session) IP() string {
+	return p.conn.RemoteAddr().String()
 }

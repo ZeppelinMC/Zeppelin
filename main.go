@@ -1,24 +1,23 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"os/signal"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/aimjel/minecraft/chat"
-	"github.com/dynamitemc/dynamite/server/commands"
+	"golang.org/x/term"
 
+	"github.com/aimjel/minecraft/chat"
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/dynamitemc/dynamite/core_commands"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server"
+	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/util"
 	"github.com/dynamitemc/dynamite/web"
 )
@@ -47,16 +46,17 @@ func start(cfg *server.Config) {
 		os.Exit(1)
 	}
 	log.Info("Done! (%v)", time.Since(startTime))
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	//c := make(chan os.Signal, 1)
+	//signal.Notify(c, os.Interrupt)
 
-	go func() {
+	/*go func() {
 		<-c
 		if util.HasArg("-prof") {
 			stopProfile()
 		}
-		srv.Close()
-	}()
+		fmt.Print("\r> ")
+		srv.ConsoleCommand("stop")
+	}()*/
 
 	go scanConsole(srv)
 	err = srv.Start()
@@ -69,6 +69,12 @@ func start(cfg *server.Config) {
 var cfg server.Config
 
 func main() {
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
 	log.Info("Starting Dynamite 1.20.1 server")
 	if util.HasArg("-prof") {
 		log.Info("Starting CPU/RAM profiler")
@@ -98,30 +104,69 @@ func main() {
 	start(&cfg)
 }
 
+// The extremely fancy custom terminal thing
 func scanConsole(srv *server.Server) {
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		txt := scanner.Text()
-		if txt == "" {
-			continue
+	var command string
+	for {
+		var b [1]byte
+		os.Stdin.Read(b[:])
+
+		switch b[0] {
+		case 127, 8: // backspace - delete character
+			if len(command) > 0 {
+				fmt.Print("\b \b")
+				command = command[:len(command)-1]
+				args := strings.Split(command, " ")
+
+				cmd := srv.GetCommandGraph().FindCommand(args[0])
+				if cmd == nil {
+					fmt.Printf("\r> %s", logger.R(command))
+				} else {
+					if len(args) > 1 {
+						fmt.Printf("\r> %s %s", args[0], logger.C(strings.Join(args[1:], " ")))
+					} else {
+						fmt.Printf("\r> %s", args[0])
+					}
+				}
+			}
+		case 3: // ctrl c - stop the server
+			fmt.Print("\r")
+			if len(command) > len("stop") {
+				fmt.Print("\x1b[K")
+			}
+			fmt.Print("> ")
+			srv.ConsoleCommand("stop")
+		case 13: // enter - run the command and clear it
+			fmt.Print("\r> \n\r")
+			command = strings.TrimSpace(command)
+			args := strings.Split(command, " ")
+
+			cmd := srv.GetCommandGraph().FindCommand(args[0])
+			if cmd == nil {
+				srv.Logger.Print(chat.NewMessage(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n\r&n%s&r&c&o<--[HERE]", args[0])))
+				command = ""
+				continue
+			}
+			cmd.Execute(commands.CommandContext{
+				Executor:    &server.ConsoleExecutor{Server: srv},
+				Arguments:   args[1:],
+				FullCommand: command,
+			})
+			command = ""
+		default: // regular character - add to current command input
+			command += string(b[0])
+			args := strings.Split(command, " ")
+
+			cmd := srv.GetCommandGraph().FindCommand(args[0])
+			if cmd == nil {
+				fmt.Printf("\r> %s", logger.R(command))
+			} else {
+				if len(args) > 1 {
+					fmt.Printf("\r> %s %s", args[0], logger.C(strings.Join(args[1:], " ")))
+				} else {
+					fmt.Printf("\r> %s", args[0])
+				}
+			}
 		}
-
-		content := strings.TrimSpace(txt)
-		args := strings.Split(content, " ")
-
-		command := srv.GetCommandGraph().FindCommand(args[0])
-		if command == nil {
-			srv.Logger.Print(chat.NewMessage(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n&n%s&r&c&o<--[HERE]", args[0])))
-			continue
-		}
-		command.Execute(commands.CommandContext{
-			Arguments:   args[1:],
-			Executor:    &server.ConsoleExecutor{Server: srv},
-			FullCommand: content,
-		})
-	}
-
-	if err := scanner.Err(); err != nil {
-		srv.Logger.Error("%v scanning console", err)
 	}
 }

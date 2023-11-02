@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/aimjel/minecraft/chat"
-	"github.com/aimjel/minecraft/packet"
 	"github.com/aimjel/minecraft/protocol/types"
 
 	pk "github.com/aimjel/minecraft/packet"
@@ -41,7 +40,7 @@ type CommandContext struct {
 	Executor           interface{}
 	Arguments          []string
 	Salt, Timestamp    int64
-	ArgumentSignatures []packet.Argument
+	ArgumentSignatures []pk.Argument
 	FullCommand        string
 }
 
@@ -51,17 +50,18 @@ func (ctx *CommandContext) Reply(message chat.Message) {
 	}); ok {
 		p.SystemChatMessage(message)
 	} else {
-		fmt.Println(logger.ParseChat(message))
+		fmt.Print(strings.ReplaceAll(logger.ParseChat(message), "\n", "\n\r"))
+		fmt.Print("\n\r> ")
 	}
 }
 
 func (ctx *CommandContext) Incomplete() {
-	ctx.Reply(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§7%s§r§c§o<--[HERE]", ctx.FullCommand)))
+	ctx.Reply(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n\r§7%s§r§c§o<--[HERE]", ctx.FullCommand)))
 }
 
 func (ctx *CommandContext) ErrorHere(msg string) {
 	sp := strings.Split(ctx.FullCommand, " ")
-	ctx.Reply(chat.NewMessage(fmt.Sprintf("§c%s\n§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1])))
+	ctx.Reply(chat.NewMessage(fmt.Sprintf("§c%s\n\r§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1])))
 }
 
 func (ctx *CommandContext) Error(msg string) {

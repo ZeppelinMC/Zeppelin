@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -88,11 +90,11 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		Server:   srv,
 		entityID: idCounter.Add(1),
 	}
-	cntrl.UUID = uuid.String()
+	cntrl.uuid = uuid.String()
 	cntrl.clientInfo.ViewDistance = int8(srv.Config.ViewDistance)
 
 	for _, op := range srv.Operators {
-		if op.UUID == cntrl.UUID {
+		if op.UUID == cntrl.UUID() {
 			plyr.SetOperator(true)
 		}
 	}
@@ -109,9 +111,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	cntrl.intitializeData()
 
-	if err := cntrl.HandlePackets(); err != nil {
+	if err := cntrl.handlePackets(); err != nil {
 		prefix, suffix := cntrl.GetPrefixSuffix()
-		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), cntrl.UUID)
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), cntrl.UUID())
 
 		srv.GlobalMessage(srv.Translate("player.leave", map[string]string{"player": cntrl.Name(), "player_prefix": prefix, "player_suffix": suffix}))
 		srv.PlayerlistRemove(conn.UUID())
@@ -120,7 +122,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 		//todo consider moving logic of removing player to a separate function
 		srv.mu.Lock()
-		delete(srv.players, cntrl.UUID)
+		delete(srv.players, cntrl.UUID())
 		srv.mu.Unlock()
 		//gui.RemovePlayer(cntrl.UUID)
 	}
@@ -131,9 +133,6 @@ func (srv *Server) addPlayer(p *Session) {
 		MOTD:               chat.NewMessage(srv.Config.MOTD),
 		EnforcesSecureChat: true,
 	})
-	srv.mu.Lock()
-	srv.players[p.UUID] = p
-	srv.mu.Unlock()
 	newPlayer := types.PlayerInfo{
 		UUID:       p.conn.UUID(),
 		Name:       p.conn.Name(),
@@ -141,38 +140,45 @@ func (srv *Server) addPlayer(p *Session) {
 		Listed:     true,
 	}
 
-	srv.mu.RLock()
+	srv.mu.Lock()
+	srv.players[p.UUID()] = p
 	players := make([]types.PlayerInfo, 0, len(srv.players))
 	for _, pl := range srv.players {
 		pl.mu.RLock()
-		defer pl.mu.RUnlock()
 		players = append(players, types.PlayerInfo{
 			UUID:          pl.conn.UUID(),
 			Name:          pl.conn.Name(),
 			Properties:    pl.conn.Properties(),
 			Listed:        true,
-			PublicKey:     pl.publicKey,
-			KeySignature:  pl.keySignature,
+			PublicKey:     bytes.Clone(pl.publicKey),
+			KeySignature:  bytes.Clone(pl.keySignature),
 			ChatSessionID: pl.sessionID,
-			ExpiresAt:     int64(pl.expires),
+			ExpiresAt:     pl.expires,
 		})
-		pl.SendPacket(&packet.PlayerInfoUpdate{
-			Actions: 0x01 | 0x08,
-			Players: []types.PlayerInfo{newPlayer},
-		})
+		if pl.UUID() != p.UUID() {
+			pl.SendPacket(&packet.PlayerInfoUpdate{
+				Actions: 0x01 | 0x08,
+				Players: []types.PlayerInfo{newPlayer},
+			})
+		}
+		pl.mu.RUnlock()
 	}
-	srv.mu.RUnlock()
+	srv.mu.Unlock()
 
 	//updates the new session's player list
+	var actions byte = 0x01 | 0x08
+	if p.Server.Config.Chat.Secure {
+		actions |= 0x02
+	}
 	p.SendPacket(&packet.PlayerInfoUpdate{
-		Actions: 0x01 | 0x02 | 0x08,
+		Actions: actions,
 		Players: players,
 	})
 
 	//gui.AddPlayer(pl.session.Info().Name, pl.UUID)
 	prefix, suffix := p.GetPrefixSuffix()
 
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.conn.RemoteAddr(), p.conn.Name(), p.UUID)
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.conn.RemoteAddr(), p.conn.Name(), p.UUID())
 
 	srv.GlobalMessage(srv.Translate("player.join", map[string]string{"player": p.Name(), "player_prefix": prefix, "player_suffix": suffix}))
 }
@@ -215,32 +221,6 @@ func (srv *Server) Reload() error {
 		p.Player.SetOperator(srv.IsOperator(p.conn.UUID()))
 
 		p.SendCommands(srv.commandGraph)
-	}
-	return nil
-}
-
-func (srv *Server) FindEntity(id int32) interface{} {
-	if p := srv.FindPlayerByID(id); p != nil {
-		return p
-	} else {
-		srv.mu.RLock()
-		defer srv.mu.RUnlock()
-		return srv.entities[id]
-	}
-}
-
-func (srv *Server) FindEntityByUUID(id [16]byte) interface{} {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-	for _, p := range srv.players {
-		if p.conn.UUID() == id {
-			return p
-		}
-	}
-	for _, e := range srv.entities {
-		if e.UUID == id {
-			return e
-		}
 	}
 	return nil
 }
@@ -307,6 +287,7 @@ func (srv *Server) Close() {
 
 	f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
 	_ = toml.NewEncoder(f).Encode(srv.Config)
+	fmt.Print("\r")
 	os.Exit(0)
 }
 
@@ -321,4 +302,21 @@ func (srv *Server) loadFiles() {
 
 		*addresses[i] = u
 	}
+}
+
+func (srv *Server) ConsoleCommand(txt string) {
+	fmt.Println(txt)
+	content := strings.TrimSpace(txt)
+	args := strings.Split(content, " ")
+
+	command := srv.GetCommandGraph().FindCommand(args[0])
+	if command == nil {
+		srv.Logger.Print(chat.NewMessage(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n&n%s&r&c&o<--[HERE]", args[0])))
+		return
+	}
+	command.Execute(commands.CommandContext{
+		Arguments:   args[1:],
+		Executor:    &ConsoleExecutor{Server: srv},
+		FullCommand: content,
+	})
 }

@@ -30,7 +30,7 @@ var list_cmd = &commands.Command{
 		for _, p := range players {
 			msg += p.Name()
 			if len(ctx.Arguments) == 1 && ctx.Arguments[0] == "uuids" {
-				msg += fmt.Sprintf(" (%s)", p.UUID)
+				msg += fmt.Sprintf(" (%s)", p.UUID())
 			}
 			if index != len(players)-1 {
 				msg += ", "

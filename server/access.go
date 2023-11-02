@@ -127,7 +127,7 @@ func (srv *Server) Ban(p *Session, reason string) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	srv.BannedPlayers = append(srv.BannedPlayers, user{
-		UUID:    p.UUID,
+		UUID:    p.UUID(),
 		Name:    p.Name(),
 		Created: string(t),
 		Reason:  reason,
@@ -152,7 +152,7 @@ func (srv *Server) MakeOperator(p *Session) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	srv.Operators = append(srv.Operators, user{
-		UUID: p.UUID,
+		UUID: p.UUID(),
 		Name: p.Name(),
 	})
 }
@@ -163,7 +163,7 @@ func (srv *Server) MakeNotOperator(p *Session) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	for i, op := range srv.Operators {
-		if op.UUID == p.UUID {
+		if op.UUID == p.UUID() {
 			srv.Operators = slices.Delete(srv.Operators, i, i+1)
 			return
 		}
@@ -174,7 +174,7 @@ func (srv *Server) AddToWhitelist(p *Session) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	srv.WhitelistedPlayers = append(srv.WhitelistedPlayers, user{
-		UUID: p.UUID,
+		UUID: p.UUID(),
 		Name: p.Name(),
 	})
 }
@@ -183,7 +183,7 @@ func (srv *Server) RemoveFromWhitelist(p *Session) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	for i, w := range srv.WhitelistedPlayers {
-		if w.UUID == p.UUID {
+		if w.UUID == p.UUID() {
 			srv.WhitelistedPlayers = slices.Delete(srv.WhitelistedPlayers, i, i+1)
 			return
 		}

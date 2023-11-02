@@ -98,7 +98,10 @@ func (p *Session) BreakBlock(pos uint64) {
 }*/
 
 func (p *Session) BroadcastSkinData() {
+	p.mu.RLock()
 	cl := p.clientInfo
+	p.mu.RUnlock()
+
 	p.Server.mu.RLock()
 	defer p.Server.mu.RUnlock()
 	for _, pl := range p.Server.players {
@@ -119,14 +122,6 @@ func positionIsValid(x, y, z float64) bool {
 		!math.IsInf(x, 0) && !math.IsInf(y, 0) && !math.IsInf(z, 0)
 }
 
-func direction(ya, pi float32) (x, y, z float64) {
-	yaw, pitch := float64(ya), float64(pi)
-	x = -math.Cos(pitch) * math.Sin(yaw)
-	y = -math.Sin(pitch)
-	z = math.Cos(pitch) * math.Cos(yaw)
-	return x, y, z
-}
-
 func (p *Session) Hit(entityId int32) {
 	e := p.Server.FindEntity(entityId)
 	x, y, z := p.Player.Position()
@@ -139,7 +134,7 @@ func (p *Session) Hit(entityId int32) {
 		pl.SetHealth(health - 1)
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:        entityId,
-			SourceTypeID:    1,
+			SourceTypeID:    31,
 			SourceCauseID:   p.entityID + 1,
 			SourceDirectID:  p.entityID + 1,
 			SourcePositionX: &x,
@@ -162,7 +157,7 @@ func (p *Session) Hit(entityId int32) {
 		}
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:        entityId,
-			SourceTypeID:    1,
+			SourceTypeID:    31,
 			SourceCauseID:   p.entityID + 1,
 			SourceDirectID:  p.entityID + 1,
 			SourcePositionX: &x,
@@ -274,7 +269,7 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 	defer p.Server.mu.RUnlock()
 
 	for _, pl := range p.Server.players {
-		if p.UUID == pl.UUID {
+		if p.UUID() == pl.UUID() {
 			continue
 		}
 		if !pl.InView(p) {

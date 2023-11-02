@@ -35,6 +35,18 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			pk.Message = strings.Join(sp, "")
 		}
 		if p.Server.Config.Chat.Format == "" {
+			p.Server.Logger.Print(chat.Message{
+				Text: point("<"),
+				Extra: []chat.Message{
+					net,
+					{
+						Text: point(">"),
+					},
+					{
+						Text: point(" " + pk.Message),
+					},
+				},
+			})
 			p.Server.mu.RLock()
 			defer p.Server.mu.RUnlock()
 			for _, pl := range p.Server.players {
@@ -57,6 +69,18 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 			p.Server.GlobalMessage(msg)
 		}
 	} else {
+		p.Server.Logger.Print(chat.Message{
+			Text: point("<"),
+			Extra: []chat.Message{
+				net,
+				{
+					Text: point(">"),
+				},
+				{
+					Text: point(" " + pk.Message),
+				},
+			},
+		})
 		p.Server.mu.RLock()
 		defer p.Server.mu.RUnlock()
 		for _, pl := range p.Server.players {
@@ -64,8 +88,12 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 				continue
 			}
 			pl.mu.Lock()
-			defer pl.mu.Unlock()
-
+			var pr = p.previousMessages
+			for _, msg := range pr {
+				if !pl.isMessageCached([256]byte(msg.Signature)) {
+					msg.MessageID = -1
+				}
+			}
 			pl.SendPacket(&packet.PlayerChatMessage{
 				Sender:           p.conn.UUID(),
 				MessageSignature: pk.Signature,
@@ -74,18 +102,22 @@ func (p *Session) Chat(pk *packet.ChatMessageServer) {
 				Timestamp:        pk.Timestamp,
 				Salt:             pk.Salt,
 				NetworkName:      net,
-				PreviousMessages: pl.acknowledgedMessages,
+				PreviousMessages: pr,
 			})
-			if len(pl.acknowledgedMessages) != 20 {
-				pl.acknowledgedMessages = append([]packet.PreviousMessage{
-					{
-						MessageID: pl.index,
-						Signature: pk.Signature,
-					},
-				}, pl.acknowledgedMessages...)
-			}
-			pl.index++
+			pl.acknowledgedMessageSignatures = append(pl.acknowledgedMessageSignatures, pk.Signature)
+			pl.mu.Unlock()
 		}
+		p.mu.Lock()
+		if len(p.previousMessages) != 20 {
+			p.previousMessages = append([]packet.PreviousMessage{
+				{
+					MessageID: p.index,
+					Signature: pk.Signature,
+				},
+			}, p.previousMessages...)
+		}
+		p.index++
+		p.mu.Unlock()
 	}
 }
 
@@ -103,4 +135,17 @@ func (p *Session) Whisper(pl *Session, msg string, timestamp, salt int64, sig []
 		NetworkName:       chat.NewMessage(prefix + p.Name() + suffix),
 		NetworkTargetName: &tgt,
 	})
+}
+
+func (p *Session) isMessageCached(s [256]byte) bool {
+	for _, sig := range p.acknowledgedMessageSignatures {
+		if [256]byte(sig) == s {
+			return true
+		}
+	}
+	return false
+}
+
+func point[T any](t T) *T {
+	return &t
 }

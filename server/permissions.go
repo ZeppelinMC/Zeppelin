@@ -51,6 +51,7 @@ func clearCache() {
 func getPlayer(playerId string) PlayerPermissions {
 	cache.mu.RLock()
 	if cache.players[playerId].Permissions != nil {
+		cache.mu.RUnlock()
 		return cache.players[playerId]
 	}
 	cache.mu.RUnlock()
@@ -72,6 +73,7 @@ func getPlayer(playerId string) PlayerPermissions {
 func getGroup(group string) GroupPermissions {
 	cache.mu.RLock()
 	if cache.groups[group].Permissions != nil {
+		cache.mu.RUnlock()
 		return cache.groups[group]
 	}
 	cache.mu.RUnlock()
@@ -96,7 +98,7 @@ func (p *Session) HasPermissions(perms []string) bool {
 	if p.Player.Operator() {
 		return true
 	}
-	permissionsPlayer := getPlayer(p.UUID)
+	permissionsPlayer := getPlayer(p.UUID())
 	permissionsGroup := getGroup(permissionsPlayer.Group)
 	for _, perm := range perms {
 		if !permissionsPlayer.Permissions[perm] && !permissionsGroup.Permissions[perm] {

@@ -29,14 +29,17 @@ type Logger struct {
 }
 
 func getDateString() string {
-	return gray(time.Now().Format("15:04:05"))
+	return time.Now().Format("15:04:05")
 }
 
-var gray = color.New(color.FgHiBlack, color.Bold).SprintFunc()
-var blue = color.New(color.FgBlue, color.Bold).SprintFunc()
-var cyan = color.New(color.FgCyan, color.Bold).SprintFunc()
-var red = color.New(color.FgRed, color.Bold).SprintFunc()
-var yellow = color.New(color.FgYellow, color.Bold).SprintFunc()
+var GB = color.New(color.FgHiBlack, color.Bold).SprintFunc()
+var BB = color.New(color.FgBlue, color.Bold).SprintFunc()
+var CB = color.New(color.FgCyan, color.Bold).SprintFunc()
+var RB = color.New(color.FgRed, color.Bold).SprintFunc()
+var YB = color.New(color.FgYellow, color.Bold).SprintFunc()
+
+var R = color.New(color.FgRed).SprintFunc()
+var C = color.New(color.FgCyan).SprintFunc()
 
 var colors = map[string]color.Attribute{
 	"black":        color.FgBlack,
@@ -60,7 +63,10 @@ var colors = map[string]color.Attribute{
 func ParseChat(msg chat.Message) string {
 	var str string
 	texts := []chat.Message{msg}
-	texts = append(texts, msg.Extra...)
+	for _, m := range msg.Extra {
+		texts = append(texts, m)
+		texts = append(texts, m.Extra...)
+	}
 
 	for _, text := range texts {
 		if text.Text == nil {
@@ -91,7 +97,8 @@ func (logger *Logger) Print(msg chat.Message) {
 		Type:    "chat",
 		Message: msg.String(),
 	})
-	fmt.Println(ParseChat(msg))
+	fmt.Println("\r" + ParseChat(msg))
+	fmt.Print("\r> ")
 }
 
 func (logger *Logger) Info(format string, a ...interface{}) {
@@ -103,7 +110,8 @@ func (logger *Logger) Info(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("%s %s: %s\n", time, blue("INFO "), str)
+	fmt.Printf("\r%s %s: %s\n", GB(time), BB("INFO "), str)
+	fmt.Print("\r> ")
 }
 
 func (logger *Logger) Debug(format string, a ...interface{}) {
@@ -118,7 +126,8 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("%s %s: %s\n", time, cyan("DEBUG"), str)
+	fmt.Printf("\r%s %s: %s\n", GB(time), CB("DEBUG"), str)
+	fmt.Print("\r> ")
 }
 
 func (logger *Logger) Error(format string, a ...interface{}) {
@@ -130,7 +139,8 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Fprintf(os.Stderr, "%s %s: %s\n", time, red("ERROR"), str)
+	fmt.Fprintf(os.Stderr, "\r%s %s: %s\n", GB(time), RB("ERROR"), str)
+	fmt.Print("\r> ")
 }
 
 func (logger *Logger) Warn(format string, a ...interface{}) {
@@ -142,7 +152,8 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("%s %s: %s\n", time, yellow("WARN "), str)
+	fmt.Printf("%s %s: %s\n", GB(time), YB("WARN "), str)
+	fmt.Print("\r> ")
 }
 
 func (logger *Logger) EnableChannel() {

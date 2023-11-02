@@ -26,7 +26,7 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		Status: minecraft.NewStatus(minecraft.Version{
 			Text:     "DynamiteMC 1.20.1",
 			Protocol: 763,
-		}, cfg.MaxPlayers, cfg.MOTD, true, false),
+		}, cfg.MaxPlayers, cfg.MOTD, true, true),
 		OnlineMode:           cfg.Online,
 		CompressionThreshold: int32(cfg.CompressionThreshold),
 	}

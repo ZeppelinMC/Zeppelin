@@ -62,7 +62,7 @@ var gamemode_cmd = &commands.Command{
 			"player_suffix": suffix,
 			"gamemode":      pascalify(ctx.Arguments[0]),
 		})
-		if exe, ok := ctx.Executor.(*server.Session); ok && player.UUID == exe.UUID {
+		if exe, ok := ctx.Executor.(*server.Session); ok && player.UUID() == exe.UUID() {
 			msg = player.Server.Translate("commands.gamemode.success.self", map[string]string{"gamemode": pascalify(ctx.Arguments[0])})
 		}
 		ctx.Reply(msg)
