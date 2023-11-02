@@ -46,17 +46,6 @@ func start(cfg *server.Config) {
 		os.Exit(1)
 	}
 	log.Info("Done! (%v)", time.Since(startTime))
-	//c := make(chan os.Signal, 1)
-	//signal.Notify(c, os.Interrupt)
-
-	/*go func() {
-		<-c
-		if util.HasArg("-prof") {
-			stopProfile()
-		}
-		fmt.Print("\r> ")
-		srv.ConsoleCommand("stop")
-	}()*/
 
 	go scanConsole(srv)
 	err = srv.Start()

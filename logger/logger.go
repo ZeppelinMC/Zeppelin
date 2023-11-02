@@ -26,6 +26,7 @@ type Logger struct {
 	c        chan Message
 	messages []Message
 	file     *os.File
+	done     bool
 }
 
 func getDateString() string {
@@ -98,7 +99,9 @@ func (logger *Logger) Print(msg chat.Message) {
 		Message: msg.String(),
 	})
 	fmt.Println("\r" + ParseChat(msg))
-	fmt.Print("\r> ")
+	if !logger.done {
+		fmt.Print("\r> ")
+	}
 }
 
 func (logger *Logger) Info(format string, a ...interface{}) {
@@ -110,8 +113,12 @@ func (logger *Logger) Info(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("\r%s %s: %s\n", GB(time), BB("INFO "), str)
-	fmt.Print("\r> ")
+	if !logger.done {
+		fmt.Printf("\r%s %s: %s\n", GB(time), BB("INFO "), str)
+		fmt.Print("\r> ")
+	} else {
+		fmt.Printf("\r%s %s: %s", GB(time), BB("INFO "), str)
+	}
 }
 
 func (logger *Logger) Debug(format string, a ...interface{}) {
@@ -126,8 +133,12 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("\r%s %s: %s\n", GB(time), CB("DEBUG"), str)
-	fmt.Print("\r> ")
+	if !logger.done {
+		fmt.Printf("\r%s %s: %s\n", GB(time), CB("INFO "), str)
+		fmt.Print("\r> ")
+	} else {
+		fmt.Printf("\r%s %s: %s", GB(time), CB("INFO "), str)
+	}
 }
 
 func (logger *Logger) Error(format string, a ...interface{}) {
@@ -139,8 +150,12 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Fprintf(os.Stderr, "\r%s %s: %s\n", GB(time), RB("ERROR"), str)
-	fmt.Print("\r> ")
+	if !logger.done {
+		fmt.Fprintf(os.Stderr, "\r%s %s: %s\n", GB(time), RB("ERROR"), str)
+		fmt.Print("\r> ")
+	} else {
+		fmt.Fprintf(os.Stderr, "\r%s %s: %s", GB(time), RB("ERROR"), str)
+	}
 }
 
 func (logger *Logger) Warn(format string, a ...interface{}) {
@@ -152,8 +167,12 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
-	fmt.Printf("%s %s: %s\n", GB(time), YB("WARN "), str)
-	fmt.Print("\r> ")
+	if !logger.done {
+		fmt.Printf("\r%s %s: %s\n", GB(time), YB("INFO "), str)
+		fmt.Print("\r> ")
+	} else {
+		fmt.Printf("\r%s %s: %s", GB(time), YB("INFO "), str)
+	}
 }
 
 func (logger *Logger) EnableChannel() {
@@ -171,6 +190,10 @@ func (logger *Logger) send(message Message) {
 	} else {
 		logger.messages = append(logger.messages, message)
 	}
+}
+
+func (logger *Logger) Done() {
+	logger.done = true
 }
 
 func (logger *Logger) write(str string) {

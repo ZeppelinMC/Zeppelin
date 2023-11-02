@@ -282,12 +282,12 @@ func (srv *Server) Close() {
 		p.Disconnect(srv.Translate("disconnect.server_shutdown", nil))
 		p.Player.Save()
 	}
+	srv.Logger.Done()
 	srv.Logger.Info("Saving world...")
 	srv.World.Save()
 
 	f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
 	_ = toml.NewEncoder(f).Encode(srv.Config)
-	fmt.Print("\r")
 	os.Exit(0)
 }
 

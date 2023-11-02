@@ -2,7 +2,7 @@ module github.com/dynamitemc/dynamite
 
 go 1.21.0
 
-toolchain go1.21.1
+toolchain go1.21.3
 
 require (
 	github.com/fatih/color v1.15.0
