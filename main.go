@@ -96,8 +96,8 @@ func main() {
 // The extremely fancy custom terminal thing
 func scanConsole(srv *server.Server) {
 	var command string
+	var b [1]byte
 	for {
-		var b [1]byte
 		os.Stdin.Read(b[:])
 
 		switch b[0] {
@@ -109,7 +109,7 @@ func scanConsole(srv *server.Server) {
 
 				cmd := srv.GetCommandGraph().FindCommand(args[0])
 				if cmd == nil {
-					fmt.Printf("\r> %s", logger.R(command))
+					fmt.Printf("\r> %s", logger.HR(command))
 				} else {
 					if len(args) > 1 {
 						fmt.Printf("\r> %s %s", args[0], logger.C(strings.Join(args[1:], " ")))
@@ -126,8 +126,11 @@ func scanConsole(srv *server.Server) {
 			fmt.Print("> ")
 			srv.ConsoleCommand("stop")
 		case 13: // enter - run the command and clear it
-			fmt.Print("\r> \n\r")
 			command = strings.TrimSpace(command)
+			if command == "" {
+				continue
+			}
+			fmt.Print("\r> \n\r")
 			args := strings.Split(command, " ")
 
 			cmd := srv.GetCommandGraph().FindCommand(args[0])
@@ -148,7 +151,7 @@ func scanConsole(srv *server.Server) {
 
 			cmd := srv.GetCommandGraph().FindCommand(args[0])
 			if cmd == nil {
-				fmt.Printf("\r> %s", logger.R(command))
+				fmt.Printf("\r> %s", logger.HR(command))
 			} else {
 				if len(args) > 1 {
 					fmt.Printf("\r> %s %s", args[0], logger.C(strings.Join(args[1:], " ")))

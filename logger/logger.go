@@ -39,7 +39,7 @@ var CB = color.New(color.FgCyan, color.Bold).SprintFunc()
 var RB = color.New(color.FgRed, color.Bold).SprintFunc()
 var YB = color.New(color.FgYellow, color.Bold).SprintFunc()
 
-var R = color.New(color.FgRed).SprintFunc()
+var HR = color.New(color.FgHiRed).SprintFunc()
 var C = color.New(color.FgCyan).SprintFunc()
 
 var colors = map[string]color.Attribute{
