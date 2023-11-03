@@ -37,7 +37,7 @@ type Controller interface {
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, log *logger.Logger, content string, timestamp, salt int64, sigs []packet.Argument) {
-	log.Print(chat.NewMessage(fmt.Sprintf("[%s] Player %s (%s) issued server command /%s", controller.IP(), controller.Name(), controller.UUID(), content)))
+	log.Info(logger.ParseChat(chat.NewMessage(fmt.Sprintf("[%s] Player %s (%s) issued server command /%s", controller.IP(), controller.Name(), controller.UUID(), content))))
 	args := strings.Split(content, " ")
 	cmd := args[0]
 	var command *commands.Command

@@ -8,9 +8,11 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/dynamitemc/dynamite/logger"
+	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/util"
 	"github.com/gorilla/websocket"
 )
@@ -34,7 +36,7 @@ var upgrader = websocket.Upgrader{}
 var conns = make([]*conn, 0)
 
 func (h *handler) Render(w http.ResponseWriter, name string, vars map[string]string) (int, error) {
-	f, err := guifs.ReadFile("pages/" + name)
+	f, err := os.ReadFile("web/pages/" + name)
 	if err != nil {
 		return 0, err
 	}
@@ -74,6 +76,51 @@ func (h *handler) HandleConn(c *conn) {
 			}
 			c.auth = true
 			c.conn.WriteJSON(sync(strings.Join(messages, "\n")))
+		case "command":
+			if !c.auth {
+				continue
+			}
+			command, ok := msg["data"].(string)
+			if !ok {
+				continue
+			}
+			srv.ConsoleCommand(command)
+		case "find-command":
+			if !c.auth {
+				continue
+			}
+			data, ok := msg["data"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			name, ok := data["command"].(string)
+			if !ok || name == "" {
+				continue
+			}
+			id, ok := data["id"].(float64)
+			if !ok {
+				continue
+			}
+
+			cmd := srv.GetCommandGraph().FindCommand(name)
+			if cmd == nil {
+				c.conn.WriteJSON(map[string]interface{}{
+					"type": "response",
+					"data": map[string]interface{}{
+						"id":   id,
+						"data": false,
+					},
+				})
+			} else {
+				c.conn.WriteJSON(map[string]interface{}{
+					"type": "response",
+					"data": map[string]interface{}{
+						"id":   id,
+						"data": true,
+					},
+				})
+			}
 		}
 	}
 }
@@ -101,7 +148,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		uri, _ := url.ParseRequestURI(r.RequestURI)
 		var code int
 		if strings.HasPrefix(r.RequestURI, "/cdn") {
-			file, err := guifs.ReadFile("cdn/" + strings.TrimPrefix(uri.Path, "/cdn/"))
+			file, err := os.ReadFile("web/cdn/" + strings.TrimPrefix(uri.Path, "/cdn/"))
 			if err != nil {
 				if errors.Is(err, fs.ErrNotExist) {
 					io.WriteString(w, "Unknown file!")
@@ -149,6 +196,20 @@ func logMessage(m string) map[string]interface{} {
 	}
 }
 
+func playerAdd(p player) map[string]interface{} {
+	return map[string]interface{}{
+		"type": "playeradd",
+		"data": p,
+	}
+}
+
+func playerRemove(p player) map[string]interface{} {
+	return map[string]interface{}{
+		"type": "playerremove",
+		"data": p,
+	}
+}
+
 func sync(m string) map[string]interface{} {
 	return map[string]interface{}{
 		"type": "sync",
@@ -165,6 +226,31 @@ type player struct {
 }
 
 var messages []string
+var players []player
+
+func AddPlayer(name, uuid string) {
+	p := player{uuid, name}
+	players = append(players, p)
+	for _, c := range conns {
+		if c == nil {
+			continue
+		}
+		if c.auth {
+			c.conn.WriteJSON(playerAdd(p))
+		}
+	}
+}
+
+type server interface {
+	ConsoleCommand(string)
+	GetCommandGraph() *commands.Graph
+}
+
+var srv server
+
+func SetServer(s server) {
+	srv = s
+}
 
 func LaunchWebPanel(addr string, password string, l *logger.Logger) {
 	go func() {

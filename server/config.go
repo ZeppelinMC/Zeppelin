@@ -42,6 +42,11 @@ func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *co
 		logger.Warn("TPS must be at least 20")
 		cfg.TPS = 20
 	}
+	if cfg.ResourcePack.Enable && cfg.ResourcePack.URL == "" {
+		logger.Warn("Resource pack is enabled but no url is provided")
+		cfg.ResourcePack.Enable = false
+	}
+
 	//web.SetMaxPlayers(cfg.MaxPlayers)
 
 	ln, err := lnCfg.Listen(address)

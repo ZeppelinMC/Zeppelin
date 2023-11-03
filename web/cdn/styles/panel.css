@@ -22,36 +22,43 @@
   border-style: solid;
   border-color: gray;
   border-width: 1px;
-  width: 50%;
-  height: 80vh;
+  margin: 0 auto;
+  width: 80%;
+  height: 60vh;
   padding: 10px 10px;
   overflow: auto;
 }
 
-#players {
+#command {
   border-radius: 5px;
   border-style: solid;
   border-color: gray;
   border-width: 1px;
-  width: 20%;
-  height: 50vh;
+  margin: 10px auto;
+  width: 80%;
   padding: 10px 10px;
+  color: white;
+  display: flex;
 }
 
 #boxes {
   display: flex;
 }
 
-#console,
-#players {
-  margin-right: 10px;
+#commandinput {
+  width: 100%;
+  margin-left: 10px;
+  border: none;
+  color: white;
+  font-size: 16px;
+  font-family: "Courier Prime", monospace;
 }
 
-#subtitles {
-  display: flex;
-}
-
-#subtitle,
-#subtitle {
-  margin-right: 47.1%;
+#commandrun {
+  color: white;
+  border-radius: 5px;
+  border-style: solid;
+  border-color: gray;
+  border-width: 1px;
+  font-size: 16px;
 }

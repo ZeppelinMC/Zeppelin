@@ -1,6 +1,41 @@
 const c = document.getElementById("console");
 const urlParams = new URLSearchParams(window.location.search);
 const password = urlParams.get("p");
+
+let tid = 0;
+let ws;
+
+const t = document.getElementById("commandinput");
+t.addEventListener("input", () => {
+  const value = t.value;
+  if (!ws) {
+    return;
+  }
+  const command = value.split(" ").shift();
+  ws.send(
+    JSON.stringify({
+      type: "find-command",
+      data: {
+        id: tid,
+        command,
+      },
+    })
+  );
+  tid++;
+});
+
+const r = document.getElementById("commandrun");
+r.addEventListener("click", () => {
+  const command = t.value;
+  ws.send(
+    JSON.stringify({
+      type: "command",
+      data: command,
+    })
+  );
+  t.value = "";
+});
+
 if (!password) {
   log(JSON.stringify({ type: "error", message: "Please input a password" }));
 }
@@ -9,7 +44,7 @@ log(JSON.stringify({ type: "error", message: "Connecting..." }));
 connect();
 
 function connect() {
-  const ws = new WebSocket("ws://" + window.location.host);
+  ws = new WebSocket("ws://" + window.location.host);
   ws.onopen = function () {
     ws.send(
       JSON.stringify({
@@ -20,7 +55,6 @@ function connect() {
   };
   ws.onmessage = function (ev) {
     const msg = JSON.parse(ev.data);
-    console.log(msg.type);
     switch (msg.type) {
       case "sync": {
         clear();
@@ -31,6 +65,14 @@ function connect() {
         log(JSON.parse(msg.data));
         break;
       }
+      case "playeradd":
+        const player = msg.data;
+      case "response":
+        if (msg.data.data) {
+          t.style["color"] = "white";
+        } else {
+          t.style["color"] = "red";
+        }
     }
   };
   ws.onclose = function () {
@@ -82,7 +124,11 @@ function log(msg) {
         break;
       }
     }
-    c.innerHTML += `<a class="consoletext" style="color: gray">${msg.time}</a> ${type}<a class="consoletext" style="color: white">: ${msg.message}</a><br/>`;
+    let m = msg.message;
+    if (m) {
+      m = m.replaceAll("\n", "<br/>");
+    }
+    c.innerHTML += `<a class="consoletext" style="color: gray">${msg.time}</a> ${type}<a class="consoletext" style="color: white">: ${m}</a><br/>`;
   }
 }
 

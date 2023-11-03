@@ -23,6 +23,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/dynamitemc/dynamite/web"
 )
 
 var idCounter atomic.Int32
@@ -175,7 +176,9 @@ func (srv *Server) addPlayer(p *Session) {
 		Players: players,
 	})
 
-	//gui.AddPlayer(pl.session.Info().Name, pl.UUID)
+	if srv.Config.Web.Enable {
+		web.AddPlayer(p.conn.Name(), p.UUID())
+	}
 	prefix, suffix := p.GetPrefixSuffix()
 
 	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.conn.RemoteAddr(), p.conn.Name(), p.UUID())
@@ -306,6 +309,7 @@ func (srv *Server) loadFiles() {
 
 func (srv *Server) ConsoleCommand(txt string) {
 	fmt.Println(txt)
+	fmt.Print("\r")
 	content := strings.TrimSpace(txt)
 	args := strings.Split(content, " ")
 
