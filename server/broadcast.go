@@ -186,7 +186,7 @@ func (p *Session) Despawn() {
 	}
 }
 
-// InView Checks if p can see pl
+// InView checks if p can see pl
 func (p *Session) InView(pl *Session) bool {
 	if p.Player.Dimension() != pl.Player.Dimension() {
 		return false
@@ -194,6 +194,13 @@ func (p *Session) InView(pl *Session) bool {
 
 	x1, y1, z1 := p.Player.Position()
 	x2, y2, z2 := pl.Player.Position()
+	distance := math.Sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))
+
+	return float64(p.clientInfo.ViewDistance)*16 > distance
+}
+
+func (p *Session) InView2(x2, y2, z2 float64) bool {
+	x1, y1, z1 := p.Player.Position()
 	distance := math.Sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))
 
 	return float64(p.clientInfo.ViewDistance)*16 > distance

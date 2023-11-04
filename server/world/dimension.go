@@ -3,6 +3,7 @@ package world
 import (
 	"sync"
 
+	"github.com/dynamitemc/dynamite/server/block"
 	"github.com/dynamitemc/dynamite/server/world/anvil"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
@@ -74,12 +75,12 @@ func (d *Dimension) Seed() int64 {
 	return d.seed
 }
 
-func (d *Dimension) Block(x, y, z int64) {
+func (d *Dimension) Block(x, y, z int64) block.Block {
 	chunk, err := d.Chunk(int32(x/16), int32(z/16))
 	if err != nil {
-		return
+		return nil
 	}
-	chunk.Block(x, y, z)
+	return chunk.Block(x, y, z)
 }
 
 func ParsePosition(p uint64) (x, y, z int64) {

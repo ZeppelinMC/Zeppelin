@@ -9,13 +9,18 @@ import (
 func (srv *Server) tickLoop() {
 	var n uint
 	for range time.Tick(time.Second / time.Duration(srv.Config.TPS)) {
-		//srv.tick(n)
+		srv.tick(n)
 		n++
 	}
 }
 
 func (srv *Server) tick(tick uint) {
+	for _, e := range srv.entities {
+		e.Entity.Tick(srv, tick)
+	}
 	for _, pl := range srv.players {
+		//x, y, z := pl.Player.Position()
+		//srv.SpawnEntity("minecraft:enderman", x, y, z)
 		//if tick%8 == 0 {
 		//pl.SendChunks(srv.GetDimension(pl.Player.Dimension()))
 		//pl.UnloadChunks()

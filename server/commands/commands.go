@@ -55,13 +55,27 @@ func (ctx *CommandContext) Reply(message chat.Message) {
 	}
 }
 
+func cond[T any](c bool, t T, f T) T {
+	if c {
+		return t
+	} else {
+		return f
+	}
+}
+
 func (ctx *CommandContext) Incomplete() {
-	ctx.Reply(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n\r§7%s§r§c§o<--[HERE]", ctx.FullCommand)))
+	_, ok := ctx.Executor.(interface {
+		SystemChatMessage(message chat.Message) error
+	})
+	ctx.Reply(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error"+cond(ok, "", "\r")+"\n§7%s§r§c§o<--[HERE]", ctx.FullCommand)))
 }
 
 func (ctx *CommandContext) ErrorHere(msg string) {
+	_, ok := ctx.Executor.(interface {
+		SystemChatMessage(message chat.Message) error
+	})
 	sp := strings.Split(ctx.FullCommand, " ")
-	ctx.Reply(chat.NewMessage(fmt.Sprintf("§c%s\n\r§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1])))
+	ctx.Reply(chat.NewMessage(fmt.Sprintf("§c%s\n"+cond(ok, "", "\r")+"§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1])))
 }
 
 func (ctx *CommandContext) Error(msg string) {

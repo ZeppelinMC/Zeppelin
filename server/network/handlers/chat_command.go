@@ -24,11 +24,9 @@ type Controller interface {
 	BroadcastSkinData()
 	Respawn(dim string)
 	BreakBlock(pos uint64)
-	ClearItem(slot int8)
 	Disconnect(reason chat.Message)
 	SetClientSettings(p *packet.ClientSettings)
 	SetSessionID(id [16]byte, pk, ks []byte, expires int64)
-	SetSlot(slot int8, data packet.Slot)
 	DropSlot()
 	TeleportToEntity(uuid [16]byte)
 	UUID() string
@@ -56,7 +54,7 @@ func ChatCommandPacket(controller Controller, graph *commands.Graph, log *logger
 		}
 	}
 	if command == nil || !controller.HasPermissions(command.RequiredPermissions) {
-		controller.SystemChatMessage(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n\r§n%s§r§c§o<--[HERE]", content)))
+		controller.SystemChatMessage(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error\n§n%s§r§c§o<--[HERE]", content)))
 		return
 	}
 	ctx := commands.CommandContext{

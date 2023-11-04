@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 	"sync"
@@ -97,7 +96,7 @@ func loadWorldData(f *os.File, wNbt *worldData) error {
 }
 
 func RandomSeed() int64 {
-	return int64(rand.Float64() * float64(math.MaxInt64))
+	return rand.Int63()
 }
 
 func (w *World) IncrementTime() (worldAge int64, dayTime int64) {

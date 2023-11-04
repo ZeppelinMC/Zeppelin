@@ -2,7 +2,6 @@ package chunk
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/aimjel/minecraft/protocol/types"
 	"github.com/dynamitemc/dynamite/server/block"
@@ -28,6 +27,7 @@ type Chunk struct {
 }
 
 func NewAnvilChunk(b []byte) (*Chunk, error) {
+
 	var ac anvilChunk
 	if err := nbt.Unmarshal(b, &ac); err != nil {
 		return nil, err
@@ -51,7 +51,6 @@ func NewAnvilChunk(b []byte) (*Chunk, error) {
 		if s.Y < 0 && s.Y < int8(ac.YPos) {
 			continue
 		}
-
 		sec := newSection(s.BlockStates.Data, s.BlockStates.Palette, s.BlockLight, s.SkyLight)
 
 		c.sections = append(c.sections, sec)
@@ -92,8 +91,9 @@ func (c *Chunk) Block(x, y, z int64) block.Block {
 	relx, rely, relz := x&0x0f, y&0x0f, z&0x0f
 
 	sec := c.sections[y1]
-	fmt.Println(sec.getBlockAt(int(relx), int(rely), int(relz)).EncodedName())
-	return nil
+	b := sec.getBlockAt(int(relx), int(rely), int(relz))
+	//logger.Println(b.EncodedName())
+	return b
 }
 
 func (c *Chunk) SetBlock(x, y, z int64, b block.Block) {

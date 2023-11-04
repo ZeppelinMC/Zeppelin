@@ -145,3 +145,15 @@ func NewVector2Argument(name string) Argument {
 		},
 	}
 }
+
+func NewResourceKeyArgument(name string, registry string) Argument {
+	return Argument{
+		Name: name,
+		Parser: Parser{
+			ID: 44,
+			Properties: types.CommandProperties{
+				Identifier: registry,
+			},
+		},
+	}
+}

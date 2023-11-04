@@ -3,20 +3,24 @@ package handlers
 import (
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/inventory"
+	"github.com/dynamitemc/dynamite/server/item"
 	"github.com/dynamitemc/dynamite/server/player"
 )
 
-func SetCreativeModeSlot(controller Controller, state *player.Player, slot int8, data packet.Slot) {
+func SetCreativeModeSlot(controller Controller, state *player.Player, slot int16, data packet.Slot) {
 	if state.GameMode() != 1 {
 		controller.Disconnect(chat.NewMessage("bruh cant use de creative button without creative"))
 		return
 	}
+	s := inventory.NetworkSlotToDataSlot(slot)
 	if !data.Present {
-		if s, ok := state.Inventory().Slot(slot); ok {
+		if s, ok := state.Inventory().Slot(s); ok {
 			state.SetPreviousSelectedSlot(s)
 		}
-		controller.ClearItem(slot)
+		state.Inventory().DeleteSlot(s)
 	} else {
-		controller.SetSlot(slot, data)
+		i, _ := item.PacketSlotToItem(s, data)
+		state.Inventory().SetSlot(s, i)
 	}
 }

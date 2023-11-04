@@ -127,7 +127,7 @@ func (p *Session) handlePackets() error {
 		case *packet.SetHeldItemServer:
 			handlers.SetHeldItem(p.Player, pk.Slot)
 		case *packet.SetCreativeModeSlot:
-			handlers.SetCreativeModeSlot(p, p.Player, int8(inventory.NetworkSlotToDataSlot(pk.Slot)), pk.ClickedItem)
+			handlers.SetCreativeModeSlot(p, p.Player, pk.Slot, pk.ClickedItem)
 		case *packet.TeleportToEntityServer:
 			handlers.TeleportToEntity(p, p.Player, pk.Player)
 		case *packet.ClickContainer:
@@ -431,29 +431,29 @@ func (p *Session) IsChunkLoaded(x, z int32) bool {
 func (p *Session) SendChunks(dimension *world.Dimension) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	max := float64(p.Server.Config.ViewDistance)
+	max := int32(p.Server.Config.ViewDistance)
 	if p.loadedChunks == nil {
 		p.loadedChunks = make(map[[2]int32]struct{})
 	}
 
 	x1, _, z1 := p.Player.Position()
 
-	chunkX := math.Floor(x1 / 16)
-	chunkZ := math.Floor(z1 / 16)
+	chunkX := int32(math.Floor(x1 / 16))
+	chunkZ := int32(math.Floor(z1 / 16))
 
 	for x := chunkX - max; x <= chunkX+max; x++ {
 		for z := chunkZ - max; z <= chunkZ+max; z++ {
-			if p.IsChunkLoaded(int32(x), int32(z)) {
+			if p.IsChunkLoaded(x, z) {
 				continue
 			}
-			c, err := dimension.Chunk(int32(x), int32(z))
+			c, err := dimension.Chunk(x, z)
 			if err != nil {
 				continue
 			}
-			p.loadedChunks[[2]int32{int32(x), int32(z)}] = struct{}{}
+			p.loadedChunks[[2]int32{x, z}] = struct{}{}
 			p.SendPacket(c.Data())
 
-			/*for _, en := range c.Entities {
+			for _, en := range c.Entities {
 				u, _ := world.IntUUIDToByteUUID(en.UUID)
 
 				var e *Entity
@@ -463,7 +463,7 @@ func (p *Session) SendChunks(dimension *world.Dimension) {
 						e = d
 					}
 				} else {
-					e = p.Server.NewEntity(en)
+					e = p.Server.NewEntity(en, dimension)
 				}
 
 				t, ok := registry.GetEntity(e.data.Id)
@@ -486,7 +486,6 @@ func (p *Session) SendChunks(dimension *world.Dimension) {
 				})
 				p.spawnedEntities = append(p.spawnedEntities, e.ID)
 			}
-			fmt.Println("sent chunk", x, z, "entities")*/
 		}
 	}
 }
@@ -614,18 +613,15 @@ func (p *Session) ClearItem(slot int8) {
 	p.Player.Inventory().DeleteSlot(slot)
 }
 
-func (p *Session) SetSlot(slot int8, data packet.Slot) {
+func (p *Session) SetSlot(slot int8, data item.Item) {
+	s, _ := item.ItemToPacketSlot(data)
 	p.SendPacket(&packet.SetContainerSlot{
 		WindowID: 0,
 		StateID:  1,
 		Slot:     int16(inventory.DataSlotToNetworkSlot(slot)),
-		Data:     data,
+		Data:     s,
 	})
-	p.Player.Inventory().SetSlot(slot, item.Item{
-		Count: data.Count,
-		Slot:  int8(slot),
-		Id:    registry.FindItem(data.Id),
-	})
+	p.Player.Inventory().SetSlot(slot, data)
 }
 
 func (p *Session) DropSlot() {

@@ -53,10 +53,26 @@ func newSection(data []int64, blocks []blockEntry, bLight, sLight []int8) (s *se
 
 	s.bitsPerEntry = ln
 
+	//if s.bitsPerEntry == 0 {
+	//	panic("shit!!!!!!!!!!!!!!!!")
+	//}
+
 	s.blockLight = bLight
 	s.skyLight = sLight
 	return s
 }
+
+// it be not workin!!
+//this is fine
+//the problem is a section has a bits per entry with zero
+// cant do 64 / 0
+
+//but its impossible for that to happen so i need more info
+// idk how to give you more info
+//debug the chunk which has a bits per entry with zero?
+
+// lets see
+// open terminal
 
 // indexOffset returns which index the xyz are in,
 // and the offset within the 64-bit value.
@@ -69,6 +85,10 @@ func (s *section) indexOffset(x, y, z int) (int, int) {
 	return startLong, stateOffset
 }
 func (s *section) getBlockAt(x, y, z int) block.Block {
+	if s.bitsPerEntry == 0 {
+		return s.entries[0]
+	}
+
 	i, offset := s.indexOffset(x, y, z)
 
 	states := s.data[i]

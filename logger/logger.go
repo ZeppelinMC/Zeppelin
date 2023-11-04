@@ -29,6 +29,12 @@ type Logger struct {
 	done     bool
 }
 
+func Println(a ...interface{}) (n int, err error) {
+	n, err = fmt.Print(a...)
+	fmt.Print("\n\r")
+	return
+}
+
 func getDateString() string {
 	return time.Now().Format("15:04:05")
 }
@@ -134,10 +140,10 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 		Message: str,
 	})
 	if !logger.done {
-		fmt.Printf("\r%s %s: %s\n", GB(time), CB("INFO "), str)
+		fmt.Printf("\r%s %s: %s\n", GB(time), CB("DEBUG"), str)
 		fmt.Print("\r> ")
 	} else {
-		fmt.Printf("\r%s %s: %s", GB(time), CB("INFO "), str)
+		fmt.Printf("\r%s %s: %s", GB(time), CB("DEBUG"), str)
 	}
 }
 
@@ -168,10 +174,10 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 		Message: str,
 	})
 	if !logger.done {
-		fmt.Printf("\r%s %s: %s\n", GB(time), YB("INFO "), str)
+		fmt.Printf("\r%s %s: %s\n", GB(time), YB("WARN "), str)
 		fmt.Print("\r> ")
 	} else {
-		fmt.Printf("\r%s %s: %s", GB(time), YB("INFO "), str)
+		fmt.Printf("\r%s %s: %s", GB(time), YB("WARN "), str)
 	}
 }
 

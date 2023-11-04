@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/term"
-
 	"github.com/aimjel/minecraft/chat"
 	"github.com/pelletier/go-toml/v2"
+	"golang.org/x/term"
 
 	"github.com/dynamitemc/dynamite/core_commands"
 	"github.com/dynamitemc/dynamite/logger"
