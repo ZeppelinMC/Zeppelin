@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/dynamitemc/dynamite/server/permission"
 	"os"
 	"strings"
 	"sync"
@@ -210,7 +211,7 @@ func (srv *Server) Reload() error {
 
 	LoadConfig("config.toml", srv.Config)
 
-	clearCache()
+	permission.Clear()
 
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
@@ -279,7 +280,7 @@ func (srv *Server) Close() {
 		WritePlayerList(file, lists[i])
 	}
 
-	saveCache()
+	permission.Save()
 
 	for _, p := range srv.players {
 		p.Disconnect(srv.Translate("disconnect.server_shutdown", nil))

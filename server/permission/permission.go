@@ -1,4 +1,4 @@
-package server
+package permission
 
 import (
 	"encoding/json"
@@ -28,7 +28,7 @@ var cache = struct {
 	groups:  make(map[string]GroupPermissions),
 }
 
-func saveCache() {
+func Save() {
 	os.MkdirAll("permissions/players", 0755)
 	os.Mkdir("permissions/groups", 0755)
 	for p, d := range cache.players {
@@ -41,14 +41,14 @@ func saveCache() {
 	}
 }
 
-func clearCache() {
+func Clear() {
 	cache.mu.Lock()
 	clear(cache.players)
 	clear(cache.groups)
 	cache.mu.Unlock()
 }
 
-func getPlayer(playerId string) PlayerPermissions {
+func GetPlayer(playerId string) PlayerPermissions {
 	cache.mu.RLock()
 	if cache.players[playerId].Permissions != nil {
 		cache.mu.RUnlock()
@@ -70,7 +70,7 @@ func getPlayer(playerId string) PlayerPermissions {
 	return data
 }
 
-func getGroup(group string) GroupPermissions {
+func GetGroup(group string) GroupPermissions {
 	cache.mu.RLock()
 	if cache.groups[group].Permissions != nil {
 		cache.mu.RUnlock()
@@ -91,15 +91,12 @@ func getGroup(group string) GroupPermissions {
 	return data
 }
 
-func (p *Session) HasPermissions(perms []string) bool {
+func HasPermissions(p string, perms []string) bool {
 	if len(perms) == 0 {
 		return true
 	}
-	if p.Player.Operator() {
-		return true
-	}
-	permissionsPlayer := getPlayer(p.UUID())
-	permissionsGroup := getGroup(permissionsPlayer.Group)
+	permissionsPlayer := GetPlayer(p)
+	permissionsGroup := GetGroup(permissionsPlayer.Group)
 	for _, perm := range perms {
 		if !permissionsPlayer.Permissions[perm] && !permissionsGroup.Permissions[perm] {
 			return false

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/dynamitemc/dynamite/server/permission"
 	"math"
 	"math/rand"
 	"slices"
@@ -513,7 +514,7 @@ func (p *Session) ChunkPosition() (int32, int32) {
 }
 
 func (p *Session) GetPrefixSuffix() (prefix string, suffix string) {
-	group := getGroup(getPlayer(p.UUID()).Group)
+	group := permission.GetGroup(permission.GetPlayer(p.UUID()).Group)
 	return group.Prefix, group.Suffix
 }
 
@@ -726,4 +727,18 @@ func (p *Session) SetCape(url string) {
 
 func (p *Session) IP() string {
 	return p.conn.RemoteAddr().String()
+}
+
+func (s *Session) HasPermissions(perms []string) bool {
+	if len(perms) == 0 {
+		return true
+	}
+	permissionsPlayer := permission.GetPlayer(s.Name())
+	permissionsGroup := permission.GetGroup(permissionsPlayer.Group)
+	for _, perm := range perms {
+		if !permissionsPlayer.Permissions[perm] && !permissionsGroup.Permissions[perm] {
+			return false
+		}
+	}
+	return true
 }
