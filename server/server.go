@@ -325,3 +325,7 @@ func (srv *Server) ConsoleCommand(txt string) {
 		FullCommand: content,
 	})
 }
+
+type ConsoleExecutor struct {
+	Server *Server
+}

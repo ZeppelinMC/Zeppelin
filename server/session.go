@@ -733,6 +733,6 @@ func (s *Session) HasPermissions(perms []string) bool {
 	if s.Player.Operator() {
 		return true
 	}
-	
+
 	return permission.HasPermissions(s.Name(), perms)
 }
