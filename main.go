@@ -57,11 +57,7 @@ func start(cfg *server.Config) {
 var cfg server.Config
 
 func main() {
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	server.OldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 
 	log.Info("Starting Dynamite 1.20.1 server")
 	if util.HasArg("-prof") {

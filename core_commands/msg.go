@@ -12,7 +12,7 @@ var msg_cmd = &commands.Command{
 	Name:                "msg",
 	RequiredPermissions: []string{"server.chat"},
 	Arguments: []commands.Argument{
-		commands.NewEntityArgument("targets", commands.EntitySingle),
+		commands.NewEntityArg("targets", commands.EntitySingle),
 		commands.NewStrArg("message", commands.GreedyPhrase),
 	},
 	Execute: func(ctx commands.CommandContext) {

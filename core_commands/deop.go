@@ -8,7 +8,7 @@ var deop_cmd = &commands.Command{
 	Name:                "deop",
 	RequiredPermissions: []string{"server.command.deop"},
 	Arguments: []commands.Argument{
-		commands.NewEntityArgument("player", commands.EntityPlayerOnly),
+		commands.NewEntityArg("player", commands.EntityPlayerOnly),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if len(ctx.Arguments) == 0 {

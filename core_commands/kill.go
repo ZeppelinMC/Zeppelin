@@ -10,7 +10,7 @@ var kill_cmd = &commands.Command{
 	Name:                "kill",
 	RequiredPermissions: []string{"server.command.kill"},
 	Arguments: []commands.Argument{
-		commands.NewEntityArgument("player", commands.EntityPlayerOnly),
+		commands.NewEntityArg("player", commands.EntityPlayerOnly),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		var player *server.Session

@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/dynamitemc/dynamite/server/permission"
+	"golang.org/x/term"
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
@@ -293,6 +294,7 @@ func (srv *Server) Close() {
 
 	f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
 	_ = toml.NewEncoder(f).Encode(srv.Config)
+	term.Restore(int(os.Stdin.Fd()), OldState)
 	os.Exit(0)
 }
 
@@ -331,3 +333,5 @@ func (srv *Server) ConsoleCommand(txt string) {
 type ConsoleExecutor struct {
 	Server *Server
 }
+
+var OldState *term.State

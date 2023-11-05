@@ -1,20 +1,27 @@
 package handlers
 
+import "github.com/dynamitemc/dynamite/server/enum"
+
 func PlayerCommand(controller Controller, action int32) {
 	switch action {
-	case 0:
+	case enum.PlayerCommandStartSneaking: // start sneaking / swimming
 		{
-			controller.BroadcastPose(5)
+			b := controller.OnBlock()
+			if b.EncodedName() == "minecraft:water" {
+				controller.BroadcastPose(3)
+			} else {
+				controller.BroadcastPose(5)
+			}
 		}
-	case 1:
+	case enum.PlayerCommandStopSneaking: // stop sneaking / swimming
 		{
 			controller.BroadcastPose(0)
 		}
-	case 3:
+	case enum.PlayerCommandStartSprinting: // sprint
 		{
 			controller.BroadcastSprinting(true)
 		}
-	case 4:
+	case enum.PlayerCommandStopSprinting: // stop sprint
 		{
 			controller.BroadcastSprinting(false)
 		}

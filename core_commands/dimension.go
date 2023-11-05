@@ -10,7 +10,7 @@ var dimension_cmd = &commands.Command{
 	Name:                "dimension",
 	RequiredPermissions: []string{"server.command.dimension"},
 	Arguments: []commands.Argument{
-		commands.NewDimensionArgument("dimension"),
+		commands.NewDimensionArg("dimension"),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if len(ctx.Arguments) == 0 {

@@ -92,6 +92,8 @@ func ParseChat(msg chat.Message) string {
 		str += color.New(attrs...).SprintFunc()(*text.Text)
 	}
 
+	str = strings.ReplaceAll(str, "\n", "\n\r")
+
 	return str
 }
 
@@ -119,6 +121,7 @@ func (logger *Logger) Info(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
+	str = strings.ReplaceAll(str, "\n", "\n\r")
 	if !logger.done {
 		fmt.Printf("\r%s %s: %s\n", GB(time), BB("INFO "), str)
 		fmt.Print("\r> ")
@@ -139,6 +142,7 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
+	str = strings.ReplaceAll(str, "\n", "\n\r")
 	if !logger.done {
 		fmt.Printf("\r%s %s: %s\n", GB(time), CB("DEBUG"), str)
 		fmt.Print("\r> ")
@@ -156,6 +160,7 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
+	str = strings.ReplaceAll(str, "\n", "\n\r")
 	if !logger.done {
 		fmt.Fprintf(os.Stderr, "\r%s %s: %s\n", GB(time), RB("ERROR"), str)
 		fmt.Print("\r> ")
@@ -173,6 +178,7 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 		Time:    time,
 		Message: str,
 	})
+	str = strings.ReplaceAll(str, "\n", "\n\r")
 	if !logger.done {
 		fmt.Printf("\r%s %s: %s\n", GB(time), YB("WARN "), str)
 		fmt.Print("\r> ")

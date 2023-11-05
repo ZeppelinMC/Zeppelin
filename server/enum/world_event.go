@@ -1,0 +1,86 @@
+package enum
+
+const (
+	WorldEventDispenserDispenses int32 = iota + 1000
+	WorldEventDispenserDispenseFail
+	WorldEventDispenserShoots
+	WorldEventEnderEyeLaunched
+	WorldEventFireworkShot
+	WorldEventIronDoorOpened
+	WorldEventWoodenDoorOpened
+	WorldEventWoodenTrapdoorOpened
+	WorldEventFenceGateOpened
+	WorldEventFireExtinguished
+	WorldEventPlayRecord
+	WorldEventIronDoorClosed
+	WorldEventWoodenDoorClosed
+	WorldEventWoodenTrapdoorClosed
+	WorldEventFenceGateClosed
+	WorldEventGhastWarms
+	WorldEventGhastShoots
+	WorldEventEnderdragonShoots
+	WorldEventBlazeShoots
+	WorldEventZombieAttacksWoodDoor
+	WorldEventZombieAttacksIronDoor
+	WorldEventZombieBreaksWoodDoor
+	WorldEventWitherBreaksBlock
+	WorldEventWitherSpawned
+	WorldEventWitherShoots
+	WorldEventBatTakesOff
+	WorldEventZombieInfects
+	WorldEventZombieVillagerConverted
+	WorldEventEnderDragonDeath
+	WorldEventAnvilDestroyed
+	WorldEventAnvilUsed
+	WorldEventAnvilLanded
+	WorldEventPortalTravel
+	WorldEventChorusFlowerGrown
+	WorldEventChorusFlowerDied
+	WorldEventBrewingStandBrewed
+	WorldEventIronTrapdoorOpened
+	WorldEventIronTrapdoorClosed
+	WorldEventEndPortalCreatedInOverworld
+	WorldEventPhantomBites
+	WorldEventZombieConvertsToDrowned
+	WorldEventHuskConvertsToZombie
+	WorldEventGrindstoneUsed
+	WorldEventBookPageTurned
+)
+
+const (
+	WorldEventComposts int32 = iota + 1500
+	WorldEventLavaConvertsBlock
+	WorldEventRedstoneTorchBurnOut
+	WorldEventEnderEyePlaced
+)
+
+const (
+	WorldEventSmokeParticles int32 = iota + 2000
+	WorldEventBlockBreak
+	WorldEventSplashPotion
+	WorldEventEyeOfEnderBreakAnimation
+	WorldEventMobSpawnParticleEffect
+	WorldEventBonemealParticles
+	WorldEventDragonBreath
+	WorldEventInstantSplashPotionEffect
+	WorldEventEnderDragonDestroysBlock
+	WorldEventWetSpongeVaporizeNether
+)
+
+const (
+	WorldEventEndGatewaySpawn int32 = iota + 3000
+	WorldEventEnderDragonGrowl
+	WorldEventElectricSpark
+	WorldEventCopperApplyWax
+	WorldEventCopperRemoveWax
+	WorldEventCopperScrapeOxidation
+)
+
+const (
+	SmokeDirectionDown int32 = iota
+	SmokeDirectionUp
+	SmokeDirectionNorth
+	SmokeDirectionSouth
+	SmokeDirectionWest
+	SmokeDirectionEast
+)

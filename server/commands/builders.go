@@ -90,7 +90,7 @@ func NewStrArg(name string, properties stringArgType) Argument {
 	}
 }
 
-func NewEntityArgument(name string, properties byte) Argument {
+func NewEntityArg(name string, properties byte) Argument {
 	props := types.CommandProperties{Flags: properties}
 	return Argument{
 		Name: name,
@@ -101,7 +101,7 @@ func NewEntityArgument(name string, properties byte) Argument {
 	}
 }
 
-func NewGamemodeArgument(name string) Argument {
+func NewGamemodeArg(name string) Argument {
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -110,7 +110,7 @@ func NewGamemodeArgument(name string) Argument {
 	}
 }
 
-func NewChatComponentArgument(name string) Argument {
+func NewChatComponentArg(name string) Argument {
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -119,7 +119,7 @@ func NewChatComponentArgument(name string) Argument {
 	}
 }
 
-func NewDimensionArgument(name string) Argument {
+func NewDimensionArg(name string) Argument {
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -128,7 +128,7 @@ func NewDimensionArgument(name string) Argument {
 	}
 }
 
-func NewVector3Argument(name string) Argument {
+func NewVector3Arg(name string) Argument {
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -137,7 +137,7 @@ func NewVector3Argument(name string) Argument {
 	}
 }
 
-func NewVector2Argument(name string) Argument {
+func NewVector2Arg(name string) Argument {
 	return Argument{
 		Name: name,
 		Parser: Parser{
@@ -146,7 +146,7 @@ func NewVector2Argument(name string) Argument {
 	}
 }
 
-func NewResourceKeyArgument(name string, registry string) Argument {
+func NewResourceKeyArg(name string, registry string) Argument {
 	return Argument{
 		Name: name,
 		Parser: Parser{

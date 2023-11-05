@@ -4,6 +4,6 @@ import "github.com/aimjel/minecraft/packet"
 
 func Interact(controller Controller, pk *packet.InteractServer) {
 	if pk.Type == 1 {
-		controller.Hit(pk.EntityID)
+		controller.Attack(pk.EntityID)
 	}
 }

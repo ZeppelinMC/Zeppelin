@@ -19,8 +19,6 @@ func (srv *Server) tick(tick uint) {
 		e.Entity.Tick(srv, tick)
 	}
 	for _, pl := range srv.players {
-		//x, y, z := pl.Player.Position()
-		//srv.SpawnEntity("minecraft:enderman", x, y, z)
 		//if tick%8 == 0 {
 		//pl.SendChunks(srv.GetDimension(pl.Player.Dimension()))
 		//pl.UnloadChunks()

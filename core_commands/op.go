@@ -8,7 +8,7 @@ var op_cmd = &commands.Command{
 	Name:                "op",
 	RequiredPermissions: []string{"server.command.op"},
 	Arguments: []commands.Argument{
-		commands.NewEntityArgument("player", commands.EntityPlayerOnly),
+		commands.NewEntityArg("player", commands.EntityPlayerOnly),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if len(ctx.Arguments) == 0 {

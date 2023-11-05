@@ -5,12 +5,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/dynamitemc/dynamite/server/permission"
 	"math"
 	"math/rand"
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/dynamitemc/dynamite/server/block"
+	"github.com/dynamitemc/dynamite/server/enum"
+	"github.com/dynamitemc/dynamite/server/permission"
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
@@ -25,7 +28,6 @@ import (
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
-	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
 )
 
@@ -241,7 +243,7 @@ func (p *Session) Login(dim string) {
 	abs := p.Player.SavedAbilities()
 	abps := &packet.PlayerAbilities{FlyingSpeed: abs.FlySpeed, FieldOfViewModifier: 0.1}
 	if abs.Flying != 0 {
-		abps.Flags |= 0x06
+		abps.Flags |= enum.PlayerAbilityFlying | enum.PlayerAbilityAllowFlying
 	}
 	if abps.Flags != 0 {
 		p.SendPacket(abps)
@@ -296,7 +298,7 @@ func (p *Session) Kill(message string) {
 	p.BroadcastHealth()
 	if f, _ := world.GameRule(p.Server.World.Gamerules()["doImmediateRespawn"]).Bool(); !f {
 		p.SendPacket(&packet.GameEvent{
-			Event: 11,
+			Event: uint8(enum.GameEventEnableRespawnScreen),
 			Value: 0,
 		})
 	}
@@ -308,7 +310,7 @@ func (p *Session) Kill(message string) {
 		}
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:     p.entityID,
-			SourceTypeID: 17,
+			SourceTypeID: int32(enum.DamageTypeGenericKill),
 		})
 		pl.SendPacket(&packet.EntityEvent{
 			EntityID: p.entityID,
@@ -319,7 +321,7 @@ func (p *Session) Kill(message string) {
 
 	p.SendPacket(&packet.DamageEvent{
 		EntityID:     p.entityID,
-		SourceTypeID: 17,
+		SourceTypeID: int32(enum.DamageTypeGenericKill),
 	})
 	p.Despawn()
 	p.SendPacket(&packet.CombatDeath{
@@ -360,27 +362,26 @@ func (p *Session) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
 func (p *Session) SetGameMode(gm byte) {
 	p.Player.SetGameMode(gm)
 	p.SendPacket(&packet.GameEvent{
-		Event: 3,
+		Event: enum.GameEventChangeGamemode,
 		Value: float32(gm),
 	})
 	p.BroadcastGamemode()
 }
 
-/*
-	func (p *Session) Push(x, y, z float64) {
-		yaw, pitch := p.Player.Rotation()
-		p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
-		p.SendPacket(&packet.PlayerPositionLook{
-			X:          x,
-			Y:          y,
-			Z:          z,
-			Yaw:        yaw,
-			Pitch:      pitch,
-			TeleportID: idCounter.Add(1),
-		})
-		p.BroadcastMovement(0, x, y, z, yaw, pitch, p.Player.OnGround(), true)
-	}
-*/
+func (p *Session) Push(x, y, z float64) {
+	yaw, pitch := p.Player.Rotation()
+	p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
+	p.SendPacket(&packet.PlayerPositionLook{
+		X:          x,
+		Y:          y,
+		Z:          z,
+		Yaw:        yaw,
+		Pitch:      pitch,
+		TeleportID: idCounter.Add(1),
+	})
+	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.Player.OnGround(), true)
+}
+
 func (p *Session) Teleport(x, y, z float64, yaw, pitch float32) {
 	p.Player.SetPosition(x, y, z, yaw, pitch, p.Player.OnGround())
 	p.SendPacket(&packet.PlayerPositionLook{
@@ -454,7 +455,7 @@ func (p *Session) SendChunks(dimension *world.Dimension) {
 			p.loadedChunks[[2]int32{x, z}] = struct{}{}
 			p.SendPacket(c.Data())
 
-			for _, en := range c.Entities {
+			/*for _, en := range c.Entities {
 				u, _ := world.IntUUIDToByteUUID(en.UUID)
 
 				var e *Entity
@@ -486,7 +487,7 @@ func (p *Session) SendChunks(dimension *world.Dimension) {
 					Type:      t.ProtocolID,
 				})
 				p.spawnedEntities = append(p.spawnedEntities, e.ID)
-			}
+			}*/
 		}
 	}
 }
@@ -676,6 +677,11 @@ func (p *Session) SetDisplayName(name string) {
 			},
 		})
 	}
+}
+
+func (p *Session) OnBlock() block.Block {
+	x, y, z := p.Player.Position()
+	return p.Server.GetDimension(p.Player.Dimension()).Block(int64(x), int64(y-1), int64(z))
 }
 
 func (p *Session) TeleportToEntity(uuid [16]byte) {

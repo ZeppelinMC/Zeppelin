@@ -11,8 +11,8 @@ var summon_cmd = &commands.Command{
 	Aliases:             []string{},
 	RequiredPermissions: []string{"server.command.summon"},
 	Arguments: []commands.Argument{
-		commands.NewResourceKeyArgument("entity", "minecraft:entity_type"),
-		commands.NewVector3Argument("location"),
+		commands.NewResourceKeyArg("entity", "minecraft:entity_type"),
+		commands.NewVector3Arg("location"),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if len(ctx.Arguments) < 4 {

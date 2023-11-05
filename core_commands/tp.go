@@ -13,8 +13,8 @@ var tp_cmd = &commands.Command{
 	RequiredPermissions: []string{"server.command.op"},
 	Aliases:             []string{"teleport"},
 	Arguments: []commands.Argument{
-		commands.NewEntityArgument("targets", commands.EntityPlayerOnly),
-		commands.NewEntityArgument("destination", commands.EntityPlayerOnly).SetAlternative(commands.NewVector3Argument("location")),
+		commands.NewEntityArg("targets", commands.EntityPlayerOnly),
+		commands.NewEntityArg("destination", commands.EntityPlayerOnly).SetAlternative(commands.NewVector3Arg("location")),
 	},
 	Execute: func(ctx commands.CommandContext) {
 		srv := getServer(ctx.Executor)

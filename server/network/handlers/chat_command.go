@@ -7,6 +7,7 @@ import (
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/logger"
+	"github.com/dynamitemc/dynamite/server/block"
 	"github.com/dynamitemc/dynamite/server/commands"
 )
 
@@ -18,7 +19,7 @@ type Controller interface {
 	HandleCenterChunk(x1, z1, x2, z2 float64)
 	BroadcastPose(pose int32)
 	BroadcastSprinting(val bool)
-	Hit(entityId int32)
+	Attack(entityId int32)
 	BroadcastAnimation(animation uint8)
 	SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []packet.SuggestionMatch)
 	BroadcastSkinData()
@@ -33,6 +34,7 @@ type Controller interface {
 	Name() string
 	IP() string
 	ClearItem(slot int8)
+	OnBlock() block.Block
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, log *logger.Logger, content string, timestamp, salt int64, sigs []packet.Argument) {

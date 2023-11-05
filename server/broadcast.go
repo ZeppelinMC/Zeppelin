@@ -7,12 +7,26 @@ import (
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
+	"github.com/dynamitemc/dynamite/server/enum"
 	"github.com/dynamitemc/dynamite/server/item"
 	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
 
 	"github.com/aimjel/minecraft/packet"
 )
+
+type Vector struct {
+	X, Y, Z float64
+}
+
+func (v *Vector) Normalize() {
+	length := math.Sqrt(v.X*v.X + v.Y*v.Y + v.Z*v.Z)
+	if length != 0 {
+		v.X /= length
+		v.Y /= length
+		v.Z /= length
+	}
+}
 
 func (srv *Server) GlobalMessage(message chat.Message) {
 	srv.mu.RLock()
@@ -122,19 +136,38 @@ func positionIsValid(x, y, z float64) bool {
 		!math.IsInf(x, 0) && !math.IsInf(y, 0) && !math.IsInf(z, 0)
 }
 
-func (p *Session) Hit(entityId int32) {
+func cond[T any](c bool, t T, f T) T {
+	if c {
+		return t
+	} else {
+		return f
+	}
+}
+
+func (p *Session) Attack(entityId int32) {
 	e := p.Server.FindEntity(entityId)
 	x, y, z := p.Player.Position()
 	soundId := int32(519)
 	if pl, ok := e.(*Session); ok {
-		if pl.Player.GameMode() == 1 {
+		if pl.Player.GameMode() == enum.GameModeCreative {
 			return
 		}
+		x1, y1, z1 := pl.Player.Position()
+
+		x2 := x1 - x
+		z2 := z1 - z
+
+		v := Vector{x2, y1, z2}
+
+		v.Normalize()
+
+		pl.Push(x1+x2, y1, z1+z2)
+
 		health := pl.Player.Health()
 		pl.SetHealth(health - 1)
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:        entityId,
-			SourceTypeID:    31,
+			SourceTypeID:    enum.DamageTypePlayerAttack,
 			SourceCauseID:   p.entityID + 1,
 			SourceDirectID:  p.entityID + 1,
 			SourcePositionX: &x,
@@ -147,6 +180,17 @@ func (p *Session) Hit(entityId int32) {
 		if ok {
 			soundId = sound.ProtocolID
 		}
+
+		x1, y1, z1 := entity.data.Pos[0], entity.data.Pos[1], entity.data.Pos[2]
+
+		x2 := x1 - x
+		z2 := z1 - z
+
+		v := Vector{x2, y1, z2}
+
+		v.Normalize()
+
+		p.Server.SetEntityPosition(entity.ID, x1+x2, y1, z1+z2)
 	}
 
 	p.Server.mu.RLock()
@@ -157,7 +201,7 @@ func (p *Session) Hit(entityId int32) {
 		}
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:        entityId,
-			SourceTypeID:    31,
+			SourceTypeID:    enum.DamageTypePlayerAttack,
 			SourceCauseID:   p.entityID + 1,
 			SourceDirectID:  p.entityID + 1,
 			SourcePositionX: &x,

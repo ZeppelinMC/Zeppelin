@@ -7,6 +7,7 @@ import (
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/enum"
 )
 
 func (p *Session) Chat(pk *packet.ChatMessageServer) {
@@ -131,7 +132,7 @@ func (p *Session) Whisper(pl *Session, msg string, timestamp, salt int64, sig []
 		//MessageSignature:  sig,
 		Salt:              salt,
 		Timestamp:         timestamp,
-		ChatType:          3,
+		ChatType:          enum.ChatTypeMsgCommandIncoming,
 		NetworkName:       chat.NewMessage(prefix + p.Name() + suffix),
 		NetworkTargetName: &tgt,
 	})
