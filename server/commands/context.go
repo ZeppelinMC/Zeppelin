@@ -29,11 +29,46 @@ func findArgument(a []Argument, n string) int {
 	return -1
 }
 
+func (ctx CommandContext) GetVector3(name string) (x, y, z float64, ok bool) {
+	for i, a := range ctx.Arguments {
+		arg := ctx.Command.Arguments[i]
+		if arg.Name == name {
+			if (arg.Parser.ID >= 8 && arg.Parser.ID <= 11) || arg.Parser.ID == 27 {
+				x1, err1 := strconv.ParseFloat(a, 64)
+				y1, err2 := strconv.ParseFloat(ctx.Arguments[i+1], 64)
+				z1, err3 := strconv.ParseFloat(ctx.Arguments[i+2], 64)
+				if err1 == nil && err2 == nil && err3 == nil {
+					return x1, y1, z1, true
+				}
+			}
+		}
+	}
+	return 0, 0, 0, false
+}
+
+func (ctx CommandContext) GetVector2(name string) (x, y float64, ok bool) {
+	for i, a := range ctx.Arguments {
+		arg := ctx.Command.Arguments[i]
+		if arg.Name == name {
+			if arg.Parser.ID == 11 || arg.Parser.ID == 27 {
+				x1, err1 := strconv.ParseFloat(a, 64)
+				y1, err2 := strconv.ParseFloat(ctx.Arguments[i+1], 64)
+				if err1 == nil && err2 == nil {
+					return x1, y1, true
+				}
+			}
+		}
+	}
+	return 0, 0, false
+}
+
 func (ctx CommandContext) GetString(name string) (value string, ok bool) {
 	for i, a := range ctx.Arguments {
 		arg := ctx.Command.Arguments[i]
-		if (arg.Parser.ID >= 8 && arg.Parser.ID <= 11) || arg.Parser.ID == 27 {
+		if arg.Parser.ID >= 8 && arg.Parser.ID <= 10 {
 			ctx.Arguments = slices.Delete(ctx.Arguments, i+1, i+3)
+		} else if arg.Parser.ID == 11 || arg.Parser.ID == 27 {
+			ctx.Arguments = slices.Delete(ctx.Arguments, i+1, i+2)
 		}
 		if arg.Name == name {
 			return a, true
