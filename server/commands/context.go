@@ -20,15 +20,6 @@ type CommandContext struct {
 	FullCommand        string
 }
 
-func findArgument(a []Argument, n string) int {
-	for i, arg := range a {
-		if arg.Name == n {
-			return i
-		}
-	}
-	return -1
-}
-
 func (ctx CommandContext) GetVector3(name string) (x, y, z float64, ok bool) {
 	for i, a := range ctx.Arguments {
 		arg := ctx.Command.Arguments[i]
