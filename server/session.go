@@ -730,15 +730,9 @@ func (p *Session) IP() string {
 }
 
 func (s *Session) HasPermissions(perms []string) bool {
-	if len(perms) == 0 {
+	if s.Player.Operator() {
 		return true
 	}
-	permissionsPlayer := permission.GetPlayer(s.Name())
-	permissionsGroup := permission.GetGroup(permissionsPlayer.Group)
-	for _, perm := range perms {
-		if !permissionsPlayer.Permissions[perm] && !permissionsGroup.Permissions[perm] {
-			return false
-		}
-	}
-	return true
+	
+	return permission.HasPermissions(s.Name(), perms)
 }
