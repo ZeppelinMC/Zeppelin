@@ -18,7 +18,7 @@ func SetCreativeModeSlot(controller Controller, state *player.Player, slot int16
 		if s, ok := state.Inventory().Slot(s); ok {
 			state.SetPreviousSelectedSlot(s)
 		}
-		state.Inventory().DeleteSlot(s)
+		controller.ClearItem(s)
 	} else {
 		i, _ := item.PacketSlotToItem(s, data)
 		state.Inventory().SetSlot(s, i)

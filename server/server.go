@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/dynamitemc/dynamite/server/permission"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/dynamitemc/dynamite/server/permission"
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
@@ -320,6 +321,7 @@ func (srv *Server) ConsoleCommand(txt string) {
 		return
 	}
 	command.Execute(commands.CommandContext{
+		Command:     command,
 		Arguments:   args[1:],
 		Executor:    &ConsoleExecutor{Server: srv},
 		FullCommand: content,

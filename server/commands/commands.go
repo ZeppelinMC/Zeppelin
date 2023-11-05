@@ -1,15 +1,12 @@
 package commands
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 
-	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
 
 	pk "github.com/aimjel/minecraft/packet"
-	"github.com/dynamitemc/dynamite/logger"
 )
 
 type SuggestionsContext struct {
@@ -36,50 +33,12 @@ func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
 	}
 }
 
-type CommandContext struct {
-	Executor           interface{}
-	Arguments          []string
-	Salt, Timestamp    int64
-	ArgumentSignatures []pk.Argument
-	FullCommand        string
-}
-
-func (ctx *CommandContext) Reply(message chat.Message) {
-	if p, ok := ctx.Executor.(interface {
-		SystemChatMessage(message chat.Message) error
-	}); ok {
-		p.SystemChatMessage(message)
-	} else {
-		fmt.Print(strings.ReplaceAll(logger.ParseChat(message), "\n", "\n\r"))
-		fmt.Print("\n\r> ")
-	}
-}
-
 func cond[T any](c bool, t T, f T) T {
 	if c {
 		return t
 	} else {
 		return f
 	}
-}
-
-func (ctx *CommandContext) Incomplete() {
-	_, ok := ctx.Executor.(interface {
-		SystemChatMessage(message chat.Message) error
-	})
-	ctx.Reply(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error"+cond(ok, "", "\r")+"\n§7%s§r§c§o<--[HERE]", ctx.FullCommand)))
-}
-
-func (ctx *CommandContext) ErrorHere(msg string) {
-	_, ok := ctx.Executor.(interface {
-		SystemChatMessage(message chat.Message) error
-	})
-	sp := strings.Split(ctx.FullCommand, " ")
-	ctx.Reply(chat.NewMessage(fmt.Sprintf("§c%s\n"+cond(ok, "", "\r")+"§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1])))
-}
-
-func (ctx *CommandContext) Error(msg string) {
-	ctx.Reply(chat.NewMessage("§c" + msg))
 }
 
 const (

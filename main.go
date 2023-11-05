@@ -139,6 +139,7 @@ func scanConsole(srv *server.Server) {
 				continue
 			}
 			cmd.Execute(commands.CommandContext{
+				Command:     cmd,
 				Executor:    &server.ConsoleExecutor{Server: srv},
 				Arguments:   args[1:],
 				FullCommand: command,

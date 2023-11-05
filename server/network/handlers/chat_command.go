@@ -32,6 +32,7 @@ type Controller interface {
 	UUID() string
 	Name() string
 	IP() string
+	ClearItem(slot int8)
 }
 
 func ChatCommandPacket(controller Controller, graph *commands.Graph, log *logger.Logger, content string, timestamp, salt int64, sigs []packet.Argument) {
@@ -58,6 +59,7 @@ func ChatCommandPacket(controller Controller, graph *commands.Graph, log *logger
 		return
 	}
 	ctx := commands.CommandContext{
+		Command:            command,
 		Arguments:          args[1:],
 		Executor:           controller,
 		FullCommand:        content,
