@@ -1,11 +1,11 @@
 package chunk
 
 import (
-	"fmt"
 	"log"
 	"math"
 	"math/bits"
 
+	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server/block"
 )
 
@@ -103,11 +103,11 @@ func (s *section) setBlockAt(x, y, z int, b block.Block) {
 	newState, ok := s.index(b)
 	if !ok {
 		old := s.bitsPerEntry
-		fmt.Println("adding", b, "to palette entries")
+		logger.Println("adding", b, "to palette entries")
 		s.addEntry(b)
 
 		if s.bitsPerEntry != old {
-			fmt.Println("RESIZING STATES SLICE")
+			logger.Println("RESIZING STATES SLICE")
 			//the amount of bits we need for a new chunk
 			newBits := (16 * 16 * 16) * s.bitsPerEntry
 

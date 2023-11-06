@@ -281,6 +281,10 @@ func (p *Session) SystemChatMessage(message chat.Message) error {
 }
 
 func (p *Session) SetHealth(health float32) {
+	if health <= 0 {
+		p.Kill("died :skull:")
+		return
+	}
 	p.Player.SetHealth(health)
 	food, saturation := p.Player.FoodLevel(), p.Player.FoodSaturationLevel()
 	p.SendPacket(&packet.SetHealth{
@@ -288,9 +292,18 @@ func (p *Session) SetHealth(health float32) {
 		Food:           food,
 		FoodSaturation: saturation,
 	})
-	if health == 0 {
-		p.Kill("died :skull:")
-	}
+}
+
+func (p *Session) Damage(health float32) {
+	p.SendPacket(&packet.EntitySoundEffect{
+		Category: 8,
+		SoundID:  519,
+		EntityID: p.entityID,
+		Seed:     world.RandomSeed(),
+		Volume:   1,
+		Pitch:    1,
+	})
+	p.SetHealth(p.Player.Health() - health)
 }
 
 func (p *Session) Kill(message string) {
@@ -379,7 +392,7 @@ func (p *Session) Push(x, y, z float64) {
 		Pitch:      pitch,
 		TeleportID: idCounter.Add(1),
 	})
-	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.Player.OnGround(), true)
+	//p.BroadcastMovement(0x14, x, y, z, yaw, pitch, p.Player.OnGround(), false)
 }
 
 func (p *Session) Teleport(x, y, z float64, yaw, pitch float32) {
@@ -573,10 +586,9 @@ func (p *Session) SpawnPlayer(pl *Session) {
 	p.SendEquipment(pl)
 }
 
-func (p *Session) DespawnPlayer(pl *Session) {
+func (p *Session) DespawnEntity(entityId int32) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	entityId := pl.entityID
 
 	p.SendPacket(&packet.DestroyEntities{
 		EntityIds: []int32{entityId},

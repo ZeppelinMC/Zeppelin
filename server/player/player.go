@@ -30,6 +30,7 @@ type Player struct {
 	x, y, z                    float64
 	yaw, pitch                 float32
 	onGround, operator, flying bool
+	highestY                   float64
 
 	mu sync.RWMutex
 }
@@ -199,6 +200,18 @@ func (p *Player) SetPosition(x, y, z float64, yaw, pitch float32, ong bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.x, p.y, p.z, p.yaw, p.pitch, p.onGround = x, y, z, yaw, pitch, ong
+}
+
+func (p *Player) SetHighestY(y float64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.highestY = y
+}
+
+func (p *Player) HighestY() float64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.highestY
 }
 
 func (p *Player) GetPosition2() uint64 {

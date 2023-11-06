@@ -226,7 +226,7 @@ func (p *Session) Despawn() {
 		if !pl.IsSpawned(p.entityID) {
 			continue
 		}
-		pl.DespawnPlayer(p)
+		pl.DespawnEntity(p.entityID)
 	}
 }
 
@@ -253,6 +253,22 @@ func (p *Session) InView2(x2, y2, z2 float64) bool {
 func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32, ong bool, teleport bool) {
 	oldx, oldy, oldz := p.Player.Position()
 	p.Player.SetPosition(x1, y1, z1, ya, pi, ong)
+
+	if g := p.Player.GameMode(); g == enum.GameModeSurvival || g == enum.GameModeAdventure {
+		if y1 > p.Player.HighestY() {
+			p.Player.SetHighestY(y1)
+		} else {
+			d := p.Player.HighestY() - y1
+			if d > 3 {
+				if b := p.OnBlock(); b != nil && b.EncodedName() != "minecraft:air" {
+					d -= 3
+					p.Damage(float32(d))
+					p.Player.SetHighestY(0)
+				}
+			}
+		}
+	}
+
 	distance := math.Sqrt((x1-oldx)*(x1-oldx) + (y1-oldy)*(y1-oldy) + (z1-oldz)*(z1-oldz))
 	if distance > 100 && !teleport {
 		//p.Teleport(oldx, oldy, oldz, yaw, pitch)
@@ -324,7 +340,7 @@ func (p *Session) BroadcastMovement(id int32, x1, y1, z1 float64, ya, pi float32
 			continue
 		}
 		if !pl.InView(p) {
-			pl.DespawnPlayer(p)
+			pl.DespawnEntity(p.entityID)
 			continue
 		}
 

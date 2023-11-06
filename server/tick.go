@@ -19,10 +19,10 @@ func (srv *Server) tick(tick uint) {
 		e.Entity.Tick(srv, tick)
 	}
 	for _, pl := range srv.players {
-		//if tick%8 == 0 {
-		//pl.SendChunks(srv.GetDimension(pl.Player.Dimension()))
-		//pl.UnloadChunks()
-		//}
+		if tick%8 == 0 {
+			pl.SendChunks(srv.GetDimension(pl.Player.Dimension()))
+			//pl.UnloadChunks()
+		}
 
 		worldAge, dayTime := srv.World.IncrementTime()
 		pl.SendPacket(&packet.UpdateTime{
