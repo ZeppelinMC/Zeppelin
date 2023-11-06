@@ -136,14 +136,6 @@ func positionIsValid(x, y, z float64) bool {
 		!math.IsInf(x, 0) && !math.IsInf(y, 0) && !math.IsInf(z, 0)
 }
 
-func cond[T any](c bool, t T, f T) T {
-	if c {
-		return t
-	} else {
-		return f
-	}
-}
-
 func (p *Session) Attack(entityId int32) {
 	e := p.Server.FindEntity(entityId)
 	x, y, z := p.Player.Position()
