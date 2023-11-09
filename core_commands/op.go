@@ -25,7 +25,7 @@ var op_cmd = &commands.Command{
 		server.MakeOperator(player)
 		player.SendCommands(server.GetCommandGraph())
 		prefix, suffix := player.GetPrefixSuffix()
-		ctx.Reply(server.Translate("commands.op.success", map[string]string{
+		ctx.Reply(server.Lang.Translate("commands.op.success", map[string]string{
 			"player":        player.Name(),
 			"player_prefix": prefix,
 			"player_suffix": suffix,

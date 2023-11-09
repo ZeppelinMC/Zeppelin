@@ -20,16 +20,16 @@ var ban_cmd = &commands.Command{
 		}
 		server := getServer(ctx.Executor)
 		playerName := ctx.Arguments[0]
-		reason := server.Translate("disconnect.banned", nil)
+		reason := server.Lang.Translate("disconnect.banned", nil)
 		if len(ctx.Arguments) > 1 {
-			reason = server.Translate("disconnect.banned.reason", map[string]string{"reason": strings.Join(ctx.Arguments[1:], " ")})
+			reason = server.Lang.Translate("disconnect.banned.reason", map[string]string{"reason": strings.Join(ctx.Arguments[1:], " ")})
 		}
 		player := server.FindPlayer(playerName)
 		if player == nil {
 			ctx.Error("No player was found")
 			return
 		}
-		server.Ban(player, strings.Join(ctx.Arguments[1:], " "))
+		server.Ban(player.Name(), player.UUID().String(), strings.Join(ctx.Arguments[1:], " "))
 		player.Disconnect(reason)
 	},
 }

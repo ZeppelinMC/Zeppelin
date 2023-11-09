@@ -9,14 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aimjel/minecraft/chat"
 	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/term"
 
 	"github.com/dynamitemc/dynamite/core_commands"
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server"
-	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/config"
 	"github.com/dynamitemc/dynamite/util"
 	"github.com/dynamitemc/dynamite/web"
 )
@@ -37,8 +36,8 @@ func stopProfile() {
 	file.Close()
 }
 
-func start(cfg *server.Config) {
-	srv, err := server.Listen(cfg, cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
+func start(cfg *config.Config) {
+	srv, err := server.New(cfg, cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
 	log.Info("Opened TCP server on %s:%d", cfg.ServerIP, cfg.ServerPort)
 	if err != nil {
 		log.Error("Failed to open TCP server: %s", err)
@@ -54,7 +53,7 @@ func start(cfg *server.Config) {
 	}
 }
 
-var cfg server.Config
+var cfg config.Config
 
 func main() {
 	server.OldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
@@ -65,9 +64,9 @@ func main() {
 		startProfile()
 	}
 
-	if err := server.LoadConfig("config.toml", &cfg); err != nil {
+	if err := config.LoadConfig("config.toml", &cfg); err != nil {
 		log.Info("%v loading config.toml. Using default config", err)
-		cfg = server.DefaultConfig
+		cfg = config.DefaultConfig
 
 		f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
 		toml.NewEncoder(f).Encode(cfg)
@@ -125,22 +124,10 @@ func scanConsole(srv *server.Server) {
 			if command == "" {
 				continue
 			}
-			fmt.Print("\r> \n\r")
-			args := strings.Split(command, " ")
-
-			cmd := srv.GetCommandGraph().FindCommand(args[0])
-			if cmd == nil {
-				srv.Logger.Print(chat.NewMessage(fmt.Sprintf("&cUnknown or incomplete command, see below for error\n\r&n%s&r&c&o<--[HERE]", args[0])))
-				command = ""
-				continue
-			}
-			cmd.Execute(commands.CommandContext{
-				Command:     cmd,
-				Executor:    &server.ConsoleExecutor{Server: srv},
-				Arguments:   args[1:],
-				FullCommand: command,
-			})
+			fmt.Printf("\r> %s\r> ", strings.Repeat(" ", len(command)))
+			srv.ConsoleCommand(command)
 			command = ""
+		case 65, 27, 66, 91, 67, 68:
 		default: // regular character - add to current command input
 			command += string(b[0])
 			args := strings.Split(command, " ")

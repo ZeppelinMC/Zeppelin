@@ -75,12 +75,3 @@ const (
 	WorldEventCopperRemoveWax
 	WorldEventCopperScrapeOxidation
 )
-
-const (
-	SmokeDirectionDown int32 = iota
-	SmokeDirectionUp
-	SmokeDirectionNorth
-	SmokeDirectionSouth
-	SmokeDirectionWest
-	SmokeDirectionEast
-)

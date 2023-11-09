@@ -1,12 +1,13 @@
-package handlers
+package handler
 
 import (
 	"strings"
 
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
-func CommandSuggestionsRequest(id int32, content string, graph *commands.Graph, controller Controller) {
+func CommandSuggestionsRequest(id int32, content string, graph *commands.Graph, state *player.Player) {
 	args := strings.Split(strings.TrimSpace(content), " ")
 	cmd := strings.TrimPrefix(args[0], "/")
 	var command *commands.Command
@@ -25,7 +26,7 @@ func CommandSuggestionsRequest(id int32, content string, graph *commands.Graph, 
 			}
 		}
 	}
-	if command == nil || !controller.HasPermissions(command.RequiredPermissions) {
+	if command == nil || !state.HasPermissions(command.RequiredPermissions) {
 		return
 	}
 	index := len(args[1:])
@@ -41,7 +42,7 @@ func CommandSuggestionsRequest(id int32, content string, graph *commands.Graph, 
 	}
 	ctx := commands.SuggestionsContext{
 		Arguments:     args[1:],
-		Executor:      controller,
+		Executor:      state,
 		FullCommand:   content,
 		TransactionId: id,
 	}

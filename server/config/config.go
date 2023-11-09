@@ -1,15 +1,9 @@
-package server
+package config
 
 import (
 	"os"
 
 	"github.com/pelletier/go-toml/v2"
-
-	"github.com/aimjel/minecraft"
-	"github.com/dynamitemc/dynamite/logger"
-	"github.com/dynamitemc/dynamite/server/commands"
-	"github.com/dynamitemc/dynamite/server/player"
-	"github.com/dynamitemc/dynamite/server/world"
 )
 
 func LoadConfig(path string, data *Config) error {
@@ -19,68 +13,6 @@ func LoadConfig(path string, data *Config) error {
 	}
 
 	return toml.NewDecoder(file).Decode(data)
-}
-
-func Listen(cfg *Config, address string, logger *logger.Logger, commandGraph *commands.Graph) (*Server, error) {
-	lnCfg := minecraft.ListenConfig{
-		Status: minecraft.NewStatus(minecraft.Version{
-			Text:     "DynamiteMC 1.20.1",
-			Protocol: 763,
-		}, cfg.MaxPlayers, cfg.MOTD, true, true),
-		OnlineMode:           cfg.Online,
-		CompressionThreshold: int32(cfg.CompressionThreshold),
-	}
-
-	if cfg.Chat.Secure && !cfg.Online {
-		logger.Warn("Secure chat doesn't work on offline mode")
-		cfg.Chat.Secure = false
-	}
-	if cfg.Chat.Secure && cfg.Chat.Format != "" {
-		logger.Warn("Secure chat overrides the chat format")
-	}
-	if cfg.TPS < 20 {
-		logger.Warn("TPS must be at least 20")
-		cfg.TPS = 20
-	}
-	if cfg.ResourcePack.Enable && cfg.ResourcePack.URL == "" {
-		logger.Warn("Resource pack is enabled but no url is provided")
-		cfg.ResourcePack.Enable = false
-	}
-
-	//web.SetMaxPlayers(cfg.MaxPlayers)
-
-	ln, err := lnCfg.Listen(address)
-	if err != nil {
-		return nil, err
-	}
-	w, err := world.OpenWorld("world", cfg.Superflat)
-	if err != nil {
-		world.CreateWorld(cfg.Hardcore)
-		logger.Error("Failed to load world: %s", err)
-		os.Exit(1)
-	}
-	w.Gamemode = byte(player.Gamemode(cfg.Gamemode))
-	srv := &Server{
-		Config:       cfg,
-		listener:     ln,
-		Logger:       logger,
-		World:        w,
-		players:      make(map[string]*Session),
-		entities:     make(map[int32]*Entity),
-		commandGraph: commandGraph,
-	}
-
-	if err := loadLang(&srv.lang); err != nil {
-		srv.lang = defaultLang
-		createLang(defaultLang)
-	}
-
-	logger.Info("Loading player info")
-	srv.loadFiles()
-
-	go srv.tickLoop()
-
-	return srv, nil
 }
 
 var DefaultConfig = Config{

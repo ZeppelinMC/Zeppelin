@@ -25,6 +25,6 @@ var deop_cmd = &commands.Command{
 		server.MakeNotOperator(player)
 		player.SendCommands(server.GetCommandGraph())
 		prefix, suffix := player.GetPrefixSuffix()
-		ctx.Reply(player.Server.Translate("commands.deop.success", map[string]string{"player": player.Name(), "player_prefix": prefix, "player_suffix": suffix}))
+		ctx.Reply(server.Lang.Translate("commands.deop.success", map[string]string{"player": player.Name(), "player_prefix": prefix, "player_suffix": suffix}))
 	},
 }

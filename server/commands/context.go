@@ -126,9 +126,9 @@ func (ctx CommandContext) GetBool(name string) (value bool, ok bool) {
 
 func (ctx *CommandContext) Reply(message chat.Message) {
 	if p, ok := ctx.Executor.(interface {
-		SystemChatMessage(message chat.Message) error
+		SendMessage(message chat.Message) error
 	}); ok {
-		p.SystemChatMessage(message)
+		p.SendMessage(message)
 	} else {
 		fmt.Print(strings.ReplaceAll(logger.ParseChat(message), "\n", "\n\r"))
 		fmt.Print("\n\r> ")
@@ -137,14 +137,14 @@ func (ctx *CommandContext) Reply(message chat.Message) {
 
 func (ctx *CommandContext) Incomplete() {
 	_, ok := ctx.Executor.(interface {
-		SystemChatMessage(message chat.Message) error
+		SendMessage(message chat.Message) error
 	})
 	ctx.Reply(chat.NewMessage(fmt.Sprintf("§cUnknown or incomplete command, see below for error"+cond(ok, "", "\r")+"\n§7%s§r§c§o<--[HERE]", ctx.FullCommand)))
 }
 
 func (ctx *CommandContext) ErrorHere(msg string) {
 	_, ok := ctx.Executor.(interface {
-		SystemChatMessage(message chat.Message) error
+		SendMessage(message chat.Message) error
 	})
 	sp := strings.Split(ctx.FullCommand, " ")
 	ctx.Reply(chat.NewMessage(fmt.Sprintf("§c%s\n"+cond(ok, "", "\r")+"§7%s §c§n%s§c§o<--[HERE]", msg, strings.Join(sp[:len(sp)-1], " "), sp[len(sp)-1])))
@@ -152,4 +152,28 @@ func (ctx *CommandContext) ErrorHere(msg string) {
 
 func (ctx *CommandContext) Error(msg string) {
 	ctx.Reply(chat.NewMessage("§c" + msg))
+}
+
+type SuggestionsContext struct {
+	Executor      interface{}
+	TransactionId int32
+	Arguments     []string
+	FullCommand   string
+}
+
+func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
+	if p, ok := c.Executor.(interface {
+		SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []pk.SuggestionMatch)
+	}); ok {
+		var start, length int32
+		if len(c.Arguments) > 0 {
+			arg := c.Arguments[len(c.Arguments)-1]
+			start = int32(strings.Index(c.FullCommand, arg))
+			length = int32(len(arg))
+		} else {
+			start = int32(len(c.FullCommand))
+			length = int32(len(c.FullCommand))
+		}
+		p.SendCommandSuggestionsResponse(c.TransactionId, start, length, suggestions)
+	}
 }

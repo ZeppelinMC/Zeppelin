@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
 var tp_cmd = &commands.Command{
@@ -21,17 +21,17 @@ var tp_cmd = &commands.Command{
 		switch len(ctx.Arguments) {
 		case 1:
 			{
-				if exe, ok := ctx.Executor.(*server.Session); !ok {
+				if exe, ok := ctx.Executor.(*player.Player); !ok {
 					ctx.Incomplete()
 					return
 				} else {
 					player := srv.FindPlayer(ctx.Arguments[0])
-					x, y, z := player.Player.Position()
-					yaw, pitch := exe.Player.Rotation()
+					x, y, z := player.Position()
+					yaw, pitch := exe.Rotation()
 					exe.Teleport(x, y, z, yaw, pitch)
 					ep, es := exe.GetPrefixSuffix()
 					pp, ps := player.GetPrefixSuffix()
-					ctx.Reply(srv.Translate("commands.teleport.success.entity.single", map[string]string{
+					ctx.Reply(srv.Lang.Translate("commands.teleport.success.entity.single", map[string]string{
 						"player":         exe.Name(),
 						"player_prefix":  ep,
 						"player_suffx":   es,
@@ -46,13 +46,13 @@ var tp_cmd = &commands.Command{
 				// Teleport player to player
 				player1 := srv.FindPlayer(ctx.Arguments[0])
 				player2 := srv.FindPlayer(ctx.Arguments[1])
-				x, y, z := player2.Player.Position()
-				yaw, pitch := player1.Player.Rotation()
+				x, y, z := player2.Position()
+				yaw, pitch := player1.Rotation()
 				player1.Teleport(x, y, z, yaw, pitch)
 
 				ep, es := player1.GetPrefixSuffix()
 				pp, ps := player2.GetPrefixSuffix()
-				ctx.Reply(srv.Translate("commands.teleport.success.entity.single", map[string]string{
+				ctx.Reply(srv.Lang.Translate("commands.teleport.success.entity.single", map[string]string{
 					"player":         player1.Name(),
 					"player_prefix":  ep,
 					"player_suffx":   es,
@@ -64,7 +64,7 @@ var tp_cmd = &commands.Command{
 		case 3:
 			{
 				// Teleport executor to coordinates
-				if exe, ok := ctx.Executor.(*server.Session); !ok {
+				if exe, ok := ctx.Executor.(*player.Player); !ok {
 					ctx.Incomplete()
 				} else {
 					x, err := strconv.ParseFloat(ctx.Arguments[0], 64)
@@ -82,12 +82,12 @@ var tp_cmd = &commands.Command{
 						ctx.Error("Invalid x position")
 						return
 					}
-					yaw, pitch := exe.Player.Rotation()
+					yaw, pitch := exe.Rotation()
 
 					exe.Teleport(x, y, z, yaw, pitch)
 
 					prefix, suffix := exe.GetPrefixSuffix()
-					ctx.Reply(srv.Translate("commands.teleport.success.location.single",
+					ctx.Reply(srv.Lang.Translate("commands.teleport.success.location.single",
 						map[string]string{
 							"player":        exe.Name(),
 							"player_prefix": prefix,
@@ -118,11 +118,11 @@ var tp_cmd = &commands.Command{
 					return
 				}
 
-				yaw, pitch := player.Player.Rotation()
+				yaw, pitch := player.Rotation()
 				player.Teleport(x, y, z, yaw, pitch)
 
 				prefix, suffix := player.GetPrefixSuffix()
-				ctx.Reply(srv.Translate("commands.teleport.success.location.single",
+				ctx.Reply(srv.Lang.Translate("commands.teleport.success.location.single",
 					map[string]string{
 						"player":        player.Name(),
 						"player_prefix": prefix,

@@ -1,9 +1,9 @@
 package core_commands
 
 import (
-	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
 var dimension_cmd = &commands.Command{
@@ -17,9 +17,11 @@ var dimension_cmd = &commands.Command{
 			ctx.Incomplete()
 			return
 		}
-		if p, ok := ctx.Executor.(*server.Session); ok {
-			p.Respawn(ctx.Arguments[0])
-			ctx.Reply(chat.NewMessage("Switched dimension to " + ctx.Arguments[0]))
+		if p, ok := ctx.Executor.(*player.Player); ok {
+			p.Respawn(p.Server.(*server.Server).World.GetDimension(ctx.Arguments[0]))
+			ctx.Reply(p.Server.(*server.Server).Lang.Translate("commands.dimension.success", map[string]string{
+				"dimension": ctx.Arguments[0],
+			}))
 		} else {
 			ctx.Error("This command can only be used by players")
 			return

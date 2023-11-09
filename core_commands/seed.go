@@ -13,7 +13,7 @@ var seed_cmd = &commands.Command{
 	Execute: func(ctx commands.CommandContext) {
 		server := getServer(ctx.Executor)
 		seed := server.World.Seed()
-		ctx.Reply(server.Translate("commands.seed.success", map[string]string{"seed": fmt.Sprint(seed)}).
+		ctx.Reply(server.Lang.Translate("commands.seed.success", map[string]string{"seed": fmt.Sprint(seed)}).
 			WithCopyToClipboardClickEvent(fmt.Sprint(seed)).
 			WithShowTextHoverEvent(chat.NewMessage("Click to Copy to clipboard")))
 	},

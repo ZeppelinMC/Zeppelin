@@ -11,6 +11,7 @@ import (
 
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/google/uuid"
 )
 
@@ -72,7 +73,7 @@ func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
 	}
 
 	if reason != "" {
-		conn.SendPacket(&packet.DisconnectPlay{DisconnectLogin: packet.DisconnectLogin{Reason: srv.Translate(reason, nil)}})
+		conn.SendPacket(&packet.DisconnectPlay{DisconnectLogin: packet.DisconnectLogin{Reason: srv.Lang.Translate(reason, nil)}})
 	}
 
 	return reason != ""
@@ -121,14 +122,14 @@ func (srv *Server) IsOperator(uuid [16]byte) bool {
 	return false
 }
 
-func (srv *Server) Ban(p *Session, reason string) {
+func (srv *Server) Ban(name, uuid string, reason string) {
 	t, _ := time.Now().MarshalJSON()
 
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	srv.BannedPlayers = append(srv.BannedPlayers, user{
-		UUID:    p.UUID(),
-		Name:    p.Name(),
+		UUID:    uuid,
+		Name:    name,
 		Created: string(t),
 		Reason:  reason,
 	})
@@ -145,45 +146,45 @@ func (srv *Server) Unban(name string) {
 	}
 }
 
-func (srv *Server) MakeOperator(p *Session) {
-	p.Player.SetOperator(true)
+func (srv *Server) MakeOperator(p *player.Player) {
+	p.SetOperator(true)
 	p.SendCommands(srv.commandGraph)
 
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	srv.Operators = append(srv.Operators, user{
-		UUID: p.UUID(),
+		UUID: p.UUID().String(),
 		Name: p.Name(),
 	})
 }
 
-func (srv *Server) MakeNotOperator(p *Session) {
-	p.Player.SetOperator(false)
+func (srv *Server) MakeNotOperator(p *player.Player) {
+	p.SetOperator(false)
 	p.SendCommands(srv.commandGraph)
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	for i, op := range srv.Operators {
-		if op.UUID == p.UUID() {
+		if op.UUID == p.UUID().String() {
 			srv.Operators = slices.Delete(srv.Operators, i, i+1)
 			return
 		}
 	}
 }
 
-func (srv *Server) AddToWhitelist(p *Session) {
+func (srv *Server) AddToWhitelist(name, uuid string) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	srv.WhitelistedPlayers = append(srv.WhitelistedPlayers, user{
-		UUID: p.UUID(),
-		Name: p.Name(),
+		UUID: uuid,
+		Name: name,
 	})
 }
 
-func (srv *Server) RemoveFromWhitelist(p *Session) {
+func (srv *Server) RemoveFromWhitelist(uuid string) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	for i, w := range srv.WhitelistedPlayers {
-		if w.UUID == p.UUID() {
+		if w.UUID == uuid {
 			srv.WhitelistedPlayers = slices.Delete(srv.WhitelistedPlayers, i, i+1)
 			return
 		}

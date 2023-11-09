@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"fmt"
@@ -8,8 +8,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/player"
 )
 
-func ClickContainer(controller Controller, state *player.Player, pk *packet.ClickContainer) {
-	inv := state.Inventory()
+func ClickContainer(state *player.Player, pk *packet.ClickContainer) {
 	if pk.WindowID == 0 {
 		//fmt.Println(pk.Mode, pk.Button)
 		switch pk.Mode {
@@ -27,9 +26,9 @@ func ClickContainer(controller Controller, state *player.Player, pk *packet.Clic
 						}
 						if slot == nil {
 							fmt.Println("setting carried item")
-							inv.SetCarriedItem(inventory.NetworkSlotToDataSlot(pk.Slot))
+							state.Inventory.SetCarriedItem(inventory.NetworkSlotToDataSlot(pk.Slot))
 						} else {
-							inv.Merge(inventory.NetworkSlotToDataSlot(pk.Slot))
+							state.Inventory.Merge(inventory.NetworkSlotToDataSlot(pk.Slot))
 						}
 					}
 				}
@@ -39,7 +38,7 @@ func ClickContainer(controller Controller, state *player.Player, pk *packet.Clic
 						// right click outside container
 					} else {
 						fmt.Println("splitting")
-						inv.Split(inventory.NetworkSlotToDataSlot(pk.Slot))
+						state.Inventory.Split(inventory.NetworkSlotToDataSlot(pk.Slot))
 					}
 				}
 			}
@@ -52,7 +51,7 @@ func ClickContainer(controller Controller, state *player.Player, pk *packet.Clic
 			case 40:
 				{
 					for s := range pk.Slots {
-						inv.Swap(inventory.NetworkSlotToDataSlot(s), -106)
+						state.Inventory.Swap(inventory.NetworkSlotToDataSlot(s), -106)
 						break
 					}
 				}
@@ -65,7 +64,7 @@ func ClickContainer(controller Controller, state *player.Player, pk *packet.Clic
 							new = inventory.NetworkSlotToDataSlot(s)
 							break
 						}
-						inv.Swap(slot, new)
+						state.Inventory.Swap(slot, new)
 					}
 				}
 			}
@@ -96,7 +95,7 @@ func ClickContainer(controller Controller, state *player.Player, pk *packet.Clic
 			switch pk.Button {
 			case 0:
 				{
-					inv.Collect(inventory.NetworkSlotToDataSlot(pk.Slot))
+					state.Inventory.Collect(inventory.NetworkSlotToDataSlot(pk.Slot))
 				}
 			}
 		}

@@ -9,6 +9,8 @@ import (
 )
 
 type Dimension struct {
+	world *World
+
 	typ string
 
 	rd *anvil.Reader
@@ -23,12 +25,17 @@ type Dimension struct {
 	mu sync.RWMutex
 }
 
-func NewDimension(typ string, rd *anvil.Reader) *Dimension {
+func (w *World) NewDimension(typ string, rd *anvil.Reader) *Dimension {
 	return &Dimension{
 		typ:    typ,
 		rd:     rd,
 		chunks: make(map[uint64]*chunk.Chunk),
+		world:  w,
 	}
+}
+
+func (d *Dimension) World() *World {
+	return d.world
 }
 
 func (d *Dimension) Chunk(x, z int32) (*chunk.Chunk, error) {

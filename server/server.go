@@ -8,7 +8,13 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
+	"github.com/dynamitemc/dynamite/server/config"
+	"github.com/dynamitemc/dynamite/server/controller"
+	"github.com/dynamitemc/dynamite/server/entity"
+	"github.com/dynamitemc/dynamite/server/handler"
+	"github.com/dynamitemc/dynamite/server/lang"
 	"github.com/dynamitemc/dynamite/server/permission"
 	"golang.org/x/term"
 
@@ -29,17 +35,72 @@ import (
 	"github.com/dynamitemc/dynamite/web"
 )
 
+func New(cfg *config.Config, address string, logger *logger.Logger, commandGraph *commands.Graph) (*Server, error) {
+	lnCfg := minecraft.ListenConfig{
+		Status: minecraft.NewStatus(minecraft.Version{
+			Text:     "DynamiteMC 1.20.1",
+			Protocol: 763,
+		}, cfg.MaxPlayers, cfg.MOTD, true, true),
+		OnlineMode:           cfg.Online,
+		CompressionThreshold: int32(cfg.CompressionThreshold),
+	}
+
+	if cfg.Chat.Secure && !cfg.Online {
+		logger.Warn("Secure chat doesn't work on offline mode")
+		cfg.Chat.Secure = false
+	}
+	if cfg.Chat.Secure && cfg.Chat.Format != "" {
+		logger.Warn("Secure chat overrides the chat format")
+	}
+	if cfg.TPS < 20 {
+		logger.Warn("TPS must be at least 20")
+		cfg.TPS = 20
+	}
+	if cfg.ResourcePack.Enable && cfg.ResourcePack.URL == "" {
+		logger.Warn("Resource pack is enabled but no url is provided")
+		cfg.ResourcePack.Enable = false
+	}
+
+	//web.SetMaxPlayers(cfg.MaxPlayers)
+
+	ln, err := lnCfg.Listen(address)
+	if err != nil {
+		return nil, err
+	}
+	w, err := world.OpenWorld("world", cfg.Superflat)
+	if err != nil {
+		world.CreateWorld(cfg.Hardcore)
+		logger.Error("Failed to load world: %s", err)
+		os.Exit(1)
+	}
+	w.Gamemode = byte(player.Gamemode(cfg.Gamemode))
+	srv := &Server{
+		Config:       cfg,
+		listener:     ln,
+		Logger:       logger,
+		World:        w,
+		Players:      controller.New[uuid.UUID, *player.Player](),
+		Entities:     controller.New[int32, entity.Entity](),
+		commandGraph: commandGraph,
+		Lang:         lang.New("lang.json"),
+	}
+
+	logger.Info("Loading player info")
+	srv.loadFiles()
+
+	go srv.tickLoop()
+
+	return srv, nil
+}
+
 var idCounter atomic.Int32
 
 type Server struct {
-	Config       *Config
+	Config       *config.Config
 	Logger       *logger.Logger
 	commandGraph *commands.Graph
 
-	lang map[string]string
-
-	// Players mapped by UUID
-	players map[string]*Session
+	Lang *lang.Lang
 
 	WhitelistedPlayers,
 	Operators,
@@ -48,7 +109,8 @@ type Server struct {
 
 	listener *minecraft.Listener
 
-	entities map[int32]*Entity
+	Players  *controller.Controller[uuid.UUID, *player.Player]
+	Entities *controller.Controller[int32, entity.Entity]
 
 	World *world.World
 
@@ -65,15 +127,8 @@ func (srv *Server) Start() error {
 	}
 }
 
-func (srv *Server) GetDimension(typ string) *world.Dimension {
-	switch typ {
-	case "minecraft:the_nether":
-		return srv.World.Nether()
-	case "minecraft:the_end":
-		return srv.World.TheEnd()
-	default:
-		return srv.World.Overworld()
-	}
+func (srv *Server) NewID() int32 {
+	return idCounter.Add(1)
 }
 
 func (srv *Server) handleNewConn(conn *minecraft.Conn) {
@@ -87,77 +142,80 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 
 	data := srv.World.GetPlayerData(uuid.String())
 
-	plyr := player.New(data)
-	cntrl := &Session{
-		Player:   plyr,
-		conn:     conn,
-		Server:   srv,
-		entityID: idCounter.Add(1),
-	}
-	cntrl.uuid = uuid.String()
-	cntrl.clientInfo.ViewDistance = int8(srv.Config.ViewDistance)
+	plyr := player.New(
+		uuid,
+		srv.Players,
+		srv.Entities,
+		srv,
+		srv.Config,
+		srv.Lang,
+		srv.Logger,
+		idCounter.Add(1),
+		conn,
+		data,
+		srv.World.GetDimension(data.Dimension),
+		int8(srv.Config.ViewDistance),
+		srv.NewID,
+	)
 
 	for _, op := range srv.Operators {
-		if op.UUID == cntrl.UUID() {
+		if op.UUID == uuid.String() {
 			plyr.SetOperator(true)
 		}
 	}
 
-	cntrl.SendCommands(srv.commandGraph)
+	plyr.SendCommands(srv.commandGraph)
 
 	//cntrl.SendPacket(&packet.SetTablistHeaderFooter{
 	//	Header: strings.Join(srv.Config.Tablist.Header, "\n"),
 	//	Footer: strings.Join(srv.Config.Tablist.Footer, "\n"),
 	//})
 
-	srv.addPlayer(cntrl)
-	cntrl.Login(plyr.Dimension())
+	srv.addPlayer(plyr)
+	plyr.Login(plyr.Dimension())
 
-	cntrl.intitializeData()
+	plyr.IntitializeData()
 
-	if err := cntrl.handlePackets(); err != nil {
-		prefix, suffix := cntrl.GetPrefixSuffix()
-		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), cntrl.UUID())
+	if err := srv.handlePackets(plyr); err != nil {
+		srv.Players.Delete(plyr.UUID())
+		prefix, suffix := plyr.GetPrefixSuffix()
+		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), plyr.UUID())
 
-		srv.GlobalMessage(srv.Translate("player.leave", map[string]string{"player": cntrl.Name(), "player_prefix": prefix, "player_suffix": suffix}))
-		srv.PlayerlistRemove(conn.UUID())
-		cntrl.Despawn()
+		srv.GlobalMessage(srv.Lang.Translate("player.leave", map[string]string{"player": plyr.Name(), "player_prefix": prefix, "player_suffix": suffix}))
+		srv.playerlistRemove(conn.UUID())
+		plyr.Despawn()
 		plyr.Save()
 
 		//todo consider moving logic of removing player to a separate function
-		srv.mu.Lock()
-		delete(srv.players, cntrl.UUID())
-		srv.mu.Unlock()
-		//gui.RemovePlayer(cntrl.UUID)
 	}
 }
 
-func (srv *Server) addPlayer(p *Session) {
+func (srv *Server) addPlayer(p *player.Player) {
 	p.SendPacket(&packet.ServerData{
 		MOTD:               chat.NewMessage(srv.Config.MOTD),
 		EnforcesSecureChat: true,
 	})
 	newPlayer := types.PlayerInfo{
-		UUID:       p.conn.UUID(),
-		Name:       p.conn.Name(),
-		Properties: p.conn.Properties(),
+		UUID:       p.UUID(),
+		Name:       p.Name(),
+		Properties: p.Properties(),
 		Listed:     true,
 	}
 
-	srv.mu.Lock()
-	srv.players[p.UUID()] = p
-	players := make([]types.PlayerInfo, 0, len(srv.players))
-	for _, pl := range srv.players {
-		pl.mu.RLock()
+	srv.Players.Set(p.UUID(), p)
+	players := make([]types.PlayerInfo, 0, srv.Players.Count())
+
+	srv.Players.Range(func(_ uuid.UUID, pl *player.Player) bool {
+		id, pk, ks, ex := pl.SessionID()
 		players = append(players, types.PlayerInfo{
-			UUID:          pl.conn.UUID(),
-			Name:          pl.conn.Name(),
-			Properties:    pl.conn.Properties(),
+			UUID:          pl.UUID(),
+			Name:          pl.Name(),
+			Properties:    pl.Properties(),
 			Listed:        true,
-			PublicKey:     bytes.Clone(pl.publicKey),
-			KeySignature:  bytes.Clone(pl.keySignature),
-			ChatSessionID: pl.sessionID,
-			ExpiresAt:     pl.expires,
+			PublicKey:     bytes.Clone(pk),
+			KeySignature:  bytes.Clone(ks),
+			ChatSessionID: id,
+			ExpiresAt:     ex,
 		})
 		if pl.UUID() != p.UUID() {
 			pl.SendPacket(&packet.PlayerInfoUpdate{
@@ -165,13 +223,12 @@ func (srv *Server) addPlayer(p *Session) {
 				Players: []types.PlayerInfo{newPlayer},
 			})
 		}
-		pl.mu.RUnlock()
-	}
-	srv.mu.Unlock()
+		return true
+	})
 
 	//updates the new session's player list
 	var actions byte = 0x01 | 0x08
-	if p.Server.Config.Chat.Secure {
+	if srv.Config.Chat.Secure {
 		actions |= 0x02
 	}
 	p.SendPacket(&packet.PlayerInfoUpdate{
@@ -180,102 +237,110 @@ func (srv *Server) addPlayer(p *Session) {
 	})
 
 	if srv.Config.Web.Enable {
-		web.AddPlayer(p.conn.Name(), p.UUID())
+		web.AddPlayer(p.Name(), p.UUID().String())
 	}
 	prefix, suffix := p.GetPrefixSuffix()
 
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.conn.RemoteAddr(), p.conn.Name(), p.UUID())
+	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.IP(), p.Name(), p.UUID())
 
-	srv.GlobalMessage(srv.Translate("player.join", map[string]string{"player": p.Name(), "player_prefix": prefix, "player_suffix": suffix}))
+	srv.GlobalMessage(srv.Lang.Translate("player.join", map[string]string{"player": p.Name(), "player_prefix": prefix, "player_suffix": suffix}))
+}
+
+func (srv *Server) handlePackets(p *player.Player) error {
+	ticker := time.NewTicker(25 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			p.Keepalive()
+		default:
+		}
+
+		packt, err := p.ReadPacket()
+		if err != nil {
+			return err
+		}
+
+		switch pk := packt.(type) {
+		case *packet.PlayerCommandServer:
+			handler.PlayerCommand(p, pk.ActionID)
+		case *packet.ChatMessageServer:
+			handler.ChatMessagePacket(p, pk)
+		case *packet.ChatCommandServer:
+			handler.ChatCommandPacket(p, srv.commandGraph, srv.Logger, pk.Command, pk.Timestamp, pk.Salt, pk.ArgumentSignatures)
+		case *packet.ClientSettings:
+			handler.ClientSettings(p, pk)
+		case *packet.PlayerPosition, *packet.PlayerPositionRotation, *packet.PlayerRotation:
+			handler.PlayerMovement(p, pk)
+		case *packet.PlayerActionServer:
+			handler.PlayerAction(p, pk)
+		case *packet.InteractServer:
+			handler.Interact(p, pk)
+		case *packet.SwingArmServer:
+			handler.SwingArm(p, pk.Hand)
+		case *packet.CommandSuggestionsRequest:
+			handler.CommandSuggestionsRequest(pk.TransactionId, pk.Text, srv.commandGraph, p)
+		case *packet.ClientCommandServer:
+			handler.ClientCommand(p, pk.ActionID)
+		case *packet.PlayerAbilitiesServer:
+			handler.PlayerAbilities(p, pk.Flags)
+		case *packet.PlayerSessionServer:
+			p.SetSessionID(pk.SessionID, pk.PublicKey, pk.KeySignature, pk.ExpiresAt)
+		case *packet.SetHeldItemServer:
+			handler.SetHeldItem(p, pk.Slot)
+		case *packet.SetCreativeModeSlot:
+			handler.SetCreativeModeSlot(p, pk.Slot, pk.ClickedItem)
+		case *packet.TeleportToEntityServer:
+			handler.TeleportToEntity(p, pk.Player)
+		case *packet.ClickContainer:
+			handler.ClickContainer(p, pk)
+		}
+	}
 }
 
 func (srv *Server) GetCommandGraph() *commands.Graph {
 	return srv.commandGraph
 }
 
-func (srv *Server) Translate(msg string, data map[string]string) chat.Message {
-	txt, ok := srv.lang[msg]
-	if !ok {
-		return chat.NewMessage(msg)
-	}
-	return srv.ParsePlaceholders(txt, data)
-}
-
-func (srv *Server) ParsePlaceholders(txt string, data map[string]string) chat.Message {
-	for k, v := range data {
-		txt = strings.ReplaceAll(txt, "%"+k+"%", v)
-	}
-	return chat.NewMessage(txt)
-}
-
 func (srv *Server) Reload() error {
 	srv.loadFiles()
 
-	LoadConfig("config.toml", srv.Config)
+	config.LoadConfig("config.toml", srv.Config)
 
 	permission.Clear()
 
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-
-	for _, p := range srv.players {
-		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.conn.UUID()) {
-			p.Disconnect(srv.Translate("disconnect.not_whitelisted", nil))
-			continue
+	srv.Players.Range(func(_ uuid.UUID, p *player.Player) bool {
+		if srv.Config.Whitelist.Enforce && srv.Config.Whitelist.Enable && !srv.IsWhitelisted(p.UUID()) {
+			p.Disconnect(srv.Lang.Translate("disconnect.not_whitelisted", nil))
+			return true
 		}
 
-		p.Player.SetOperator(srv.IsOperator(p.conn.UUID()))
-
+		p.SetOperator(srv.IsOperator(p.UUID()))
 		p.SendCommands(srv.commandGraph)
-	}
+		return true
+	})
 	return nil
 }
 
-func (srv *Server) Player(uuid string) *Session {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-	return srv.players[uuid]
+func (srv *Server) FindPlayer(username string) *player.Player {
+	_, p := srv.Players.Range(func(_ uuid.UUID, p *player.Player) bool {
+		return !strings.EqualFold(p.Name(), username)
+	})
+
+	return p
 }
 
-func (srv *Server) PlayerCount() int {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-	return len(srv.players)
-}
+func (srv *Server) FindPlayerByID(id int32) *player.Player {
+	_, p := srv.Players.Range(func(_ uuid.UUID, p *player.Player) bool {
+		return p.EntityID() != id
+	})
 
-func (srv *Server) Players() map[string]*Session {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-	return srv.players
-}
-
-func (srv *Server) FindPlayer(username string) *Session {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-	for _, p := range srv.players {
-		if strings.EqualFold(p.Name(), username) {
-			return p
-		}
-	}
-	return nil
-}
-
-func (srv *Server) FindPlayerByID(id int32) *Session {
-	srv.mu.RLock()
-	defer srv.mu.RUnlock()
-	for _, p := range srv.players {
-		if p.entityID == id {
-			return p
-		}
-	}
-	return nil
+	return p
 }
 
 func (srv *Server) Close() {
-	srv.mu.Lock()
-	defer srv.mu.Unlock()
-	srv.Logger.Info("Closing server...")
+	srv.Logger.Info("Stopping server")
 
+	srv.Logger.Info("Saving player data")
 	var files = []string{"whitelist.json", "banned_players.json", "ops.json", "banned_ips.json"}
 	var lists = [][]user{srv.WhitelistedPlayers, srv.BannedPlayers, srv.Operators, srv.BannedIPs}
 	for i, file := range files {
@@ -284,16 +349,17 @@ func (srv *Server) Close() {
 
 	permission.Save()
 
-	for _, p := range srv.players {
-		p.Disconnect(srv.Translate("disconnect.server_shutdown", nil))
-		p.Player.Save()
-	}
-	srv.Logger.Done()
-	srv.Logger.Info("Saving world...")
+	srv.Players.Range(func(_ uuid.UUID, p *player.Player) bool {
+		p.Disconnect(srv.Lang.Translate("disconnect.server_shutdown", nil))
+		p.Save()
+		return true
+	})
+
+	srv.Logger.Info("Saving world")
 	srv.World.Save()
 
 	f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
-	_ = toml.NewEncoder(f).Encode(srv.Config)
+	toml.NewEncoder(f).Encode(srv.Config)
 	term.Restore(int(os.Stdin.Fd()), OldState)
 	os.Exit(0)
 }
@@ -325,13 +391,9 @@ func (srv *Server) ConsoleCommand(txt string) {
 	command.Execute(commands.CommandContext{
 		Command:     command,
 		Arguments:   args[1:],
-		Executor:    &ConsoleExecutor{Server: srv},
+		Executor:    srv,
 		FullCommand: content,
 	})
-}
-
-type ConsoleExecutor struct {
-	Server *Server
 }
 
 var OldState *term.State

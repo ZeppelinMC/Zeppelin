@@ -34,11 +34,11 @@ func OpenWorld(name string, flat bool) (*World, error) {
 		return nil, fmt.Errorf("%v loading world level data", err)
 	}
 
-	wrld.overworld = NewDimension("minecraft:overworld", anvil.NewReader(name+"/region/", name+"/entities/"))
-	wrld.nether = NewDimension("minecraft:the_nether", anvil.NewReader(name+"/DIM-1/region/", name+"/DIM-1/entities/"))
-	wrld.theEnd = NewDimension("minecraft:the_end", anvil.NewReader(name+"/DIM1/region/", name+"/DIM1/entities/"))
+	wrld.overworld = wrld.NewDimension("minecraft:overworld", anvil.NewReader(name+"/region/", name+"/entities/"))
+	wrld.nether = wrld.NewDimension("minecraft:the_nether", anvil.NewReader(name+"/DIM-1/region/", name+"/DIM-1/entities/"))
+	wrld.theEnd = wrld.NewDimension("minecraft:the_end", anvil.NewReader(name+"/DIM1/region/", name+"/DIM1/entities/"))
 	if flat {
-		wrld.overworld.generator = &FlatGenerator{}
+		wrld.overworld.generator = new(FlatGenerator)
 	}
 
 	return &wrld, nil
@@ -62,6 +62,17 @@ func (w *World) Nether() *Dimension {
 
 func (w *World) TheEnd() *Dimension {
 	return w.theEnd
+}
+
+func (w *World) GetDimension(typ string) *Dimension {
+	switch typ {
+	case "minecraft:the_nether":
+		return w.Nether()
+	case "minecraft:the_end":
+		return w.TheEnd()
+	default:
+		return w.Overworld()
+	}
 }
 
 func (w *World) LoadSpawnChunks(rd int32) (success int) {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
 var msg_cmd = &commands.Command{
@@ -16,22 +16,22 @@ var msg_cmd = &commands.Command{
 		commands.NewStrArg("message", commands.GreedyPhrase),
 	},
 	Execute: func(ctx commands.CommandContext) {
-		var player *server.Session
+		var pl *player.Player
 		if len(ctx.Arguments) < 2 {
 			ctx.Incomplete()
 			return
 		}
-		if p, ok := ctx.Executor.(*server.Session); !ok {
+		if p, ok := ctx.Executor.(*player.Player); !ok {
 			//todo implement
 			return
 		} else {
-			player = getServer(ctx.Executor).FindPlayer(ctx.Arguments[0])
-			if player == nil {
+			pl = getServer(ctx.Executor).FindPlayer(ctx.Arguments[0])
+			if pl == nil {
 				ctx.Error("No player was found")
 				return
 			}
 			fmt.Println(ctx.ArgumentSignatures)
-			p.Whisper(player, strings.Join(ctx.Arguments[1:], " "), ctx.Timestamp, ctx.Salt, nil) //, ctx.ArgumentSignatures[1].Signature)
+			p.Whisper(pl, strings.Join(ctx.Arguments[1:], " "), ctx.Timestamp, ctx.Salt, nil) //, ctx.ArgumentSignatures[1].Signature)
 		}
 	},
 }

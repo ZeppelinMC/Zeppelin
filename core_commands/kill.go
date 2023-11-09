@@ -4,6 +4,7 @@ import (
 	"github.com/aimjel/minecraft/chat"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
 var kill_cmd = &commands.Command{
@@ -13,13 +14,13 @@ var kill_cmd = &commands.Command{
 		commands.NewEntityArg("player", commands.EntityPlayerOnly),
 	},
 	Execute: func(ctx commands.CommandContext) {
-		var player *server.Session
+		var pl *player.Player
 		if len(ctx.Arguments) == 0 {
-			if p, ok := ctx.Executor.(*server.Session); !ok {
+			if p, ok := ctx.Executor.(*player.Player); !ok {
 				ctx.Incomplete()
 				return
 			} else {
-				player = p
+				pl = p
 			}
 		} else {
 			p := getServer(ctx.Executor).FindPlayer(ctx.Arguments[0])
@@ -27,16 +28,16 @@ var kill_cmd = &commands.Command{
 				ctx.Error("No player was found")
 				return
 			}
-			player = p
+			pl = p
 		}
-		name := player.Name()
-		player.Kill(name + " was killed")
-		prefix, suffix := player.GetPrefixSuffix()
-		ctx.Reply(player.Server.Translate("commands.kill.success.single", map[string]string{
-			"player":        player.Name(),
+		name := pl.Name()
+		pl.Kill(name + " was killed")
+		prefix, suffix := pl.GetPrefixSuffix()
+		ctx.Reply(pl.Server.(*server.Server).Lang.Translate("commands.kill.success.single", map[string]string{
+			"player":        pl.Name(),
 			"player_prefix": prefix,
 			"player_suffx":  suffix,
 		}))
-		player.Server.GlobalMessage(chat.NewMessage(name + " was killed"))
+		pl.Server.(*server.Server).GlobalMessage(chat.NewMessage(name + " was killed"))
 	},
 }

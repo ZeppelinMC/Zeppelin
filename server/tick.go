@@ -4,6 +4,9 @@ import (
 	"time"
 
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/entity"
+	"github.com/dynamitemc/dynamite/server/player"
+	"github.com/google/uuid"
 )
 
 func (srv *Server) tickLoop() {
@@ -15,19 +18,22 @@ func (srv *Server) tickLoop() {
 }
 
 func (srv *Server) tick(tick uint) {
-	for _, e := range srv.entities {
-		e.Entity.Tick(srv, tick)
-	}
-	for _, pl := range srv.players {
+	srv.Entities.RangeNoLock(func(_ int32, e entity.Entity) bool {
+		e.Tick(srv, tick)
+		return true
+	})
+
+	worldAge, dayTime := srv.World.IncrementTime()
+	srv.Players.RangeNoLock(func(_ uuid.UUID, pl *player.Player) bool {
 		if tick%8 == 0 {
-			pl.SendChunks(srv.GetDimension(pl.Player.Dimension()))
+			pl.SendChunks(pl.Dimension())
 			//pl.UnloadChunks()
 		}
 
-		worldAge, dayTime := srv.World.IncrementTime()
 		pl.SendPacket(&packet.UpdateTime{
 			WorldAge:  worldAge,
 			TimeOfDay: dayTime,
 		})
-	}
+		return true
+	})
 }

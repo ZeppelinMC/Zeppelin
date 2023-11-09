@@ -3,13 +3,14 @@ package core_commands
 import (
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 )
 
 func getServer(executor interface{}) *server.Server {
-	if p, ok := executor.(*server.Session); ok {
-		return p.Server
-	} else if c, ok := executor.(*server.ConsoleExecutor); ok {
-		return c.Server
+	if p, ok := executor.(*player.Player); ok {
+		return p.Server.(*server.Server)
+	} else if c, ok := executor.(*server.Server); ok {
+		return c
 	}
 	return nil
 }
@@ -20,7 +21,6 @@ var Commands = &commands.Graph{
 		gamemode_cmd,
 		ram_cmd,
 		kill_cmd,
-		gamerule_cmd,
 		ban_cmd,
 		banlist_cmd,
 		op_cmd,
@@ -34,5 +34,6 @@ var Commands = &commands.Graph{
 		msg_cmd,
 		summon_cmd,
 		test_cmd,
+		nick_cmd,
 	},
 }

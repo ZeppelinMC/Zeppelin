@@ -2,36 +2,11 @@ package commands
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/aimjel/minecraft/protocol/types"
 
 	pk "github.com/aimjel/minecraft/packet"
 )
-
-type SuggestionsContext struct {
-	Executor      interface{}
-	TransactionId int32
-	Arguments     []string
-	FullCommand   string
-}
-
-func (c *SuggestionsContext) Return(suggestions []pk.SuggestionMatch) {
-	if p, ok := c.Executor.(interface {
-		SendCommandSuggestionsResponse(id int32, start int32, length int32, matches []pk.SuggestionMatch)
-	}); ok {
-		var start, length int32
-		if len(c.Arguments) > 0 {
-			arg := c.Arguments[len(c.Arguments)-1]
-			start = int32(strings.Index(c.FullCommand, arg))
-			length = int32(len(arg))
-		} else {
-			start = int32(len(c.FullCommand))
-			length = int32(len(c.FullCommand))
-		}
-		p.SendCommandSuggestionsResponse(c.TransactionId, start, length, suggestions)
-	}
-}
 
 func cond[T any](c bool, t T, f T) T {
 	if c {

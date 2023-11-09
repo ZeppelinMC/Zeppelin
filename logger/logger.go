@@ -26,7 +26,6 @@ type Logger struct {
 	c        chan Message
 	messages []Message
 	file     *os.File
-	done     bool
 }
 
 func Println(a ...interface{}) (n int, err error) {
@@ -44,6 +43,7 @@ var BB = color.New(color.FgBlue, color.Bold).SprintFunc()
 var CB = color.New(color.FgCyan, color.Bold).SprintFunc()
 var RB = color.New(color.FgRed, color.Bold).SprintFunc()
 var YB = color.New(color.FgYellow, color.Bold).SprintFunc()
+var GG = color.New(color.FgHiGreen, color.Bold).SprintFunc()
 
 var HR = color.New(color.FgHiRed).SprintFunc()
 var C = color.New(color.FgCyan).SprintFunc()
@@ -68,7 +68,7 @@ var colors = map[string]color.Attribute{
 }
 
 func ParseChat(msg chat.Message) string {
-	var str string
+	var str strings.Builder
 	texts := []chat.Message{msg}
 	for _, m := range msg.Extra {
 		texts = append(texts, m)
@@ -89,12 +89,10 @@ func ParseChat(msg chat.Message) string {
 		if text.Underlined {
 			attrs = append(attrs, color.Underline)
 		}
-		str += color.New(attrs...).SprintFunc()(*text.Text)
+		str.WriteString(color.New(attrs...).SprintFunc()(*text.Text))
 	}
 
-	str = strings.ReplaceAll(str, "\n", "\n\r")
-
-	return str
+	return strings.ReplaceAll(str.String(), "\n", "\n\r")
 }
 
 func (logger *Logger) Channel() chan Message {
@@ -102,14 +100,12 @@ func (logger *Logger) Channel() chan Message {
 }
 
 func (logger *Logger) Print(msg chat.Message) {
+	time := getDateString()
 	logger.send(Message{
 		Type:    "chat",
 		Message: msg.String(),
 	})
-	fmt.Println("\r" + ParseChat(msg))
-	if !logger.done {
-		fmt.Print("\r> ")
-	}
+	fmt.Printf("\r%s %s: %s\n\r> ", GB(time), GG("CHAT "), ParseChat(msg))
 }
 
 func (logger *Logger) Info(format string, a ...interface{}) {
@@ -122,12 +118,7 @@ func (logger *Logger) Info(format string, a ...interface{}) {
 		Message: str,
 	})
 	str = strings.ReplaceAll(str, "\n", "\n\r")
-	if !logger.done {
-		fmt.Printf("\r%s %s: %s\n", GB(time), BB("INFO "), str)
-		fmt.Print("\r> ")
-	} else {
-		fmt.Printf("\r%s %s: %s", GB(time), BB("INFO "), str)
-	}
+	fmt.Printf("\r%s %s: %s\n\r> ", GB(time), BB("INFO "), str)
 }
 
 func (logger *Logger) Debug(format string, a ...interface{}) {
@@ -143,12 +134,7 @@ func (logger *Logger) Debug(format string, a ...interface{}) {
 		Message: str,
 	})
 	str = strings.ReplaceAll(str, "\n", "\n\r")
-	if !logger.done {
-		fmt.Printf("\r%s %s: %s\n", GB(time), CB("DEBUG"), str)
-		fmt.Print("\r> ")
-	} else {
-		fmt.Printf("\r%s %s: %s", GB(time), CB("DEBUG"), str)
-	}
+	fmt.Printf("\r%s %s: %s\n\r> ", GB(time), CB("DEBUG"), str)
 }
 
 func (logger *Logger) Error(format string, a ...interface{}) {
@@ -161,12 +147,7 @@ func (logger *Logger) Error(format string, a ...interface{}) {
 		Message: str,
 	})
 	str = strings.ReplaceAll(str, "\n", "\n\r")
-	if !logger.done {
-		fmt.Fprintf(os.Stderr, "\r%s %s: %s\n", GB(time), RB("ERROR"), str)
-		fmt.Print("\r> ")
-	} else {
-		fmt.Fprintf(os.Stderr, "\r%s %s: %s", GB(time), RB("ERROR"), str)
-	}
+	fmt.Fprintf(os.Stderr, "\r%s %s: %s\n\r> ", GB(time), RB("ERROR"), str)
 }
 
 func (logger *Logger) Warn(format string, a ...interface{}) {
@@ -179,12 +160,7 @@ func (logger *Logger) Warn(format string, a ...interface{}) {
 		Message: str,
 	})
 	str = strings.ReplaceAll(str, "\n", "\n\r")
-	if !logger.done {
-		fmt.Printf("\r%s %s: %s\n", GB(time), YB("WARN "), str)
-		fmt.Print("\r> ")
-	} else {
-		fmt.Printf("\r%s %s: %s", GB(time), YB("WARN "), str)
-	}
+	fmt.Printf("\r%s %s: %s\n\r> ", GB(time), YB("WARN "), str)
 }
 
 func (logger *Logger) EnableChannel() {
@@ -202,10 +178,6 @@ func (logger *Logger) send(message Message) {
 	} else {
 		logger.messages = append(logger.messages, message)
 	}
-}
-
-func (logger *Logger) Done() {
-	logger.done = true
 }
 
 func (logger *Logger) write(str string) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
+	"github.com/dynamitemc/dynamite/server/player"
 	p "github.com/dynamitemc/dynamite/server/player"
 )
 
@@ -35,13 +36,13 @@ var gamemode_cmd = &commands.Command{
 			ctx.ErrorHere(fmt.Sprintf("Unknown game mode: %s", ctx.Arguments[0]))
 			return
 		}
-		var player *server.Session
+		var pl *player.Player
 		if len(ctx.Arguments) == 1 {
-			if p, ok := ctx.Executor.(*server.Session); !ok {
+			if p, ok := ctx.Executor.(*player.Player); !ok {
 				ctx.Incomplete()
 				return
 			} else {
-				player = p
+				pl = p
 			}
 		} else {
 			p := getServer(ctx.Executor).FindPlayer(ctx.Arguments[1])
@@ -49,21 +50,21 @@ var gamemode_cmd = &commands.Command{
 				ctx.Error("No player was found")
 				return
 			}
-			player = p
+			pl = p
 		}
-		if int(player.Player.GameMode()) == gm {
+		if int(pl.GameMode()) == gm {
 			return
 		}
-		player.SetGameMode(byte(gm))
-		prefix, suffix := player.GetPrefixSuffix()
-		msg := player.Server.Translate("commands.gamemode.success.other", map[string]string{
-			"player":        player.Name(),
+		pl.SetGameMode(byte(gm))
+		prefix, suffix := pl.GetPrefixSuffix()
+		msg := pl.Server.(*server.Server).Lang.Translate("commands.gamemode.success.other", map[string]string{
+			"player":        pl.Name(),
 			"player_prefix": prefix,
 			"player_suffix": suffix,
 			"gamemode":      pascalify(ctx.Arguments[0]),
 		})
-		if exe, ok := ctx.Executor.(*server.Session); ok && player.UUID() == exe.UUID() {
-			msg = player.Server.Translate("commands.gamemode.success.self", map[string]string{"gamemode": pascalify(ctx.Arguments[0])})
+		if exe, ok := ctx.Executor.(*player.Player); ok && pl.UUID() == exe.UUID() {
+			msg = pl.Server.(*server.Server).Lang.Translate("commands.gamemode.success.self", map[string]string{"gamemode": pascalify(ctx.Arguments[0])})
 		}
 		ctx.Reply(msg)
 	},
