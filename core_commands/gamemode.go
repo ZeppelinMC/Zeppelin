@@ -7,7 +7,6 @@ import (
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/player"
-	p "github.com/dynamitemc/dynamite/server/player"
 )
 
 func pascalify(str string) (res string) {
@@ -31,7 +30,7 @@ var gamemode_cmd = &commands.Command{
 			ctx.Incomplete()
 			return
 		}
-		gm := p.Gamemode(ctx.Arguments[0])
+		gm := player.Gamemode(ctx.Arguments[0])
 		if gm == -1 {
 			ctx.ErrorHere(fmt.Sprintf("Unknown game mode: %s", ctx.Arguments[0]))
 			return

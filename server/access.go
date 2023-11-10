@@ -80,7 +80,7 @@ func (srv *Server) ValidateConn(conn *minecraft.Conn) bool {
 }
 
 func (srv *Server) IsPlayerBanned(u [16]byte) bool {
-	suuid, _ := uuid.FromBytes(u[:])
+	suuid := uuid.UUID(u)
 	for _, u := range srv.BannedPlayers {
 		if u.UUID == suuid.String() {
 			return true
@@ -101,7 +101,7 @@ func (srv *Server) IsIPBanned(ip string) bool {
 }
 
 func (srv *Server) IsWhitelisted(u [16]byte) bool {
-	suuid, _ := uuid.FromBytes(u[:])
+	suuid := uuid.UUID(u)
 	for _, u := range srv.WhitelistedPlayers {
 		if u.UUID == suuid.String() {
 			return true

@@ -23,6 +23,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/permission"
 	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
+
 	"github.com/google/uuid"
 )
 

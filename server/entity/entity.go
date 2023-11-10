@@ -18,11 +18,22 @@ type Entity interface {
 	Tick(srv server, tick uint)
 	UUID() uuid.UUID
 	EntityID() int32
+	Type() string
+
 	Position() (x, y, z float64)
 	Rotation() (yaw, pitch float32)
 	OnGround() bool
 	SetPosition(x, y, z float64)
-	Type() string
+}
+
+type LivingEntity interface {
+	Entity
+	Kill()
+	Attack(attacker LivingEntity)
+}
+
+type Player interface {
+	LivingEntity
 }
 
 var pool = map[string]func(int32, uuid.UUID, chunk.Entity, *world.Dimension) Entity{}

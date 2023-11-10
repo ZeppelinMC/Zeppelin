@@ -16,13 +16,12 @@ import (
 	"github.com/dynamitemc/dynamite/server/handler"
 	"github.com/dynamitemc/dynamite/server/lang"
 	"github.com/dynamitemc/dynamite/server/permission"
+	"github.com/google/uuid"
 	"golang.org/x/term"
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/protocol/types"
 	"github.com/pelletier/go-toml/v2"
-
-	"github.com/google/uuid"
 
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"
@@ -138,7 +137,7 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	}
 
 	x := conn.UUID()
-	uuid, _ := uuid.FromBytes(x[:])
+	uuid := uuid.UUID(x[:])
 
 	data := srv.World.GetPlayerData(uuid.String())
 

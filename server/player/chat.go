@@ -8,6 +8,7 @@ import (
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/enum"
+
 	"github.com/google/uuid"
 )
 

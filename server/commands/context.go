@@ -9,6 +9,7 @@ import (
 	"github.com/aimjel/minecraft/chat"
 	pk "github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/logger"
+	"github.com/dynamitemc/dynamite/logger/color"
 )
 
 type CommandContext struct {
@@ -130,7 +131,7 @@ func (ctx *CommandContext) Reply(message chat.Message) {
 	}); ok {
 		p.SendMessage(message)
 	} else {
-		fmt.Print(strings.ReplaceAll(logger.ParseChat(message), "\n", "\n\r"))
+		fmt.Print(strings.ReplaceAll(color.FromChat(message), "\n", "\n\r"))
 		fmt.Print("\n\r> ")
 	}
 }

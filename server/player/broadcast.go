@@ -14,6 +14,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/enum"
 	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
+
 	"github.com/google/uuid"
 )
 
@@ -79,7 +80,10 @@ func (p *Player) Attack(entityId int32) {
 			SourcePositionZ: &z,
 		})
 	} else {
-		entity := e.(entity.Entity)
+		entity, ok := e.(entity.LivingEntity)
+		if !ok {
+			return
+		}
 		sound, ok := registry.GetSound(fmt.Sprintf("minecraft:entity.%s.hurt", strings.TrimPrefix(entity.Type(), "minecraft:")))
 		if ok {
 			soundId = sound.ProtocolID

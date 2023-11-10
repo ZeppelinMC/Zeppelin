@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/aimjel/minecraft/chat"
+	"github.com/dynamitemc/dynamite/logger/color"
 	"github.com/dynamitemc/dynamite/util"
-	"github.com/fatih/color"
 )
 
 type Message struct {
@@ -38,62 +38,15 @@ func getDateString() string {
 	return time.Now().Format("15:04:05")
 }
 
-var GB = color.New(color.FgHiBlack, color.Bold).SprintFunc()
-var BB = color.New(color.FgBlue, color.Bold).SprintFunc()
-var CB = color.New(color.FgCyan, color.Bold).SprintFunc()
-var RB = color.New(color.FgRed, color.Bold).SprintFunc()
-var YB = color.New(color.FgYellow, color.Bold).SprintFunc()
-var GG = color.New(color.FgHiGreen, color.Bold).SprintFunc()
+var GB = color.Color{color.FgBlack, color.Bold}.Colorize
+var BB = color.Color{color.FgBlue, color.Bold}.Colorize
+var CB = color.Color{color.FgCyan, color.Bold}.Colorize
+var RB = color.Color{color.FgRed, color.Bold}.Colorize
+var YB = color.Color{color.FgYellow, color.Bold}.Colorize
+var GG = color.Color{color.FgGreen, color.Bold}.Colorize
 
-var HR = color.New(color.FgHiRed).SprintFunc()
-var C = color.New(color.FgCyan).SprintFunc()
-
-var colors = map[string]color.Attribute{
-	"black":        color.FgBlack,
-	"dark_blue":    color.FgBlue,
-	"dark_green":   color.FgGreen,
-	"dark_aqua":    color.FgCyan,
-	"dark_red":     color.FgRed,
-	"dark_purple":  color.FgMagenta,
-	"gold":         color.FgYellow,
-	"gray":         color.FgWhite,
-	"dark_gray":    color.FgHiBlack,
-	"blue":         color.FgHiBlue,
-	"green":        color.FgHiGreen,
-	"aqua":         color.FgHiCyan,
-	"red":          color.FgHiRed,
-	"light_purple": color.FgHiMagenta,
-	"yellow":       color.FgHiYellow,
-	"white":        color.FgHiWhite,
-}
-
-func ParseChat(msg chat.Message) string {
-	var str strings.Builder
-	texts := []chat.Message{msg}
-	for _, m := range msg.Extra {
-		texts = append(texts, m)
-		texts = append(texts, m.Extra...)
-	}
-
-	for _, text := range texts {
-		if text.Text == nil {
-			continue
-		}
-		attrs := []color.Attribute{colors[text.Color]}
-		if text.Bold {
-			attrs = append(attrs, color.Bold)
-		}
-		if text.Italic {
-			attrs = append(attrs, color.Italic)
-		}
-		if text.Underlined {
-			attrs = append(attrs, color.Underline)
-		}
-		str.WriteString(color.New(attrs...).SprintFunc()(*text.Text))
-	}
-
-	return strings.ReplaceAll(str.String(), "\n", "\n\r")
-}
+var HR = color.Color{color.FgRed}.Colorize
+var C = color.Color{color.FgCyan}.Colorize
 
 func (logger *Logger) Channel() chan Message {
 	return logger.c
@@ -105,7 +58,7 @@ func (logger *Logger) Print(msg chat.Message) {
 		Type:    "chat",
 		Message: msg.String(),
 	})
-	fmt.Printf("\r%s %s: %s\n\r> ", GB(time), GG("CHAT "), ParseChat(msg))
+	fmt.Printf("\r%s %s: %s\n\r> ", GB(time), GG("CHAT "), color.FromChat(msg))
 }
 
 func (logger *Logger) Info(format string, a ...interface{}) {
