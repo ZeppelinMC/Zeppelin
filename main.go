@@ -64,6 +64,13 @@ var cfg config.Config
 var prof bool
 
 func main() {
+	if util.HasArg("-gencfg") {
+		log.Info("Generating config file")
+		f, _ := os.OpenFile("config.toml", os.O_RDWR|os.O_CREATE, 0666)
+		toml.NewEncoder(f).Encode(config.DefaultConfig)
+		f.Close()
+		return
+	}
 	server.OldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 
 	log.Info("Starting Dynamite 1.20.1 server")

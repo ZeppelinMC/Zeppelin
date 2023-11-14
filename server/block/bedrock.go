@@ -18,6 +18,6 @@ func (g Bedrock) Properties() map[string]string {
 	return nil
 }
 
-func (d Bedrock) New(p map[string]string) chunk.Block {
+func (d Bedrock) New(string, map[string]string) chunk.Block {
 	return d
 }

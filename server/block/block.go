@@ -13,9 +13,27 @@ func init() {
 	chunk.RegisterBlock(GrassBlock{})
 	chunk.RegisterBlock(Snow{})
 	chunk.RegisterBlock(Bedrock{})
+	chunk.RegisterBlock(AcaciaLog{})
+	chunk.RegisterBlock(AcaciaLog{Stripped: true})
+
+	chunk.RegisterBlock(BirchLog{})
+	chunk.RegisterBlock(BirchLog{Stripped: true})
+
+	chunk.RegisterBlock(CherryLog{})
+	chunk.RegisterBlock(CherryLog{Stripped: true})
+
+	chunk.RegisterBlock(DarkOakLog{})
+	chunk.RegisterBlock(DarkOakLog{Stripped: true})
+
+	chunk.RegisterBlock(OakLog{})
+	chunk.RegisterBlock(OakLog{Stripped: true})
+
+	chunk.RegisterBlock(SpruceLog{})
+	chunk.RegisterBlock(SpruceLog{Stripped: true})
 }
 
 type BreakInfo struct {
+	Hardness    float64
 	Unbreakable bool
 }
 

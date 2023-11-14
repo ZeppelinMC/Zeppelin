@@ -1,8 +1,6 @@
 package block
 
 import (
-	"fmt"
-
 	"github.com/dynamitemc/dynamite/server/block/pos"
 	"github.com/dynamitemc/dynamite/server/world"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
@@ -22,7 +20,7 @@ func (g GrassBlock) Properties() map[string]string {
 	}
 }
 
-func (GrassBlock) New(p map[string]string) chunk.Block {
+func (GrassBlock) New(_ string, p map[string]string) chunk.Block {
 	var a GrassBlock
 	if p["snowy"] == "true" {
 		a.Snowy = true
@@ -33,7 +31,6 @@ func (GrassBlock) New(p map[string]string) chunk.Block {
 func (g GrassBlock) Tick(p pos.BlockPosition, d *world.Dimension, _ uint) chunk.Block {
 	if g.Snowy {
 		b := d.Block(p.X(), p.Y()+1, p.Z())
-		fmt.Printf("%s\n\r", b.EncodedName())
 		if _, ok := b.(Snow); !ok {
 			g.Snowy = false
 		}

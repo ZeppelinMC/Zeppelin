@@ -13,11 +13,13 @@ var nbtBytes []byte
 type blockInfo struct {
 	Properties map[string][]string `json:"properties"`
 
-	States []struct {
-		Id         int  `json:"id"`
-		Default    bool `json:"default"`
-		Properties map[string]string
-	}
+	States []blockState
+}
+
+type blockState struct {
+	Id         int  `json:"id"`
+	Default    bool `json:"default"`
+	Properties map[string]string
 }
 
 var blocks map[string]blockInfo
@@ -55,7 +57,17 @@ func DefaultBlock(name string) Block {
 		return nil
 	}
 	block := blocks[b.EncodedName()]
-	return b.New(block.States[0].Properties)
+	d, _ := defaultState(block.States)
+	return b.New(name, d.Properties)
+}
+
+func defaultState(s []blockState) (_ blockState, ok bool) {
+	for _, i := range s {
+		if i.Default {
+			return i, ok
+		}
+	}
+	return
 }
 
 func GetBlockId(b Block) (int, bool) {

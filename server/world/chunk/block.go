@@ -3,7 +3,7 @@ package chunk
 type Block interface {
 	EncodedName() string
 
-	New(map[string]string) Block
+	New(string, map[string]string) Block
 
 	Properties() map[string]string
 }
@@ -17,8 +17,8 @@ func (u UnknownBlock) EncodedName() string {
 	return u.encodedName
 }
 
-func (u UnknownBlock) New(m map[string]string) Block {
-	return UnknownBlock{encodedName: u.encodedName, properties: m}
+func (u UnknownBlock) New(n string, m map[string]string) Block {
+	return UnknownBlock{encodedName: n, properties: m}
 }
 
 func (u UnknownBlock) Properties() map[string]string {

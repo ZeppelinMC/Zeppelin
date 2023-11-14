@@ -20,7 +20,7 @@ func (s Snow) Properties() map[string]string {
 	}
 }
 
-func (Snow) New(m map[string]string) chunk.Block {
+func (Snow) New(_ string, m map[string]string) chunk.Block {
 	l, _ := strconv.Atoi(m["layers"])
 	if l == 0 {
 		l = 1

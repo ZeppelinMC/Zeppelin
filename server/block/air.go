@@ -12,6 +12,6 @@ func (Air) Properties() map[string]string {
 	return nil
 }
 
-func (a Air) New(map[string]string) chunk.Block {
+func (a Air) New(string, map[string]string) chunk.Block {
 	return a
 }

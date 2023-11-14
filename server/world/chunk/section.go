@@ -33,7 +33,7 @@ func newSection(data []int64, blocks []blockEntry, bLight, sLight []int8) (s *se
 	for _, entry := range blocks {
 		b := GetBlock(entry.Name)
 		if entry.Properties != nil {
-			b = b.New(entry.Properties)
+			b = b.New(entry.Name, entry.Properties)
 		}
 
 		id, ok := GetBlockId(b)

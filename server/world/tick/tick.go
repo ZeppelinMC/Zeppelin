@@ -72,11 +72,11 @@ func (t *Ticker) tick(tick uint) {
 }
 
 func blockTick(srv *server.Server, d *world.Dimension, tick uint, rts int) {
-	randomTickedBlocks := 0
 
 	for h, c := range d.Chunks() {
 		cx, cz := h.Position()
 		for cy, s := range c.Sections {
+			randomTickedBlocks := 0
 			for x := 0; x < 15; x++ {
 				for y := 0; y < 15; y++ {
 					for z := 0; z < 15; z++ {
@@ -91,8 +91,8 @@ func blockTick(srv *server.Server, d *world.Dimension, tick uint, rts int) {
 						if randomTickedBlocks < rts && randBool() {
 							if bl, ok := b.(block.RandomTicker); ok {
 								srv.SetBlock(d, x1, y1, z1, bl.RandomTick(pos, d, tick), world.SetBlockReplace)
+								randomTickedBlocks++
 							}
-							randomTickedBlocks++
 						}
 					}
 				}

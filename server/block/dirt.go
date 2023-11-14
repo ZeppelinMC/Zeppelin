@@ -19,6 +19,6 @@ func (g Dirt) Properties() map[string]string {
 	return nil
 }
 
-func (d Dirt) New(p map[string]string) chunk.Block {
+func (d Dirt) New(string, map[string]string) chunk.Block {
 	return d
 }
