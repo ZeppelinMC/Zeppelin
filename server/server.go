@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/dynamitemc/dynamite/server/block"
-	_ "github.com/dynamitemc/dynamite/server/block"
 
 	"github.com/dynamitemc/dynamite/server/block/pos"
 	"github.com/dynamitemc/dynamite/server/config"
@@ -90,8 +89,8 @@ func New(cfg *config.Config, address string, logger *logger.Logger, commandGraph
 		Lang:         lang.New("lang.json"),
 	}
 
-	logger.Info("Loading player info")
 	srv.loadFiles()
+	logger.Debug("Loaded player info")
 
 	return srv, nil
 }

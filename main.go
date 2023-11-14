@@ -39,7 +39,7 @@ func stopProfile() {
 
 func start(cfg *config.Config) {
 	srv, err := server.New(cfg, cfg.ServerIP+":"+strconv.Itoa(cfg.ServerPort), log, core_commands.Commands)
-	log.Info("Opened TCP server on %s:%d", cfg.ServerIP, cfg.ServerPort)
+	log.Info("Started TCP server on %s:%d", cfg.ServerIP, cfg.ServerPort)
 	if err != nil {
 		log.Error("Failed to open TCP server: %s", err)
 		os.Exit(1)
@@ -50,7 +50,9 @@ func start(cfg *config.Config) {
 	log.Info("Done! (%v)", time.Since(startTime))
 
 	go scanConsole(srv)
-	defer stopProfile()
+	if prof {
+		defer stopProfile()
+	}
 	err = srv.Start()
 	if err != nil {
 		log.Error("Failed to start server: %s", err)
@@ -59,12 +61,14 @@ func start(cfg *config.Config) {
 }
 
 var cfg config.Config
+var prof bool
 
 func main() {
 	server.OldState, _ = term.MakeRaw(int(os.Stdin.Fd()))
 
 	log.Info("Starting Dynamite 1.20.1 server")
 	if util.HasArg("-prof") {
+		prof = true
 		log.Info("Starting CPU/RAM profiler")
 		startProfile()
 	}

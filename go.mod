@@ -16,3 +16,5 @@ require (
 	golang.org/x/sys v0.13.0
 	golang.org/x/term v0.13.0
 )
+
+require github.com/MichaelTJones/pcg v0.0.0-20180122055547-df440c6ed7ed

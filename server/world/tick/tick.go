@@ -3,15 +3,18 @@ package tick
 import (
 	"time"
 
+	"github.com/MichaelTJones/pcg"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server"
+	"github.com/dynamitemc/dynamite/server/block"
 	"github.com/dynamitemc/dynamite/server/block/pos"
 	"github.com/dynamitemc/dynamite/server/entity"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
-	"github.com/dynamitemc/dynamite/server/world/chunk"
 	"github.com/google/uuid"
 )
+
+var pcg32 = pcg.NewPCG32()
 
 type Ticker struct {
 	ticker  *time.Ticker
@@ -50,7 +53,7 @@ func (t *Ticker) tick(tick uint) {
 	})
 
 	if tick%8 == 0 {
-		blockTick(t.server, t.server.World.Overworld(), tick)
+		blockTick(t.server, t.server.World.Overworld(), tick, 3)
 	}
 
 	worldAge, dayTime := t.server.World.IncrementTime()
@@ -68,7 +71,9 @@ func (t *Ticker) tick(tick uint) {
 	})
 }
 
-func blockTick(srv *server.Server, d *world.Dimension, tick uint) {
+func blockTick(srv *server.Server, d *world.Dimension, tick uint, rts int) {
+	randomTickedBlocks := 0
+
 	for h, c := range d.Chunks() {
 		cx, cz := h.Position()
 		for cy, s := range c.Sections {
@@ -77,15 +82,25 @@ func blockTick(srv *server.Server, d *world.Dimension, tick uint) {
 					for z := 0; z < 15; z++ {
 						b := s.GetBlockAt(x, y, z)
 						x1, y1, z1 := int64((int(cx)*16)+x), int64(((cy-4)*16)+y), int64((int(cz)*16)+z)
+						pos := pos.BlockPosition{x1, y1, z1}
 
-						if bl, ok := b.(interface {
-							Tick(pos.BlockPosition, *world.Dimension, uint) chunk.Block
-						}); ok {
-							srv.SetBlock(d, x1, y1, z1, bl.Tick(pos.BlockPosition{x1, y1, z1}, d, tick), world.SetBlockReplace)
+						if bl, ok := b.(block.Ticker); ok {
+							srv.SetBlock(d, x1, y1, z1, bl.Tick(pos, d, tick), world.SetBlockReplace)
+						}
+
+						if randomTickedBlocks < rts && randBool() {
+							if bl, ok := b.(block.RandomTicker); ok {
+								srv.SetBlock(d, x1, y1, z1, bl.RandomTick(pos, d, tick), world.SetBlockReplace)
+							}
+							randomTickedBlocks++
 						}
 					}
 				}
 			}
 		}
 	}
+}
+
+func randBool() bool {
+	return pcg32.Random()&0x01 == 0
 }

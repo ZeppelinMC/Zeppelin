@@ -21,7 +21,7 @@ type BreakInfo struct {
 
 type Ticker interface {
 	chunk.Block
-	Tick(pos.BlockPosition, *world.Dimension, uint) chunk.Chunk
+	Tick(pos.BlockPosition, *world.Dimension, uint) chunk.Block
 }
 
 type RandomTicker interface {
