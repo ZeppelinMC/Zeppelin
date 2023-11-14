@@ -9,14 +9,17 @@ import (
 func PlayerAction(state *player.Player, pk *packet.PlayerActionServer) {
 	switch pk.Status {
 	case enum.PlayerActionStartedDigging:
+		if state.GameMode() == enum.GameModeCreative {
+			state.BreakBlock(int64(pk.Location))
+		}
 		state.BroadcastMetadataInArea(&packet.SetEntityMetadata{
 			EntityID: state.EntityID(),
 			Pose:     &dg,
 		})
 		//go controller.BroadcastDigging(pk.Location)
 	case enum.PlayerActionCancelledDigging, enum.PlayerActionFinishedDigging:
-		if pk.Status == 2 {
-			state.BreakBlock(pk.Location)
+		if pk.Status == enum.PlayerActionFinishedDigging {
+			state.BreakBlock(int64(pk.Location))
 		}
 		state.BroadcastMetadataInArea(&packet.SetEntityMetadata{
 			EntityID: state.EntityID(),

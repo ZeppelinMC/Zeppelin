@@ -9,7 +9,6 @@ import (
 	_ "embed"
 
 	"github.com/aimjel/minecraft/nbt"
-	"github.com/dynamitemc/dynamite/server/block"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
@@ -208,20 +207,5 @@ func (w *World) Save() {
 }
 
 type Generator interface {
-	Generate(x, z int32) (*chunk.Chunk, error)
-}
-
-type FlatGenerator struct{}
-
-func (f *FlatGenerator) Generate(x, z int32) (*chunk.Chunk, error) {
-	c := chunk.Chunk{}
-	for x := int64(0); x < 16; x++ {
-		for z := int64(0); z < 16; z++ {
-			c.SetBlock(x, 0, z, block.GetBlock("minecraft:bedrock"))
-			c.SetBlock(x, 1, z, block.GetBlock("minecraft:dirt"))
-			c.SetBlock(x, 2, z, block.GetBlock("minecraft:dirt"))
-			c.SetBlock(x, 3, z, block.GetBlock("minecraft:grass_block"))
-		}
-	}
-	return nil, nil
+	GenerateChunk(x, z int32) (*chunk.Chunk, error)
 }

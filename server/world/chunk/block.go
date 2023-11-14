@@ -1,4 +1,12 @@
-package block
+package chunk
+
+type Block interface {
+	EncodedName() string
+
+	New(map[string]string) Block
+
+	Properties() map[string]string
+}
 
 type UnknownBlock struct {
 	encodedName string
@@ -15,4 +23,8 @@ func (u UnknownBlock) New(m map[string]string) Block {
 
 func (u UnknownBlock) Properties() map[string]string {
 	return u.properties
+}
+
+func NewUnknownBlock(name string) *UnknownBlock {
+	return &UnknownBlock{encodedName: name}
 }

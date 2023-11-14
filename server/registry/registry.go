@@ -9,7 +9,7 @@ import (
 //go:embed registries.nbt
 var rg []byte
 
-type Item struct {
+type Entry struct {
 	ProtocolID int32 `nbt:"protocol_id"`
 }
 
@@ -20,9 +20,9 @@ var data struct {
 }
 
 type registry struct {
-	Default    string          `nbt:"default"`
-	Entries    map[string]Item `nbt:"entries"`
-	ProtocolID int32           `nbt:"protocol_id"`
+	Default    string           `nbt:"default"`
+	Entries    map[string]Entry `nbt:"entries"`
+	ProtocolID int32            `nbt:"protocol_id"`
 }
 
 func loadregistry() {
@@ -41,7 +41,7 @@ func FindItem(id int32) string {
 	return ""
 }
 
-func GetItem(name string) (item Item, ok bool) {
+func GetItem(name string) (item Entry, ok bool) {
 	if data.Item.Entries == nil {
 		loadregistry()
 	}
@@ -49,7 +49,7 @@ func GetItem(name string) (item Item, ok bool) {
 	return it, ok
 }
 
-func GetEntity(name string) (item Item, ok bool) {
+func GetEntity(name string) (item Entry, ok bool) {
 	if data.EntityType.Entries == nil {
 		loadregistry()
 	}
@@ -57,7 +57,7 @@ func GetEntity(name string) (item Item, ok bool) {
 	return it, ok
 }
 
-func GetSound(name string) (item Item, ok bool) {
+func GetSound(name string) (item Entry, ok bool) {
 	if data.SoundEvent.Entries == nil {
 		loadregistry()
 	}

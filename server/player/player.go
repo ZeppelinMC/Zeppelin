@@ -11,7 +11,7 @@ import (
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/logger"
-	"github.com/dynamitemc/dynamite/server/block"
+	"github.com/dynamitemc/dynamite/server/block/pos"
 	"github.com/dynamitemc/dynamite/server/commands"
 	"github.com/dynamitemc/dynamite/server/config"
 	"github.com/dynamitemc/dynamite/server/controller"
@@ -23,17 +23,10 @@ import (
 	"github.com/dynamitemc/dynamite/server/permission"
 	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/dynamitemc/dynamite/server/world/chunk"
 
 	"github.com/google/uuid"
 )
-
-type Position struct {
-	X, Y, Z int32
-}
-
-func (p Position) Data() uint64 {
-	return ((uint64(p.X) & 0x3FFFFFF) << 38) | ((uint64(p.Z) & 0x3FFFFFF) << 12) | (uint64(p.Y) & 0xFFF)
-}
 
 var tags = &packet.UpdateTags{
 	Tags: []packet.TagType{
@@ -187,26 +180,6 @@ func New(
 	return pl
 }
 
-func (p *Player) UUID() uuid.UUID {
-	return p.uuid
-}
-
-func (p *Player) Name() string {
-	return p.conn.Name()
-}
-
-func (p *Player) EntityID() int32 {
-	return p.entityID
-}
-
-func (p *Player) SendPacket(pk packet.Packet) error {
-	return p.conn.SendPacket(pk)
-}
-
-func (p *Player) ReadPacket() (packet.Packet, error) {
-	return p.conn.ReadPacket()
-}
-
 func (p *Player) Save() {
 	o := int8(0)
 	if p.onGround.Load() {
@@ -234,6 +207,10 @@ func (p *Player) Save() {
 
 func (p *Player) Respawn(d *world.Dimension) {
 	p.SetDead(false)
+	p.SetHealth(20)
+	p.SetFoodLevel(20)
+	p.SetFoodSaturationLevel(5)
+
 	p.SendPacket(&packet.Respawn{
 		GameMode:         p.GameMode(),
 		PreviousGameMode: -1,
@@ -276,12 +253,16 @@ func (p *Player) Respawn(d *world.Dimension) {
 	p.Teleport(float64(x1), float64(y1), float64(z1), yaw, pitch)
 
 	p.SendPacket(&packet.SetDefaultSpawnPosition{
-		Location: Position{x1, y1, z1}.Data(),
+		Location: pos.BlockPosition{int64(x1), int64(y1), int64(z1)}.Data(),
 		Angle:    a,
 	})
 }
 
 func (p *Player) Login(d *world.Dimension) {
+	x1, y1, z1 := p.Position()
+	yaw, pitch := p.Rotation()
+
+	p.logger.Info("[%s] Player %s (%s) has joined the server with entity id %d at [%s]%f %f %f", p.IP(), p.Name(), p.UUID(), p.entityID, p.Dimension().Type(), x1, y1, z1)
 	p.SendPacket(&packet.JoinGame{
 		EntityID:           p.entityID,
 		IsHardcore:         p.IsHardcore(),
@@ -291,7 +272,6 @@ func (p *Player) Login(d *world.Dimension) {
 		DimensionType:      d.Type(),
 		DimensionName:      d.Type(),
 		HashedSeed:         d.Seed(),
-		MaxPlayers:         0,
 		ViewDistance:       int32(p.clientInfo.ViewDistance),
 		SimulationDistance: int32(p.clientInfo.ViewDistance), //todo fix this
 	})
@@ -299,9 +279,6 @@ func (p *Player) Login(d *world.Dimension) {
 		Channel: "minecraft:brand",
 		Data:    []byte("Dynamite"),
 	})
-	x1, y1, z1 := p.Position()
-	yaw, pitch := p.Rotation()
-
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 
@@ -318,36 +295,29 @@ func (p *Player) Login(d *world.Dimension) {
 	}
 	p.SendPacket(tags)
 
-	if p.Operator() {
-		p.SendPacket(&packet.EntityEvent{
-			EntityID: p.entityID,
-			Status:   28,
-		})
-	}
+	p.Teleport(x1, y1, z1, yaw, pitch)
 
 	x, y, z, a := d.World().Spawn()
 	p.SendPacket(&packet.SetDefaultSpawnPosition{
-		Location: Position{x, y, z}.Data(),
+		Location: pos.BlockPosition{int64(x), int64(y), int64(z)}.Data(),
 		Angle:    a,
 	})
 
-	p.Teleport(x1, y1, z1, yaw, pitch)
-
-	/*if p.Server.Config.ResourcePack.Enable {
+	if p.config.ResourcePack.Enable {
 		p.SendPacket(&packet.ResourcePack{
-			URL:    p.Server.Config.ResourcePack.URL,
-			Hash:   p.Server.Config.ResourcePack.Hash,
-			Forced: p.Server.Config.ResourcePack.Force,
+			URL:    p.config.ResourcePack.URL,
+			Hash:   p.config.ResourcePack.Hash,
+			Forced: p.config.ResourcePack.Force,
 			//Prompt: p.Server.Config.Messages.ResourcePackPrompt,
 		})
-	}*/
+	}
 }
 
 func (p *Player) SendMessage(message chat.Message) error {
 	return p.SendPacket(&packet.SystemChatMessage{Message: message})
 }
 
-func (p *Player) Damage(health float32) {
+func (p *Player) Damage(health float32, typ int32) {
 	p.SendPacket(&packet.EntitySoundEffect{
 		Category: enum.SoundCategoryAmbient,
 		SoundID:  519,
@@ -356,6 +326,16 @@ func (p *Player) Damage(health float32) {
 		Volume:   1,
 		Pitch:    1,
 	})
+	p.playerController.Range(func(_ uuid.UUID, pl *Player) bool {
+		if !pl.IsSpawned(p.entityID) {
+			return true
+		}
+		pl.SendPacket(&packet.DamageEvent{
+			EntityID:     p.entityID,
+			SourceTypeID: typ,
+		})
+		return true
+	})
 	p.SetHealth(p.Health() - health)
 }
 
@@ -363,7 +343,7 @@ func (p *Player) Kill(message string) {
 	p.SetDead(true)
 	if f, _ := world.GameRule(p.Dimension().World().Gamerules()["doImmediateRespawn"]).Bool(); !f {
 		p.SendPacket(&packet.GameEvent{
-			Event: uint8(enum.GameEventEnableRespawnScreen),
+			Event: enum.GameEventEnableRespawnScreen,
 			Value: 0,
 		})
 	}
@@ -374,27 +354,23 @@ func (p *Player) Kill(message string) {
 		}
 		pl.SendPacket(&packet.DamageEvent{
 			EntityID:     p.entityID,
-			SourceTypeID: int32(enum.DamageTypeGenericKill),
+			SourceTypeID: enum.DamageTypeGenericKill,
 		})
 		pl.SendPacket(&packet.EntityEvent{
 			EntityID: p.entityID,
-			Status:   3,
+			Status:   enum.EntityStatusLivingEntityDeath,
 		})
 		return true
 	})
-
 	p.SendPacket(&packet.DamageEvent{
 		EntityID:     p.entityID,
-		SourceTypeID: int32(enum.DamageTypeGenericKill),
+		SourceTypeID: enum.DamageTypeGenericKill,
 	})
-	p.Despawn()
+	//p.Despawn()
 	p.SendPacket(&packet.CombatDeath{
 		Message:  message,
 		PlayerID: p.entityID,
 	})
-	p.SetHealth(20)
-	p.SetFoodLevel(20)
-	p.SetFoodSaturationLevel(5)
 }
 
 func (p *Player) Push(x, y, z float64) {
@@ -420,7 +396,7 @@ func (p *Player) Teleport(x, y, z float64, yaw, pitch float32) {
 		Pitch:      pitch,
 		TeleportID: p.newID(),
 	})
-	p.BroadcastMovement(0, x, y, z, yaw, pitch, p.OnGround(), true)
+	p.HandleMovement(0, x, y, z, yaw, pitch, p.OnGround(), true)
 }
 
 func (p *Player) SendCommands(g *commands.Graph) {
@@ -452,6 +428,8 @@ func (p *Player) Disconnect(reason chat.Message) {
 }
 
 func (p *Player) IsChunkLoaded(x, z int32) bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	_, ok := p.loadedChunks[[2]int32{x, z}]
 	return ok
 }
@@ -470,7 +448,7 @@ func (p *Player) SendChunks(dimension *world.Dimension) {
 
 	for x := chunkX - max; x <= chunkX+max; x++ {
 		for z := chunkZ - max; z <= chunkZ+max; z++ {
-			if p.IsChunkLoaded(x, z) {
+			if _, ok := p.loadedChunks[[2]int32{x, z}]; ok {
 				continue
 			}
 			c, err := dimension.Chunk(x, z)
@@ -516,29 +494,14 @@ func (p *Player) SendChunks(dimension *world.Dimension) {
 	}
 }
 
-func (p *Player) ChunkPosition() (int32, int32) {
-	x, _, z := p.Position()
-	return int32(x) / 16, int32(z) / 16
+func (p *Player) ChunkPosition() (x int32, z int32) {
+	x1, _, z1 := p.Position()
+	return int32(x1) / 16, int32(z1) / 16
 }
 
 func (p *Player) GetPrefixSuffix() (prefix string, suffix string) {
 	group := permission.GetGroup(permission.GetPlayer(p.UUID().String()).Group)
 	return group.Prefix, group.Suffix
-}
-
-func (p *Player) HandleCenterChunk(x1, z1, x2, z2 float64) {
-	oldChunkX := int(math.Floor(x1 / 16))
-	oldChunkZ := int(math.Floor(z1 / 16))
-
-	newChunkX := int(math.Floor(x2 / 16))
-	newChunkZ := int(math.Floor(z2 / 16))
-
-	if newChunkX != oldChunkX || newChunkZ != oldChunkZ {
-		p.SendPacket(&packet.SetCenterChunk{
-			ChunkX: int32(newChunkX),
-			ChunkZ: int32(newChunkZ),
-		})
-	}
 }
 
 func (p *Player) IsSpawned(entityId int32) bool {
@@ -668,7 +631,7 @@ func (p *Player) SendCommandSuggestionsResponse(id int32, start int32, length in
 	})
 }
 
-func (p *Player) OnBlock() block.Block {
+func (p *Player) OnBlock() chunk.Block {
 	x, y, z := p.Position()
 	return p.Dimension().Block(int64(x), int64(y-1), int64(z))
 }

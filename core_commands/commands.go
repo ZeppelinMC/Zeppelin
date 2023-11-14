@@ -35,5 +35,6 @@ var Commands = &commands.Graph{
 		summon_cmd,
 		test_cmd,
 		nick_cmd,
+		block_cmd,
 	},
 }

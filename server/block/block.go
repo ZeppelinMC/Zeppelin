@@ -1,43 +1,43 @@
 package block
 
-type Block interface {
-	EncodedName() string
+import (
+	"github.com/dynamitemc/dynamite/server/block/pos"
+	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/dynamitemc/dynamite/server/world/chunk"
+)
 
-	New(map[string]string) Block
-
-	Properties() map[string]string
+func init() {
+	chunk.RegisterBlock(Air{})
+	chunk.RegisterBlock(Dirt{})
+	chunk.RegisterBlock(Dirt{true})
+	chunk.RegisterBlock(GrassBlock{})
+	chunk.RegisterBlock(Snow{})
+	chunk.RegisterBlock(Bedrock{})
 }
 
-func GetBlock(name string) Block {
-	if b, ok := registeredBlocks[name]; ok {
-		return b
-	}
-
-	return &UnknownBlock{encodedName: name}
+type BreakInfo struct {
+	Unbreakable bool
 }
 
-func GetBlockId(b Block) (int, bool) {
-	block := blocks[b.EncodedName()]
-
-	for _, state := range block.States {
-
-		if eq(state.Properties, b.Properties()) {
-			return state.Id, true
-		}
-	}
-	return 0, false
+type Ticker interface {
+	chunk.Block
+	Tick(pos.BlockPosition, *world.Dimension, uint) chunk.Chunk
 }
 
-func eq(a, b map[string]string) bool {
-	if len(a) != len(b) {
-		return false
-	}
+type RandomTicker interface {
+	chunk.Block
+	RandomTick(pos.BlockPosition, *world.Dimension, uint) chunk.Block
+}
 
-	for k, v := range a {
-		if w, ok := b[k]; !ok || v != w {
-			return false
-		}
-	}
+type Breakable interface {
+	chunk.Block
+	BreakInfo() BreakInfo
+}
 
-	return true
+func boolstr(b bool) (s string) {
+	s = "false"
+	if b {
+		s = "true"
+	}
+	return
 }

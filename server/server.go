@@ -10,12 +10,18 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/dynamitemc/dynamite/server/block"
+	_ "github.com/dynamitemc/dynamite/server/block"
+
+	"github.com/dynamitemc/dynamite/server/block/pos"
 	"github.com/dynamitemc/dynamite/server/config"
 	"github.com/dynamitemc/dynamite/server/controller"
 	"github.com/dynamitemc/dynamite/server/entity"
+	"github.com/dynamitemc/dynamite/server/enum"
 	"github.com/dynamitemc/dynamite/server/handler"
 	"github.com/dynamitemc/dynamite/server/lang"
 	"github.com/dynamitemc/dynamite/server/permission"
+	"github.com/dynamitemc/dynamite/server/world/chunk"
 	"github.com/google/uuid"
 	"golang.org/x/term"
 
@@ -86,8 +92,6 @@ func New(cfg *config.Config, address string, logger *logger.Logger, commandGraph
 
 	logger.Info("Loading player info")
 	srv.loadFiles()
-
-	go srv.tickLoop()
 
 	return srv, nil
 }
@@ -181,9 +185,9 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Name(), plyr.UUID())
 
 		srv.GlobalMessage(srv.Lang.Translate("player.leave", map[string]string{"player": plyr.Name(), "player_prefix": prefix, "player_suffix": suffix}))
+		plyr.Save()
 		srv.playerlistRemove(conn.UUID())
 		plyr.Despawn()
-		plyr.Save()
 
 		//todo consider moving logic of removing player to a separate function
 	}
@@ -240,8 +244,6 @@ func (srv *Server) addPlayer(p *player.Player) {
 	}
 	prefix, suffix := p.GetPrefixSuffix()
 
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.IP(), p.Name(), p.UUID())
-
 	srv.GlobalMessage(srv.Lang.Translate("player.join", map[string]string{"player": p.Name(), "player_prefix": prefix, "player_suffix": suffix}))
 }
 
@@ -292,6 +294,8 @@ func (srv *Server) handlePackets(p *player.Player) error {
 			handler.TeleportToEntity(p, pk.Player)
 		case *packet.ClickContainer:
 			handler.ClickContainer(p, pk)
+		case *packet.UseItemOnServer:
+			handler.UseItemOn(p, pk, srv.SetBlock)
 		}
 	}
 }
@@ -392,6 +396,39 @@ func (srv *Server) ConsoleCommand(txt string) {
 		Arguments:   args[1:],
 		Executor:    srv,
 		FullCommand: content,
+	})
+}
+
+func (srv *Server) SetBlock(d *world.Dimension, x, y, z int64, b chunk.Block, typ world.SetBlockHandling) {
+	if typ > 2 {
+		typ = world.SetBlockReplace
+	}
+
+	_, isAir := b.(block.Air)
+
+	if typ == world.SetBlockKeep && isAir {
+		return
+	}
+	//d.SetBlock(x, y, z, b)
+	cx, cz := int32(x/16), int32(z/16)
+	pos := pos.BlockPosition{x, y, z}.Data()
+	bid, _ := chunk.GetBlockId(b)
+
+	bu := &packet.BlockUpdate{
+		Location: pos,
+		BlockID:  int32(bid),
+	}
+
+	we := &packet.WorldEvent{Event: enum.WorldEventBlockBreak, Location: pos, Data: int32(bid)}
+	srv.Players.Range(func(_ uuid.UUID, pl *player.Player) bool {
+		if !pl.IsChunkLoaded(cx, cz) {
+			return true
+		}
+		if typ == world.SetBlockDestroy && isAir {
+			pl.SendPacket(we)
+		}
+		pl.SendPacket(bu)
+		return true
 	})
 }
 

@@ -17,17 +17,15 @@ func PlayerMovement(
 	switch pk := p.(type) {
 	case *packet.PlayerPosition:
 		{
-			state.BroadcastMovement(pk.ID(), pk.X, pk.FeetY, pk.Z, yaw, pitch, pk.OnGround, false)
-			state.HandleCenterChunk(x, z, pk.X, pk.Z)
+			state.HandleMovement(pk.ID(), pk.X, pk.FeetY, pk.Z, yaw, pitch, pk.OnGround, false)
 		}
 	case *packet.PlayerPositionRotation:
 		{
-			state.BroadcastMovement(pk.ID(), pk.X, pk.FeetY, pk.Z, pk.Yaw, pk.Pitch, pk.OnGround, false)
-			state.HandleCenterChunk(x, z, pk.X, pk.Z)
+			state.HandleMovement(pk.ID(), pk.X, pk.FeetY, pk.Z, pk.Yaw, pk.Pitch, pk.OnGround, false)
 		}
 	case *packet.PlayerRotation:
 		{
-			state.BroadcastMovement(pk.ID(), x, y, z, pk.Yaw, pk.Pitch, pk.OnGround, false)
+			state.HandleMovement(pk.ID(), x, y, z, pk.Yaw, pk.Pitch, pk.OnGround, false)
 		}
 	}
 }

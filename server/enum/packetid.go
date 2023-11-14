@@ -1,0 +1,195 @@
+package enum
+
+const ServerboundHandshake int32 = iota
+
+const (
+	ClientboundStatusResponse int32 = iota
+	ClientboundPingResponse
+)
+
+const (
+	ServerboundStatusRequest int32 = iota
+	ServerboundPingRequest
+)
+
+const (
+	ClientboundLoginDisconnect int32 = iota
+	ClientboundLoginEncryptionRequest
+	ClientboundLoginSuccess
+	ClientboundLoginSetCompression
+	ClientboundLoginPluginRequest
+)
+
+const (
+	ServerboundLoginStart int32 = iota
+	ServerboundLoginEncryptionResponse
+	ServerboundLoginPluginResponse
+)
+
+const (
+	ClientboundPlayBundleDelimiter int32 = iota
+	ClientboundPlaySpawnEntity
+	ClientboundPlaySpawnExperienceOrb
+	ClientboundPlaySpawnPlayer
+	ClientboundPlayEntityAnimation
+	ClientboundPlayAwardStatistics
+	ClientboundPlayAcknowledgeBlockChange
+	ClientboundPlaySetBlockDestroyStage
+	ClientboundPlayBlockEntityData
+	ClientboundPlayBlockAction
+	ClientboundPlayBlockUpdate
+	ClientboundPlayBossBar
+	ClientboundPlayChangeDifficulty
+	ClientboundPlayChunkBiomes
+	ClientboundPlayClearTitles
+	ClientboundPlayCommandSuggestionsResponse
+	ClientboundPlayCommands
+	ClientboundPlayCloseContainer
+	ClientboundPlaySetContainerContent
+	ClientboundPlaySetContainerProperty
+	ClientboundPlaySetContainerSlot
+	ClientboundPlaySetCooldown
+	ClientboundPlayChatSuggestions
+	ClientboundPlayPluginMessage
+	ClientboundPlayDamageEvent
+	ClientboundPlayDeleteMessage
+	ClientboundPlayDisconnect
+	ClientboundPlayDisguisedChatMessage
+	ClientboundPlayEntityEvent
+	ClientboundPlayExplosion
+	ClientboundPlayUnloadChunk
+	ClientboundPlayGameEvent
+	ClientboundPlayOpenHorseScreen
+	ClientboundPlayHurtAnimation
+	ClientboundPlayInitializeWorldBorder
+	ClientboundPlayKeepAlive
+	ClientboundPlayChunkDataUpdateLight
+	ClientboundPlayWorldEvent
+	ClientboundPlayParticle
+	ClientboundPlayUpdateLight
+	ClientboundPlayLogin
+	ClientboundPlayMapData
+	ClientboundPlayMerchantOffers
+	ClientboundPlayUpdateEntityPosition
+	ClientboundPlayUpdateEntityPositionRotation
+	ClientboundPlayUpdateEntityRotation
+	ClientboundPlayMoveVehicle
+	ClientboundPlayOpenBook
+	ClientboundPlayOpenScreen
+	ClientboundPlayOpenSignEditor
+	ClientboundPlayPing
+	ClientboundPlayPlaceGhostRecipe
+	ClientboundPlayPlayerAbilities
+	ClientboundPlayPlayerChatMessage
+	ClientboundPlayEndCombat
+	ClientboundPlayEnterCombat
+	ClientboundPlayCombatDeath
+	ClientboundPlayPlayerInfoRemove
+	ClientboundPlayPlayerInfoUpdate
+	ClientboundPlayLookAt
+	ClientboundPlaySynchronizePlayerPosition
+	ClientboundPlayUpdateRecipeBook
+	ClientboundPlayRemoveEntities
+	ClientboundPlayRemoveEntityEffect
+	ClientboundPlayResourcePack
+	ClientboundPlayRespawn
+	ClientboundPlaySetHeadRotation
+	ClientboundPlayUpdateSectionBlocks
+	ClientboundPlaySelectAdvancementsTab
+	ClientboundPlayServerData
+	ClientboundPlaySetActionBarText
+	ClientboundPlaySetBorderCenter
+	ClientboundPlaySetBorderLerpSize
+	ClientboundPlaySetBorderSize
+	ClientboundPlaySetBorderWarningDelay
+	ClientboundPlaySetBorderWarningDistance
+	ClientboundPlaySetCamera
+	ClientboundPlaySetHeldItem
+	ClientboundPlaySetCenterChunk
+	ClientboundPlaySetRenderDistance
+	ClientboundPlaySetDefaultSpawnPosition
+	ClientboundPlayDisplayObjective
+	ClientboundPlaySetEntityMetadata
+	ClientboundPlayLinkEntities
+	ClientboundPlaySetEntityVelocity
+	ClientboundPlaySetEquipment
+	ClientboundPlaySetExperience
+	ClientboundPlaySetHealth
+	ClientboundPlayUpdateObjectives
+	ClientboundPlaySetPassengers
+	ClientboundPlayUpdateTeams
+	ClientboundPlayUpdateScore
+	ClientboundPlaySetSimulationDistance
+	ClientboundPlaySetSubtitleText
+	ClientboundPlayUpdateTime
+	ClientboundPlaySetTitleText
+	ClientboundPlaySetTitleAnimationTimes
+	ClientboundPlayEntitySoundEffect
+	ClientboundPlaySoundEffect
+	ClientboundPlayStopSound
+	ClientboundPlaySystemChatMessage
+	ClientboundPlaySetTablistHeaderFooter
+	ClientboundPlayTagQueryResponse
+	ClientboundPlayPickupItem
+	ClientboundPlayTeleportEntity
+	ClientboundPlayUpdateAdvancements
+	ClientboundPlayUpdateAttributes
+	ClientboundPlayFeatureFlags
+	ClientboundPlayEntityEffect
+	ClientboundPlayUpdateRecipes
+	ClientboundPlayUpdateTags
+)
+
+const (
+	ServerboundPlayConfirmTeleportation int32 = iota
+	ServerboundPlayQueryBlockEntityTag
+	ServerboundPlayChangeDifficulty
+	ServerboundPlayMessageAcknowledgement
+	ServerboundPlayChatCommand
+	ServerboundPlayChatMessage
+	ServerboundPlayPlayerSession
+	ServerboundPlayClientCommand
+	ServerboundPlayClientInformation
+	ServerboundPlayCommandSuggestionsRequest
+	ServerboundPlayClickContainerButton
+	ServerboundPlayClickContainer
+	ServerboundPlayCloseContainer
+	ServerboundPlayPluginMessage
+	ServerboundPlayEditBook
+	ServerboundPlayQueryEntityTag
+	ServerboundPlayInteract
+	ServerboundPlayJigsawGenerate
+	ServerboundPlayKeepAlive
+	ServerboundPlayLockDifficulty
+	ServerboundPlaySetPlayerPosition
+	ServerboundPlaySetPlayerPositionRotation
+	ServerboundPlaySetPlayerRotation
+	ServerboundPlaySetPlayerOnGround
+	ServerboundPlayMoveVehicle
+	ServerboundPlayPaddleBoat
+	ServerboundPlayPickItem
+	ServerboundPlayPlaceRecipe
+	ServerboundPlayPlayerAbilities
+	ServerboundPlayPlayerAction
+	ServerboundPlayPlayerCommand
+	ServerboundPlayPlayerInput
+	ServerboundPlayPong
+	ServerboundPlayChangeRecipeBookSettings
+	ServerboundPlaySetSeenRecipe
+	ServerboundPlayRenameItem
+	ServerboundPlayResourcePack
+	ServerboundPlaySeenAdvancements
+	ServerboundPlaySelectTrade
+	ServerboundPlaySetBeaconEffect
+	ServerboundPlaySetHeldItem
+	ServerboundPlayProgramCommandBlock
+	ServerboundPlayProgramCommandBlockMinecart
+	ServerboundPlaySetCreativeModeSlot
+	ServerboundPlayProgramJigsawBlock
+	ServerboundPlayProgramStructureBlock
+	ServerboundPlayUpdateSign
+	ServerboundPlaySwingArm
+	ServerboundPlayTeleportToEntity
+	ServerboundPlayUseItemOn
+	ServerboundPlayUseItem
+)

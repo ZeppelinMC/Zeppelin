@@ -3,7 +3,6 @@ package world
 import (
 	"sync"
 
-	"github.com/dynamitemc/dynamite/server/block"
 	"github.com/dynamitemc/dynamite/server/world/anvil"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
@@ -20,7 +19,7 @@ type Dimension struct {
 
 	seed int64
 
-	chunks map[uint64]*chunk.Chunk
+	chunks map[chunk.Hash]*chunk.Chunk
 
 	mu sync.RWMutex
 }
@@ -29,13 +28,17 @@ func (w *World) NewDimension(typ string, rd *anvil.Reader) *Dimension {
 	return &Dimension{
 		typ:    typ,
 		rd:     rd,
-		chunks: make(map[uint64]*chunk.Chunk),
+		chunks: make(map[chunk.Hash]*chunk.Chunk),
 		world:  w,
 	}
 }
 
 func (d *Dimension) World() *World {
 	return d.world
+}
+
+func (d *Dimension) Chunks() map[chunk.Hash]*chunk.Chunk {
+	return d.chunks
 }
 
 func (d *Dimension) Chunk(x, z int32) (*chunk.Chunk, error) {
@@ -53,7 +56,7 @@ func (d *Dimension) Chunk(x, z int32) (*chunk.Chunk, error) {
 		if d.generator == nil {
 			return nil, err
 		}
-		ch, err = d.generator.Generate(x, z)
+		ch, err = d.generator.GenerateChunk(x, z)
 		if err != nil {
 			return nil, err
 		}
@@ -82,18 +85,37 @@ func (d *Dimension) Seed() int64 {
 	return d.seed
 }
 
-func (d *Dimension) Block(x, y, z int64) block.Block {
-	chunk, err := d.Chunk(int32(x/16), int32(z/16))
+func (d *Dimension) Block(x, y, z int64) chunk.Block {
+	c, err := d.Chunk(int32(x/16), int32(z/16))
 	if err != nil {
 		return nil
 	}
-	return chunk.Block(x, y, z)
+	b := c.Block(x, y, z)
+	if b == nil {
+		return chunk.GetBlock("minecraft:air")
+	}
+	return b
 }
 
-func ParsePosition(p uint64) (x, y, z int64) {
-	pos := int64(p)
+func (d *Dimension) SetBlock(x, y, z int64, b chunk.Block) {
+	chunk, err := d.Chunk(int32(x/16), int32(z/16))
+	if err != nil {
+		return
+	}
+	chunk.SetBlock(x, y, z, b)
+}
+
+func ParsePosition(pos int64) (x, y, z int64) {
 	x = pos >> 38
 	y = pos << 52 >> 52
 	z = pos << 26 >> 38
 	return
 }
+
+type SetBlockHandling = int8
+
+const (
+	SetBlockReplace SetBlockHandling = iota
+	SetBlockKeep
+	SetBlockDestroy
+)

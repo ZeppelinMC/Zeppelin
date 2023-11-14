@@ -16,6 +16,7 @@ import (
 	"github.com/dynamitemc/dynamite/logger"
 	"github.com/dynamitemc/dynamite/server"
 	"github.com/dynamitemc/dynamite/server/config"
+	"github.com/dynamitemc/dynamite/server/world/tick"
 	"github.com/dynamitemc/dynamite/util"
 	"github.com/dynamitemc/dynamite/web"
 )
@@ -43,9 +44,13 @@ func start(cfg *config.Config) {
 		log.Error("Failed to open TCP server: %s", err)
 		os.Exit(1)
 	}
+	ticker := tick.New(srv, srv.Config.TPS)
+	ticker.Start()
+	log.Info("Started tick loop")
 	log.Info("Done! (%v)", time.Since(startTime))
 
 	go scanConsole(srv)
+	defer stopProfile()
 	err = srv.Start()
 	if err != nil {
 		log.Error("Failed to start server: %s", err)

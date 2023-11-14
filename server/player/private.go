@@ -14,6 +14,26 @@ import (
 	"github.com/google/uuid"
 )
 
+func (p *Player) UUID() uuid.UUID {
+	return p.uuid
+}
+
+func (p *Player) Name() string {
+	return p.conn.Name()
+}
+
+func (p *Player) EntityID() int32 {
+	return p.entityID
+}
+
+func (p *Player) SendPacket(pk packet.Packet) error {
+	return p.conn.SendPacket(pk)
+}
+
+func (p *Player) ReadPacket() (packet.Packet, error) {
+	return p.conn.ReadPacket()
+}
+
 func (p *Player) ClientSettings() clientInfo {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -68,23 +88,25 @@ func (p *Player) Health() float32 {
 }
 
 func (p *Player) SetHealth(health float32) {
+	if health < 0 {
+		health = 0
+	}
 	p.mu.Lock()
 	p.health = health
 	p.mu.Unlock()
-	if health <= 0 {
-		p.Kill("died :skull:")
-		return
-	}
 	food, saturation := p.FoodLevel(), p.FoodSaturationLevel()
 	p.SendPacket(&packet.SetHealth{
 		Health:         health,
 		Food:           food,
 		FoodSaturation: saturation,
 	})
-	p.broadcastMetadataGlobal(&packet.SetEntityMetadata{
+	/*p.broadcastMetadataGlobal(&packet.SetEntityMetadata{
 		EntityID: p.EntityID(),
 		Health:   &health,
-	})
+	})*/
+	if health <= 0 {
+		p.Kill("died :skull:")
+	}
 }
 
 func (p *Player) FoodLevel() int32 {
@@ -177,6 +199,14 @@ func (p *Player) Operator() bool {
 
 func (p *Player) SetOperator(op bool) {
 	p.operator.Store(op)
+	v := enum.EntityStatusPlayerOpPermissionLevel0
+	if op {
+		v = enum.EntityStatusPlayerOpPermissionLevel4
+	}
+	p.SendPacket(&packet.EntityEvent{
+		EntityID: p.entityID,
+		Status:   v,
+	})
 }
 
 func (p *Player) SetSelectedSlot(h int32) {

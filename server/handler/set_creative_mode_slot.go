@@ -11,7 +11,7 @@ import (
 
 func SetCreativeModeSlot(state *player.Player, slot int16, data packet.Slot) {
 	if state.GameMode() != enum.GameModeCreative {
-		state.Disconnect(chat.NewMessage("bruh cant use de creative button without creative"))
+		state.Disconnect(chat.NewMessage("bruh cant use the creative button without creative"))
 		return
 	}
 	s := inventory.NetworkSlotToDataSlot(slot)
@@ -19,7 +19,7 @@ func SetCreativeModeSlot(state *player.Player, slot int16, data packet.Slot) {
 		if s, ok := state.Inventory.Slot(s); ok {
 			state.SetPreviousSelectedSlot(s)
 		}
-		state.ClearItem(s)
+		//state.ClearItem(s)
 	} else {
 		i, _ := item.PacketSlotToItem(s, data)
 		state.Inventory.SetSlot(s, i)

@@ -6,7 +6,6 @@ import (
 	"math/bits"
 
 	"github.com/dynamitemc/dynamite/logger"
-	"github.com/dynamitemc/dynamite/server/block"
 )
 
 type section struct {
@@ -14,7 +13,7 @@ type section struct {
 
 	bitsPerEntry int
 
-	entries []block.Block
+	entries []Block
 
 	ids []int32
 
@@ -29,15 +28,15 @@ func newSection(data []int64, blocks []blockEntry, bLight, sLight []int8) (s *se
 	s = new(section)
 	s.data = data
 
-	s.entries = make([]block.Block, 0, len(blocks))
+	s.entries = make([]Block, 0, len(blocks))
 	s.ids = make([]int32, 0, len(blocks))
 	for _, entry := range blocks {
-		b := block.GetBlock(entry.Name)
+		b := GetBlock(entry.Name)
 		if entry.Properties != nil {
 			b = b.New(entry.Properties)
 		}
 
-		id, ok := block.GetBlockId(b)
+		id, ok := GetBlockId(b)
 		if !ok {
 			log.Panicf("unable to find block id for %+v\n", b)
 		}
@@ -84,7 +83,7 @@ func (s *section) indexOffset(x, y, z int) (int, int) {
 
 	return startLong, stateOffset
 }
-func (s *section) getBlockAt(x, y, z int) block.Block {
+func (s *section) GetBlockAt(x, y, z int) Block {
 	if s.bitsPerEntry == 0 {
 		return s.entries[0]
 	}
@@ -99,7 +98,7 @@ func (s *section) getBlockAt(x, y, z int) block.Block {
 	return s.entries[data]
 }
 
-func (s *section) setBlockAt(x, y, z int, b block.Block) {
+func (s *section) setBlockAt(x, y, z int, b Block) {
 	newState, ok := s.index(b)
 	if !ok {
 		old := s.bitsPerEntry
@@ -123,7 +122,7 @@ func (s *section) setBlockAt(x, y, z int, b block.Block) {
 			for i := 0; i < 16; i++ {
 				for j := 0; j < 16; j++ {
 					for k := 0; k < 16; k++ {
-						newSec.setBlockAt(i, j, k, s.getBlockAt(i, j, k))
+						newSec.setBlockAt(i, j, k, s.GetBlockAt(i, j, k))
 					}
 				}
 			}
@@ -139,7 +138,7 @@ func (s *section) setBlockAt(x, y, z int, b block.Block) {
 	s.data[i] |= newState << offset
 }
 
-func (s *section) addEntry(b block.Block) {
+func (s *section) addEntry(b Block) {
 	s.entries = append(s.entries, b)
 
 	bitsPerEntry := bits.Len(uint(len(s.entries) - 1))
@@ -150,7 +149,7 @@ func (s *section) addEntry(b block.Block) {
 	s.bitsPerEntry = bitsPerEntry
 }
 
-func (s *section) index(b block.Block) (int64, bool) {
+func (s *section) index(b Block) (int64, bool) {
 	for k, v := range s.entries {
 
 		if v == b {
@@ -159,4 +158,8 @@ func (s *section) index(b block.Block) (int64, bool) {
 	}
 
 	return 0, false
+}
+
+func (s *section) Blocks() []Block {
+	return s.entries
 }
