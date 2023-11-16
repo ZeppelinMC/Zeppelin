@@ -25,37 +25,37 @@ jobs:
       - name: Build
         run: go build -v
       - name: Upload Go build results linux
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: ${{ runner.os == 'Linux' && matrix.arch == 'amd64' }}
         with:
           name: Dynamite-AMD64-Linux.zip
           path: dynamite
       - name: Upload Go build results arm64-linux
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: ${{ runner.os == 'Linux' && matrix.arch == 'arm64' }}
         with:
           name: Dynamite-ARM64-Linux.zip
           path: dynamite
       - name: Upload Go build results windows
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: ${{ runner.os == 'Windows' && matrix.arch == 'amd64' }}
         with:
           name: Dynamite-AMD64-Windows.zip
           path: dynamite.exe
       - name: Upload Go build results arm64-windows
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: ${{ runner.os == 'Windows' && matrix.arch == 'arm64' }}
         with:
           name: Dynamite-ARM64-Windows.zip
           path: dynamite.exe
       - name: Upload Go build results macos
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
         with:
           name: Dynamite-AMD64-macOS.zip
           path: dynamite
       - name: Upload Go build results arm64-macos
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: ${{ runner.os == 'macOS' && matrix.arch == 'arm64' }}
         with:
           name: Dynamite-ARM64-macOS.zip
