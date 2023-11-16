@@ -285,6 +285,8 @@ func (p *Player) Login(d *world.Dimension) {
 	p.SetPosition(x1, y1, z1, yaw, pitch, false)
 	p.SendChunks(d)
 
+	logger.Println("sent chunks")
+
 	abs := p.SavedAbilities()
 	abps := &packet.PlayerAbilities{FlyingSpeed: abs.FlySpeed, FieldOfViewModifier: 0.1}
 	if abs.Flying != 0 {

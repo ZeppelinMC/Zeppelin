@@ -78,14 +78,14 @@ type Config struct {
 	SimulationDistance   int          `toml:"simulation_distance"`
 	Superflat            bool         `toml:"superflat"`
 	MOTD                 string       `toml:"motd"`
-	Whitelist            Whitelist    `toml:"whitelist"`
-	Web                  Web          `toml:"web"`
 	Gamemode             string       `toml:"gamemode"`
 	Hardcore             bool         `toml:"hardcore"`
 	MaxPlayers           int          `toml:"max_players"`
 	TPS                  int64        `toml:"tps"`
 	Online               bool         `toml:"online_mode"`
 	CompressionThreshold int          `toml:"compression_threshold"`
+	Whitelist            Whitelist    `toml:"whitelist"`
+	Web                  Web          `toml:"web"`
 	Tablist              Tablist      `toml:"tablist"`
 	Chat                 Chat         `toml:"chat"`
 	ResourcePack         ResourcePack `toml:"resource_pack"`

@@ -29,8 +29,9 @@ type Logger struct {
 }
 
 func Println(a ...interface{}) (n int, err error) {
-	n, err = fmt.Print(a...)
-	fmt.Print("\n\r")
+	s := fmt.Sprint(a...)
+	n, err = fmt.Println(strings.ReplaceAll(s, "\n", "\n\r"))
+	fmt.Print("\r")
 	return
 }
 

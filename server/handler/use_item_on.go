@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/block"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/world"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
@@ -21,9 +22,8 @@ func UseItemOn(state *player.Player, pk *packet.UseItemOnServer, f func(d *world
 	}
 
 	b := chunk.DefaultBlock(i.Id)
-	if b == nil || b.EncodedName() == "minecraft:air" {
+	if _, ok := b.(block.Air); ok {
 		return
 	}
-
 	f(state.Dimension(), x, y, z, b, world.SetBlockReplace)
 }

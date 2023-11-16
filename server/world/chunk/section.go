@@ -1,6 +1,7 @@
 package chunk
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"math/bits"
@@ -102,7 +103,7 @@ func (s *section) setBlockAt(x, y, z int, b Block) {
 	newState, ok := s.index(b)
 	if !ok {
 		old := s.bitsPerEntry
-		logger.Println("adding", b, "to palette entries")
+		fmt.Printf("adding %#v to palette entries\n\r", b)
 		s.addEntry(b)
 
 		if s.bitsPerEntry != old {
@@ -114,8 +115,15 @@ func (s *section) setBlockAt(x, y, z int, b Block) {
 			newUsedBitsPerLong := (64 / s.bitsPerEntry) * s.bitsPerEntry
 
 			newSec := section{
+				entries: s.entries,
+				ids:     s.ids,
+
+				bitsPerEntry: s.bitsPerEntry,
 				//create a new slice which can hold all the blocks
-				data: make([]int64, int(math.Ceil(float64(newBits*newUsedBitsPerLong)))),
+				data: make([]int64, int(math.Ceil(float64(newBits/newUsedBitsPerLong)))),
+
+				skyLight:   s.skyLight,
+				blockLight: s.blockLight,
 			}
 
 			s.bitsPerEntry = old
@@ -147,12 +155,19 @@ func (s *section) addEntry(b Block) {
 	}
 
 	s.bitsPerEntry = bitsPerEntry
+
+	id, ok := GetBlockId(b)
+	if !ok {
+		log.Panicf("unable to find block id for %+v\n", b)
+	}
+
+	s.ids = append(s.ids, int32(id))
 }
 
 func (s *section) index(b Block) (int64, bool) {
 	for k, v := range s.entries {
-
-		if v == b {
+		//temp
+		if v.EncodedName() == b.EncodedName() {
 			return int64(k), true
 		}
 	}

@@ -24,7 +24,7 @@ func PlayerCommand(state *player.Player, action int32) {
 	case enum.PlayerCommandStartSneaking: // start sneaking / swimming
 		{
 			b := state.OnBlock()
-			if b.EncodedName() == "minecraft:water" {
+			if b != nil && b.EncodedName() == "minecraft:water" {
 				pk.Pose = &sw
 			} else {
 				pk.Pose = &sn

@@ -21,6 +21,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/lang"
 	"github.com/dynamitemc/dynamite/server/permission"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
+	"github.com/dynamitemc/dynamite/server/world/generator/overworld"
 	"github.com/google/uuid"
 	"golang.org/x/term"
 
@@ -88,6 +89,7 @@ func New(cfg *config.Config, address string, logger *logger.Logger, commandGraph
 		commandGraph: commandGraph,
 		Lang:         lang.New("lang.json"),
 	}
+	w.Overworld().SetGenerator(&overworld.DefaultGenerator{})
 
 	srv.loadFiles()
 	logger.Debug("Loaded player info")

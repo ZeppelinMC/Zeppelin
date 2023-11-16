@@ -33,6 +33,10 @@ func (w *World) NewDimension(typ string, rd *anvil.Reader) *Dimension {
 	}
 }
 
+func (d *Dimension) SetGenerator(g Generator) {
+	d.generator = g
+}
+
 func (d *Dimension) World() *World {
 	return d.world
 }

@@ -52,14 +52,16 @@ func (t *Ticker) tick(tick uint) {
 		return true
 	})
 
+	//TODO: tick blocks again
 	if tick%8 == 0 {
-		blockTick(t.server, t.server.World.Overworld(), tick, 3)
+		//blockTick(t.server, t.server.World.Overworld(), tick, 3)
 	}
 
 	worldAge, dayTime := t.server.World.IncrementTime()
 	t.server.Players.RangeNoLock(func(_ uuid.UUID, pl *player.Player) bool {
+		//TODO: send chunks again.
 		if tick%8 == 0 {
-			pl.SendChunks(pl.Dimension())
+			//pl.SendChunks(pl.Dimension())
 			//pl.UnloadChunks()
 		}
 
@@ -75,11 +77,11 @@ func blockTick(srv *server.Server, d *world.Dimension, tick uint, rts int) {
 
 	for h, c := range d.Chunks() {
 		cx, cz := h.Position()
-		for cy, s := range c.Sections {
+		for cy, s := range c.Sections() {
 			randomTickedBlocks := 0
-			for x := 0; x < 15; x++ {
-				for y := 0; y < 15; y++ {
-					for z := 0; z < 15; z++ {
+			for x := 0; x < 16; x++ {
+				for y := 0; y < 16; y++ {
+					for z := 0; z < 16; z++ {
 						b := s.GetBlockAt(x, y, z)
 						x1, y1, z1 := int64((int(cx)*16)+x), int64(((cy-4)*16)+y), int64((int(cz)*16)+z)
 						pos := pos.BlockPosition{x1, y1, z1}
@@ -91,8 +93,8 @@ func blockTick(srv *server.Server, d *world.Dimension, tick uint, rts int) {
 						if randomTickedBlocks < rts && randBool() {
 							if bl, ok := b.(block.RandomTicker); ok {
 								srv.SetBlock(d, x1, y1, z1, bl.RandomTick(pos, d, tick), world.SetBlockReplace)
-								randomTickedBlocks++
 							}
+							randomTickedBlocks++
 						}
 					}
 				}
