@@ -33,9 +33,15 @@ jobs:
           path: dynamite
       - name: Upload Go build results windows
         uses: actions/upload-artifact@v3
-        if: ${{ runner.os == 'Windows' }}
+        if: ${{ runner.os == 'Windows' && matrix.arch == 'amd64' }}
         with:
           name: Dynamite-Windows
+          path: dynamite.exe
+      - name: Upload Go build results arm64-windows
+        uses: actions/upload-artifact@v3
+        if: ${{ runner.os == 'Windows' && matrix.arch == 'arm64' }}
+        with:
+          name: Dynamite-ARM64-Windows
           path: dynamite.exe
       - name: Upload Go build results macos
         uses: actions/upload-artifact@v3
