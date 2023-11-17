@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/server/entity"
+	"github.com/dynamitemc/dynamite/server/entity/pos"
 	"github.com/dynamitemc/dynamite/server/player"
 	"github.com/dynamitemc/dynamite/server/registry"
 	"github.com/dynamitemc/dynamite/server/world"
@@ -105,7 +106,7 @@ func (srv *Server) TeleportEntity(id int32, x, y, z float64) {
 		e.SetPosition(x, y, z)
 
 		ya, pi := e.Rotation()
-		yaw, pitch := player.DegreesToAngle(ya), player.DegreesToAngle(pi)
+		yaw, pitch := pos.DegreesToAngle(ya), pos.DegreesToAngle(pi)
 		ong := e.OnGround()
 		srv.Players.Range(func(_ uuid.UUID, pl *player.Player) bool {
 			if !pl.IsSpawned(id) {

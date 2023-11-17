@@ -16,6 +16,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/config"
 	"github.com/dynamitemc/dynamite/server/controller"
 	"github.com/dynamitemc/dynamite/server/entity"
+	epos "github.com/dynamitemc/dynamite/server/entity/pos"
 	"github.com/dynamitemc/dynamite/server/enum"
 	"github.com/dynamitemc/dynamite/server/inventory"
 	"github.com/dynamitemc/dynamite/server/item"
@@ -89,10 +90,9 @@ type Player struct {
 
 	clientInfo clientInfo
 
-	x, y, z                    float64
-	yaw, pitch                 float32
-	onGround, operator, flying *atomic.Bool
-	highestY                   float64
+	Position         epos.EntityPosition
+	operator, flying *atomic.Bool
+	highestY         float64
 
 	spawnedEntities []int32
 	loadedChunks    map[[2]int32]struct{}
@@ -156,45 +156,25 @@ func New(
 		Inventory:        inventory.From(data.Inventory, data.SelectedItemSlot),
 		selectedSlot:     newAtomicInt32(data.SelectedItemSlot),
 		dimension:        dimension,
-		onGround:         &atomic.Bool{},
 		operator:         &atomic.Bool{},
-		flying:           newAtomicBool(data.Abilities.Flying&int8(enum.PlayerAbilityFlying) != 0),
+		flying:           newAtomicBool(data.Abilities.Flying),
 		index:            &atomic.Int32{},
-		x:                data.Pos[0],
-		y:                data.Pos[1],
-		z:                data.Pos[2],
-		yaw:              data.Rotation[0],
-		pitch:            data.Rotation[1],
 		health:           data.Health,
 		foodSaturation:   data.FoodSaturationLevel,
 		newID:            newID,
 	}
+	pl.Position.SetAll(data.Pos[0], data.Pos[1], data.Pos[2], data.Rotation[0], data.Rotation[1], data.OnGround)
 	pl.clientInfo.ViewDistance = vd
-
-	fl := true
-	if data.Abilities.Flying == 0 {
-		fl = false
-	}
-	pl.flying = newAtomicBool(fl)
 
 	return pl
 }
 
 func (p *Player) Save() {
-	o := int8(0)
-	if p.onGround.Load() {
-		o = 1
-	}
-	fl := int8(0)
-	if p.flying.Load() {
-		fl = 1
-	}
-
 	p.mu.Lock()
-	p.data.Pos[0], p.data.Pos[1], p.data.Pos[2], p.data.Rotation[0], p.data.Rotation[1], p.data.OnGround = p.x, p.y, p.z, p.yaw, p.pitch, o
+	p.data.Pos[0], p.data.Pos[1], p.data.Pos[2], p.data.Rotation[0], p.data.Rotation[1], p.data.OnGround = p.Position.All()
 	p.data.PlayerGameType = int32(p.gameMode)
 	p.data.Inventory = p.Inventory.Data()
-	p.data.Abilities.Flying = fl
+	p.data.Abilities.Flying = p.flying.Load()
 	p.data.Dimension = p.dimension.Type()
 	p.data.SelectedItemSlot = p.selectedSlot.Load()
 	p.data.Health = p.health
@@ -227,13 +207,13 @@ func (p *Player) Respawn(d *world.Dimension) {
 	case "minecraft:overworld":
 		x1, y1, z1, a = d.World().Spawn()
 	case "minecraft:the_nether":
-		x, y, z := p.Position()
+		x, y, z := p.Position.X(), p.Position.Y(), p.Position.Z()
 		x1, y1, z1 = int32(x)/8, int32(y)/8, int32(z)/8
 	}
 
 	clear(p.spawnedEntities)
 
-	yaw, pitch := p.Rotation()
+	yaw, pitch := p.Position.Yaw(), p.Position.Pitch()
 
 	if b, _ := world.GameRule(d.World().Gamerules()["keepInventory"]).Bool(); !b {
 		p.Inventory.Clear()
@@ -259,8 +239,8 @@ func (p *Player) Respawn(d *world.Dimension) {
 }
 
 func (p *Player) Login(d *world.Dimension) {
-	x1, y1, z1 := p.Position()
-	yaw, pitch := p.Rotation()
+	x1, y1, z1 := p.Position.X(), p.Position.Y(), p.Position.Z()
+	yaw, pitch := p.Position.Yaw(), p.Position.Pitch()
 
 	p.logger.Info("[%s] Player %s (%s) has joined the server with entity id %d at [%s]%f %f %f", p.IP(), p.Name(), p.UUID(), p.entityID, p.Dimension().Type(), x1, y1, z1)
 	p.SendPacket(&packet.JoinGame{
@@ -282,14 +262,14 @@ func (p *Player) Login(d *world.Dimension) {
 	chunkX, chunkZ := math.Floor(x1/16), math.Floor(z1/16)
 	p.SendPacket(&packet.SetCenterChunk{ChunkX: int32(chunkX), ChunkZ: int32(chunkZ)})
 
-	p.SetPosition(x1, y1, z1, yaw, pitch, false)
+	p.Position.SetAll(x1, y1, z1, yaw, pitch, false)
 	p.SendChunks(d)
 
 	logger.Println("sent chunks")
 
 	abs := p.SavedAbilities()
 	abps := &packet.PlayerAbilities{FlyingSpeed: abs.FlySpeed, FieldOfViewModifier: 0.1}
-	if abs.Flying != 0 {
+	if abs.Flying {
 		abps.Flags |= enum.PlayerAbilityFlying | enum.PlayerAbilityAllowFlying
 	}
 	if abps.Flags != 0 {
@@ -375,20 +355,6 @@ func (p *Player) Kill(message string) {
 	})
 }
 
-func (p *Player) Push(x, y, z float64) {
-	yaw, pitch := p.Rotation()
-	p.SetPosition(x, y, z, yaw, pitch, p.OnGround())
-	p.SendPacket(&packet.PlayerPositionLook{
-		X:          x,
-		Y:          y,
-		Z:          z,
-		Yaw:        yaw,
-		Pitch:      pitch,
-		TeleportID: p.newID(),
-	})
-	//p.BroadcastMovement(0x14, x, y, z, yaw, pitch, p.Player.OnGround(), false)
-}
-
 func (p *Player) Teleport(x, y, z float64, yaw, pitch float32) {
 	p.SendPacket(&packet.PlayerPositionLook{
 		X:          x,
@@ -398,7 +364,7 @@ func (p *Player) Teleport(x, y, z float64, yaw, pitch float32) {
 		Pitch:      pitch,
 		TeleportID: p.newID(),
 	})
-	p.HandleMovement(0, x, y, z, yaw, pitch, p.OnGround(), true)
+	p.HandleMovement(0, x, y, z, yaw, pitch, p.Position.OnGround(), true)
 }
 
 func (p *Player) SendCommands(g *commands.Graph) {
@@ -437,7 +403,7 @@ func (p *Player) IsChunkLoaded(x, z int32) bool {
 }
 
 func (p *Player) SendChunks(dimension *world.Dimension) {
-	x1, _, z1 := p.Position()
+	x1, z1 := p.Position.X(), p.Position.Z()
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	max := int32(p.clientInfo.ViewDistance)
@@ -486,8 +452,8 @@ func (p *Player) SendChunks(dimension *world.Dimension) {
 					X:        x,
 					Y:        y,
 					Z:        z,
-					Pitch:    DegreesToAngle(yaw),
-					Yaw:      DegreesToAngle(pitch),
+					Pitch:    epos.DegreesToAngle(yaw),
+					Yaw:      epos.DegreesToAngle(pitch),
 					Type:     t.ProtocolID,
 				})
 				p.spawnedEntities = append(p.spawnedEntities, e.EntityID())
@@ -497,7 +463,7 @@ func (p *Player) SendChunks(dimension *world.Dimension) {
 }
 
 func (p *Player) ChunkPosition() (x int32, z int32) {
-	x1, _, z1 := p.Position()
+	x1, z1 := p.Position.X(), p.Position.Z()
 	return int32(x1) / 16, int32(z1) / 16
 }
 
@@ -519,9 +485,9 @@ func (p *Player) IsSpawned(entityId int32) bool {
 
 func (p *Player) SpawnPlayer(pl *Player) {
 	entityId := pl.entityID
-	x, y, z := pl.Position()
-	ya, pi := pl.Rotation()
-	yaw, pitch := DegreesToAngle(ya), DegreesToAngle(pi)
+	x, y, z := pl.Position.X(), pl.Position.Y(), pl.Position.Z()
+	ya, pi := pl.Position.Yaw(), pl.Position.Pitch()
+	yaw, pitch := epos.DegreesToAngle(ya), epos.DegreesToAngle(pi)
 
 	p.SendPacket(&packet.SpawnPlayer{
 		EntityID:   entityId,
@@ -600,13 +566,13 @@ func (p *Player) SetSlot(slot int8, data item.Item) {
 func (p *Player) DropSlot() {
 	item := p.PreviousSelectedSlot()
 	s, _ := item.ToPacketSlot()
-	x, y, z := p.Position()
+	x, y, z := p.Position.X(), p.Position.Y(), p.Position.Z()
 
 	id := p.newID()
 	u := uuid.New()
 
 	p.playerController.Range(func(_ uuid.UUID, pl *Player) bool {
-		if !pl.InView(p.Position()) {
+		if !pl.InView(x, y, z) {
 			return true
 		}
 		pl.SendPacket(&packet.SpawnEntity{
@@ -634,7 +600,7 @@ func (p *Player) SendCommandSuggestionsResponse(id int32, start int32, length in
 }
 
 func (p *Player) OnBlock() chunk.Block {
-	x, y, z := p.Position()
+	x, y, z := p.Position.X(), p.Position.Y(), p.Position.Z()
 	return p.Dimension().Block(int64(x), int64(y-1), int64(z))
 }
 
@@ -644,8 +610,8 @@ func (p *Player) TeleportToEntity(uuid [16]byte) {
 		return
 	}
 	if pl, ok := e.(*Player); ok {
-		x, y, z := pl.Position()
-		yaw, pitch := pl.Rotation()
+		x, y, z := pl.Position.X(), pl.Position.Y(), pl.Position.Z()
+		yaw, pitch := pl.Position.Yaw(), pl.Position.Pitch()
 		p.Teleport(x, y, z, yaw, pitch)
 	} else {
 		e := e.(entity.Entity)
@@ -668,7 +634,7 @@ func (s *Player) HasPermissions(perms []string) bool {
 }
 
 func (p *Player) InView(x2, y2, z2 float64) bool {
-	x1, y1, z1 := p.Position()
+	x1, y1, z1 := p.Position.X(), p.Position.Y(), p.Position.Z()
 	distance := math.Sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))
 
 	return float64(p.clientInfo.ViewDistance)*16 > distance

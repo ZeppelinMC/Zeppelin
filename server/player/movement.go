@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/aimjel/minecraft/packet"
+	"github.com/dynamitemc/dynamite/server/entity/pos"
 	"github.com/dynamitemc/dynamite/server/enum"
 	"github.com/google/uuid"
 )
@@ -24,8 +25,8 @@ func (p *Player) handleCenterChunk(oldx, oldz, newx, newz float64) {
 }
 
 func (p *Player) HandleMovement(packetid int32, x1, y1, z1 float64, ya, pi float32, ong bool, teleport bool) {
-	oldx, oldy, oldz := p.Position()
-	p.SetPosition(x1, y1, z1, ya, pi, ong)
+	oldx, oldy, oldz := p.Position.X(), p.Position.Y(), p.Position.Z()
+	p.Position.SetAll(x1, y1, z1, ya, pi, ong)
 	p.handleCenterChunk(oldx, oldy, x1, y1)
 	if y1 > p.HighestY() {
 		p.SetHighestY(y1)
@@ -50,7 +51,7 @@ func (p *Player) HandleMovement(packetid int32, x1, y1, z1 float64, ya, pi float
 		p.logger.Info("%s moved too quickly!", p.Name())
 		return
 	}*/
-	if !PositionIsValid(x1, y1, z1) {
+	if !pos.PositionIsValid(x1, y1, z1) {
 		p.Disconnect(p.lang.Translate("disconnect.invalid_player_movement", nil))
 		return
 	}
@@ -60,7 +61,7 @@ func (p *Player) HandleMovement(packetid int32, x1, y1, z1 float64, ya, pi float
 		return
 	}
 
-	yaw, pitch := DegreesToAngle(ya), DegreesToAngle(pi)
+	yaw, pitch := pos.DegreesToAngle(ya), pos.DegreesToAngle(pi)
 
 	var pk packet.Packet
 	headRotationPacket := &packet.EntityHeadRotation{
@@ -112,7 +113,7 @@ func (p *Player) HandleMovement(packetid int32, x1, y1, z1 float64, ya, pi float
 		if p.UUID() == u {
 			return true
 		}
-		if !pl.InView(p.Position()) {
+		if !pl.InView(p.Position.X(), p.Position.Y(), p.Position.Z()) {
 			pl.DespawnEntity(p.EntityID())
 			return true
 		}

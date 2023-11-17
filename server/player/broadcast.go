@@ -2,7 +2,6 @@ package player
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/aimjel/minecraft/chat"
@@ -18,15 +17,6 @@ import (
 
 	"github.com/google/uuid"
 )
-
-func DegreesToAngle(degrees float32) byte {
-	return byte(math.Round(float64(degrees) * (256.0 / 360.0)))
-}
-
-func PositionIsValid(x, y, z float64) bool {
-	return !math.IsNaN(x) && !math.IsNaN(y) && !math.IsNaN(z) &&
-		!math.IsInf(x, 0) && !math.IsInf(y, 0) && !math.IsInf(z, 0)
-}
 
 func (p *Player) BroadcastAnimation(animation uint8) {
 	p.playerController.Range(func(u uuid.UUID, pl *Player) bool {
@@ -65,7 +55,7 @@ func (p *Player) Attack(entityId int32) {
 	if e == nil {
 		return
 	}
-	x, y, z := p.Position()
+	x, y, z := p.Position.X(), p.Position.Y(), p.Position.Z()
 	soundId := int32(519)
 	if pl, ok := e.(*Player); ok {
 		if pl.GameMode() == enum.GameModeCreative {

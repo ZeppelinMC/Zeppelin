@@ -40,6 +40,8 @@ import (
 	"github.com/dynamitemc/dynamite/web"
 )
 
+const Version = "1.20.1"
+
 func New(cfg *config.Config, address string, logger *logger.Logger, commandGraph *commands.Graph) (*Server, error) {
 	lnCfg := minecraft.ListenConfig{
 		Status: minecraft.NewStatus(minecraft.Version{

@@ -37,13 +37,13 @@ type Attribute struct {
 }
 
 type Abilities struct {
-	Mayfly       int8    `nbt:"mayfly"`
-	Instabuild   int8    `nbt:"instabuild"`
+	Mayfly       bool    `nbt:"mayfly"`
+	Instabuild   bool    `nbt:"instabuild"`
 	WalkSpeed    float32 `nbt:"walkSpeed"`
-	MayBuild     int8    `nbt:"mayBuild"`
-	Flying       int8    `nbt:"flying"`
+	MayBuild     bool    `nbt:"mayBuild"`
+	Flying       bool    `nbt:"flying"`
 	FlySpeed     float32 `nbt:"flySpeed"`
-	Invulnerable int8    `nbt:"invulnerable"`
+	Invulnerable bool    `nbt:"invulnerable"`
 }
 
 type Brain struct {
@@ -52,7 +52,7 @@ type Brain struct {
 
 type PlayerData struct {
 	path                  string
-	Invulnerable          int8               `nbt:"Invulnerable"`
+	Invulnerable          bool               `nbt:"Invulnerable"`
 	FoodSaturationLevel   float32            `nbt:"foodSaturationLevel"`
 	UUID                  []int32            `nbt:"UUID"`
 	EnderItems            []item.Item        `nbt:"EnderItems"`
@@ -67,7 +67,7 @@ type PlayerData struct {
 	HurtByTimestamp       int32              `nbt:"HurtByTimestamp"`
 	FallDistance          float32            `nbt:"FallDistance"`
 	PlayerGameType        int32              `nbt:"playerGameType"`
-	SeenCredits           int8               `nbt:"seenCredits"`
+	SeenCredits           bool               `nbt:"seenCredits"`
 	Pos                   []float64          `nbt:"Pos"`
 	FoodTickTimer         int32              `nbt:"foodTickTimer"`
 	Brain                 Brain              `nbt:"Brain"`
@@ -77,7 +77,7 @@ type PlayerData struct {
 	XpP                   float32            `nbt:"XpP"`
 	FallFlying            int8               `nbt:"FallFlying"`
 	Motion                []float64          `nbt:"Motion"`
-	OnGround              int8               `nbt:"OnGround"`
+	OnGround              bool               `nbt:"OnGround"`
 	Rotation              []float32          `nbt:"Rotation"`
 	Score                 int32              `nbt:"Score"`
 	Fire                  int16              `nbt:"Fire"`
@@ -172,7 +172,7 @@ func (world *World) GeneratePlayerData(uuid string) *PlayerData {
 		},
 		FoodLevel:           20,
 		FoodSaturationLevel: 5,
-		OnGround:            1,
+		OnGround:            true,
 		UUID:                ByteUUIDToIntUUID(u),
 		PlayerGameType:      int32(world.Gamemode),
 		Dimension:           "minecraft:overworld",

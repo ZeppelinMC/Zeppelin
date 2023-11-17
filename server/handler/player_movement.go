@@ -12,8 +12,8 @@ func PlayerMovement(
 	if state.IsDead() {
 		return
 	}
-	x, y, z := state.Position()
-	yaw, pitch := state.Rotation()
+	x, y, z := state.Position.X(), state.Position.Y(), state.Position.Z()
+	yaw, pitch := state.Position.Yaw(), state.Position.Pitch()
 	switch pk := p.(type) {
 	case *packet.PlayerPosition:
 		{

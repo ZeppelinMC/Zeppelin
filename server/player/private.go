@@ -158,29 +158,6 @@ func (p *Player) GameMode() byte {
 	return p.gameMode
 }
 
-func (p *Player) Position() (x, y, z float64) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.x, p.y, p.z
-}
-
-func (p *Player) Rotation() (yaw, pitch float32) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.yaw, p.pitch
-}
-
-func (p *Player) OnGround() bool {
-	return p.onGround.Load()
-}
-
-func (p *Player) SetPosition(x, y, z float64, yaw, pitch float32, ong bool) {
-	p.onGround.Store(ong)
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.x, p.y, p.z, p.yaw, p.pitch = x, y, z, yaw, pitch
-}
-
 func (p *Player) SetHighestY(y float64) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
