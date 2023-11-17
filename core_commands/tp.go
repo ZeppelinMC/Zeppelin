@@ -26,8 +26,8 @@ var tp_cmd = &commands.Command{
 					return
 				} else {
 					player := srv.FindPlayer(ctx.Arguments[0])
-					x, y, z := player.Position()
-					yaw, pitch := exe.Rotation()
+					x, y, z := player.Position.X(), player.Position.Y(), player.Position.Z()
+					yaw, pitch := exe.Position.Yaw(), exe.Position.Pitch()
 					exe.Teleport(x, y, z, yaw, pitch)
 					ep, es := exe.GetPrefixSuffix()
 					pp, ps := player.GetPrefixSuffix()
@@ -46,8 +46,8 @@ var tp_cmd = &commands.Command{
 				// Teleport player to player
 				player1 := srv.FindPlayer(ctx.Arguments[0])
 				player2 := srv.FindPlayer(ctx.Arguments[1])
-				x, y, z := player2.Position()
-				yaw, pitch := player1.Rotation()
+				x, y, z := player2.Position.X(), player2.Position.Y(), player2.Position.Z()
+				yaw, pitch := player1.Position.Yaw(), player1.Position.Yaw()
 				player1.Teleport(x, y, z, yaw, pitch)
 
 				ep, es := player1.GetPrefixSuffix()
@@ -82,7 +82,7 @@ var tp_cmd = &commands.Command{
 						ctx.Error("Invalid x position")
 						return
 					}
-					yaw, pitch := exe.Rotation()
+					yaw, pitch := exe.Position.Yaw(), exe.Position.Pitch()
 
 					exe.Teleport(x, y, z, yaw, pitch)
 
@@ -118,7 +118,7 @@ var tp_cmd = &commands.Command{
 					return
 				}
 
-				yaw, pitch := player.Rotation()
+				yaw, pitch := player.Position.Yaw(), player.Position.Pitch()
 				player.Teleport(x, y, z, yaw, pitch)
 
 				prefix, suffix := player.GetPrefixSuffix()

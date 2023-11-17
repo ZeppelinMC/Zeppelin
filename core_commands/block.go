@@ -15,7 +15,7 @@ var block_cmd = &commands.Command{
 	},
 	Execute: func(ctx commands.CommandContext) {
 		if p, ok := ctx.Executor.(*player.Player); ok {
-			x, y, z := p.Position()
+			x, y, z := p.Position.X(), p.Position.Y(), p.Position.Z()
 			if len(ctx.Arguments) >= 3 {
 				x, y, z, _ = ctx.GetVector3("pos")
 			}
