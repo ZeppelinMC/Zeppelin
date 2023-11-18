@@ -7,7 +7,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
 	"github.com/dynamitemc/dynamite/logger"
@@ -23,6 +22,7 @@ import (
 	"github.com/dynamitemc/dynamite/server/lang"
 	"github.com/dynamitemc/dynamite/server/permission"
 	"github.com/dynamitemc/dynamite/server/registry"
+	"github.com/dynamitemc/dynamite/server/session"
 	"github.com/dynamitemc/dynamite/server/world"
 	"github.com/dynamitemc/dynamite/server/world/chunk"
 
@@ -67,9 +67,8 @@ type Player struct {
 	playerController *controller.Controller[uuid.UUID, *Player]
 	entityController *controller.Controller[int32, entity.Entity]
 
-	conn *minecraft.Conn
+	session session.Session
 
-	uuid     uuid.UUID
 	entityID int32
 
 	isHardCore *atomic.Bool
@@ -124,7 +123,6 @@ func newAtomicBool(val bool) *atomic.Bool {
 }
 
 func New(
-	uuid uuid.UUID,
 	players *controller.Controller[uuid.UUID, *Player],
 	entities *controller.Controller[int32, entity.Entity],
 	server any,
@@ -132,7 +130,7 @@ func New(
 	lang *lang.Lang,
 	logger *logger.Logger,
 	entityId int32,
-	conn *minecraft.Conn,
+	session session.Session,
 	data *world.PlayerData,
 	dimension *world.Dimension,
 	vd int8,
@@ -145,8 +143,7 @@ func New(
 		lang:             lang,
 		playerController: players,
 		entityController: entities,
-		conn:             conn,
-		uuid:             uuid,
+		session:          session,
 		entityID:         entityId,
 		isHardCore:       &atomic.Bool{},
 		gameMode:         byte(data.PlayerGameType),
@@ -392,7 +389,7 @@ func (p *Player) Disconnect(reason chat.Message) {
 	pk := &packet.DisconnectPlay{}
 	pk.Reason = reason
 	p.SendPacket(pk)
-	p.conn.Close(nil)
+	p.session.Close(nil)
 }
 
 func (p *Player) IsChunkLoaded(x, z int32) bool {
@@ -491,7 +488,7 @@ func (p *Player) SpawnPlayer(pl *Player) {
 
 	p.SendPacket(&packet.SpawnPlayer{
 		EntityID:   entityId,
-		PlayerUUID: pl.conn.UUID(),
+		PlayerUUID: pl.session.UUID(),
 		X:          x,
 		Y:          y,
 		Z:          z,
@@ -622,7 +619,7 @@ func (p *Player) TeleportToEntity(uuid [16]byte) {
 }
 
 func (p *Player) IP() string {
-	return p.conn.RemoteAddr().String()
+	return p.session.RemoteAddr().String()
 }
 
 func (s *Player) HasPermissions(perms []string) bool {

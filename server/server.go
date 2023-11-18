@@ -149,7 +149,6 @@ func (srv *Server) handleNewConn(conn *minecraft.Conn) {
 	data := srv.World.GetPlayerData(uuid.String())
 
 	plyr := player.New(
-		uuid,
 		srv.Players,
 		srv.Entities,
 		srv,

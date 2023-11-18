@@ -20,7 +20,7 @@ import (
 
 func (p *Player) BroadcastAnimation(animation uint8) {
 	p.playerController.Range(func(u uuid.UUID, pl *Player) bool {
-		if !pl.IsSpawned(p.EntityID()) || u == p.uuid {
+		if !pl.IsSpawned(p.EntityID()) || u == p.UUID() {
 			return true
 		}
 
@@ -126,7 +126,7 @@ func (p *Player) BroadcastGamemode() {
 		pl.SendPacket(&packet.PlayerInfoUpdate{
 			Actions: 0x04,
 			Players: []types.PlayerInfo{{
-				UUID:     p.conn.UUID(),
+				UUID:     p.UUID(),
 				GameMode: gm,
 			}},
 		})
@@ -183,7 +183,7 @@ func (p *Player) BroadcastMetadataInArea(pk *packet.SetEntityMetadata) {
 
 func (p *Player) broadcastMetadataGlobal(pk *packet.SetEntityMetadata) {
 	p.playerController.Range(func(u uuid.UUID, pl *Player) bool {
-		if u == p.uuid {
+		if u == p.UUID() {
 			return true
 		}
 		pl.SendPacket(pk)

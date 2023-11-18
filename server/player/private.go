@@ -2,8 +2,6 @@ package player
 
 import (
 	"bytes"
-	"encoding/base64"
-	"encoding/json"
 
 	"github.com/aimjel/minecraft/chat"
 	"github.com/aimjel/minecraft/packet"
@@ -15,11 +13,11 @@ import (
 )
 
 func (p *Player) UUID() uuid.UUID {
-	return p.uuid
+	return p.session.UUID()
 }
 
 func (p *Player) Name() string {
-	return p.conn.Name()
+	return p.session.Name()
 }
 
 func (p *Player) EntityID() int32 {
@@ -27,11 +25,11 @@ func (p *Player) EntityID() int32 {
 }
 
 func (p *Player) SendPacket(pk packet.Packet) error {
-	return p.conn.SendPacket(pk)
+	return p.session.SendPacket(pk)
 }
 
 func (p *Player) ReadPacket() (packet.Packet, error) {
-	return p.conn.ReadPacket()
+	return p.session.ReadPacket()
 }
 
 func (p *Player) ClientSettings() clientInfo {
@@ -58,7 +56,7 @@ func (p *Player) SetClientSettings(pk *packet.ClientSettings) {
 }
 
 func (p *Player) Properties() []types.Property {
-	return p.conn.Properties()
+	return p.session.Properties()
 }
 
 func (p *Player) Dimension() *world.Dimension {
@@ -220,7 +218,7 @@ func (p *Player) SetSessionID(id [16]byte, pk, ks []byte, expires int64) {
 			Actions: 0x02,
 			Players: []types.PlayerInfo{
 				{
-					UUID:          p.conn.UUID(),
+					UUID:          p.session.UUID(),
 					ChatSessionID: id,
 					PublicKey:     bytes.Clone(pk),
 					KeySignature:  bytes.Clone(ks),
@@ -238,10 +236,10 @@ func (p *Player) SessionID() (id [16]byte, pk, ks []byte, expires int64) {
 	return p.sessionID, p.publicKey, p.keySignature, p.expires
 }
 
-// SetSkin allows you to set the player's skin.
+/*// SetSkin allows you to set the player's skin.
 func (p *Player) SetSkin(url string) {
 	var textures types.TexturesProperty
-	b, _ := base64.StdEncoding.DecodeString(p.conn.Properties()[0].Value)
+	b, _ := base64.StdEncoding.DecodeString(p.session.Properties()[0].Value)
 	json.Unmarshal(b, &textures)
 	textures.Textures.Skin.URL = url
 
@@ -249,14 +247,14 @@ func (p *Player) SetSkin(url string) {
 
 	d := base64.StdEncoding.EncodeToString(t)
 
-	p.conn.Properties()[0].Signature = ""
-	p.conn.Properties()[0].Value = d
+	p.session.Properties()[0].Signature = ""
+	p.session.Properties()[0].Value = d
 }
 
 // SetCape allows you to set the player's cape.
 func (p *Player) SetCape(url string) {
 	var textures types.TexturesProperty
-	b, _ := base64.StdEncoding.DecodeString(p.conn.Properties()[0].Value)
+	b, _ := base64.StdEncoding.DecodeString(p.session.Properties()[0].Value)
 	json.Unmarshal(b, &textures)
 	textures.Textures.Cape.URL = url
 
@@ -264,9 +262,9 @@ func (p *Player) SetCape(url string) {
 
 	d := base64.StdEncoding.EncodeToString(t)
 
-	p.conn.Properties()[0].Signature = ""
-	p.conn.Properties()[0].Value = d
-}
+	p.session.Properties()[0].Signature = ""
+	p.session.Properties()[0].Value = d
+}*/
 
 func (p *Player) SetDisplayName(name *chat.Message) {
 	p.playerController.Range(func(_ uuid.UUID, pl *Player) bool {
