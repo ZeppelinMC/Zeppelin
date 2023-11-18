@@ -1,7 +1,7 @@
 <br/>
 <p align="center">
   <a href="https://github.com/DynamiteMC/Dynamite">
-    ![i111mage-removebg-preview](https://github.com/DynamiteMC/Dynamite/assets/84847714/299c803e-ff30-46fb-ba56-a752e365307d)
+    <img src="https://user-images.githubusercontent.com/84847714/263548779-299c803e-ff30-46fb-ba56-a752e365307d.png" alt="Logo" width="772" height="174">
   </a>
 
   <h3 align="center">Dynamite</h3>
