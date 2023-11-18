@@ -113,3 +113,4 @@ Distributed under the AGPL-3.0 License. See [LICENSE](https://github.com/Dynamit
 * [Gorilla - Websocket](https://github.com/gorilla/websocket)
 * [Google - UUID](https://github.com/google/uuid)
 * [Michael T Jones - pcg](https://github.com/MichaelTJones/pcg)
+* [Aimjel / Angel - Minecraft Protocol Library for Go](https://github.com/aimjel/minecraft)
