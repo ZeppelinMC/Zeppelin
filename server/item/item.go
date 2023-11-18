@@ -43,21 +43,21 @@ func (item Item) ToPacketSlot() (packet.Slot, error) {
 }
 
 func ItemToPacketSlot(item Item) (packet.Slot, error) {
-	it, ok := registry.GetItem(item.Id)
+	it, ok := registry.Item.Get(item.Id)
 	if !ok {
 		return packet.Slot{}, ErrInvalidID
 	}
 	return packet.Slot{
 		Present: true,
 		Count:   item.Count,
-		Id:      it.ProtocolID,
+		Id:      it,
 		Tag:     *(*packet.SlotTag)(unsafe.Pointer(&item.Tag)),
 	}, nil
 }
 
 func PacketSlotToItem(sl int8, slot packet.Slot) (Item, error) {
-	id := registry.FindItem(slot.Id)
-	if id == "" {
+	id, ok := registry.Item.Find(slot.Id)
+	if !ok {
 		return Item{}, ErrInvalidID
 	}
 	return Item{

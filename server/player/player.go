@@ -436,7 +436,7 @@ func (p *Player) SendChunks(dimension *world.Dimension) {
 					e = entity.CreateEntity(p.entityController, p.newID(), en, dimension)
 				}
 
-				t, ok := registry.GetEntity(e.Type())
+				t, ok := registry.EntityType.Get(e.Type())
 				if !ok {
 					continue
 				}
@@ -451,7 +451,7 @@ func (p *Player) SendChunks(dimension *world.Dimension) {
 					Z:        z,
 					Pitch:    epos.DegreesToAngle(yaw),
 					Yaw:      epos.DegreesToAngle(pitch),
-					Type:     t.ProtocolID,
+					Type:     t,
 				})
 				p.spawnedEntities = append(p.spawnedEntities, e.EntityID())
 			}

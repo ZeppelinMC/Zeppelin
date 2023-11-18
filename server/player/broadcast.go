@@ -78,9 +78,9 @@ func (p *Player) Attack(entityId int32) {
 		if !ok {
 			return
 		}
-		sound, ok := registry.GetSound(fmt.Sprintf("minecraft:entity.%s.hurt", strings.TrimPrefix(entity.Type(), "minecraft:")))
+		sound, ok := registry.SoundEvent.Get(fmt.Sprintf("minecraft:entity.%s.hurt", strings.TrimPrefix(entity.Type(), "minecraft:")))
 		if ok {
-			soundId = sound.ProtocolID
+			soundId = sound
 		}
 	}
 

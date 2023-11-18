@@ -38,7 +38,7 @@ func (srv *Server) FindEntityByUUID(id [16]byte) interface{} {
 }
 
 func (srv *Server) SpawnEntity(typ string, x, y, z float64) {
-	id, ok := registry.GetEntity(typ)
+	id, ok := registry.EntityType.Get(typ)
 	if !ok {
 		return
 	}
@@ -53,7 +53,7 @@ func (srv *Server) SpawnEntity(typ string, x, y, z float64) {
 		X:        x,
 		Y:        y,
 		Z:        z,
-		Type:     id.ProtocolID,
+		Type:     id,
 	}
 
 	srv.Players.Range(func(_ uuid.UUID, pl *player.Player) bool {
