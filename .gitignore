@@ -1,9 +1,3 @@
-resources
-configs/config.toml
-dynamite
-.idea
-banned_ips.json
-banned_players.json
-ops.json
-config.toml
-whitelist.json
+/*.nbt
+/world
+/.idea

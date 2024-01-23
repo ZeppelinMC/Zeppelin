@@ -1,59 +1,37 @@
 package world
 
 import (
-	"bytes"
-	"compress/gzip"
+	"fmt"
+	"github.com/aimjel/nitrate/server/world/anvil"
+	"github.com/aimjel/nitrate/server/world/generator"
+	"github.com/aquilax/go-perlin"
+	"math/rand"
 	"os"
-	"sync/atomic"
-
-	"github.com/aimjel/minecraft/nbt"
 )
 
 type World struct {
-	nbt struct {
-		Data struct {
-			Seed        int64 `nbt:"seed"`
-			DataVersion int32
-		}
-	}
+	//name of the folder which holds the contents of the world
+	name string
 
-	entityIdCounter atomic.Value
-
-	dimensions []*Dimension
+	overWorld *Dimension
 }
 
 func OpenWorld(name string) (*World, error) {
-	f, err := os.Open(name + "/level.dat")
-	if err != nil {
-		return nil, err
+	if _, err := os.Stat(name); os.IsNotExist(err) {
+		w := &World{
+			name:      name,
+			overWorld: NewDimension("minecraft:overworld"),
+		}
+
+		w.overWorld.rd = anvil.NewReader(name + "/region/")
+		w.overWorld.gen = &generator.Default{Perlin: perlin.NewPerlin(2, 2, 1, rand.Int63())}
+		fmt.Println("created world in memory")
+		return w, nil
 	}
 
-	gzipRd, err := gzip.NewReader(f)
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	if _, err := buf.ReadFrom(gzipRd); err != nil {
-		return nil, err
-	}
-
-	var wrld World
-	if err := nbt.Unmarshal(buf.Bytes(), &wrld.nbt); err != nil {
-		return nil, err
-	}
-
-	//todo temp
-	wrld.dimensions = make([]*Dimension, 0, 1)
-	wrld.dimensions = append(wrld.dimensions, NewDimension("minecraft:overworld"))
-
-	return &wrld, nil
+	return nil, nil
 }
 
-func (w *World) Seed() int64 {
-	return w.nbt.Data.Seed
-}
-
-func (w *World) DefaultDimension() *Dimension {
-	return w.dimensions[0]
+func (w *World) OverWorld() *Dimension {
+	return w.overWorld
 }

@@ -1,106 +1,93 @@
 package server
 
 import (
-	"encoding/hex"
-	"sync"
-
-	"github.com/dynamitemc/dynamite/util"
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
 
 	"github.com/aimjel/minecraft"
-	//"github.com/dynamitemc/dynamite/web"
-	"github.com/dynamitemc/dynamite/logger"
-	"github.com/dynamitemc/dynamite/server/commands"
-	"github.com/dynamitemc/dynamite/server/network"
-	"github.com/dynamitemc/dynamite/server/player"
-	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/aimjel/nitrate/server/network"
+	"github.com/aimjel/nitrate/server/player"
+	"github.com/aimjel/nitrate/server/world"
 )
 
 type Server struct {
-	Config       *ServerConfig
-	Logger       logger.Logger
-	CommandGraph commands.Graph
+	cfg *Config
 
-	// Players mapped by UUID
-	Players map[string]*PlayerController
+	ln *minecraft.Listener
 
-	WhitelistedPlayers,
-	Operators,
-	BannedPlayers,
-	BannedIPs []user
-
-	listener *minecraft.Listener
+	Logger *log.Logger
 
 	world *world.World
 
-	mu *sync.RWMutex
+	broadcaster *network.Broadcast
 }
 
-func (srv *Server) Start() error {
-	for {
-		conn, err := srv.listener.Accept()
-		if err != nil {
-			return err
-		}
-		go srv.handleNewConn(conn)
+func (cfg *Config) NewServer(status *minecraft.Status) (*Server, error) {
+	ln, err := (&minecraft.ListenConfig{
+		Status:               status,
+		OnlineMode:           cfg.OnlineMode,
+		CompressionThreshold: cfg.CompressionThreshold,
+		Messages:             nil, //todo
+	}).Listen(cfg.Address)
+
+	if err != nil {
+		return nil, err
 	}
+
+	var w *world.World
+	//todo change to use a variable
+	if w, err = world.OpenWorld("world2"); err != nil {
+		return nil, err
+	}
+
+	srv := &Server{
+		cfg:         cfg,
+		ln:          ln,
+		world:       w,
+		broadcaster: network.NewBroadcast(),
+	}
+
+	srv.handleSIGINT()
+
+	return srv, nil
 }
 
-func (srv *Server) handleNewConn(conn *minecraft.Conn) {
-	if srv.ValidateConn(conn) {
-		return
+func (srv *Server) Accept() (*player.Player, error) {
+	conn, err := srv.ln.Accept()
+	if err != nil {
+		return nil, err
 	}
+	plyer := player.New(srv.world)
+	go srv.handleNewConn(plyer, conn)
+	return plyer, err
+}
 
-	plyr := player.New()
-	sesh := network.New(conn, plyr)
-	cntrl := &PlayerController{player: plyr, session: sesh}
-	cntrl.UUID = util.AddDashesToUUID(hex.EncodeToString(conn.Info.UUID[:]))
-	if err := cntrl.JoinDimension(srv.world.DefaultDimension()); err != nil {
-		//TODO log error
-		conn.Close(err)
-		panic(err)
-		return
-	}
+func (srv *Server) handleNewConn(p *player.Player, c *minecraft.Conn) {
+	sesh := network.NewSession(c, p, srv.broadcaster)
 
-	if err := cntrl.SendAvailableCommands(srv.CommandGraph.Data()); err != nil {
-		//TODO log error
-		conn.Close(err)
-		return
-	}
+	p.Session = sesh
 
-	srv.addPlayer(cntrl)
+	sesh.ViewDistance = srv.cfg.ViewDistance
+	sesh.LoginPlay()
+
+	srv.broadcaster.AddSession(sesh)
+
 	if err := sesh.HandlePackets(); err != nil {
-		u := cntrl.UUID
-
-		srv.Logger.Info("[%s] Player %s (%s) has left the server", conn.RemoteAddr().String(), conn.Info.Name, u)
-		srv.PlayerlistRemove(conn.Info.UUID)
-		//gui.RemovePlayer(cntrl.UUID)
+		srv.broadcaster.RemoveSessions(sesh)
+		//error occurred while handling packets
+		srv.Logger.Println(err)
 	}
 }
 
-func (srv *Server) addPlayer(p *PlayerController) {
-	srv.mu.Lock()
-	srv.Players[p.UUID] = p
-	srv.mu.Unlock()
-
-	srv.PlayerlistUpdate()
-	//gui.AddPlayer(p.session.Info().Name, p.UUID)
-
-	srv.Logger.Info("[%s] Player %s (%s) has joined the server", p.session.RemoteAddr().String(), p.session.Info().Name, p.UUID)
-}
-
-func (srv *Server) GetCommand(name string) func(commands.Executor, []string) {
-	var cmd func(commands.Executor, []string)
-	for _, c := range srv.CommandGraph.Commands {
-		if c.Name == name {
-			return c.Execute
+func (srv *Server) handleSIGINT() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			fmt.Println("you quit! lol")
+			os.Exit(0)
 		}
-
-		for _, a := range c.Aliases {
-			if a == name {
-				return c.Execute
-			}
-		}
-	}
-
-	return cmd
+	}()
 }

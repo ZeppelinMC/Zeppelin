@@ -1,17 +1,16 @@
 package anvil
 
 import (
+	"bytes"
 	"compress/zlib"
 	"encoding/binary"
 	"fmt"
 	"github.com/aimjel/minecraft/protocol"
-	"github.com/dynamitemc/dynamite/server/world/chunk"
+	"github.com/aimjel/nitrate/server/world/chunk"
 	"io"
 	"os"
 	"strconv"
 )
-
-var buffers = protocol.NewBufferPool()
 
 type Reader struct {
 	//path to the folder where the anvil files are stored
@@ -23,55 +22,60 @@ func NewReader(path string) *Reader {
 }
 
 func (r *Reader) ReadChunk(x, z int32) (*chunk.Chunk, error) {
+	buf := protocol.GetBuffer(1024 * 30)
+	defer protocol.PutBuffer(buf)
+
+	if err := CopyChunk(buf, x, z, r.path); err != nil {
+		return nil, fmt.Errorf("%v reading chunk %v %v", err, x, z)
+	}
+
+	return chunk.NewAnvilChunk(buf.Bytes())
+}
+
+func CopyChunk(buf *bytes.Buffer, x, z int32, path string) error {
 	chunkFile := "r." + strconv.FormatInt(int64(x>>5), 10) + "." + strconv.FormatInt(int64(z>>5), 10) + ".mca"
 
-	f, err := os.Open(r.path + chunkFile)
+	f, err := os.Open(path + chunkFile)
 	if err != nil {
-		return nil, fmt.Errorf("%v reading chunk %v %v", err, x, z)
+		return err
 	}
 
 	defer f.Close()
 
-	offset, sector, err := r.decodeChunkLocation(f, x, z)
+	offset, _, err := decodeChunkLocation(f, x, z)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	chunkLength, compressionScheme, err := r.decodeChunkHeader(f, offset)
+	chunkLength, compressionScheme, err := decodeChunkHeader(f, offset)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	//will hold the uncompressed nbt data
-	buf := buffers.Get(int(sector))
-	buf.Reset()
-	buffers.Put(buf)
 
 	switch compressionScheme {
 	//todo implement gzip decompression
 
 	//zlib decompression
 	case 2:
-		//todo handle error
 		//chunk header takes up 5 bytes
-		f.Seek(int64(offset+5), io.SeekStart)
+		_, _ = f.Seek(int64(offset+5), io.SeekStart)
 
 		rd, err := zlib.NewReader(io.LimitReader(f, int64(chunkLength)))
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		if _, err := buf.ReadFrom(rd); err != nil {
-			return nil, err
+		if _, err = buf.ReadFrom(rd); err != nil {
+			return err
 		}
 	}
 
-	return chunk.NewAnvilChunk(buf.Bytes())
+	return nil
 }
 
 // decodeChunkLocation decodes the location entry for the x z Chunk coordinates passed.
 // Returns the Chunk's offset in the file and sector or how much space it takes up.
-func (r *Reader) decodeChunkLocation(f *os.File, x, z int32) (uint32, uint32, error) {
+func decodeChunkLocation(f *os.File, x, z int32) (uint32, uint32, error) {
 	//allocate space for the location entry data
 	loc := make([]byte, 4)
 
@@ -79,7 +83,7 @@ func (r *Reader) decodeChunkLocation(f *os.File, x, z int32) (uint32, uint32, er
 	offset := 4 * ((x & 31) + (z&31)*32)
 	n, err := f.ReadAt(loc, int64(offset))
 	if err != nil {
-		return 0, 0, fmt.Errorf("%w reading chunk(x=%v z=%v) location", err, x, z)
+		return 0, 0, err
 	}
 
 	if n != 4 {
@@ -95,7 +99,7 @@ func (r *Reader) decodeChunkLocation(f *os.File, x, z int32) (uint32, uint32, er
 	return (entry >> 8) * 4096, (entry & 0xff) * 4096, nil
 }
 
-func (r *Reader) decodeChunkHeader(f *os.File, offset uint32) (uint32, byte, error) {
+func decodeChunkHeader(f *os.File, offset uint32) (uint32, byte, error) {
 	//allocate space to store the header
 	header := make([]byte, 5)
 
