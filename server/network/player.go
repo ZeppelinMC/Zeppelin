@@ -28,5 +28,7 @@ type Player interface {
 	// See player.GameMode to convert integers into game-mode types
 	GameMode() int
 
+	KnockBack()
+
 	entity.Entity
 }
