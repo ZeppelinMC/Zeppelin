@@ -33,8 +33,8 @@ func (p *Player) Interact(target entity.Entity) {
 	fmt.Println("player touched", target)
 }
 
-func (p *Player) KnockBack() {
-	p.Session.Knockback(0, 1000, 4000)
+func (p *Player) Attack(e entity.Entity) {
+	p.Session.Knockback(0, 4000, 4000)
 }
 
 func New(wrld *world.World) *Player {

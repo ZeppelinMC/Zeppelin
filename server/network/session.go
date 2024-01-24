@@ -106,7 +106,7 @@ func (s *Session) HandlePackets() error {
 			case reflect.Pointer:
 				name = val.Elem().Type().Name()
 			}
-			fmt.Printf("no handle for %v %s\n", pk.ID(), name)
+			fmt.Printf("no handle for 0x%x %s\n", pk.ID(), name)
 		}
 	}
 }
