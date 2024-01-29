@@ -2,7 +2,7 @@ package network
 
 import (
 	"github.com/aimjel/minecraft/packet"
-	"github.com/aimjel/nitrate/server/world/entity"
+	"github.com/dynamitemc/dynamite/server/world/entity"
 )
 
 func HandlePlayerLeftRightClick(s *Session, pk packet.Packet) {

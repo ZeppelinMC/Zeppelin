@@ -1,13 +1,18 @@
 package main
 
 import (
-	"github.com/aimjel/minecraft"
-	"github.com/aimjel/nitrate/server"
 	"log"
 	"os"
+
+	"github.com/aimjel/minecraft"
+	"github.com/dynamitemc/dynamite/server"
 )
 
 func main() {
+	/*var reg registry.Registry
+	file, _ := os.ReadFile("server/network/registry.nbt")
+	err := nbt.Unmarshal(file, &reg)
+	fmt.Printf("%v %#v\n", err, reg)*/
 	var logger = log.New(os.Stdout, "", log.Ltime|log.Lshortfile)
 
 	cfg, err := server.LoadConfig("config.toml")

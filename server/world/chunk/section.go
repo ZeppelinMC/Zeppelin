@@ -1,10 +1,11 @@
 package chunk
 
 import (
-	"github.com/aimjel/nitrate/server/block"
 	"log"
 	"math"
 	"math/bits"
+
+	"github.com/dynamitemc/dynamite/server/block"
 )
 
 // Section represents a 16x16x16.

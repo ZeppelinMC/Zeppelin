@@ -1,4 +1,4 @@
-module github.com/aimjel/nitrate
+module github.com/dynamitemc/dynamite
 
 go 1.21.0
 

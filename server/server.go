@@ -7,9 +7,9 @@ import (
 	"os/signal"
 
 	"github.com/aimjel/minecraft"
-	"github.com/aimjel/nitrate/server/network"
-	"github.com/aimjel/nitrate/server/player"
-	"github.com/aimjel/nitrate/server/world"
+	"github.com/dynamitemc/dynamite/server/network"
+	"github.com/dynamitemc/dynamite/server/player"
+	"github.com/dynamitemc/dynamite/server/world"
 )
 
 type Server struct {

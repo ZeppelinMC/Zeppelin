@@ -3,12 +3,13 @@ package network
 import (
 	_ "embed"
 	"fmt"
-	"github.com/aimjel/nitrate/server/world/entity"
 	"math"
 	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/dynamitemc/dynamite/server/world/entity"
 
 	"github.com/aimjel/minecraft"
 	"github.com/aimjel/minecraft/packet"

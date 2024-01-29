@@ -5,11 +5,12 @@ import (
 	"compress/zlib"
 	"encoding/binary"
 	"fmt"
-	"github.com/aimjel/minecraft/protocol"
-	"github.com/aimjel/nitrate/server/world/chunk"
 	"io"
 	"os"
 	"strconv"
+
+	"github.com/aimjel/minecraft/protocol"
+	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
 type Reader struct {

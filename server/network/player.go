@@ -1,8 +1,8 @@
 package network
 
 import (
-	"github.com/aimjel/nitrate/server/world"
-	"github.com/aimjel/nitrate/server/world/entity"
+	"github.com/dynamitemc/dynamite/server/world"
+	"github.com/dynamitemc/dynamite/server/world/entity"
 )
 
 // Player describes functions the session can use to update and retrieve states

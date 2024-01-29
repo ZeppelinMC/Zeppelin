@@ -3,11 +3,12 @@ package chunk
 import (
 	"bytes"
 	"errors"
-	"github.com/aimjel/minecraft/nbt"
-	"github.com/aimjel/minecraft/protocol/encoding"
-	"github.com/aimjel/nitrate/server/block"
 	"math"
 	"unsafe"
+
+	"github.com/aimjel/minecraft/nbt"
+	"github.com/aimjel/minecraft/protocol/encoding"
+	"github.com/dynamitemc/dynamite/server/block"
 )
 
 var ErrNotFound = errors.New("chunk not found")

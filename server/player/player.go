@@ -2,12 +2,13 @@ package player
 
 import (
 	"fmt"
-	"github.com/aimjel/nitrate/server/network"
-	"github.com/aimjel/nitrate/server/world/entity"
 	"math"
 	"sync/atomic"
 
-	"github.com/aimjel/nitrate/server/world"
+	"github.com/dynamitemc/dynamite/server/network"
+	"github.com/dynamitemc/dynamite/server/world/entity"
+
+	"github.com/dynamitemc/dynamite/server/world"
 )
 
 // Player implements a player entity

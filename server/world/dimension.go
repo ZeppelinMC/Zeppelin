@@ -2,9 +2,10 @@ package world
 
 import (
 	"errors"
-	"github.com/aimjel/nitrate/server/world/anvil"
-	"github.com/aimjel/nitrate/server/world/chunk"
 	"sync"
+
+	"github.com/dynamitemc/dynamite/server/world/anvil"
+	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
 type Dimension struct {

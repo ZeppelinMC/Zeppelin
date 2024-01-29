@@ -1,9 +1,9 @@
 package generator
 
 import (
-	"github.com/aimjel/nitrate/server/block"
-	"github.com/aimjel/nitrate/server/world/chunk"
 	"github.com/aquilax/go-perlin"
+	"github.com/dynamitemc/dynamite/server/block"
+	"github.com/dynamitemc/dynamite/server/world/chunk"
 )
 
 type Default struct {

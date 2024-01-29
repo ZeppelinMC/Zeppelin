@@ -2,11 +2,12 @@ package world
 
 import (
 	"fmt"
-	"github.com/aimjel/nitrate/server/world/anvil"
-	"github.com/aimjel/nitrate/server/world/generator"
-	"github.com/aquilax/go-perlin"
 	"math/rand"
 	"os"
+
+	"github.com/aquilax/go-perlin"
+	"github.com/dynamitemc/dynamite/server/world/anvil"
+	"github.com/dynamitemc/dynamite/server/world/generator"
 )
 
 type World struct {

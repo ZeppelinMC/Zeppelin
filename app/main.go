@@ -2,8 +2,9 @@ package main
 
 import (
 	"bytes"
-	"github.com/aimjel/nitrate/server/world/anvil"
 	"os"
+
+	"github.com/dynamitemc/dynamite/server/world/anvil"
 )
 
 func main() {
