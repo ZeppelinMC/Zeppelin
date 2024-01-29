@@ -144,6 +144,7 @@ func (b *Broadcast) RemoveSessions(sessions ...*Session) {
 		uuids = append(uuids, s.conn.UUID())
 		eids = append(eids, s.eid)
 		delete(b.sessions, s.conn.Name())
+		delete(entities, s.eid)
 	}
 	b.mu.Unlock()
 
