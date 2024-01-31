@@ -2,7 +2,6 @@ package network
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/dynamitemc/dynamite/server/network/registry"
@@ -40,8 +39,6 @@ func init() {
 		panic(err)
 	}
 
-	out, _ := json.MarshalIndent(reg.ChatType, "", "	")
-	fmt.Println(string(out))
 }
 
 func addEntity(id int32, e entity.Entity) {
