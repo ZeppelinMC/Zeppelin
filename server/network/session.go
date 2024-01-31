@@ -2,7 +2,10 @@ package network
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
+	"github.com/aimjel/minecraft/nbt"
+	"github.com/dynamitemc/dynamite/server/network/registry"
 	"math"
 	"reflect"
 	"sync"
@@ -27,8 +30,19 @@ var (
 	mu sync.RWMutex
 
 	//go:embed registry.nbt
-	registry []byte
+	registryData []byte
+
+	reg registry.DefaultRegistry
 )
+
+func init() {
+	if err := nbt.Unmarshal(registryData, &reg); err != nil {
+		panic(err)
+	}
+
+	out, _ := json.MarshalIndent(reg.ChatType, "", "	")
+	fmt.Println(string(out))
+}
 
 func addEntity(id int32, e entity.Entity) {
 	mu.Lock()
@@ -121,7 +135,7 @@ func (s *Session) LoginPlay() error {
 		GameMode:            uint8(s.state.GameMode()),
 		PreviousGameMode:    -1,
 		DimensionNames:      dims,
-		Registry:            registry,
+		Registry:            registryData,
 		DimensionType:       dims[0],
 		DimensionName:       "nitrate:secret",
 		HashedSeed:          0,
