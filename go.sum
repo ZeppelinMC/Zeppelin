@@ -1,11 +1,7 @@
-github.com/aimjel/minecraft v0.0.0-20240107192440-fa092ef5116e h1:/H5KqkzG/LvedTw66TEfEe9DnudSpsxkTyENvIyV5cs=
-github.com/aimjel/minecraft v0.0.0-20240107192440-fa092ef5116e/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
-github.com/aimjel/minecraft v0.0.0-20240122023946-20f1068b8d46 h1:FFqbYSDZARBNS59qn85UxEpF8RotF8LttARR/qPpkc0=
-github.com/aimjel/minecraft v0.0.0-20240122023946-20f1068b8d46/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
-github.com/aimjel/minecraft v0.0.0-20240130023851-19219d9b281f h1:HAM1ZDL+L6F+zpe8dByWI85nyr6jIZUB0Y5o+/7yi3I=
-github.com/aimjel/minecraft v0.0.0-20240130023851-19219d9b281f/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/aimjel/minecraft v0.0.0-20240131064730-4b9b48e0c774 h1:sarLjJxzUcxqNMCPvkgq2jtgT14KloxYEAcUG/wdHWw=
 github.com/aimjel/minecraft v0.0.0-20240131064730-4b9b48e0c774/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
+github.com/aimjel/minecraft v0.0.0-20240131173446-d2a0a65ce54a h1:WTQjYXES8VBE5LpG37O2aciDJiGCa0cAEjJEGWlrWvs=
+github.com/aimjel/minecraft v0.0.0-20240131173446-d2a0a65ce54a/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/aquilax/go-perlin v1.1.0 h1:Gg+3jQ24wT4Y5GI7TCRLmYarzUG0k+n/JATFqOimb7s=
 github.com/aquilax/go-perlin v1.1.0/go.mod h1:z9Rl7EM4BZY0Ikp2fEN1I5mKSOJ26HQpk0O2TBdN2HE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

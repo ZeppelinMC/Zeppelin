@@ -1,8 +1,9 @@
 package network
 
 import (
-	"github.com/aimjel/minecraft/protocol/metadata"
 	"sync"
+
+	"github.com/aimjel/minecraft/protocol/metadata"
 
 	"github.com/aimjel/minecraft/protocol"
 
@@ -166,6 +167,31 @@ func (b *Broadcast) BroadcastEntityMetaData(c *Session, meta metadata.MetaData) 
 		s.conn.SendPacket(&packet.SetEntityMetadata{
 			EntityID: c.eid,
 			MetaData: meta,
+		})
+	}
+}
+
+type animation uint8
+
+const (
+	SwingMainArm animation = iota
+	invalidAnimation
+	LeaveBed
+	SwingOffhand
+	CriticalEffect
+	MagicCriticalEffect
+)
+
+func (b *Broadcast) BroadcastAnimation(entity int32, animation animation) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	for _, s := range b.sessions {
+		if !s.isEntitySpawned(entity) {
+			continue
+		}
+		s.conn.SendPacket(&packet.EntityAnimation{
+			EntityID:  entity,
+			Animation: uint8(animation),
 		})
 	}
 }

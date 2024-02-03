@@ -3,13 +3,14 @@ package network
 import (
 	_ "embed"
 	"fmt"
-	"github.com/aimjel/minecraft/nbt"
-	"github.com/dynamitemc/dynamite/server/network/registry"
 	"math"
 	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/aimjel/minecraft/nbt"
+	"github.com/dynamitemc/dynamite/server/network/registry"
 
 	"github.com/dynamitemc/dynamite/server/world/entity"
 
@@ -87,6 +88,7 @@ func NewSession(c *minecraft.Conn, p Player, b *Broadcast) *Session {
 			0x16: HandlePlayerMovement,
 
 			0x1E: HandlePlayerCommand,
+			0x2F: HandleSwingArm,
 		},
 	}
 }
