@@ -29,13 +29,12 @@ func HandlePlayerLeftRightClick(s *Session, pk packet.Packet) {
 			d := &packet.DamageEvent{
 				EntityID:       p.EntityID,
 				SourceTypeID:   int32(e.ID),
-				SourceCauseID:  s.eid,
-				SourceDirectID: int32(e.ID),
-				HasSrcPos:      false,
+				SourceCauseID:  s.eid + 1,
+				SourceDirectID: s.eid + 1,
 			}
 
 			if a, ok := en.(entity.Attacker); ok {
-				a.Attack(s.state)
+				s.state.Attack(a)
 			}
 
 			s.conn.SendPacket(d)
