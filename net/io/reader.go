@@ -1,6 +1,7 @@
 package io
 
 import (
+	"aether/nbt"
 	"fmt"
 	"io"
 	"unsafe"
@@ -185,5 +186,14 @@ func (r Reader) ByteArray(s *[]byte) error {
 
 func (r Reader) FixedByteArray(s []byte) error {
 	_, err := r.r.Read(s)
+	return err
+}
+
+func (r Reader) NBT(v any) error {
+	dec := nbt.NewDecoder(r.r)
+	dec.ReadRootName(false)
+
+	_, err := dec.Decode(v)
+
 	return err
 }
