@@ -10,7 +10,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"sync/atomic"
 	"unicode/utf16"
+
+	"github.com/google/uuid"
 )
 
 type Conn struct {
@@ -23,7 +26,23 @@ type Conn struct {
 
 	loginData login.LoginSuccess
 
-	state int
+	state atomic.Int32
+}
+
+func (conn *Conn) Username() string {
+	return conn.loginData.Username
+}
+
+func (conn *Conn) UUID() uuid.UUID {
+	return conn.loginData.UUID
+}
+
+func (conn *Conn) Properties() []login.Property {
+	return conn.loginData.Properties
+}
+
+func (conn *Conn) SetState(state int32) {
+	conn.state.Store(state)
 }
 
 func (conn *Conn) WritePacket(pk packet.Packet) error {
@@ -66,13 +85,13 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 			return nil, err
 		}
 
-		rd = io.NewReader(bytes.NewReader(data))
+		rd = io.NewReader(bytes.NewReader(data), int(length))
 	} else {
 		//compression
 	}
 
 	var pk packet.Packet
-	pc, ok := serverboundPool[conn.state][packetId]
+	pc, ok := serverboundPool[conn.state.Load()][packetId]
 	if !ok {
 		return packet.UnknownPacket{
 			Id:      packetId,
@@ -124,7 +143,7 @@ func (conn *Conn) handleHandshake() bool {
 
 	switch handshaking.NextState {
 	case handshake.Status:
-		conn.state = StatusState
+		conn.state.Store(StatusState)
 		pk, err := conn.ReadPacket()
 		if err != nil {
 			return false
@@ -149,7 +168,7 @@ func (conn *Conn) handleHandshake() bool {
 			return false
 		}
 	case handshake.Login:
-		conn.state = LoginState
+		conn.state.Store(LoginState)
 		pk, err := conn.ReadPacket()
 		if err != nil {
 			return false
@@ -165,6 +184,15 @@ func (conn *Conn) handleHandshake() bool {
 		if err := conn.WritePacket(&conn.loginData); err != nil {
 			return false
 		}
+		pk, err = conn.ReadPacket()
+		if err != nil {
+			return false
+		}
+		_, ok = pk.(*login.LoginAcknowledged)
+		if !ok {
+			return false
+		}
+		conn.state.Store(ConfigurationState)
 	}
-	return true
+	return false
 }

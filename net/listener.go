@@ -26,7 +26,7 @@ func (l *Listener) Accept() (*Conn, error) {
 	c, err := l.Listener.Accept()
 	conn := &Conn{
 		Conn:   c,
-		reader: io.NewReader(c),
+		reader: io.NewReader(c, 0),
 		writer: io.NewWriter(c),
 
 		listener: l,

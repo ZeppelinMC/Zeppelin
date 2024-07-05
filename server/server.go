@@ -2,6 +2,7 @@ package server
 
 import (
 	"aether/net"
+	"aether/net/packet/configuration"
 	"fmt"
 )
 
@@ -24,5 +25,8 @@ func (srv Server) Start() {
 		if conn == nil {
 			continue
 		}
+		fmt.Println("new connection from player", conn.Username())
+		conn.SetState(net.PlayState)
+		conn.WritePacket(configuration.FinishConfiguration{})
 	}
 }

@@ -27,3 +27,14 @@ func (u UnknownPacket) Decode(io.Reader) error {
 func (u UnknownPacket) Encode(io.Writer) error {
 	return nil
 }
+
+type EmptyPacket struct {
+}
+
+func (pk EmptyPacket) Encode(io.Writer) error {
+	return nil
+}
+
+func (pk EmptyPacket) Decode(io.Reader) error {
+	return nil
+}

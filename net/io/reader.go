@@ -12,11 +12,12 @@ import (
 )
 
 type Reader struct {
-	r io.Reader
+	r      io.Reader
+	length int
 }
 
-func NewReader(r io.Reader) Reader {
-	return Reader{r}
+func NewReader(r io.Reader, length int) Reader {
+	return Reader{r, length}
 }
 
 func (r Reader) readBytes(l int) ([]byte, error) {
@@ -27,6 +28,11 @@ func (r Reader) readBytes(l int) ([]byte, error) {
 
 func (r Reader) Bool(b *bool) error {
 	return r.Ubyte((*byte)(unsafe.Pointer(&b)))
+}
+
+func (r Reader) ReadAll(data *[]byte) (err error) {
+	*data, err = r.readBytes(r.length)
+	return err
 }
 
 func (r Reader) Byte(i *int8) error {
