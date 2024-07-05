@@ -1,6 +1,8 @@
 package io
 
 import (
+	"aether/chat"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -20,6 +22,10 @@ func NewWriter(w io.Writer) Writer {
 func (w Writer) writeBytes(bytes ...byte) error {
 	_, err := w.w.Write(bytes)
 	return err
+}
+
+func (w Writer) Bool(b bool) error {
+	return w.Ubyte(*(*byte)(unsafe.Pointer(&b)))
 }
 
 func (w Writer) Byte(i int8) error {
@@ -160,4 +166,10 @@ func (w Writer) ByteArray(s []byte) error {
 
 func (w Writer) FixedByteArray(s []byte) error {
 	return w.writeBytes(s...)
+}
+
+func (w Writer) JSONTextComponent(comp chat.TextComponent) error {
+	d, _ := json.Marshal(comp)
+
+	return w.ByteArray(d)
 }

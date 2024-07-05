@@ -21,6 +21,9 @@ func (cfg ServerConfig) New() (*Server, error) {
 				Protocol: net.ProtocolVersion,
 			},
 			Description: status.StatusDescription{Text: "welcome to our minecraft server!"},
+			Players: status.StatusPlayers{
+				Max: 20,
+			},
 		}),
 
 		IP:                   cfg.IP,

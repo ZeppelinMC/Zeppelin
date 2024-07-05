@@ -16,6 +16,13 @@ func (srv Server) Start() {
 	srv.ticker.Start()
 	fmt.Println("started server")
 	for {
-		fmt.Println(srv.listener.Accept())
+		conn, err := srv.listener.Accept()
+		if err != nil {
+			fmt.Println("server error", err)
+			return
+		}
+		if conn == nil {
+			continue
+		}
 	}
 }

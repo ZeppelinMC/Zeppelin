@@ -1,7 +1,9 @@
 package io
 
 import (
+	"aether/chat"
 	"aether/nbt"
+	"encoding/json"
 	"fmt"
 	"io"
 	"unsafe"
@@ -21,6 +23,10 @@ func (r Reader) readBytes(l int) ([]byte, error) {
 	arr := make([]byte, l)
 	_, err := r.r.Read(arr)
 	return arr, err
+}
+
+func (r Reader) Bool(b *bool) error {
+	return r.Ubyte((*byte)(unsafe.Pointer(&b)))
 }
 
 func (r Reader) Byte(i *int8) error {
@@ -196,4 +202,12 @@ func (r Reader) NBT(v any) error {
 	_, err := dec.Decode(v)
 
 	return err
+}
+
+func (r Reader) JSONTextComponent(comp *chat.TextComponent) error {
+	var d []byte
+	if err := r.ByteArray(&d); err != nil {
+		return err
+	}
+	return json.Unmarshal(d, comp)
 }

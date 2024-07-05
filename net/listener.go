@@ -2,9 +2,6 @@ package net
 
 import (
 	"aether/net/io"
-	"aether/net/packet/handshake"
-	"aether/net/packet/status"
-	"fmt"
 	"net"
 )
 
@@ -37,41 +34,9 @@ func (l *Listener) Accept() (*Conn, error) {
 	if err != nil {
 		return conn, err
 	}
-	pk, err := conn.ReadPacket()
-	if err != nil {
-		return conn, err
-	}
-	handshaking, ok := pk.(*handshake.Handshaking)
-	if !ok {
-		return conn, fmt.Errorf("expected packet Handshaking, got %T", pk)
-	}
 
-	switch handshaking.NextState {
-	case handshake.Status:
-		conn.state = StatusState
-		pk, err := conn.ReadPacket()
-		if err != nil {
-			return conn, err
-		}
-		_, ok := pk.(*status.StatusRequest)
-		if !ok {
-			return conn, fmt.Errorf("expected packet StatusRequest, got %T", pk)
-		}
-		if err := conn.WritePacket(&status.StatusResponse{Data: l.Status()}); err != nil {
-			return conn, err
-		}
-
-		pk, err = conn.ReadPacket()
-		if err != nil {
-			return conn, err
-		}
-		p, ok := pk.(*status.Ping)
-		if !ok {
-			return conn, fmt.Errorf("expected packet PingRequest, got %T", pk)
-		}
-		if err := conn.WritePacket(p); err != nil {
-			return conn, err
-		}
+	if !conn.handleHandshake() {
+		conn = nil
 	}
 
 	return conn, nil
