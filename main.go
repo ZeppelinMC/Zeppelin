@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	// runTests()
 	cfg := server.ServerConfig{
 		IP:                   net.IPv4(127, 0, 0, 1),
 		Port:                 25565,
