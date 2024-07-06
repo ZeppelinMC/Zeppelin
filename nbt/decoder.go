@@ -133,8 +133,8 @@ func (d *Decoder) readIntArray() ([]int32, error) {
 	data, err := d.readBytes(int(length) * 4)
 	sl := make([]int32, length)
 
-	for i := 0; i < len(sl); i += 4 {
-		sl[i] = int32(data[i])<<24 | int32(data[i+1])<<16 | int32(data[i+2])<<8 | int32(data[i+3])
+	for i := 0; i < len(sl); i++ {
+		sl[i] = int32(data[i*4])<<24 | int32(data[i*4+1])<<16 | int32(data[i*4+2])<<8 | int32(data[i*4+3])
 	}
 
 	return sl, err
@@ -149,8 +149,8 @@ func (d *Decoder) readLongArray() ([]int64, error) {
 	data, err := d.readBytes(int(length) * 8)
 	sl := make([]int64, length)
 
-	for i := 0; i < len(sl); i += 8 {
-		sl[i] = int64(data[i])<<56 | int64(data[i+1])<<48 | int64(data[i+2])<<40 | int64(data[i+3])<<32 | int64(data[i+4])<<24 | int64(data[i+5])<<16 | int64(data[i+6])<<8 | int64(data[i+7])
+	for i := 0; i < len(sl); i++ {
+		sl[i] = int64(data[i*8])<<56 | int64(data[i*8+1])<<48 | int64(data[i*8+2])<<40 | int64(data[i*8+3])<<32 | int64(data[i*8+4])<<24 | int64(data[i*8+5])<<16 | int64(data[i*8+6])<<8 | int64(data[i*8+7])
 	}
 
 	return sl, err
@@ -180,17 +180,12 @@ func (d *Decoder) readString() (string, error) {
 }
 
 func (d *Decoder) decodeCompound(val reflect.Value) error {
-	i := d.i
-	fmt.Println(i, ":", val.Type().String())
-	d.i++
 	for {
 		elemType, err := d.readByte()
 		if err != nil {
-			fmt.Println(i, err)
 			return err
 		}
 		if elemType == End {
-			fmt.Println(i, "comp end")
 			return nil
 		}
 		name, err := d.readString()
@@ -287,13 +282,15 @@ func (d *Decoder) decodeList(val reflect.Value) error {
 	if typeId == End && length > 0 {
 		return fmt.Errorf("unexpected list of Tag_End")
 	}
+
+	// Initialize the slice if necessary
 	if val.Kind() == reflect.Interface {
+		val.Set(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf((*interface{})(nil)).Elem()), int(length), int(length)))
 		val = val.Elem()
-	}
-	if length > int32(val.Len()) {
-		if val.Kind() != reflect.Array {
-			val = reflect.AppendSlice(val, reflect.MakeSlice(val.Type(), int(length)-val.Len(), int(length)-val.Len()))
-		} else {
+	} else if val.Kind() == reflect.Slice {
+		val.Set(reflect.MakeSlice(val.Type(), int(length), int(length)))
+	} else if val.Kind() == reflect.Array {
+		if length > int32(val.Len()) {
 			return fmt.Errorf("len %d is bigger than array len %d", length, val.Len())
 		}
 	}
@@ -400,7 +397,7 @@ func decodeChar(tgt *rune, src []byte) (itrinc int) {
 }
 
 func (d *Decoder) compoundGetList(val reflect.Value, name string) (reflect.Value, error) {
-	z := reflect.MakeSlice(reflect.TypeFor[[]any](), 0, 0)
+	z := reflect.MakeSlice(reflect.TypeOf([]any{}), 0, 0)
 	switch val.Kind() {
 	case reflect.Struct:
 		field := val.FieldByName(name)
@@ -449,7 +446,7 @@ func (d *Decoder) compoundGetList(val reflect.Value, name string) (reflect.Value
 }
 
 func (d *Decoder) compoundGetCompound(val reflect.Value, name string) (reflect.Value, error) {
-	z := reflect.MakeMap(reflect.TypeFor[map[string]any]())
+	z := reflect.MakeMap(reflect.TypeOf(map[string]any{}))
 	switch val.Kind() {
 	case reflect.Struct:
 		field := val.FieldByName(name)
@@ -534,7 +531,7 @@ func (d *Decoder) compoundSet(val reflect.Value, name string, value any) error {
 }
 
 func (d *Decoder) listGetList(val reflect.Value, index int) (reflect.Value, error) {
-	z := reflect.MakeSlice(reflect.TypeFor[[]any](), 0, 0)
+	z := reflect.MakeSlice(reflect.TypeOf([]any{}), 0, 0)
 	field := val.Index(index)
 	if field.Kind() != reflect.Slice && field.Kind() != reflect.Array {
 		if field.Kind() == reflect.Interface {
@@ -549,7 +546,7 @@ func (d *Decoder) listGetList(val reflect.Value, index int) (reflect.Value, erro
 }
 
 func (d *Decoder) listGetCompound(val reflect.Value, index int) (reflect.Value, error) {
-	z := reflect.MakeMap(reflect.TypeFor[map[string]any]())
+	z := reflect.MakeMap(reflect.TypeOf(map[string]any{}))
 	field := val.Index(index)
 	if field.Kind() != reflect.Map && field.Kind() != reflect.Struct {
 		if field.Kind() == reflect.Interface {
