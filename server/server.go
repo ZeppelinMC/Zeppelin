@@ -3,6 +3,8 @@ package server
 import (
 	"aether/net"
 	"aether/net/packet/configuration"
+	"aether/net/packet/play"
+	"aether/net/registry"
 	"fmt"
 )
 
@@ -26,7 +28,20 @@ func (srv Server) Start() {
 			continue
 		}
 		fmt.Println("new connection from player", conn.Username())
-		conn.SetState(net.PlayState)
+		for _, packet := range registry.RegistryMap.Packets() {
+			fmt.Println(conn.WritePacket(packet))
+		}
 		conn.WritePacket(configuration.FinishConfiguration{})
+		conn.SetState(net.PlayState)
+		conn.WritePacket(&play.Login{
+			EntityID: 1,
+
+			ViewDistance:        12,
+			SimulationDistance:  12,
+			EnableRespawnScreen: true,
+			DimensionType:       0,
+			DimensionName:       "minecraft:overworld",
+			GameMode:            1,
+		})
 	}
 }

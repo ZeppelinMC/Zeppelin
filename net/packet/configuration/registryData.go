@@ -1,15 +1,14 @@
 package configuration
 
-import "aether/net/io"
-
-type Entry struct {
-	ID   string
-	Data []byte
-}
+import (
+	"aether/net/io"
+	"fmt"
+	"reflect"
+)
 
 type RegistryData struct {
-	EntryID string
-	Entries []Entry
+	RegistryId string
+	Registry   any
 }
 
 func (RegistryData) ID() int32 {
@@ -17,46 +16,34 @@ func (RegistryData) ID() int32 {
 }
 
 func (r *RegistryData) Encode(w io.Writer) error {
-	if err := w.Identifier(r.EntryID); err != nil {
+	if err := w.Identifier(r.RegistryId); err != nil {
 		return err
 	}
-	if err := w.VarInt(int32(len(r.Entries))); err != nil {
+	fmt.Println(r.RegistryId)
+	reg := reflect.ValueOf(r.Registry)
+	if err := w.VarInt(int32(reg.Len())); err != nil {
 		return err
 	}
-	for _, entry := range r.Entries {
-		if err := w.Identifier(entry.ID); err != nil {
+	for _, key := range reg.MapKeys() {
+		v := reg.MapIndex(key)
+
+		fmt.Println(key)
+		if err := w.Identifier(key.String()); err != nil {
 			return err
 		}
-		if err := w.Bool(len(entry.Data) != 0); err != nil {
+		if err := w.Bool(!v.IsZero()); err != nil {
 			return err
 		}
-		if len(entry.Data) != 0 {
-			//TODO
+		if !v.IsZero() {
+			if err := w.NBT(v); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
 func (d *RegistryData) Decode(r io.Reader) error {
-	if err := r.Identifier(&d.EntryID); err != nil {
-		return err
-	}
-	var length int32
-	if _, err := r.VarInt(&length); err != nil {
-		return err
-	}
-	d.Entries = make([]Entry, length)
-	for _, entry := range d.Entries {
-		if err := r.Identifier(&entry.ID); err != nil {
-			return err
-		}
-		var hasData bool
-		if err := r.Bool(&hasData); err != nil {
-			return err
-		}
-		if hasData {
-			//TODO
-		}
-	}
 	return nil
+	//TODO
 }

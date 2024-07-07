@@ -24,27 +24,30 @@ const (
 	LongArray
 )
 
-// Decoder doesnt work with nested maps yet
 type Decoder struct {
 	rd io.Reader
 	dontReadRootCompoundName,
 	disallowUnknownFields bool
-
-	i int
 }
 
 func NewDecoder(rd io.Reader) *Decoder {
 	return &Decoder{rd: rd}
 }
 
+func (d *Decoder) ReadRootName(v bool) {
+	d.dontReadRootCompoundName = !v
+}
+
+func (d *Decoder) DisallowUnknownFields(v bool) {
+	d.disallowUnknownFields = v
+}
+
 func (d *Decoder) Decode(v any) (rootName string, err error) {
 	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Pointer && val.Kind() != reflect.Map {
+	if val.Kind() != reflect.Pointer {
 		return "", fmt.Errorf("Decode expects a pointer")
 	}
-	if val.Kind() == reflect.Pointer {
-		val = val.Elem()
-	}
+	val = val.Elem()
 
 	typeId, err := d.readByte()
 	if err != nil {
@@ -60,217 +63,500 @@ func (d *Decoder) Decode(v any) (rootName string, err error) {
 			return
 		}
 	}
-	err = d.decodeCompound(val)
+
+	switch val.Kind() {
+	case reflect.Struct:
+		if err := d.decodeCompoundStruct(val); err != nil {
+			return rootName, err
+		}
+	case reflect.Map:
+		if err := d.decodeCompoundMap(val); err != nil {
+			return rootName, err
+		}
+	default:
+		return rootName, fmt.Errorf("Decode expects a pointer of struct/map, not %s", val.Type())
+	}
 
 	return
 }
 
-func (d *Decoder) ReadRootName(val bool) {
-	d.dontReadRootCompoundName = !val
-}
-
-func (d *Decoder) DisallowUnknownFields(val bool) {
-	d.disallowUnknownFields = val
-}
-
-func (d *Decoder) readBytes(l int) ([]byte, error) {
-	data := make([]byte, l)
-
-	_, err := d.rd.Read(data)
-	return data, err
-}
-
-func (d *Decoder) readByte() (int8, error) {
-	data, err := d.readBytes(1)
-
-	return int8(data[0]), err
-}
-
-func (d *Decoder) readShort() (int16, error) {
-	data, err := d.readBytes(2)
-	return int16(data[0])<<8 | int16(data[1]), err
-}
-
-func (d *Decoder) readInt() (int32, error) {
-	data, err := d.readBytes(4)
-	return int32(data[0])<<24 | int32(data[1])<<16 | int32(data[2])<<8 | int32(data[3]), err
-}
-
-func (d *Decoder) readLong() (int64, error) {
-	data, err := d.readBytes(8)
-	return int64(data[0])<<56 | int64(data[1])<<48 | int64(data[2])<<40 | int64(data[3])<<32 | int64(data[4])<<24 | int64(data[5])<<16 | int64(data[6])<<8 | int64(data[7]), err
-}
-
-func (d *Decoder) readFloat() (float32, error) {
-	i32, err := d.readInt()
-
-	return math.Float32frombits(uint32(i32)), err
-}
-
-func (d *Decoder) readDouble() (float64, error) {
-	i64, err := d.readLong()
-
-	return math.Float64frombits(uint64(i64)), err
-}
-
-func (d *Decoder) readByteArray() ([]int8, error) {
-	length, err := d.readInt()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := d.readBytes(int(length))
-
-	return *(*[]int8)(unsafe.Pointer(&data)), err
-}
-
-func (d *Decoder) readIntArray() ([]int32, error) {
-	length, err := d.readInt()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := d.readBytes(int(length) * 4)
-	sl := make([]int32, length)
-
-	for i := 0; i < len(sl); i++ {
-		sl[i] = int32(data[i*4])<<24 | int32(data[i*4+1])<<16 | int32(data[i*4+2])<<8 | int32(data[i*4+3])
-	}
-
-	return sl, err
-}
-
-func (d *Decoder) readLongArray() ([]int64, error) {
-	length, err := d.readInt()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := d.readBytes(int(length) * 8)
-	sl := make([]int64, length)
-
-	for i := 0; i < len(sl); i++ {
-		sl[i] = int64(data[i*8])<<56 | int64(data[i*8+1])<<48 | int64(data[i*8+2])<<40 | int64(data[i*8+3])<<32 | int64(data[i*8+4])<<24 | int64(data[i*8+5])<<16 | int64(data[i*8+6])<<8 | int64(data[i*8+7])
-	}
-
-	return sl, err
-}
-
-func (d *Decoder) readString() (string, error) {
-	length, err := d.readShort()
-	if err != nil {
-		return "", err
-	}
-
-	data, err := d.readBytes(int(length))
-	if err != nil {
-		return "", err
-	}
-	var stringData = make([]rune, length)
-	var finalLength int
-
-	for i := 0; i < int(length); i++ {
-		i += decodeChar(&stringData[i], data[i:])
-
-		finalLength++
-	}
-	stringData = stringData[:finalLength]
-
-	return string(stringData), nil
-}
-
-func (d *Decoder) decodeCompound(val reflect.Value) error {
+func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 	for {
-		elemType, err := d.readByte()
+		typeId, err := d.readByte()
 		if err != nil {
 			return err
 		}
-		if elemType == End {
+		if typeId == End {
 			return nil
 		}
+
 		name, err := d.readString()
 		if err != nil {
 			return err
 		}
-		var value any
-		switch elemType {
-		case Byte:
-			value, err = d.readByte()
-			if err != nil {
-				return err
+
+		var fieldType *reflect.StructField
+
+		for i := 0; i < _struct.NumField(); i++ {
+			typ := _struct.Type().Field(i)
+
+			if typ.Tag.Get("nbt") == name {
+				fieldType = &typ
+
+				break
 			}
-		case Short:
-			value, err = d.readShort()
-			if err != nil {
-				return err
-			}
-		case Int:
-			value, err = d.readInt()
-			if err != nil {
-				return err
-			}
-		case Long:
-			value, err = d.readLong()
-			if err != nil {
-				return err
-			}
-		case Float:
-			value, err = d.readFloat()
-			if err != nil {
-				return err
-			}
-		case Double:
-			value, err = d.readDouble()
-			if err != nil {
-				return err
-			}
-		case String:
-			value, err = d.readString()
-			if err != nil {
-				return err
-			}
-		case ByteArray:
-			value, err = d.readByteArray()
-			if err != nil {
-				return err
-			}
-		case IntArray:
-			value, err = d.readIntArray()
-			if err != nil {
-				return err
-			}
-		case LongArray:
-			value, err = d.readLongArray()
-			if err != nil {
-				return err
-			}
-		case Compound:
-			c, err := d.compoundGetCompound(val, name)
-			if err != nil {
-				return err
-			}
-			if err := d.decodeCompound(c); err != nil {
-				return err
-			}
-			continue
-		case List:
-			c, err := d.compoundGetList(val, name)
-			if err != nil {
-				return err
-			}
-			if err := d.decodeList(c); err != nil {
-				return err
-			}
-			continue
 		}
 
-		if err := d.compoundSet(val, name, value); err != nil {
-			return err
+		if fieldType == nil {
+			fmt.Println("not found", name)
+		}
+
+		if fieldType == nil {
+			ft, ok := _struct.Type().FieldByName(name)
+			if !ok {
+				if d.disallowUnknownFields {
+					return fmt.Errorf("unknown field %s", name)
+				}
+			}
+			fieldType = &ft
+		}
+		field := _struct.FieldByName(fieldType.Name)
+
+		switch typeId {
+		case Byte:
+			d, err := d.readByte()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Uint8:
+					field.SetUint(uint64(d))
+				case reflect.Bool:
+					field.SetBool(*(*bool)(unsafe.Pointer(&d)))
+				default:
+					if reflect.TypeOf(d).AssignableTo(field.Type()) {
+						field.Set(reflect.ValueOf(d))
+					} else {
+						return fmt.Errorf("cannot assign byte to type %s for field %s", field.Type(), name)
+					}
+				}
+			}
+		case Short:
+			d, err := d.readShort()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Uint16:
+					field.SetUint(uint64(d))
+				default:
+					if reflect.TypeOf(d).AssignableTo(field.Type()) {
+						field.Set(reflect.ValueOf(d))
+					} else {
+						return fmt.Errorf("cannot assign short to type %s for field %s", field.Type(), name)
+					}
+				}
+			}
+		case Int:
+			d, err := d.readInt()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Uint32:
+					field.SetUint(uint64(d))
+				default:
+					if reflect.TypeOf(d).AssignableTo(field.Type()) {
+						field.Set(reflect.ValueOf(d))
+					} else {
+						return fmt.Errorf("cannot assign int to type %s for field %s", field.Type(), name)
+					}
+				}
+			}
+		case Long:
+			d, err := d.readLong()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Uint64:
+					field.SetUint(uint64(d))
+				default:
+					if reflect.TypeOf(d).AssignableTo(field.Type()) {
+						field.Set(reflect.ValueOf(d))
+					} else {
+						return fmt.Errorf("cannot assign long to type %s for field %s", field.Type(), name)
+					}
+				}
+			}
+		case String:
+			d, err := d.readString()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				if reflect.TypeOf(d).AssignableTo(field.Type()) {
+					field.Set(reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign string to type %s for field %s", field.Type(), name)
+				}
+			}
+		case Float:
+			d, err := d.readFloat()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				if reflect.TypeOf(d).AssignableTo(field.Type()) {
+					field.Set(reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign float to type %s for field %s", field.Type(), name)
+				}
+			}
+		case Double:
+			d, err := d.readDouble()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				if reflect.TypeOf(d).AssignableTo(field.Type()) {
+					field.Set(reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign double to type %s for field %s", field.Type(), name)
+				}
+			}
+		case ByteArray:
+			d, err := d.readByteArray()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Slice:
+					switch field.Type().Elem().Kind() {
+					case reflect.Int8:
+						field.Set(reflect.ValueOf(*(*[]int8)(unsafe.Pointer(&d))))
+					}
+				default:
+					if reflect.TypeOf(d).AssignableTo(field.Type()) {
+						field.Set(reflect.ValueOf(d))
+					} else {
+						return fmt.Errorf("cannot assign byte array to type %s for field %s", field.Type(), name)
+					}
+				}
+			}
+		case IntArray:
+			d, err := d.readIntArray()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Slice:
+					switch field.Type().Elem().Kind() {
+					case reflect.Int32:
+						field.Set(reflect.ValueOf(*(*[]int32)(unsafe.Pointer(&d))))
+					}
+				default:
+					if reflect.TypeOf(d).AssignableTo(field.Type()) {
+						field.Set(reflect.ValueOf(d))
+					} else {
+						return fmt.Errorf("cannot assign int array to type %s for field %s", field.Type(), name)
+					}
+				}
+			}
+		case LongArray:
+			d, err := d.readLongArray()
+			if err != nil {
+				return err
+			}
+
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Slice:
+					switch field.Type().Elem().Kind() {
+					case reflect.Int64:
+						field.Set(reflect.ValueOf(*(*[]int64)(unsafe.Pointer(&d))))
+					}
+				default:
+					if reflect.TypeOf(d).AssignableTo(field.Type()) {
+						field.Set(reflect.ValueOf(d))
+					} else {
+						return fmt.Errorf("cannot assign long array to type %s for field %s", field.Type(), name)
+					}
+				}
+			}
+		case List:
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Slice, reflect.Array:
+					if err := d.decodeList(field); err != nil {
+						return err
+					}
+				default:
+					return fmt.Errorf("cannot assign list to type %s for field %s", field.Type(), name)
+				}
+			} else {
+				if err := d._decodeList(); err != nil {
+					return err
+				}
+			}
+		case Compound:
+			if field.IsValid() {
+				switch field.Kind() {
+				case reflect.Struct:
+					if err := d.decodeCompoundStruct(field); err != nil {
+						return err
+					}
+				case reflect.Map:
+					fmt.Println("registry", name)
+					if field.IsNil() {
+						field.Set(reflect.MakeMap(field.Type()))
+					}
+					if err := d.decodeCompoundMap(field); err != nil {
+						return err
+					}
+				case reflect.Interface:
+					if field.NumMethod() == 0 {
+						field.Set(reflect.MakeMap(reflect.TypeOf(map[string]any{})))
+
+						if err := d.decodeCompoundMap(field.Elem()); err != nil {
+							return err
+						}
+						continue
+					}
+					fallthrough
+				default:
+					return fmt.Errorf("cannot assign compound to type %s for field %s", field.Type(), name)
+				}
+			} else {
+				fmt.Println("decoding unknown for", name)
+				if err := d.decodeCompound(); err != nil {
+					return err
+				}
+			}
 		}
 	}
 }
 
-func (d *Decoder) decodeList(val reflect.Value) error {
+func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
+	for {
+		typeId, err := d.readByte()
+		if err != nil {
+			return err
+		}
+		if typeId == End {
+			return nil
+		}
+
+		name, err := d.readString()
+		if err != nil {
+			return err
+		}
+
+		nameVal := reflect.ValueOf(name)
+		switch typeId {
+		case Byte:
+			d, err := d.readByte()
+			if err != nil {
+				return err
+			}
+
+			switch _map.Type().Elem().Kind() {
+			case reflect.Uint8:
+				_map.SetMapIndex(nameVal, reflect.ValueOf(uint8(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign byte to type %s for field %s", _map.Type().Elem(), name)
+				}
+			}
+		case Short:
+			d, err := d.readShort()
+			if err != nil {
+				return err
+			}
+
+			switch _map.Type().Elem().Kind() {
+			case reflect.Uint16:
+				_map.SetMapIndex(nameVal, reflect.ValueOf(uint16(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign short to type %s for field %s", _map.Type().Elem(), name)
+				}
+			}
+		case Int:
+			d, err := d.readInt()
+			if err != nil {
+				return err
+			}
+
+			switch _map.Type().Elem().Kind() {
+			case reflect.Uint32:
+				_map.SetMapIndex(nameVal, reflect.ValueOf(uint32(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+				} else {
+					fmt.Println("compmap")
+					return fmt.Errorf("cannot assign int to type %s for field %s", _map.Type().Elem(), name)
+				}
+			}
+		case Long:
+			d, err := d.readLong()
+			if err != nil {
+				return err
+			}
+
+			switch _map.Type().Elem().Kind() {
+			case reflect.Uint64:
+				_map.SetMapIndex(nameVal, reflect.ValueOf(uint64(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign long to type %s for field %s", _map.Type().Elem(), name)
+				}
+			}
+		case String:
+			d, err := d.readString()
+			if err != nil {
+				return err
+			}
+
+			if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+				_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+			} else {
+				return fmt.Errorf("cannot assign long to type %s for field %s", _map.Type().Elem(), name)
+			}
+		case Float:
+			d, err := d.readFloat()
+			if err != nil {
+				return err
+			}
+
+			if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+				_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+			} else {
+				return fmt.Errorf("cannot assign float to type %s for field %s", _map.Type().Elem(), name)
+			}
+		case Double:
+			d, err := d.readDouble()
+			if err != nil {
+				return err
+			}
+
+			if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+				_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+			} else {
+				return fmt.Errorf("cannot assign float to type %s for field %s", _map.Type().Elem(), name)
+			}
+		case ByteArray:
+			d, err := d.readByteArray()
+			if err != nil {
+				return err
+			}
+
+			switch _map.Type().Elem().Kind() {
+			case reflect.Slice:
+				switch _map.Type().Elem().Elem().Kind() {
+				case reflect.Int8:
+					_map.SetMapIndex(nameVal, reflect.ValueOf(*(*[]int8)(unsafe.Pointer(&d))))
+				}
+			default:
+				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign byte array to type %s for field %s", _map.Type().Elem(), name)
+				}
+			}
+		case IntArray:
+			d, err := d.readIntArray()
+			if err != nil {
+				return err
+			}
+
+			switch _map.Type().Elem().Kind() {
+			case reflect.Slice:
+				switch _map.Type().Elem().Elem().Kind() {
+				case reflect.Uint32:
+					_map.SetMapIndex(nameVal, reflect.ValueOf(*(*[]uint32)(unsafe.Pointer(&d))))
+				}
+			default:
+				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign int array to type %s for field %s", _map.Type().Elem(), name)
+				}
+			}
+		case LongArray:
+			d, err := d.readLongArray()
+			if err != nil {
+				return err
+			}
+
+			switch _map.Type().Elem().Kind() {
+			case reflect.Slice:
+				switch _map.Type().Elem().Elem().Kind() {
+				case reflect.Uint64:
+					_map.SetMapIndex(nameVal, reflect.ValueOf(*(*[]uint64)(unsafe.Pointer(&d))))
+				}
+			default:
+				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign long array to type %s for field %s", _map.Type().Elem(), name)
+				}
+			}
+		case List:
+			switch _map.Type().Elem().Kind() {
+			case reflect.Slice:
+				s := reflect.MakeSlice(_map.Type().Elem(), 0, 0)
+				d.decodeList(s)
+				_map.SetMapIndex(nameVal, s)
+			case reflect.Array:
+				s := reflect.New(_map.Type().Elem()).Elem()
+				d.decodeList(s)
+				_map.SetMapIndex(nameVal, s)
+			}
+		case Compound:
+			s := reflect.New(_map.Type().Elem()).Elem()
+			switch _map.Type().Elem().Kind() {
+			case reflect.Map:
+				//fmt.Println("map-map", name)
+				if err := d.decodeCompoundMap(_map.MapIndex(nameVal)); err != nil {
+					return err
+				}
+				_map.SetMapIndex(nameVal, s)
+			case reflect.Struct:
+				fmt.Println("entry", name)
+				//fmt.Println("map-struct", name)
+				if err := d.decodeCompoundStruct(s); err != nil {
+					return err
+				}
+				_map.SetMapIndex(nameVal, s)
+			}
+		}
+	}
+}
+
+func (d *Decoder) decodeList(list reflect.Value) error {
 	typeId, err := d.readByte()
 	if err != nil {
 		return err
@@ -279,294 +565,377 @@ func (d *Decoder) decodeList(val reflect.Value) error {
 	if err != nil {
 		return err
 	}
-	if typeId == End && length > 0 {
-		return fmt.Errorf("unexpected list of Tag_End")
-	}
-
-	// Initialize the slice if necessary
-	if val.Kind() == reflect.Interface {
-		val.Set(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf((*interface{})(nil)).Elem()), int(length), int(length)))
-		val = val.Elem()
-	} else if val.Kind() == reflect.Slice {
-		val.Set(reflect.MakeSlice(val.Type(), int(length), int(length)))
-	} else if val.Kind() == reflect.Array {
-		if length > int32(val.Len()) {
-			return fmt.Errorf("len %d is bigger than array len %d", length, val.Len())
+	if list.Len() < int(length) {
+		switch list.Kind() {
+		case reflect.Slice:
+			list.Set(reflect.AppendSlice(list, reflect.MakeSlice(list.Type(), int(length)-list.Len(), int(length)-list.Len())))
+		case reflect.Array:
+			return fmt.Errorf("list of size %d is too big for array %s", length, list.Type())
 		}
 	}
 
-	for i := int32(0); i < length; i++ {
-		var value any
+	for i := 0; i < int(length); i++ {
 		switch typeId {
 		case Byte:
-			value, err = d.readByte()
+			d, err := d.readByte()
+			if err != nil {
+				return err
+			}
+
+			switch list.Type().Elem().Kind() {
+			case reflect.Uint8:
+				list.Index(i).Set(reflect.ValueOf(uint8(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(list.Type().Elem()) {
+					list.Index(i).Set(reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign byte to type %s for index %d", list.Type().Elem(), i)
+				}
+			}
+		case Short:
+			d, err := d.readShort()
+			if err != nil {
+				return err
+			}
+
+			switch list.Type().Elem().Kind() {
+			case reflect.Uint16:
+				list.Index(i).Set(reflect.ValueOf(uint16(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(list.Type().Elem()) {
+					list.Index(i).Set(reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign short to type %s for index %d", list.Type().Elem(), i)
+				}
+			}
+		case Int:
+			d, err := d.readInt()
+			if err != nil {
+				return err
+			}
+
+			switch list.Type().Elem().Kind() {
+			case reflect.Uint32:
+				list.Index(i).Set(reflect.ValueOf(uint32(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(list.Type().Elem()) {
+					list.Index(i).Set(reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign int to type %s for index %d", list.Type().Elem(), i)
+				}
+			}
+		case Long:
+			d, err := d.readLong()
+			if err != nil {
+				return err
+			}
+
+			switch list.Type().Elem().Kind() {
+			case reflect.Uint64:
+				list.Index(i).Set(reflect.ValueOf(uint64(d)))
+			default:
+				if reflect.TypeOf(d).AssignableTo(list.Type().Elem()) {
+					list.Index(i).Set(reflect.ValueOf(d))
+				} else {
+					return fmt.Errorf("cannot assign long to type %s for index %d", list.Type().Elem(), i)
+				}
+			}
+		case Float:
+			d, err := d.readFloat()
+			if err != nil {
+				return err
+			}
+
+			if reflect.TypeOf(d).AssignableTo(list.Type().Elem()) {
+				list.Index(i).Set(reflect.ValueOf(d))
+			} else {
+				return fmt.Errorf("cannot assign float to type %s for index %d", list.Type().Elem(), i)
+			}
+		case Double:
+			d, err := d.readDouble()
+			if err != nil {
+				return err
+			}
+
+			if reflect.TypeOf(d).AssignableTo(list.Type().Elem()) {
+				list.Index(i).Set(reflect.ValueOf(d))
+			} else {
+				return fmt.Errorf("cannot assign double to type %s for index %d", list.Type().Elem(), i)
+			}
+		case String:
+			d, err := d.readString()
+			if err != nil {
+				return err
+			}
+
+			if reflect.TypeOf(d).AssignableTo(list.Type().Elem()) {
+				list.Index(i).Set(reflect.ValueOf(d))
+			} else {
+				return fmt.Errorf("cannot assign string to type %s for index %d", list.Type().Elem(), i)
+			}
+		case Compound:
+			switch list.Type().Elem().Kind() {
+			case reflect.Struct:
+				if err := d.decodeCompoundStruct(list.Index(i)); err != nil {
+					return err
+				}
+			case reflect.Map:
+				list.Index(i).Set(reflect.MakeMap(list.Type().Elem()))
+				if err := d.decodeCompoundMap(list.Index(i)); err != nil {
+					return err
+				}
+			}
+		case List:
+			switch list.Type().Elem().Kind() {
+			case reflect.Slice:
+				list.Index(i).Set(reflect.MakeSlice(list.Type().Elem(), 0, 0))
+				fallthrough
+			case reflect.Array:
+				if err := d.decodeList(list.Index(i)); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (d *Decoder) decodeCompound() error {
+	for {
+		typeId, err := d.readByte()
+		if err != nil {
+			return err
+		}
+
+		if typeId == End {
+			return nil
+		}
+		_, err = d.readString()
+		if err != nil {
+			return err
+		}
+
+		switch typeId {
+		case Byte:
+			_, err := d.readByte()
 			if err != nil {
 				return err
 			}
 		case Short:
-			value, err = d.readShort()
+			_, err := d.readShort()
 			if err != nil {
 				return err
 			}
 		case Int:
-			value, err = d.readInt()
+			_, err := d.readInt()
 			if err != nil {
 				return err
 			}
 		case Long:
-			value, err = d.readLong()
+			_, err := d.readLong()
 			if err != nil {
 				return err
 			}
 		case Float:
-			value, err = d.readFloat()
+			_, err := d.readFloat()
 			if err != nil {
 				return err
 			}
 		case Double:
-			value, err = d.readDouble()
-			if err != nil {
-				return err
-			}
-		case String:
-			value, err = d.readString()
+			_, err := d.readDouble()
 			if err != nil {
 				return err
 			}
 		case ByteArray:
-			value, err = d.readByteArray()
+			_, err := d.readByteArray()
 			if err != nil {
 				return err
 			}
 		case IntArray:
-			value, err = d.readIntArray()
+			_, err := d.readIntArray()
 			if err != nil {
 				return err
 			}
 		case LongArray:
-			value, err = d.readLongArray()
+			_, err := d.readLongArray()
+			if err != nil {
+				return err
+			}
+		case String:
+			_, err := d.readString()
 			if err != nil {
 				return err
 			}
 		case Compound:
-			c, err := d.listGetCompound(val, int(i))
-			if err != nil {
+			if err := d.decodeCompound(); err != nil {
 				return err
 			}
-			if err := d.decodeCompound(c); err != nil {
-				return err
-			}
-			continue
 		case List:
-			c, err := d.listGetList(val, int(i))
-			if err != nil {
+			if err := d._decodeList(); err != nil {
 				return err
 			}
-			if err := d.decodeList(c); err != nil {
+		}
+	}
+}
+
+func (d *Decoder) _decodeList() error {
+	typeId, err := d.readByte()
+	if err != nil {
+		return err
+	}
+	length, err := d.readInt()
+	if err != nil {
+		return err
+	}
+	for i := 0; i < int(length); i++ {
+		switch typeId {
+		case Byte:
+			if _, err := d.readByte(); err != nil {
 				return err
 			}
-			continue
-		}
-
-		if err := d.listSet(val, int(i), value); err != nil {
-			return err
+		case Short:
+			if _, err := d.readShort(); err != nil {
+				return err
+			}
+		case Int:
+			if _, err := d.readInt(); err != nil {
+				return err
+			}
+		case Long:
+			if _, err := d.readLong(); err != nil {
+				return err
+			}
+		case Float:
+			if _, err := d.readFloat(); err != nil {
+				return err
+			}
+		case Double:
+			if _, err := d.readDouble(); err != nil {
+				return err
+			}
+		case String:
+			if _, err := d.readString(); err != nil {
+				return err
+			}
+		case List:
+			if err := d._decodeList(); err != nil {
+				return err
+			}
+		case Compound:
+			if err := d.decodeCompound(); err != nil {
+				return err
+			}
+		case ByteArray:
+			if _, err := d.readByteArray(); err != nil {
+				return err
+			}
+		case IntArray:
+			if _, err := d.readIntArray(); err != nil {
+				return err
+			}
+		case LongArray:
+			if _, err := d.readLongArray(); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func decodeChar(tgt *rune, src []byte) (itrinc int) {
-	switch {
-	case src[0]&0x80 == 0: //'\u0001' to '\u007F'
-		*tgt = rune(src[0])
-	case src[0]&0xE0 == 0xC0 && src[1]&0xC0 == 0x80: //'\u0000' and characters in the range '\u0080' to '\u07FF'
-		b1 := src[0] & ((1 << 5) - 1)
-		b2 := src[1] & ((1 << 6) - 1)
-		*tgt = rune(b2) | rune(b1)<<5
-		itrinc++
-	case src[0]&0xF0 == 0xE0 && src[1]&0xC0 == 0x80 && src[2]&0xC0 == 0x80: //'\u0800' to '\uFFFF'
-		b1 := src[0] & ((1 << 4) - 1)
-		b2 := src[1] & ((1 << 6) - 1)
-		b3 := src[2] & ((1 << 6) - 1)
-
-		*tgt = rune(b3) | rune(b2)<<5 | rune(b1)<<10
-		itrinc += 2
-	}
-
-	return
+func (d *Decoder) readByte() (int8, error) {
+	var data [1]byte
+	_, err := d.rd.Read(data[:])
+	return int8(data[0]), err
 }
 
-func (d *Decoder) compoundGetList(val reflect.Value, name string) (reflect.Value, error) {
-	z := reflect.MakeSlice(reflect.TypeOf([]any{}), 0, 0)
-	switch val.Kind() {
-	case reflect.Struct:
-		field := val.FieldByName(name)
-		if !field.IsValid() {
-			for i := 0; i < val.NumField(); i++ {
-				if val.Type().Field(i).Tag.Get("nbt") == name {
-					field = val.Field(i)
-					goto cont
-				}
-			}
-			if d.disallowUnknownFields {
-				return z, fmt.Errorf("unknown field %s for struct %s", name, val)
-			}
-			return z, nil
-		}
+func (d *Decoder) readShort() (int16, error) {
+	var data [2]byte
+	_, err := d.rd.Read(data[:])
 
-	cont:
-		if field.Kind() != reflect.Slice && field.Kind() != reflect.Array {
-			if field.Kind() == reflect.Interface {
-				if field.NumMethod() != 0 {
-					return z, fmt.Errorf("cannot assign list to %s for field %s", field.Type(), name)
-				}
-			} else {
-				return z, fmt.Errorf("cannot assign list to %s for field %s", field.Type(), name)
-			}
-		}
-		return field, nil
-	case reflect.Map:
-		if val.Type().Elem().Kind() != reflect.Slice && val.Type().Elem().Kind() != reflect.Array {
-			if val.Type().Elem().Kind() == reflect.Interface {
-				if val.Type().Elem().NumMethod() != 0 {
-					return z, fmt.Errorf("cannot assign compound to %s for field %s", val.Type().Elem(), name)
-				}
-			} else {
-				return z, fmt.Errorf("cannot assign compound to %s for field %s", val.Type().Elem(), name)
-			}
-		}
-		v := val.MapIndex(reflect.ValueOf(name))
-		if !v.IsValid() {
-			val.SetMapIndex(reflect.ValueOf(name), z)
-			v = val.MapIndex(reflect.ValueOf(name))
-		}
-		return v, nil
-	}
-	return z, nil
+	return int16(data[0])<<8 | int16(data[1]), err
 }
 
-func (d *Decoder) compoundGetCompound(val reflect.Value, name string) (reflect.Value, error) {
-	z := reflect.MakeMap(reflect.TypeOf(map[string]any{}))
-	switch val.Kind() {
-	case reflect.Struct:
-		field := val.FieldByName(name)
-		if !field.IsValid() {
-			for i := 0; i < val.NumField(); i++ {
-				if val.Type().Field(i).Tag.Get("nbt") == name {
-					field = val.Field(i)
-					goto cont
-				}
-			}
-			if d.disallowUnknownFields {
-				return z, fmt.Errorf("unknown field %s for struct %s", name, val)
-			}
-			return z, nil
-		}
-	cont:
-		if field.Kind() != reflect.Map && field.Kind() != reflect.Struct {
-			if field.Kind() == reflect.Interface {
-				if field.NumMethod() != 0 {
-					return z, fmt.Errorf("cannot assign compound to %s for field %s", field.Type(), name)
-				}
-			} else {
-				return z, fmt.Errorf("cannot assign compound to %s for field %s", field.Type(), name)
-			}
-		}
-		if field.Kind() == reflect.Map && field.IsNil() {
-			field.Set(reflect.MakeMap(field.Type()))
-		}
-		return field, nil
-	case reflect.Map:
-		if val.Type().Elem().Kind() != reflect.Map && val.Type().Elem().Kind() != reflect.Struct {
-			if val.Type().Elem().Kind() == reflect.Interface {
-				if val.Type().Elem().NumMethod() != 0 {
-					return z, fmt.Errorf("cannot assign compound to %s for field %s", val.Type().Elem(), name)
-				}
-			} else {
-				return z, fmt.Errorf("cannot assign compound to %s for field %s", val.Type().Elem(), name)
-			}
-		}
-		v := val.MapIndex(reflect.ValueOf(name))
-		if !v.IsValid() {
-			val.SetMapIndex(reflect.ValueOf(name), z)
-			v = val.MapIndex(reflect.ValueOf(name))
-		}
-		return v, nil
-	}
-	return z, nil
+func (d *Decoder) readInt() (int32, error) {
+	var data [4]byte
+	_, err := d.rd.Read(data[:])
+
+	return int32(data[0])<<24 | int32(data[1])<<16 | int32(data[2])<<8 | int32(data[3]), err
 }
 
-func (d *Decoder) compoundSet(val reflect.Value, name string, value any) error {
-	valueType := reflect.TypeOf(value)
-	switch val.Kind() {
-	case reflect.Struct:
-		field := val.FieldByName(name)
-		if !field.IsValid() {
-			for i := 0; i < val.NumField(); i++ {
-				if val.Type().Field(i).Tag.Get("nbt") == name {
-					field = val.Field(i)
-					goto cont
-				}
-			}
-			if d.disallowUnknownFields {
-				return fmt.Errorf("unknown field %s for struct %s", name, val)
-			}
-			return nil
-		}
-	cont:
-		if !valueType.AssignableTo(field.Type()) {
-			return fmt.Errorf("cannot assign %s to %s for field %s", valueType, field.Type(), name)
-		}
-		field.Set(reflect.ValueOf(value))
-	case reflect.Map:
-		if !valueType.AssignableTo(val.Type().Elem()) {
-			return fmt.Errorf("cannot assign %s to %s for field %s", valueType, val.Type().Elem(), name)
-		}
-		if val.IsNil() {
-			val.Set(reflect.MakeMap(val.Type()))
-		}
-		val.SetMapIndex(reflect.ValueOf(name), reflect.ValueOf(value))
-	}
-	return nil
+func (d *Decoder) readLong() (int64, error) {
+	var data [8]byte
+	_, err := d.rd.Read(data[:])
+
+	return int64(data[0])<<56 | int64(data[1])<<48 | int64(data[2])<<40 | int64(data[3])<<32 | int64(data[4])<<24 | int64(data[5])<<16 | int64(data[6])<<8 | int64(data[7]), err
 }
 
-func (d *Decoder) listGetList(val reflect.Value, index int) (reflect.Value, error) {
-	z := reflect.MakeSlice(reflect.TypeOf([]any{}), 0, 0)
-	field := val.Index(index)
-	if field.Kind() != reflect.Slice && field.Kind() != reflect.Array {
-		if field.Kind() == reflect.Interface {
-			if field.NumMethod() != 0 {
-				return z, fmt.Errorf("cannot assign compound to %s for element %d", field.Type(), index)
-			}
-		} else {
-			return z, fmt.Errorf("cannot assign compound to %s for element %d", field.Type(), index)
-		}
-	}
-	return field, nil
+func (d *Decoder) readFloat() (float32, error) {
+	i, err := d.readInt()
+	return math.Float32frombits(uint32(i)), err
 }
 
-func (d *Decoder) listGetCompound(val reflect.Value, index int) (reflect.Value, error) {
-	z := reflect.MakeMap(reflect.TypeOf(map[string]any{}))
-	field := val.Index(index)
-	if field.Kind() != reflect.Map && field.Kind() != reflect.Struct {
-		if field.Kind() == reflect.Interface {
-			if field.NumMethod() != 0 {
-				return z, fmt.Errorf("cannot assign compound to %s for element %d", field.Type(), index)
-			}
-		} else {
-			return z, fmt.Errorf("cannot assign compound to %s for element %d", field.Type(), index)
-		}
-	}
-	return field, nil
+func (d *Decoder) readDouble() (float64, error) {
+	i, err := d.readLong()
+	return math.Float64frombits(uint64(i)), err
 }
 
-func (d *Decoder) listSet(val reflect.Value, index int, value any) error {
-	valueType := reflect.TypeOf(value)
-	if !valueType.AssignableTo(val.Type().Elem()) {
-		return fmt.Errorf("cannot assign %s to %s for element %d", valueType, val.Type().Elem(), index)
+func (d *Decoder) readString() (string, error) {
+	l, err := d.readShort()
+
+	if err != nil {
+		return "", err
 	}
 
-	field := val.Index(index)
-	field.Set(reflect.ValueOf(value))
-	return nil
+	var data = make([]byte, l)
+	_, err = d.rd.Read(data)
+	return string(data), err
+}
+
+func (d *Decoder) readByteArray() ([]byte, error) {
+	l, err := d.readInt()
+	if err != nil {
+		return nil, err
+	}
+	var data = make([]byte, l)
+	_, err = d.rd.Read(data)
+	return data, err
+}
+
+func (d *Decoder) readIntArray() ([]int32, error) {
+	l, err := d.readInt()
+	if err != nil {
+		return nil, err
+	}
+	var data = make([]byte, l*4)
+	_, err = d.rd.Read(data)
+	if err != nil {
+		return nil, err
+	}
+
+	var sl = make([]int32, l)
+
+	for i := range sl {
+		sl[i] = int32(data[i*4+0])<<24 | int32(data[i*4+1])<<16 | int32(data[i*4+2])<<8 | int32(data[i*4+3])
+	}
+	return sl, nil
+}
+
+func (d *Decoder) readLongArray() ([]int64, error) {
+	l, err := d.readInt()
+	if err != nil {
+		return nil, err
+	}
+	var data = make([]byte, l*8)
+	_, err = d.rd.Read(data)
+	if err != nil {
+		return nil, err
+	}
+
+	var sl = make([]int64, l)
+
+	for i := range sl {
+		sl[i] = int64(data[i*8+0])<<56 | int64(data[i*8+1])<<48 | int64(data[i*8+2])<<40 | int64(data[i*8+3])<<32 | int64(data[i*8+4])<<24 | int64(data[i*8+5])<<16 | int64(data[i*8+6])<<8 | int64(data[i*8+7])
+	}
+	return sl, nil
 }

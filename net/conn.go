@@ -168,6 +168,7 @@ func (conn *Conn) handleHandshake() bool {
 			return false
 		}
 	case handshake.Login:
+		fmt.Println("login")
 		conn.state.Store(LoginState)
 		pk, err := conn.ReadPacket()
 		if err != nil {
@@ -193,6 +194,7 @@ func (conn *Conn) handleHandshake() bool {
 			return false
 		}
 		conn.state.Store(ConfigurationState)
+		return true
 	}
 	return false
 }

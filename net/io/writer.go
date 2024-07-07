@@ -2,6 +2,7 @@ package io
 
 import (
 	"aether/chat"
+	"aether/nbt"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -172,4 +173,11 @@ func (w Writer) JSONTextComponent(comp chat.TextComponent) error {
 	d, _ := json.Marshal(comp)
 
 	return w.ByteArray(d)
+}
+
+func (w Writer) NBT(data any) error {
+	enc := nbt.NewEncoder(w.w)
+	enc.WriteRootName(false)
+
+	return enc.Encode("", data)
 }
