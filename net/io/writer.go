@@ -132,13 +132,7 @@ func (w Writer) VarLong(value int64) error {
 }
 
 func (w Writer) Position(x, y, z int32) error {
-	i := int64(
-		int64(x&((1<<26)-1))<<36 |
-			int64(z&((1<<26)-1))<<12 |
-			int64(y&((1<<12)-1)),
-	)
-
-	return w.Long(i)
+	return w.Long(((int64(x) & 0x3FFFFFF) << 38) | ((int64(z) & 0x3FFFFFF) << 12) | (int64(y) & 0xFFF))
 }
 
 func (w Writer) UUID(u uuid.UUID) error {

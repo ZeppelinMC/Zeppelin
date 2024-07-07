@@ -5,7 +5,6 @@ import (
 	"aether/net/packet/configuration"
 	"bytes"
 	_ "embed"
-	"fmt"
 	"reflect"
 )
 
@@ -78,6 +77,16 @@ type registries struct {
 			Translate string `nbt:"translate"`
 		} `nbt:"description"`
 		Effects struct {
+			SmashDamagePerFallenBlock []struct {
+				Effect struct {
+					Type  string `nbt:"type"`
+					Value struct {
+						Base               float32 `nbt:"base"`
+						PerLevelAboveFirst float32 `nbt:"per_level_above_first"`
+						Type               string  `nbt:"type"`
+					} `nbt:"value"`
+				} `nbt:"effect"`
+			} `nbt:"minecraft:smash_damage_per_fallen_block"`
 			PreventArmorChange struct{} `nbt:"minecraft:prevent_armor_change"`
 			HitBlock           []struct {
 				Effect struct {
@@ -122,6 +131,7 @@ type registries struct {
 			} `nbt:"minecraft:armor_effectiveness"`
 			Attributes []struct {
 				Amount struct {
+					Added              float32 `nbt:"added"`
 					Base               float32 `nbt:"base"`
 					PerLevelAboveFirst float32 `nbt:"per_level_above_first"`
 					Type               string  `nbt:"type"`
@@ -130,6 +140,80 @@ type registries struct {
 				Id        string `nbt:"id"`
 				Operation string `nbt:"operation"`
 			} `nbt:"minecraft:attributes"`
+			AmmoUse []struct {
+				Effect struct {
+					Type  string  `nbt:"type"`
+					Value float32 `nbt:"value"`
+				} `nbt:"effect"`
+				Requirements struct {
+					Condition string `nbt:"condition"`
+					Predicate struct {
+						Items string `nbt:"items"`
+					} `nbt:"predicate"`
+				} `nbt:"requirements"`
+			} `nbt:"minecraft:ammo_use"`
+			ProjectileSpawned []struct {
+				Effect struct {
+					Duration float32 `nbt:"duration"`
+					Type     string  `nbt:"type"`
+				} `nbt:"effect"`
+			} `nbt:"minecraft:projectile_spawned"`
+			LocationChanged []struct {
+				Effect struct {
+					BlockState struct {
+						State struct {
+							Name       string
+							Properties map[string]any
+						} `nbt:"state"`
+						Type string `nbt:"type"`
+					} `nbt:"block_state"`
+					Height    float32 `nbt:"height"`
+					Offset    []int32 `nbt:"offset"`
+					Predicate struct {
+						Predicates []struct {
+							Offset []int32 `nbt:"offset"`
+							Tag    string  `nbt:"tag"`
+							Type   string  `nbt:"type"`
+							Blocks string  `nbt:"blocks"`
+							Fluids string  `nbt:"fluids"`
+						} `nbt:"predicates"`
+						Radius struct {
+							Max   float32 `nbt:"max"`
+							Min   float32 `nbt:"min"`
+							Type  string  `nbt:"type"`
+							Value struct {
+								Base               float32 `nbt:"base"`
+								PerLevelAboveFirst float32 `nbt:"per_level_above_first"`
+								Type               string  `nbt:"type"`
+							} `nbt:"value"`
+						} `nbt:"radius"`
+						Type string `nbt:"type"`
+					} `nbt:"predicate"`
+					TriggerGameEvent string `nbt:"trigger_game_event"`
+					Type             string `nbt:"type"`
+				} `nbt:"effect"`
+				Requirements struct {
+					Condition string `nbt:"condition"`
+					Entity    string `nbt:"entity"`
+					Predicate struct {
+						Flags struct {
+							IsOnGround bool `nbt:"is_on_ground"`
+						} `nbt:"flags"`
+					} `nbt:"predicate"`
+				} `nbt:"requirements"`
+			} `nbt:"minecraft:location_changed"`
+			DamageImmunity []struct {
+				Effect       struct{}
+				Requirements struct {
+					Condition string `nbt:"condition"`
+					Predicate struct {
+						Tags []struct {
+							Expected bool   `nbt:"expected"`
+							Id       string `nbt:"id"`
+						} `nbt:"tags"`
+					} `nbt:"predicate"`
+				} `nbt:"requirements"`
+			} `nbt:"minecraft:damage_immunity"`
 			DamageProtection []struct {
 				Effect struct {
 					Type  string `nbt:"type"`
@@ -147,6 +231,15 @@ type registries struct {
 							Id       string `nbt:"id"`
 						} `nbt:"tags"`
 					} `nbt:"predicate"`
+					Terms []struct {
+						Condition string `nbt:"condition"`
+						Predicate struct {
+							Tags []struct {
+								Expected bool   `nbt:"expected"`
+								Id       string `nbt:"id"`
+							} `nbt:"tags"`
+						} `nbt:"predicate"`
+					} `nbt:"terms"`
 				} `nbt:"requirements"`
 			} `nbt:"minecraft:damage_protection"`
 			Damage []struct {
@@ -175,6 +268,11 @@ type registries struct {
 						PerLevelAboveFirst float32 `nbt:"per_level_above_first"`
 						Type               string  `nbt:"type"`
 					} `nbt:"max_duration"`
+					Duration struct {
+						Base               float32 `nbt:"base"`
+						PerLevelAboveFirst float32 `nbt:"per_level_above_first"`
+						Type               string  `nbt:"type"`
+					} `nbt:"duration"`
 					MinAmplifier float32 `nbt:"min_amplifier"`
 					MinDuration  float32 `nbt:"min_duration"`
 					ToApply      string  `nbt:"to_apply"`
@@ -193,7 +291,10 @@ type registries struct {
 				Enchanted    string `nbt:"enchanted"`
 				Requirements struct {
 					Condition string `nbt:"condition"`
-					Terms     []struct {
+					Predicate struct {
+						IsDirect bool `nbt:"is_direct"`
+					} `nbt:"predicate"`
+					Terms []struct {
 						Condition  string `nbt:"condition"`
 						Thundering bool   `nbt:"thundering"`
 						Entity     string `nbt:"entity"`
@@ -295,11 +396,10 @@ func LoadRegistry() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(Registries.Enchantment["minecraft:aqua_affinity"].MinCost)
 	v := reflect.ValueOf(Registries)
 	for i := 0; i < v.NumField(); i++ {
 		RegistryMap[v.Type().Field(i).Tag.Get("nbt")] = v.Field(i).Interface()
 	}
 
-	return nil
+	return err
 }

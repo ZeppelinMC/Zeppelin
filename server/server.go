@@ -3,7 +3,6 @@ package server
 import (
 	"aether/net"
 	"aether/net/packet/configuration"
-	"aether/net/packet/play"
 	"aether/net/registry"
 	"fmt"
 )
@@ -28,11 +27,15 @@ func (srv Server) Start() {
 			continue
 		}
 		fmt.Println("new connection from player", conn.Username())
-		for _, packet := range registry.RegistryMap.Packets() {
+		/*for _, packet := range registry.RegistryMap.Packets() {
 			fmt.Println(conn.WritePacket(packet))
-		}
-		conn.WritePacket(configuration.FinishConfiguration{})
-		conn.SetState(net.PlayState)
+		}*/
+		conn.WritePacket(&configuration.RegistryData{
+			RegistryId: "minecraft:chat_type",
+			Registry:   registry.Registries.ChatType,
+		})
+		//conn.WritePacket(configuration.FinishConfiguration{})
+		/*conn.SetState(net.PlayState)
 		conn.WritePacket(&play.Login{
 			EntityID: 1,
 
@@ -42,6 +45,6 @@ func (srv Server) Start() {
 			DimensionType:       0,
 			DimensionName:       "minecraft:overworld",
 			GameMode:            1,
-		})
+		})*/
 	}
 }

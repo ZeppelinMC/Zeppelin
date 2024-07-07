@@ -70,6 +70,9 @@ func (d *Decoder) Decode(v any) (rootName string, err error) {
 			return rootName, err
 		}
 	case reflect.Map:
+		if val.IsNil() {
+			val.Set(reflect.MakeMap(val.Type()))
+		}
 		if err := d.decodeCompoundMap(val); err != nil {
 			return rootName, err
 		}
@@ -105,10 +108,6 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 
 				break
 			}
-		}
-
-		if fieldType == nil {
-			fmt.Println("not found", name)
 		}
 
 		if fieldType == nil {
@@ -322,7 +321,7 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 						return err
 					}
 				case reflect.Map:
-					fmt.Println("registry", name)
+
 					if field.IsNil() {
 						field.Set(reflect.MakeMap(field.Type()))
 					}
@@ -343,7 +342,6 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					return fmt.Errorf("cannot assign compound to type %s for field %s", field.Type(), name)
 				}
 			} else {
-				fmt.Println("decoding unknown for", name)
 				if err := d.decodeCompound(); err != nil {
 					return err
 				}
@@ -414,7 +412,6 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					fmt.Println("compmap")
 					return fmt.Errorf("cannot assign int to type %s for field %s", _map.Type().Elem(), name)
 				}
 			}
@@ -536,21 +533,32 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				_map.SetMapIndex(nameVal, s)
 			}
 		case Compound:
-			s := reflect.New(_map.Type().Elem()).Elem()
 			switch _map.Type().Elem().Kind() {
 			case reflect.Map:
-				//fmt.Println("map-map", name)
-				if err := d.decodeCompoundMap(_map.MapIndex(nameVal)); err != nil {
+				s := reflect.MakeMap(_map.Type().Elem())
+				if err := d.decodeCompoundMap(s); err != nil {
 					return err
 				}
 				_map.SetMapIndex(nameVal, s)
 			case reflect.Struct:
-				fmt.Println("entry", name)
-				//fmt.Println("map-struct", name)
+				s := reflect.New(_map.Type().Elem()).Elem()
 				if err := d.decodeCompoundStruct(s); err != nil {
 					return err
 				}
 				_map.SetMapIndex(nameVal, s)
+			case reflect.Interface:
+				if _map.Type().Elem().NumMethod() == 0 {
+					s := reflect.MakeMap(reflect.TypeOf(map[string]any{}))
+
+					if err := d.decodeCompoundMap(s); err != nil {
+						return err
+					}
+					_map.SetMapIndex(nameVal, s)
+					continue
+				}
+				fallthrough
+			default:
+				return fmt.Errorf("cannot assign compound to type %s on field %s", _map.Type().Elem(), name)
 			}
 		}
 	}

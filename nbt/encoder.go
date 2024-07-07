@@ -27,7 +27,17 @@ func (e *Encoder) Encode(name string, v any) error {
 			return err
 		}
 	}
-	return e.encodeCompound(v)
+	val := reflect.ValueOf(v)
+	switch val.Kind() {
+	case reflect.Struct:
+		fmt.Println("encoding root struct compound")
+		return e.encodeCompoundStruct(val)
+	case reflect.Map:
+		fmt.Println("encoding root map compound")
+		return e.encodeCompoundMap(val)
+	default:
+		return fmt.Errorf("Encode expects map/struct, not %s", val.Type())
+	}
 }
 
 func (e *Encoder) WriteRootName(val bool) {
@@ -108,315 +118,535 @@ func (e *Encoder) writeString(s string) error {
 	return e.writeBytes([]byte(s)...)
 }
 
-func (e *Encoder) encodeCompound(v any) error {
-	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-	}
+func (e *Encoder) encodeCompoundStruct(val reflect.Value) error {
+	for i := 0; i < val.NumField(); i++ {
+		tf := val.Type().Field(i)
+		f := val.Field(i)
+		if !tf.IsExported() {
+			fmt.Println(tf.Name, "unexported")
+			continue
+		}
+		name := tf.Name
+		if v, ok := tf.Tag.Lookup("nbt"); ok {
+			name = v
+		}
 
-	switch val.Kind() {
-	case reflect.Struct:
-		for i := 0; i < val.NumField(); i++ {
-			field := val.Field(i)
-			fieldType := val.Type().Field(i)
-			name := fieldType.Name
-			tag := fieldType.Tag.Get("nbt")
-			if tag != "" {
-				name = tag
-			}
-			if err := e.encodeField(name, field); err != nil {
-				return err
-			}
-		}
-	case reflect.Map:
-		for _, key := range val.MapKeys() {
-			name := key.String()
-			if err := e.encodeField(name, val.MapIndex(key)); err != nil {
-				return err
-			}
-		}
-	default:
-		return fmt.Errorf("unsupported compound type: %s", val.Type())
-	}
-	return e.writeByte(End)
-}
-
-func (e *Encoder) encodeField(name string, val reflect.Value) error {
-	switch val.Kind() {
-	case reflect.Int8, reflect.Uint8:
-		if err := e.writeByte(Byte); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		if val.CanUint() {
-			return e.writeByte(int8(val.Uint()))
-		}
-		return e.writeByte(int8(val.Int()))
-	case reflect.Int16, reflect.Uint16:
-		if err := e.writeByte(Short); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		if val.CanUint() {
-			return e.writeShort(int16(val.Uint()))
-		}
-		return e.writeShort(int16(val.Int()))
-	case reflect.Int32, reflect.Uint32:
-		if err := e.writeByte(Int); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		if val.CanUint() {
-			return e.writeInt(int32(val.Uint()))
-		}
-		return e.writeInt(int32(val.Int()))
-	case reflect.Int64, reflect.Uint64:
-		if err := e.writeByte(Long); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		if val.CanUint() {
-			return e.writeLong(int64(val.Uint()))
-		}
-		return e.writeLong(val.Int())
-	case reflect.Float32:
-		if err := e.writeByte(Float); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		return e.writeFloat(float32(val.Float()))
-	case reflect.Float64:
-		if err := e.writeByte(Double); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		return e.writeDouble(val.Float())
-	case reflect.String:
-		if err := e.writeByte(String); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		return e.writeString(val.String())
-	case reflect.Slice:
-		switch val.Type().Elem().Kind() {
-		case reflect.Int8:
-			if err := e.writeByte(ByteArray); err != nil {
+		switch f.Kind() {
+		case reflect.Bool:
+			fmt.Println("encoding bool", name, f.Bool())
+			if err := e.writeByte(Byte); err != nil {
 				return err
 			}
 			if err := e.writeString(name); err != nil {
 				return err
 			}
-			return e.writeByteArray(val.Interface().([]int8))
-		case reflect.Uint8:
-			if err := e.writeByte(ByteArray); err != nil {
+			b := f.Bool()
+			if err := e.writeByte(*(*int8)(unsafe.Pointer(&b))); err != nil {
+				return err
+			}
+		case reflect.Int8, reflect.Uint8:
+			fmt.Println("encoding byte", name)
+			if err := e.writeByte(Byte); err != nil {
 				return err
 			}
 			if err := e.writeString(name); err != nil {
 				return err
 			}
-			return e.writeByteArray(*(*[]int8)(val.UnsafePointer()))
-		case reflect.Int32:
-			if err := e.writeByte(IntArray); err != nil {
-				return err
-			}
-			if err := e.writeString(name); err != nil {
-				return err
-			}
-			return e.writeIntArray(val.Interface().([]int32))
-		case reflect.Uint32:
-			if err := e.writeByte(IntArray); err != nil {
-				return err
-			}
-			if err := e.writeString(name); err != nil {
-				return err
-			}
-			return e.writeIntArray(*(*[]int32)(val.UnsafePointer()))
-		case reflect.Int64:
-			if err := e.writeByte(LongArray); err != nil {
-				return err
-			}
-			if err := e.writeString(name); err != nil {
-				return err
-			}
-			return e.writeLongArray(val.Interface().([]int64))
-		case reflect.Uint64:
-			if err := e.writeByte(LongArray); err != nil {
-				return err
-			}
-			if err := e.writeString(name); err != nil {
-				return err
-			}
-			return e.writeLongArray(*(*[]int64)(val.UnsafePointer()))
-		default:
-			if err := e.writeByte(List); err != nil {
-				return err
-			}
-			if err := e.writeString(name); err != nil {
-				return err
-			}
-			if val.Len() == 0 {
-				if err := e.writeByte(End); err != nil {
+			if f.CanUint() {
+				if err := e.writeByte(int8(f.Uint())); err != nil {
 					return err
 				}
-				return e.writeInt(0)
+			} else {
+				if err := e.writeByte(int8(f.Int())); err != nil {
+					return err
+				}
 			}
-			elemType := val.Index(0).Kind()
-			if err := e.encodeList(val, elemType); err != nil {
+		case reflect.Int16, reflect.Uint16:
+			fmt.Println("encoding short", name)
+			if err := e.writeByte(Short); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if f.CanUint() {
+				if err := e.writeShort(int16(f.Uint())); err != nil {
+					return err
+				}
+			} else {
+				if err := e.writeShort(int16(f.Int())); err != nil {
+					return err
+				}
+			}
+		case reflect.Int32, reflect.Uint32:
+			fmt.Println("encoding int", name)
+			if err := e.writeByte(Int); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if f.CanUint() {
+				if err := e.writeInt(int32(f.Uint())); err != nil {
+					return err
+				}
+			} else {
+				if err := e.writeInt(int32(f.Int())); err != nil {
+					return err
+				}
+			}
+		case reflect.Int64, reflect.Uint64:
+			fmt.Println("encoding long", name)
+			if err := e.writeByte(Long); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if f.CanUint() {
+				if err := e.writeLong(int64(f.Uint())); err != nil {
+					return err
+				}
+			} else {
+				if err := e.writeLong(int64(f.Int())); err != nil {
+					return err
+				}
+			}
+		case reflect.Float32:
+			fmt.Println("encoding float", name)
+			if err := e.writeByte(Float); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.writeFloat(float32(f.Float())); err != nil {
+				return err
+			}
+		case reflect.Float64:
+			fmt.Println("encoding double", name)
+			if err := e.writeByte(Double); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.writeDouble(f.Float()); err != nil {
+				return err
+			}
+		case reflect.String:
+			fmt.Println("encoding string", name, f.String())
+			if err := e.writeByte(String); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.writeString(f.String()); err != nil {
+				return err
+			}
+		case reflect.Slice, reflect.Array:
+			switch f.Type().Elem().Kind() {
+			case reflect.Uint8, reflect.Int8:
+				fmt.Println("encoding byte array", name)
+				if err := e.writeByte(ByteArray); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.writeBytes(*(*[]byte)(f.UnsafePointer())...); err != nil {
+					return err
+				}
+			case reflect.Uint32, reflect.Int32:
+				fmt.Println("encoding int array", name)
+				if err := e.writeByte(IntArray); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.writeIntArray(*(*[]int32)(f.UnsafePointer())); err != nil {
+					return err
+				}
+			case reflect.Uint64, reflect.Int64:
+				fmt.Println("encoding long array")
+				if err := e.writeByte(LongArray); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.writeLongArray(*(*[]int64)(f.UnsafePointer())); err != nil {
+					return err
+				}
+			default:
+				fmt.Println("encoding list", name)
+				if err := e.writeByte(List); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.encodeList(f); err != nil {
+					return err
+				}
+			}
+		case reflect.Struct:
+			fmt.Println("encoding struct compound", name)
+			if err := e.writeByte(Compound); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.encodeCompoundStruct(f); err != nil {
+				return err
+			}
+		case reflect.Map:
+			fmt.Println("encoding map compound", name)
+			if err := e.writeByte(Compound); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.encodeCompoundMap(f); err != nil {
 				return err
 			}
 		}
-	case reflect.Map:
-		if err := e.writeByte(Compound); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		return e.encodeCompound(val.Interface())
-	case reflect.Struct:
-		if err := e.writeByte(Compound); err != nil {
-			return err
-		}
-		if err := e.writeString(name); err != nil {
-			return err
-		}
-		return e.encodeCompound(val.Interface())
-	default:
-		return fmt.Errorf("unsupported field type: %s", val.Type())
+
 	}
-	return nil
+	fmt.Println("struct compound done")
+	return e.writeByte(0)
 }
 
-func (e *Encoder) encodeList(val reflect.Value, elemType reflect.Kind) error {
-	var elemTypeId int8
-	switch elemType {
-	case reflect.Int8, reflect.Uint8:
-		elemTypeId = Byte
-	case reflect.Int16, reflect.Uint16:
-		elemTypeId = Short
-	case reflect.Int32, reflect.Uint32:
-		elemTypeId = Int
-	case reflect.Int64, reflect.Uint64:
-		elemTypeId = Long
-	case reflect.Float32:
-		elemTypeId = Float
-	case reflect.Float64:
-		elemTypeId = Double
-	case reflect.String:
-		elemTypeId = String
-	case reflect.Slice:
-		switch val.Index(0).Type().Elem().Kind() {
-		case reflect.Int8, reflect.Uint8:
-			elemTypeId = ByteArray
-		case reflect.Int32, reflect.Uint32:
-			elemTypeId = IntArray
-		case reflect.Int64, reflect.Uint64:
-			elemTypeId = LongArray
-		default:
-			elemTypeId = List
-		}
-	case reflect.Map, reflect.Struct:
-		elemTypeId = Compound
-	default:
-		return fmt.Errorf("unsupported list element type: %s", elemType)
-	}
+func (e *Encoder) encodeCompoundMap(val reflect.Value) error {
+	for _, key := range val.MapKeys() {
+		f := val.MapIndex(key)
+		name := key.String()
 
-	if err := e.writeByte(elemTypeId); err != nil {
+		switch f.Kind() {
+		case reflect.Bool:
+			if err := e.writeByte(Byte); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			b := f.Bool()
+			if err := e.writeByte(*(*int8)(unsafe.Pointer(&b))); err != nil {
+				return err
+			}
+		case reflect.Int8, reflect.Uint8:
+			if err := e.writeByte(Byte); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if f.CanUint() {
+				if err := e.writeByte(int8(f.Uint())); err != nil {
+					return err
+				}
+			} else {
+				if err := e.writeByte(int8(f.Int())); err != nil {
+					return err
+				}
+			}
+		case reflect.Int16, reflect.Uint16:
+			if err := e.writeByte(Short); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if f.CanUint() {
+				if err := e.writeShort(int16(f.Uint())); err != nil {
+					return err
+				}
+			} else {
+				if err := e.writeShort(int16(f.Int())); err != nil {
+					return err
+				}
+			}
+		case reflect.Int32, reflect.Uint32:
+			if err := e.writeByte(Int); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if f.CanUint() {
+				if err := e.writeInt(int32(f.Uint())); err != nil {
+					return err
+				}
+			} else {
+				if err := e.writeInt(int32(f.Int())); err != nil {
+					return err
+				}
+			}
+		case reflect.Int64, reflect.Uint64:
+			if err := e.writeByte(Long); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if f.CanUint() {
+				if err := e.writeLong(int64(f.Uint())); err != nil {
+					return err
+				}
+			} else {
+				if err := e.writeLong(int64(f.Int())); err != nil {
+					return err
+				}
+			}
+		case reflect.Float32:
+			if err := e.writeByte(Float); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.writeFloat(float32(f.Float())); err != nil {
+				return err
+			}
+		case reflect.Float64:
+			if err := e.writeByte(Double); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.writeDouble(f.Float()); err != nil {
+				return err
+			}
+		case reflect.String:
+			if err := e.writeByte(String); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.writeString(f.String()); err != nil {
+				return err
+			}
+		case reflect.Slice, reflect.Array:
+			switch f.Type().Elem().Kind() {
+			case reflect.Uint8, reflect.Int8:
+				if err := e.writeByte(ByteArray); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.writeBytes(*(*[]byte)(f.UnsafePointer())...); err != nil {
+					return err
+				}
+			case reflect.Uint32, reflect.Int32:
+				if err := e.writeByte(IntArray); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.writeIntArray(*(*[]int32)(f.UnsafePointer())); err != nil {
+					return err
+				}
+			case reflect.Uint64, reflect.Int64:
+				if err := e.writeByte(LongArray); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.writeLongArray(*(*[]int64)(f.UnsafePointer())); err != nil {
+					return err
+				}
+			default:
+				if err := e.writeByte(List); err != nil {
+					return err
+				}
+				if err := e.writeString(name); err != nil {
+					return err
+				}
+				if err := e.encodeList(f); err != nil {
+					return err
+				}
+			}
+		case reflect.Struct:
+			if err := e.writeByte(Compound); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.encodeCompoundStruct(f); err != nil {
+				return err
+			}
+		case reflect.Map:
+			if err := e.writeByte(Compound); err != nil {
+				return err
+			}
+			if err := e.writeString(name); err != nil {
+				return err
+			}
+			if err := e.encodeCompoundMap(f); err != nil {
+				return err
+			}
+		}
+
+	}
+	return e.writeByte(0)
+}
+
+func (e *Encoder) encodeList(val reflect.Value) error {
+	fmt.Println("list type", e.tagFor(val.Type().Elem()))
+	if err := e.writeByte(e.tagFor(val.Type().Elem())); err != nil {
 		return err
 	}
+
+	fmt.Println("list len", val.Len())
+
 	if err := e.writeInt(int32(val.Len())); err != nil {
 		return err
 	}
 
 	for i := 0; i < val.Len(); i++ {
-		switch elemTypeId {
-		case Byte:
-			if val.Index(i).CanUint() {
-				if err := e.writeByte(int8(val.Index(i).Int())); err != nil {
-					return err
-				}
-			} else {
-				if err := e.writeByte(int8(val.Index(i).Int())); err != nil {
-					return err
-				}
-			}
-		case Short:
-			if val.Index(i).CanUint() {
-				if err := e.writeShort(int16(val.Index(i).Int())); err != nil {
-					return err
-				}
-			} else {
-				if err := e.writeShort(int16(val.Index(i).Int())); err != nil {
-					return err
-				}
-			}
-		case Int:
-			if val.Index(i).CanUint() {
-				if err := e.writeInt(int32(val.Index(i).Int())); err != nil {
-					return err
-				}
-			} else {
-				if err := e.writeInt(int32(val.Index(i).Int())); err != nil {
-					return err
-				}
-			}
-		case Long:
-			if val.Index(i).CanUint() {
-				if err := e.writeLong(int64(val.Index(i).Int())); err != nil {
-					return err
-				}
-			} else {
-				if err := e.writeLong(val.Index(i).Int()); err != nil {
-					return err
-				}
-			}
-		case Float:
-			if err := e.writeFloat(float32(val.Index(i).Float())); err != nil {
+		f := val.Index(i)
+		switch val.Type().Elem().Kind() {
+		case reflect.Bool:
+			fmt.Println("writing bool", i)
+			b := f.Bool()
+			if err := e.writeByte(*(*int8)(unsafe.Pointer(&b))); err != nil {
 				return err
 			}
-		case Double:
-			if err := e.writeDouble(val.Index(i).Float()); err != nil {
+		case reflect.Int8:
+			fmt.Println("writing byte", i)
+			if err := e.writeByte(int8(f.Int())); err != nil {
 				return err
 			}
-		case String:
-			if err := e.writeString(val.Index(i).String()); err != nil {
+		case reflect.Uint8:
+			fmt.Println("writing byte", i)
+			if err := e.writeByte(int8(f.Uint())); err != nil {
 				return err
 			}
-		case ByteArray:
-			if err := e.writeByteArray(val.Index(i).Interface().([]int8)); err != nil {
+		case reflect.Int16:
+			fmt.Println("writing short", i)
+			if err := e.writeShort(int16(f.Int())); err != nil {
 				return err
 			}
-		case IntArray:
-			if err := e.writeIntArray(val.Index(i).Interface().([]int32)); err != nil {
+		case reflect.Uint16:
+			fmt.Println("writing short", i)
+			if err := e.writeShort(int16(f.Uint())); err != nil {
 				return err
 			}
-		case LongArray:
-			if err := e.writeLongArray(val.Index(i).Interface().([]int64)); err != nil {
+		case reflect.Int32:
+			fmt.Println("writing int", i)
+			if err := e.writeInt(int32(f.Int())); err != nil {
 				return err
 			}
-		case Compound:
-			if err := e.encodeCompound(val.Index(i).Interface()); err != nil {
+		case reflect.Uint32:
+			fmt.Println("writing int", i)
+			if err := e.writeInt(int32(f.Uint())); err != nil {
 				return err
 			}
-		case List:
-			if err := e.encodeList(val.Index(i), val.Index(i).Index(0).Kind()); err != nil {
+		case reflect.Int64:
+			fmt.Println("writing long", i)
+			if err := e.writeLong(f.Int()); err != nil {
+				return err
+			}
+		case reflect.Uint64:
+			fmt.Println("writing long", i)
+			if err := e.writeLong(int64(f.Uint())); err != nil {
+				return err
+			}
+		case reflect.String:
+			fmt.Println("writing string", i, f.String())
+			if err := e.writeString(f.String()); err != nil {
+				return err
+			}
+		case reflect.Slice, reflect.Array:
+			switch f.Type().Elem().Kind() {
+			case reflect.Uint8, reflect.Int8:
+				fmt.Println("writing byte array", i)
+				if err := e.writeBytes(*(*[]byte)(f.UnsafePointer())...); err != nil {
+					return err
+				}
+			case reflect.Uint32, reflect.Int32:
+				fmt.Println("writing int array", i)
+				if err := e.writeIntArray(*(*[]int32)(f.UnsafePointer())); err != nil {
+					return err
+				}
+			case reflect.Uint64, reflect.Int64:
+				fmt.Println("writing long array", i)
+				if err := e.writeLongArray(*(*[]int64)(f.UnsafePointer())); err != nil {
+					return err
+				}
+			default:
+				fmt.Println("writing list", i)
+				if err := e.encodeList(f); err != nil {
+					return err
+				}
+			}
+		case reflect.Float32:
+			fmt.Println("writing float", i)
+			if err := e.writeFloat(float32(f.Float())); err != nil {
+				return err
+			}
+		case reflect.Float64:
+			fmt.Println("writing double", i)
+			if err := e.writeDouble(f.Float()); err != nil {
+				return err
+			}
+		case reflect.Struct:
+			fmt.Println("writing struct compound", i)
+			if err := e.encodeCompoundStruct(f); err != nil {
+				return err
+			}
+		case reflect.Map:
+			fmt.Println("writing map compound", i)
+			if err := e.encodeCompoundMap(f); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+func (e *Encoder) tagFor(typ reflect.Type) int8 {
+	switch typ.Kind() {
+	case reflect.Uint8, reflect.Int8, reflect.Bool:
+		return Byte
+	case reflect.Uint16, reflect.Int16:
+		return Short
+	case reflect.Uint32, reflect.Int32:
+		return Int
+	case reflect.Uint64, reflect.Int64:
+		return Long
+	case reflect.Float32:
+		return Float
+	case reflect.Float64:
+		return Double
+	case reflect.Struct, reflect.Map:
+		return Compound
+	case reflect.String:
+		return String
+	case reflect.Slice, reflect.Array:
+		{
+			switch typ.Elem().Kind() {
+			case reflect.Uint8, reflect.Int8:
+				return ByteArray
+			case reflect.Uint32, reflect.Int32:
+				return IntArray
+			case reflect.Uint64, reflect.Int64:
+				return LongArray
+			default:
+				return List
+			}
+		}
+	default:
+		return 0
+	}
 }

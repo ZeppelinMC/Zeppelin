@@ -152,15 +152,13 @@ func (r Reader) VarLong(value *int64) error {
 
 func (r Reader) Position(x, y, z *int32) error {
 	var l int64
-	if err := r.Long(&l); err != nil {
-		return err
-	}
+	err := r.Long(&l)
 
 	*x = int32(l >> 38)
-	*y = int32(l & ((1 << 12) - 1))
-	*z = int32((l >> 12) & ((1 << 26) - 1))
+	*y = int32(l << 52 >> 52)
+	*z = int32(l << 26 >> 38)
 
-	return nil
+	return err
 }
 
 func (r Reader) UUID(u *uuid.UUID) error {
