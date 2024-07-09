@@ -1,5 +1,9 @@
 package io
 
+import (
+	"unsafe"
+)
+
 func AppendByte(data []byte, b int8) []byte {
 	return append(data, byte(b))
 }
@@ -63,5 +67,6 @@ func (set BitSet) Get(i int) bool {
 }
 
 func (set BitSet) Set(i int, v bool) {
-	set[i/64] |= (1 << (i % 64))
+	bdata := int64(*(*byte)(unsafe.Pointer(&v)))
+	set[i/64] |= (1 << (bdata % 64))
 }

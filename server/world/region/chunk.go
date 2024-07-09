@@ -24,7 +24,7 @@ type Chunk struct {
 	} `nbt:"block_entities"`
 
 	Sections []struct {
-		BlockLight, Skylight [2048]byte
+		BlockLight, Skylight []byte
 		Y                    int8
 		Biomes               struct {
 			Data    []int64  `nbt:"data"`
@@ -49,9 +49,7 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		CX: chunk.XPos,
 		CZ: chunk.ZPos,
 
-		Heightmaps:       chunk.Heightmaps,
-		SkyLightArrays:   make([][]byte, len(chunk.Sections)+2),
-		BlockLightArrays: make([][]byte, len(chunk.Sections)+2),
+		Heightmaps: chunk.Heightmaps,
 
 		SkyLightMask:   make(io.BitSet, 64/(len(chunk.Sections)+2)),
 		BlockLightMask: make(io.BitSet, 64/(len(chunk.Sections)+2)),
@@ -163,14 +161,20 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 			data = io.AppendLong(data, long)
 		}
 
-		pk.SkyLightArrays[secI+1] = section.Skylight[:]
-		pk.BlockLightArrays[secI+1] = section.BlockLight[:]
-		pk.SkyLightMask.Set(secI+1, len(section.Skylight) != 0)
-		pk.BlockLightMask.Set(secI+1, len(section.BlockLight) != 0)
+		if section.Skylight != nil {
+			pk.SkyLightArrays = append(pk.SkyLightArrays, section.Skylight)
+		}
+		if section.BlockLight != nil {
+			pk.BlockLightArrays = append(pk.BlockLightArrays, section.BlockLight)
+		}
+		pk.SkyLightMask.Set(secI+1, section.Skylight != nil)
+		pk.BlockLightMask.Set(secI+1, section.BlockLight != nil)
 
-		pk.EmptySkyLightMask.Set(secI+1, section.Skylight == [2048]byte{})
-		pk.EmptyBlockLightMask.Set(secI+1, section.BlockLight == [2048]byte{})
+		pk.EmptySkyLightMask.Set(secI+1, section.Skylight != nil && [2048]byte(section.Skylight) == [2048]byte{})
+		pk.EmptyBlockLightMask.Set(secI+1, section.BlockLight != nil && [2048]byte(section.Skylight) == [2048]byte{})
 	}
+
+	pk.Data = data
 
 	return pk
 }
