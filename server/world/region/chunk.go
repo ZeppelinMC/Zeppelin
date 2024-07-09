@@ -3,7 +3,6 @@ package region
 import (
 	"aether/net/io"
 	"aether/net/packet/play"
-	"aether/net/registry"
 	"aether/server/world/region/blocks"
 	"fmt"
 )
@@ -51,21 +50,21 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 
 		Heightmaps: chunk.Heightmaps,
 
-		SkyLightMask:   make(io.BitSet, 64/(len(chunk.Sections)+2)),
+		/*SkyLightMask:   make(io.BitSet, 64/(len(chunk.Sections)+2)),
 		BlockLightMask: make(io.BitSet, 64/(len(chunk.Sections)+2)),
 
 		EmptySkyLightMask:   make(io.BitSet, 64/(len(chunk.Sections)+2)),
-		EmptyBlockLightMask: make(io.BitSet, 64/(len(chunk.Sections)+2)),
+		EmptyBlockLightMask: make(io.BitSet, 64/(len(chunk.Sections)+2)),*/
 	}
-	pk.EmptySkyLightMask.Set(0, true)
+	/*pk.EmptySkyLightMask.Set(0, true)
 	pk.EmptySkyLightMask.Set(len(chunk.Sections)+2, true)
 	pk.EmptyBlockLightMask.Set(0, true)
-	pk.EmptyBlockLightMask.Set(len(chunk.Sections)+2, true)
+	pk.EmptyBlockLightMask.Set(len(chunk.Sections)+2, true)*/
 
 	var data []byte
 
-	for secI, section := range chunk.Sections {
-		var blockCount int16
+	for _, section := range chunk.Sections {
+		/*var blockCount int16
 		var airId = -1
 
 		for i, state := range section.BlockStates.Palette {
@@ -76,11 +75,11 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		}
 		if airId == -1 {
 			blockCount = 4096
-		}
+		}*/
 
 		blockBitsPerEntry := byte((len(section.BlockStates.Data) * 64) / 4096)
 
-		for _, long := range section.BlockStates.Data {
+		/*for _, long := range section.BlockStates.Data {
 			var pos byte
 
 			for i := 0; i < 64; i++ {
@@ -99,14 +98,18 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 
 				pos += blockBitsPerEntry
 			}
-		}
+		}*/
 
 		//Block Count
-		data = io.AppendShort(data, blockCount)
+		data = io.AppendShort(data, 1024)
 
 		//
 		// Block Palette
 		//
+
+		if blockBitsPerEntry != 4 {
+			fmt.Println(blockBitsPerEntry)
+		}
 
 		data = io.AppendUbyte(data, blockBitsPerEntry)
 
@@ -135,7 +138,7 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		// Biome Palette
 		//
 
-		biomeBitsPerEntry := byte((len(section.Biomes.Data) * 64) / 64)
+		/*biomeBitsPerEntry := byte((len(section.Biomes.Data) * 64) / 64)
 		var biomeMap = registry.BiomeId.GetMap()
 
 		data = io.AppendUbyte(data, blockBitsPerEntry)
@@ -159,9 +162,12 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		data = io.AppendVarInt(data, int32(len(section.Biomes.Data)))
 		for _, long := range section.Biomes.Data {
 			data = io.AppendLong(data, long)
-		}
+		}*/
 
-		if section.Skylight != nil {
+		data = io.AppendLong(data, 0)
+		data = io.AppendLong(data, 0x39)
+		data = io.AppendLong(data, 0)
+		/*if section.Skylight != nil {
 			pk.SkyLightArrays = append(pk.SkyLightArrays, section.Skylight)
 		}
 		if section.BlockLight != nil {
@@ -171,7 +177,7 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		pk.BlockLightMask.Set(secI+1, section.BlockLight != nil)
 
 		pk.EmptySkyLightMask.Set(secI+1, section.Skylight != nil && [2048]byte(section.Skylight) == [2048]byte{})
-		pk.EmptyBlockLightMask.Set(secI+1, section.BlockLight != nil && [2048]byte(section.Skylight) == [2048]byte{})
+		pk.EmptyBlockLightMask.Set(secI+1, section.BlockLight != nil && [2048]byte(section.Skylight) == [2048]byte{})*/
 	}
 
 	pk.Data = data
