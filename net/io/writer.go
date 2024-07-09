@@ -89,28 +89,23 @@ func (w Writer) Identifier(s string) error {
 	if len(s) > 32767 {
 		return fmt.Errorf("expected identifier len to be > 32767, got %d", len(s))
 	}
-	if err := w.Int(int32(len(s))); err != nil {
+	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
 	}
 	return w.writeBytes(*(*[]byte)(unsafe.Pointer(&s))...)
 }
 
 func (w Writer) VarInt(value int32) error {
-	var (
-		CONTINUE_BIT int32 = 128
-		SEGMENT_BITS int32 = 127
-	)
-	for {
-		if (value & ^SEGMENT_BITS) == 0 {
-			return w.Ubyte(byte(value))
-		}
-
-		if err := w.Ubyte(byte((value & SEGMENT_BITS) | CONTINUE_BIT)); err != nil {
+	ux := uint32(value)
+	for ux >= 0x80 {
+		if err := w.Ubyte(byte(ux&0x7F) | 0x80); err != nil {
 			return err
 		}
 
-		value >>= 7
+		ux >>= 7
 	}
+
+	return w.Ubyte(byte(ux))
 }
 
 func (w Writer) VarLong(value int64) error {
@@ -140,7 +135,7 @@ func (w Writer) UUID(u uuid.UUID) error {
 	return w.writeBytes(d[:]...)
 }
 
-func (w Writer) BitSet(data []int64) error {
+func (w Writer) BitSet(data BitSet) error {
 	if err := w.VarInt(int32(len(data))); err != nil {
 		return err
 	}

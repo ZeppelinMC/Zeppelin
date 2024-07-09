@@ -44,6 +44,9 @@ func (conn *Conn) Properties() []login.Property {
 func (conn *Conn) SetState(state int32) {
 	conn.state.Store(state)
 }
+func (conn *Conn) State() int32 {
+	return conn.state.Load()
+}
 
 func (conn *Conn) WritePacket(pk packet.Packet) error {
 	if conn.listener.CompressionThreshold < 0 {
@@ -58,6 +61,7 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 		if err := conn.writer.VarInt(int32(buf.Len())); err != nil {
 			return err
 		}
+
 		return conn.writer.FixedByteArray(buf.Bytes())
 	} else {
 		//compressed
@@ -128,6 +132,17 @@ func (conn *Conn) writeLegacyStatus(status status.StatusResponseData) {
 	binary.Write(conn, binary.BigEndian, utf16be)
 }
 
+func (conn *Conn) writeLegacyDisconnect(reason string) {
+	var data = []byte{0xFF}
+
+	var strdata = utf16.Encode([]rune(reason))
+	var strlen = int16(len(strdata))
+
+	data = append(data, byte(strlen>>8), byte(strlen))
+	conn.Write(data)
+	binary.Write(conn, binary.BigEndian, strdata)
+}
+
 func (conn *Conn) handleHandshake() bool {
 	pk, err := conn.ReadPacket()
 	if err != nil {
@@ -137,6 +152,9 @@ func (conn *Conn) handleHandshake() bool {
 	if !ok {
 		if pk.ID() == 122 {
 			conn.writeLegacyStatus(conn.listener.Status())
+		}
+		if pk.ID() == 78 {
+			conn.writeLegacyDisconnect("Your client is too old! this server supports MC 1.21")
 		}
 		return false
 	}
@@ -178,8 +196,9 @@ func (conn *Conn) handleHandshake() bool {
 			return false
 		}
 		conn.loginData = login.LoginSuccess{
-			UUID:     loginStart.PlayerUUID,
-			Username: loginStart.Name,
+			UUID:                loginStart.PlayerUUID,
+			Username:            loginStart.Name,
+			StrictErrorHandling: true,
 		}
 		if err := conn.WritePacket(&conn.loginData); err != nil {
 			return false

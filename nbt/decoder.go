@@ -236,7 +236,7 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				}
 			}
 		case ByteArray:
-			d, err := d.readByteArray()
+			data, err := d.readByteArray()
 			if err != nil {
 				return err
 			}
@@ -246,11 +246,19 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				case reflect.Slice:
 					switch field.Type().Elem().Kind() {
 					case reflect.Int8:
-						field.Set(reflect.ValueOf(*(*[]int8)(unsafe.Pointer(&d))))
+						field.Set(reflect.ValueOf(*(*[]int8)(unsafe.Pointer(&data))))
+					}
+				case reflect.Array:
+					switch field.Type().Elem().Kind() {
+					case reflect.Int8:
+						d := *(*[]int8)(unsafe.Pointer(&data))
+						field.Set(reflect.ValueOf(d).Convert(field.Type()))
+					default:
+						field.Set(reflect.ValueOf(data).Convert(field.Type()))
 					}
 				default:
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
-						field.Set(reflect.ValueOf(d))
+						field.Set(reflect.ValueOf(data))
 					} else {
 						return fmt.Errorf("cannot assign byte array to type %s for field %s", field.Type(), name)
 					}
@@ -692,6 +700,8 @@ func (d *Decoder) decodeList(list reflect.Value) error {
 				if err := d.decodeCompoundMap(list.Index(i)); err != nil {
 					return err
 				}
+			default:
+				return fmt.Errorf("cannot assign compound to type %s on index %d", list.Type().Elem(), i)
 			}
 		case List:
 			switch list.Type().Elem().Kind() {
@@ -702,6 +712,8 @@ func (d *Decoder) decodeList(list reflect.Value) error {
 				if err := d.decodeList(list.Index(i)); err != nil {
 					return err
 				}
+			default:
+				return fmt.Errorf("cannot assign list to type %s on index %d", list.Type().Elem(), i)
 			}
 		}
 	}
@@ -907,6 +919,7 @@ func (d *Decoder) readByteArray() ([]byte, error) {
 	}
 	var data = make([]byte, l)
 	_, err = d.rd.Read(data)
+
 	return data, err
 }
 
@@ -936,6 +949,7 @@ func (d *Decoder) readLongArray() ([]int64, error) {
 	}
 	var data = make([]byte, l*8)
 	_, err = d.rd.Read(data)
+
 	if err != nil {
 		return nil, err
 	}

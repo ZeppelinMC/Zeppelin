@@ -3,6 +3,7 @@ package server
 import (
 	"aether/net"
 	"aether/net/packet/status"
+	"aether/server/world"
 	net2 "net"
 )
 
@@ -34,6 +35,7 @@ func (cfg ServerConfig) New() (*Server, error) {
 	server := &Server{
 		listener: listener,
 		cfg:      cfg,
+		world:    world.NewWorld("world"),
 	}
 	server.createTicker()
 	return server, err

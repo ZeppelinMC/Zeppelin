@@ -168,7 +168,7 @@ func (r Reader) UUID(u *uuid.UUID) error {
 	return err
 }
 
-func (r Reader) BitSet(data *[]int64) error {
+func (r Reader) BitSet(data *BitSet) error {
 	var l int32
 	if _, err := r.VarInt(&l); err != nil {
 		return err

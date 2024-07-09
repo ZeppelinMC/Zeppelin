@@ -1,50 +1,35 @@
 package server
 
 import (
+	"aether/log"
 	"aether/net"
-	"aether/net/packet/configuration"
-	"aether/net/registry"
-	"fmt"
+	"aether/server/player"
+	"aether/server/world"
+	"time"
 )
 
 type Server struct {
 	cfg      ServerConfig
 	listener *net.Listener
 	ticker   Ticker
+
+	world *world.World
 }
 
-func (srv Server) Start() {
-	fmt.Println("started ticker!")
+func (srv *Server) Start(ts time.Time) {
 	srv.ticker.Start()
-	fmt.Println("started server")
+	log.Infof("Started server ticker (%d TPS)\n", srv.cfg.TPS)
+	log.Infof("Done! (%s)\n", time.Since(ts))
 	for {
 		conn, err := srv.listener.Accept()
 		if err != nil {
-			fmt.Println("server error", err)
+			log.Errorln("Server error: ", err)
 			return
 		}
 		if conn == nil {
 			continue
 		}
-		fmt.Println("new connection from player", conn.Username())
-		/*for _, packet := range registry.RegistryMap.Packets() {
-			fmt.Println(conn.WritePacket(packet))
-		}*/
-		conn.WritePacket(&configuration.RegistryData{
-			RegistryId: "minecraft:chat_type",
-			Registry:   registry.Registries.ChatType,
-		})
-		//conn.WritePacket(configuration.FinishConfiguration{})
-		/*conn.SetState(net.PlayState)
-		conn.WritePacket(&play.Login{
-			EntityID: 1,
-
-			ViewDistance:        12,
-			SimulationDistance:  12,
-			EnableRespawnScreen: true,
-			DimensionType:       0,
-			DimensionName:       "minecraft:overworld",
-			GameMode:            1,
-		})*/
+		log.Infof("[%s] Player attempting to connect: %s (%s)\n", conn.RemoteAddr(), conn.Username(), conn.UUID())
+		player.NewPlayer(conn, 1, srv.world).Login()
 	}
 }

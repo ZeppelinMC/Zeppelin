@@ -6,7 +6,28 @@ import (
 	"bytes"
 	_ "embed"
 	"reflect"
+	"sync"
 )
+
+var biome_id_mu sync.Mutex
+var BiomeId = biomeIdMap{m: make(map[string]int32)}
+
+type biomeIdMap struct {
+	mu sync.Mutex
+	m  map[string]int32
+}
+
+func (b *biomeIdMap) SetMap(m map[string]int32) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.m = m
+}
+
+func (b *biomeIdMap) GetMap() map[string]int32 {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.m
+}
 
 var Registries registries
 
@@ -25,53 +46,106 @@ func (r registries_t) Packets() []*configuration.RegistryData {
 	return regDatas
 }
 
+type Dimension1 struct {
+	FixedTime                   int64   `nbt:"fixed_time"`
+	AmbientLight                float32 `nbt:"ambient_light"`
+	BedWorks                    bool    `nbt:"bed_works"`
+	CoordinateScale             float64 `nbt:"coordinate_scale"`
+	Effects                     string  `nbt:"effects"`
+	HasCeiling                  bool    `nbt:"has_ceiling"`
+	HasRaids                    bool    `nbt:"has_raids"`
+	HasSkylight                 bool    `nbt:"has_skylight"`
+	Height                      int32   `nbt:"height"`
+	Infiniburn                  string  `nbt:"infiniburn"`
+	LogicalHeight               int32   `nbt:"logical_height"`
+	MinY                        int32   `nbt:"min_y"`
+	MonsterSpawnBlockLightLimit int32   `nbt:"monster_spawn_block_light_limit"`
+	Natural                     bool    `nbt:"natural"`
+	Ultrawarm                   bool    `nbt:"ultrawarm"`
+	PiglinSafe                  bool    `nbt:"piglin_safe"`
+	RespawnAnchorWorks          bool    `nbt:"respawn_anchor_works"`
+	MonsterSpawnLightLevel      int32   `nbt:"monster_spawn_light_level"`
+}
+
+type Dimension struct {
+	FixedTime                   int64   `nbt:"fixed_time"`
+	AmbientLight                float32 `nbt:"ambient_light"`
+	BedWorks                    bool    `nbt:"bed_works"`
+	CoordinateScale             float64 `nbt:"coordinate_scale"`
+	Effects                     string  `nbt:"effects"`
+	HasCeiling                  bool    `nbt:"has_ceiling"`
+	HasRaids                    bool    `nbt:"has_raids"`
+	HasSkylight                 bool    `nbt:"has_skylight"`
+	Height                      int32   `nbt:"height"`
+	Infiniburn                  string  `nbt:"infiniburn"`
+	LogicalHeight               int32   `nbt:"logical_height"`
+	MinY                        int32   `nbt:"min_y"`
+	MonsterSpawnBlockLightLimit int32   `nbt:"monster_spawn_block_light_limit"`
+	Natural                     bool    `nbt:"natural"`
+	Ultrawarm                   bool    `nbt:"ultrawarm"`
+	PiglinSafe                  bool    `nbt:"piglin_safe"`
+	RespawnAnchorWorks          bool    `nbt:"respawn_anchor_works"`
+	MonsterSpawnLightLevel      struct {
+		MaxInclusive int32  `nbt:"max_inclusive"`
+		MinInclusive int32  `nbt:"min_inclusive"`
+		Type         string `nbt:"type"`
+	} `nbt:"monster_spawn_light_level"`
+}
+
+type ChatTypeWStyle struct {
+	Chat struct {
+		Parameters     []string `nbt:"parameters"`
+		TranslationKey string   `nbt:"translation_key"`
+		Style          struct {
+			Color  string `nbt:"color"`
+			Italic bool   `nbt:"italic"`
+		} `nbt:"style"`
+	} `nbt:"chat"`
+	Narration struct {
+		Parameters     []string `nbt:"parameters"`
+		TranslationKey string   `nbt:"translation_key"`
+	} `nbt:"narration"`
+}
+
+type ChatType struct {
+	Chat struct {
+		Parameters     []string `nbt:"parameters"`
+		TranslationKey string   `nbt:"translation_key"`
+	} `nbt:"chat"`
+	Narration struct {
+		Parameters     []string `nbt:"parameters"`
+		TranslationKey string   `nbt:"translation_key"`
+	} `nbt:"narration"`
+}
+
 type registries struct {
 	BannerPattern map[string]struct {
 		AssetId        string `nbt:"asset_id"`
 		TranslationKey string `nbt:"translation_key"`
 	} `nbt:"minecraft:banner_pattern"`
-	ChatType map[string]struct {
-		Chat struct {
-			Parameters []string `nbt:"parameters"`
-			Style      struct {
-				Color  string `nbt:"color"`
-				Italic bool   `nbt:"italic"`
-			} `nbt:"style"`
-			TranslationKey string `nbt:"translation_key"`
-		} `nbt:"chat"`
-		Narration struct {
-			Parameters     []string `nbt:"parameters"`
-			TranslationKey string   `nbt:"translation_key"`
-		} `nbt:"narration"`
+	ChatType struct {
+		Chat                   ChatType       `nbt:"minecraft:chat"`
+		EmoteCommand           ChatType       `nbt:"minecraft:emote_command"`
+		MsgCommandIncoming     ChatTypeWStyle `nbt:"minecraft:msg_command_incoming"`
+		MsgCommandOutgoing     ChatTypeWStyle `nbt:"minecraft:msg_command_outgoing"`
+		SayCommand             ChatType       `nbt:"minecraft:say_command"`
+		TeamMsgCommandIncoming ChatType       `nbt:"minecraft:team_msg_command_incoming"`
+		TeamMsgCommandOutgoing ChatType       `nbt:"minecraft:team_msg_command_outgoing"`
 	} `nbt:"minecraft:chat_type"`
 	DamageType map[string]struct {
 		Exhaustion       float32 `nbt:"exhaustion"`
 		MessageID        string  `nbt:"message_id"`
 		Scaling          string  `nbt:"scaling"`
-		DeathMessageType string  `nbt:"death_message_type"`
-		Effects          string  `nbt:"effects"`
+		DeathMessageType string  `nbt:"death_message_type,omitempty"`
+		Effects          string  `nbt:"effects,omitempty"`
 	} `nbt:"minecraft:damage_type"`
-	DimensionType map[string]struct {
-		FixedTime                   int64   `nbt:"fixed_time"`
-		AmbientLight                float32 `nbt:"ambient_light"`
-		BedWorks                    bool    `nbt:"bed_works"`
-		CoordinateScale             float64 `nbt:"coordinate_scale"`
-		Effects                     string  `nbt:"effects"`
-		HasCeiling                  bool    `nbt:"has_ceiling"`
-		HasRaids                    bool    `nbt:"has_raids"`
-		HasSkylight                 bool    `nbt:"has_skylight"`
-		Height                      int32   `nbt:"height"`
-		Infiniburn                  string  `nbt:"infiniburn"`
-		LogicalHeight               int32   `nbt:"logical_height"`
-		MinY                        int32   `nbt:"min_y"`
-		MonsterSpawnBlockLightLimit int32   `nbt:"monster_spawn_block_light_limit"`
-		Natural                     bool    `nbt:"natural"`
-		Ultrawarm                   bool    `nbt:"ultrawarm"`
-		PiglinSafe                  bool    `nbt:"piglin_safe"`
-		RespawnAnchorWorks          bool    `nbt:"respawn_anchor_works"`
-		MonsterSpawnLightLevel      any     `nbt:"monster_spawn_light_level"`
+	DimensionType struct {
+		Overworld      Dimension  `nbt:"minecraft:overworld"`
+		OverworldCaves Dimension  `nbt:"minecraft:overworld_caves"`
+		TheEnd         Dimension  `nbt:"minecraft:the_end"`
+		TheNether      Dimension1 `nbt:"minecraft:the_nether"`
 	} `nbt:"minecraft:dimension_type"`
-	Enchantment map[string]struct {
+	/*Enchantment map[string]struct {
 		AnvilCost   int32 `nbt:"anvil_cost"`
 		Description struct {
 			Translate string `nbt:"translate"`
@@ -323,7 +397,7 @@ type registries struct {
 		Weight         int32    `nbt:"weight"`
 		ExclusiveSet   string   `nbt:"exclusive_set"`
 		PrimaryItems   string   `nbt:"primary_items"`
-	} `nbt:"minecraft:enchantment"`
+	} `nbt:"minecraft:enchantment"`*/
 	JukeboxSong map[string]struct {
 		ComparatorOutput int32 `nbt:"comparator_output"`
 		Description      struct {
@@ -343,8 +417,13 @@ type registries struct {
 			Color     string `nbt:"color"`
 			Translate string `nbt:"translate"`
 		} `nbt:"description"`
-		Ingredient     string  `nbt:"ingredient"`
-		ItemModelIndex float32 `nbt:"item_model_index"`
+		Ingredient             string  `nbt:"ingredient"`
+		ItemModelIndex         float32 `nbt:"item_model_index"`
+		OverrideArmorMaterials struct {
+			Diamond string `nbt:"minecraft:diamond,omitempty"`
+			Gold    string `nbt:"minecraft:gold,omitempty"`
+			Iron    string `nbt:"minecraft:iron,omitempty"`
+		} `nbt:"override_armor_materials,omitempty"`
 	} `nbt:"minecraft:trim_material"`
 	TrimPattern map[string]struct {
 		AssetId     string `nbt:"asset_id"`
@@ -377,7 +456,7 @@ type registries struct {
 				MinDelay            int32  `nbt:"min_delay"`
 				ReplaceCurrentMusic bool   `nbt:"replace_current_music"`
 				Sound               string `nbt:"sound"`
-			} `nbt:"music"`
+			} `nbt:"music,omitempty"`
 			SkyColor      int32 `nbt:"sky_color"`
 			WaterColor    int32 `nbt:"water_color"`
 			WaterFogColor int32 `nbt:"water_fog_color"`

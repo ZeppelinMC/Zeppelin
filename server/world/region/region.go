@@ -9,41 +9,6 @@ import (
 	"sync"
 )
 
-type Chunk struct {
-	DataVersion int32
-	Heightmaps  struct {
-		MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE []int64
-	}
-	InhabitedTime int64
-	LastUpdate    int64
-	Status        string
-	BlockEntities []struct {
-		Id string
-		X  int32 `nbt:"x"`
-		Y  int32 `nbt:"y"`
-		Z  int32 `nbt:"z"`
-	} `nbt:"block_entities"`
-
-	Sections []struct {
-		BlockLight, Skylight []int8
-		Y                    int8
-		Biomes               struct {
-			Palette []string `nbt:"palette"`
-		} `nbt:"biomes"`
-		BlockStates struct {
-			Data    []int64 `nbt:"data"`
-			Palette []struct {
-				Name       string
-				Properties map[string]any
-			} `nbt:"palette"`
-		} `nbt:"block_states"`
-	} `nbt:"sections"`
-
-	XPos int32 `nbt:"xPos"`
-	YPos int32 `nbt:"yPos"`
-	ZPos int32 `nbt:"zPos"`
-}
-
 type RegionFile struct {
 	reader io.ReaderAt
 
@@ -61,7 +26,7 @@ func chunkLocation(l int32) (offset, size int32) {
 }
 
 func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
-	l := r.locations[((x%32)+(z%32)*32)*4:][:4]
+	l := r.locations[((uint32(x)%32)+(uint32(z)%32)*32)*4:][:4]
 	loc := int32(l[0])<<24 | int32(l[1])<<16 | int32(l[2])<<8 | int32(l[3])
 
 	r.chu_mu.Lock()
@@ -105,9 +70,11 @@ func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
 		defer rd.Close()
 	}
 
+	var data, _ = io.ReadAll(rd)
+
 	r.chunks[loc] = &Chunk{}
 
-	_, err = nbt.NewDecoder(rd).Decode(r.chunks[loc])
+	_, err = nbt.NewDecoder(bytes.NewReader(data)).Decode(r.chunks[loc])
 
 	return r.chunks[loc], err
 }
