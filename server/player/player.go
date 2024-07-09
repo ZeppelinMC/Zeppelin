@@ -66,11 +66,5 @@ func (p *Player) Login() error {
 		return err
 	}
 
-	for x, z := int32(-6), int32(-6); x < 6 && z < 6; x, z = x+1, z+1 {
-		c, _ := p.world.GetChunk(x, z)
-
-		p.conn.WritePacket(c.Encode())
-	}
-
 	return nil
 }
