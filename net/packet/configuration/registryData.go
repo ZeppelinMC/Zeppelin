@@ -17,6 +17,9 @@ func ConstructRegistryPackets() []*RegistryData {
 	return regDatas
 }
 
+// clientbound
+const PacketIdRegistryData = 0x07
+
 type RegistryData struct {
 	RegistryId string
 	Registry   any

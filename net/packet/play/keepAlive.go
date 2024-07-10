@@ -2,6 +2,9 @@ package play
 
 import "aether/net/io"
 
+//serverbound
+const PacketIdServerboundKeepAlive = 0x18
+
 type ServerboundKeepAlive struct {
 	KeepAliveID int64
 }
@@ -17,6 +20,9 @@ func (k *ServerboundKeepAlive) Encode(w io.Writer) error {
 func (k *ServerboundKeepAlive) Decode(r io.Reader) error {
 	return r.Long(&k.KeepAliveID)
 }
+
+//clientbound
+const PacketIdClientboundKeepAlive = 0x26
 
 type ClientboundKeepAlive struct {
 	KeepAliveID int64

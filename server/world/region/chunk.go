@@ -5,12 +5,14 @@ import (
 	"aether/net/packet/play"
 	"aether/net/registry"
 	"aether/server/world/region/blocks"
+	"bytes"
 	"fmt"
 )
 
 var emptyLightBuffer = make([]byte, 2048)
 
-func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
+func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
+	w := io.NewWriter(buffer)
 	pk := &play.ChunkDataUpdateLight{
 		CX: chunk.XPos,
 		CZ: chunk.ZPos,
@@ -32,8 +34,6 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 	pk.BlockLightArrays = append(pk.BlockLightArrays, emptyLightBuffer)
 	pk.BlockLightMask.Set(0, true)
 	pk.EmptyBlockLightMask.Set(0, true)
-
-	var data []byte
 
 	for secI, section := range chunk.Sections {
 		var blockCount int16
@@ -75,33 +75,32 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		}
 
 		//Block Count
-		data = io.AppendShort(data, blockCount)
+		w.Short(blockCount)
 
 		//
 		// Block Palette
 		//
-
-		data = io.AppendUbyte(data, blockBitsPerEntry)
+		w.Ubyte(blockBitsPerEntry)
 
 		switch {
 		case blockBitsPerEntry == 0:
 			pale := section.BlockStates.Palette[0]
 			stateId, _ := blocks.Blocks[pale.Name].FindState(pale.Properties)
-			data = io.AppendVarInt(data, stateId)
+			w.VarInt(stateId)
 		case blockBitsPerEntry >= 4 && blockBitsPerEntry <= 8:
-			data = io.AppendVarInt(data, int32(len(section.BlockStates.Palette)))
+			w.VarInt(int32(len(section.BlockStates.Palette)))
 			for _, e := range section.BlockStates.Palette {
 				stateId, _ := blocks.Blocks[e.Name].FindState(e.Properties)
-				data = io.AppendVarInt(data, stateId)
+				w.VarInt(stateId)
 			}
 		case blockBitsPerEntry == 15: // no palette
 		default:
 			fmt.Println("invalid block bits per entry", blockBitsPerEntry, (len(section.BlockStates.Data)*64)/4096)
 		}
 
-		data = io.AppendVarInt(data, int32(len(section.BlockStates.Data)))
+		w.VarInt(int32(len(section.BlockStates.Data)))
 		for _, long := range section.BlockStates.Data {
-			data = io.AppendLong(data, long)
+			w.Long(long)
 		}
 
 		//
@@ -109,7 +108,7 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		//
 
 		biomeBitsPerEntry := byte((len(section.Biomes.Data) * 64) / 64)
-		data = io.AppendUbyte(data, biomeBitsPerEntry)
+		w.Ubyte(biomeBitsPerEntry)
 
 		var biomeMap = registry.BiomeId.GetMap()
 
@@ -118,22 +117,23 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 			pale := section.Biomes.Palette[0]
 			stateId := biomeMap[pale]
 
-			data = io.AppendVarInt(data, stateId)
+			w.VarInt(stateId)
 		case biomeBitsPerEntry >= 1 && biomeBitsPerEntry <= 3:
-			data = io.AppendVarInt(data, int32(len(section.Biomes.Palette)))
+			w.VarInt(int32(len(section.Biomes.Palette)))
 			for _, e := range section.Biomes.Palette {
 				stateId := biomeMap[e]
 
-				data = io.AppendVarInt(data, stateId)
+				w.VarInt(stateId)
 			}
 		case biomeBitsPerEntry == 6: // no palette
 		default:
 			fmt.Println("invalid biome bits per entry", biomeBitsPerEntry)
 		}
 
-		data = io.AppendVarInt(data, int32(len(section.Biomes.Data)))
+		w.VarInt(int32(len(section.Biomes.Data)))
 		for _, long := range section.Biomes.Data {
-			data = io.AppendLong(data, long)
+
+			w.Long(long)
 		}
 
 		//
@@ -164,7 +164,7 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 	pk.BlockLightMask.Set(len(chunk.Sections), true)
 	pk.EmptyBlockLightMask.Set(len(chunk.Sections), true)
 
-	pk.Data = data
+	pk.Data = buffer.Bytes()
 
 	return pk
 }

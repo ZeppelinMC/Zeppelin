@@ -23,6 +23,9 @@ const (
 	MainHandRight
 )
 
+//serverbound
+const PacketIdClientInformation = 0x00
+
 type ClientInformation struct {
 	Locale              string
 	ViewDistance        int8

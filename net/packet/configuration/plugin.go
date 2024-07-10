@@ -2,6 +2,9 @@ package configuration
 
 import "aether/net/io"
 
+//two-sided
+const PacketIdPluginMessage = 0x01
+
 type ClientboundPluginMessage struct {
 	Channel string
 	Data    []byte

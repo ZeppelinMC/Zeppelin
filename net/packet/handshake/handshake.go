@@ -10,6 +10,9 @@ const (
 	Transfer
 )
 
+// serverbound
+const PacketIdHandshaking = 0x00
+
 type Handshaking struct {
 	ProtocolVersion int32
 	ServerAddress   string

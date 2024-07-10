@@ -2,6 +2,9 @@ package login
 
 import "aether/net/io"
 
+//two-sided
+const PacketIdEncryption = 0x01
+
 type EncryptionRequest struct {
 	PublicKey          []byte
 	VerifyToken        []byte

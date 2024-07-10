@@ -2,6 +2,9 @@ package login
 
 import "aether/net/io"
 
+// clientbound
+const PacketIdCookieRequest = 0x05
+
 type CookieRequest struct {
 	Key string
 }

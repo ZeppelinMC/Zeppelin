@@ -8,6 +8,9 @@ type BlockEntity struct {
 	Data    any
 }
 
+//clientbound
+const PacketIdChunkDataUpdateLight = 0x27
+
 type ChunkDataUpdateLight struct {
 	CX, CZ     int32
 	Heightmaps struct {

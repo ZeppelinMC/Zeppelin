@@ -19,6 +19,9 @@ const (
 	GameEventStartWaitingChunks
 )
 
+//clientbound
+const PacketIdGameEvent = 0x22
+
 type GameEvent struct {
 	Event byte
 	Value float32

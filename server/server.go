@@ -3,7 +3,7 @@ package server
 import (
 	"aether/log"
 	"aether/net"
-	"aether/server/player"
+	"aether/server/session"
 	"aether/server/world"
 	"time"
 )
@@ -30,6 +30,6 @@ func (srv *Server) Start(ts time.Time) {
 			continue
 		}
 		log.Infof("[%s] Player attempting to connect: %s (%s)\n", conn.RemoteAddr(), conn.Username(), conn.UUID())
-		player.NewPlayer(conn, 1, srv.world).Login()
+		session.NewSession(conn, 1, srv.world).Login()
 	}
 }

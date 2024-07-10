@@ -6,6 +6,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// serverbound
+const PacketIdLoginStart = 0x00
+
 type LoginStart struct {
 	Name       string
 	PlayerUUID uuid.UUID

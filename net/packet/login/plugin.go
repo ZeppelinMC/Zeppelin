@@ -2,6 +2,9 @@ package login
 
 import "aether/net/io"
 
+//clientbound
+const PacketIdLoginPluginRequest = 0x04
+
 type LoginPluginRequest struct {
 	MessageID int32
 	Channel   string
@@ -31,6 +34,9 @@ func (l *LoginPluginRequest) Decode(r io.Reader) error {
 	}
 	return r.ReadAll(&l.Data)
 }
+
+//serverbound
+const PacketIdLoginPluginResponse = 0x02
 
 type LoginPluginResponse struct {
 	MessageID int32

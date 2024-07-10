@@ -5,6 +5,9 @@ import (
 	"aether/net/io"
 )
 
+// clientbound
+const PacketIdDisconnect = 0x02
+
 type Disconnect struct {
 	Reason chat.TextComponent
 }

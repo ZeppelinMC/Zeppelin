@@ -5,6 +5,9 @@ import (
 	"aether/net/packet"
 )
 
+// serverbound
+const PacketIdChunkBatchFinished = 0x0D
+
 type ChunkBatchFinished struct {
 	BatchSize int32
 }
@@ -21,6 +24,9 @@ func (c *ChunkBatchFinished) Decode(r io.Reader) error {
 	_, err := r.VarInt(&c.BatchSize)
 	return err
 }
+
+// clientbound
+const PacketIdChunkBatchStart = 0x0D
 
 type ChunkBatchStart packet.EmptyPacket
 

@@ -4,6 +4,13 @@ import (
 	"aether/net/packet"
 )
 
+const (
+	//clientbound
+	PacketIdFinishConfiguration = 0x03
+	//serverbound
+	PacketIdAcknowledgeFinishConfiguration
+)
+
 type FinishConfiguration struct {
 	packet.EmptyPacket
 }

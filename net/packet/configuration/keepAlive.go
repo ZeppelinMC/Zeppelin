@@ -2,6 +2,9 @@ package configuration
 
 import "aether/net/io"
 
+//two-sided
+const PacketIdKeepAlive = 0x04
+
 type KeepAlive struct {
 	KeepAliveID int64
 }

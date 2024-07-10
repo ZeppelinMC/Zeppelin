@@ -2,6 +2,9 @@ package play
 
 import "aether/net/io"
 
+//clientbound
+const PacketIdSetCenterChunk = 0x54
+
 type SetCenterChunk struct {
 	ChunkX, ChunkZ int32
 }

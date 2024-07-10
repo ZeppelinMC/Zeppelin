@@ -12,6 +12,9 @@ type Property struct {
 	Signature string
 }
 
+// clientbound
+const PacketIdLoginSuccess = 0x02
+
 type LoginSuccess struct {
 	UUID                uuid.UUID
 	Username            string
@@ -83,6 +86,8 @@ func (l *LoginSuccess) Decode(r io.Reader) error {
 	}
 	return r.Bool(&l.StrictErrorHandling)
 }
+
+const PacketIdLoginAcknowledged = 0x03
 
 type LoginAcknowledged struct{}
 

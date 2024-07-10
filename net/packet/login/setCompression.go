@@ -2,6 +2,9 @@ package login
 
 import "aether/net/io"
 
+//clientbound
+const PacketIdSetCompression = 0x03
+
 type SetCompression struct {
 	Threshold int32
 }

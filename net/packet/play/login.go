@@ -2,6 +2,9 @@ package play
 
 import "aether/net/io"
 
+//clientbound
+const PacketIdLogin = 0x2B
+
 type Login struct {
 	EntityID int32
 

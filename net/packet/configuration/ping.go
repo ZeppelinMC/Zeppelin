@@ -2,6 +2,9 @@ package configuration
 
 import "aether/net/io"
 
+//two-sided
+const PacketIdPing = 0x05
+
 type Ping struct {
 	ID_ int32
 }

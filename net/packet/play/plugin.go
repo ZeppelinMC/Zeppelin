@@ -5,6 +5,9 @@ import (
 	"aether/net/packet/configuration"
 )
 
+// clientbound
+const PacketIdClientboundPluginMessage = 0x19
+
 type ClientboundPluginMessage configuration.ClientboundPluginMessage
 
 func (ClientboundPluginMessage) ID() int32 {
@@ -24,6 +27,9 @@ func (c *ClientboundPluginMessage) Decode(r io.Reader) error {
 	}
 	return r.ReadAll(&c.Data)
 }
+
+// serverbound
+const PacketIdServerboundPluginMessage = 0x12
 
 type ServerboundPluginMessage struct {
 	configuration.ServerboundPluginMessage
