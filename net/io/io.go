@@ -68,5 +68,6 @@ func (set BitSet) Get(i int) bool {
 
 func (set BitSet) Set(i int, v bool) {
 	bdata := int64(*(*byte)(unsafe.Pointer(&v)))
-	set[i/64] |= (1 << (bdata % 64))
+
+	set[i/64] |= bdata << (i % 64)
 }

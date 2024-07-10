@@ -290,6 +290,9 @@ func (e *Encoder) encodeCompoundStruct(val reflect.Value) error {
 				if err := e.writeString(name); err != nil {
 					return err
 				}
+				if err := e.writeInt(int32(f.Len())); err != nil {
+					return err
+				}
 				for i := 0; i < f.Len(); i++ {
 					x := f.Index(i)
 

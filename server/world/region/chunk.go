@@ -3,45 +3,12 @@ package region
 import (
 	"aether/net/io"
 	"aether/net/packet/play"
+	"aether/net/registry"
 	"aether/server/world/region/blocks"
 	"fmt"
 )
 
-type Chunk struct {
-	DataVersion int32
-	Heightmaps  struct {
-		MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE []int64
-	}
-	InhabitedTime int64
-	LastUpdate    int64
-	Status        string
-	BlockEntities []struct {
-		Id string
-		X  int32 `nbt:"x"`
-		Y  int32 `nbt:"y"`
-		Z  int32 `nbt:"z"`
-	} `nbt:"block_entities"`
-
-	Sections []struct {
-		BlockLight, Skylight []byte
-		Y                    int8
-		Biomes               struct {
-			Data    []int64  `nbt:"data"`
-			Palette []string `nbt:"palette"`
-		} `nbt:"biomes"`
-		BlockStates struct {
-			Data    []int64 `nbt:"data"`
-			Palette []struct {
-				Name       string
-				Properties map[string]string
-			} `nbt:"palette"`
-		} `nbt:"block_states"`
-	} `nbt:"sections"`
-
-	XPos int32 `nbt:"xPos"`
-	YPos int32 `nbt:"yPos"`
-	ZPos int32 `nbt:"zPos"`
-}
+var emptyLightBuffer = make([]byte, 2048)
 
 func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 	pk := &play.ChunkDataUpdateLight{
@@ -50,21 +17,26 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 
 		Heightmaps: chunk.Heightmaps,
 
-		/*SkyLightMask:   make(io.BitSet, 64/(len(chunk.Sections)+2)),
-		BlockLightMask: make(io.BitSet, 64/(len(chunk.Sections)+2)),
+		SkyLightMask:      make(io.BitSet, 1),
+		EmptySkyLightMask: make(io.BitSet, 1),
+		SkyLightArrays:    make([][]byte, 0, len(chunk.Sections)+2),
 
-		EmptySkyLightMask:   make(io.BitSet, 64/(len(chunk.Sections)+2)),
-		EmptyBlockLightMask: make(io.BitSet, 64/(len(chunk.Sections)+2)),*/
+		BlockLightMask:      make(io.BitSet, 1),
+		EmptyBlockLightMask: make(io.BitSet, 1),
+		BlockLightArrays:    make([][]byte, 0, len(chunk.Sections)+2),
 	}
-	/*pk.EmptySkyLightMask.Set(0, true)
-	pk.EmptySkyLightMask.Set(len(chunk.Sections)+2, true)
+	pk.SkyLightArrays = append(pk.SkyLightArrays, emptyLightBuffer)
+	pk.SkyLightMask.Set(0, true)
+	pk.EmptySkyLightMask.Set(0, true)
+
+	pk.BlockLightArrays = append(pk.BlockLightArrays, emptyLightBuffer)
+	pk.BlockLightMask.Set(0, true)
 	pk.EmptyBlockLightMask.Set(0, true)
-	pk.EmptyBlockLightMask.Set(len(chunk.Sections)+2, true)*/
 
 	var data []byte
 
-	for _, section := range chunk.Sections {
-		/*var blockCount int16
+	for secI, section := range chunk.Sections {
+		var blockCount int16
 		var airId = -1
 
 		for i, state := range section.BlockStates.Palette {
@@ -75,41 +47,39 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		}
 		if airId == -1 {
 			blockCount = 4096
-		}*/
+		}
 
-		blockBitsPerEntry := byte((len(section.BlockStates.Data) * 64) / 4096)
+		blockBitsPerEntry := byte(len(section.BlockStates.Data) * 64 / 4096)
 
-		/*for _, long := range section.BlockStates.Data {
-			var pos byte
+		if blockCount != 4096 {
+			for _, long := range section.BlockStates.Data {
+				var pos byte
 
-			for i := 0; i < 64; i++ {
-				if blockCount == 4096 {
-					break
+				for i := 0; i < 64; i++ {
+					if blockCount == 4096 {
+						break
+					}
+					if pos+blockBitsPerEntry > 64-pos {
+						break
+					}
+
+					var entry = (long >> pos) & (int64((1 << blockBitsPerEntry) - 1))
+
+					if entry != int64(airId) {
+						blockCount++
+					}
+
+					pos += blockBitsPerEntry
 				}
-				if pos+blockBitsPerEntry > 64-pos {
-					break
-				}
-
-				var entry = (long >> pos) & (int64((1 << blockBitsPerEntry) - 1))
-
-				if entry != int64(airId) {
-					blockCount++
-				}
-
-				pos += blockBitsPerEntry
 			}
-		}*/
+		}
 
 		//Block Count
-		data = io.AppendShort(data, 1024)
+		data = io.AppendShort(data, blockCount)
 
 		//
 		// Block Palette
 		//
-
-		if blockBitsPerEntry != 4 {
-			fmt.Println(blockBitsPerEntry)
-		}
 
 		data = io.AppendUbyte(data, blockBitsPerEntry)
 
@@ -126,7 +96,7 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 			}
 		case blockBitsPerEntry == 15: // no palette
 		default:
-			fmt.Println("invalid block bits per entry", blockBitsPerEntry)
+			fmt.Println("invalid block bits per entry", blockBitsPerEntry, (len(section.BlockStates.Data)*64)/4096)
 		}
 
 		data = io.AppendVarInt(data, int32(len(section.BlockStates.Data)))
@@ -138,20 +108,22 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		// Biome Palette
 		//
 
-		/*biomeBitsPerEntry := byte((len(section.Biomes.Data) * 64) / 64)
-		var biomeMap = registry.BiomeId.GetMap()
+		biomeBitsPerEntry := byte((len(section.Biomes.Data) * 64) / 64)
+		data = io.AppendUbyte(data, biomeBitsPerEntry)
 
-		data = io.AppendUbyte(data, blockBitsPerEntry)
+		var biomeMap = registry.BiomeId.GetMap()
 
 		switch {
 		case biomeBitsPerEntry == 0:
 			pale := section.Biomes.Palette[0]
 			stateId := biomeMap[pale]
+
 			data = io.AppendVarInt(data, stateId)
 		case biomeBitsPerEntry >= 1 && biomeBitsPerEntry <= 3:
 			data = io.AppendVarInt(data, int32(len(section.Biomes.Palette)))
 			for _, e := range section.Biomes.Palette {
 				stateId := biomeMap[e]
+
 				data = io.AppendVarInt(data, stateId)
 			}
 		case biomeBitsPerEntry == 6: // no palette
@@ -162,25 +134,46 @@ func (chunk Chunk) Encode() *play.ChunkDataUpdateLight {
 		data = io.AppendVarInt(data, int32(len(section.Biomes.Data)))
 		for _, long := range section.Biomes.Data {
 			data = io.AppendLong(data, long)
-		}*/
-
-		data = io.AppendLong(data, 0)
-		data = io.AppendLong(data, 0x39)
-		data = io.AppendLong(data, 0)
-		/*if section.Skylight != nil {
-			pk.SkyLightArrays = append(pk.SkyLightArrays, section.Skylight)
 		}
+
+		//
+		// Lighting
+		//
+
+		if section.SkyLight != nil {
+			pk.SkyLightMask.Set(secI+1, true)
+			if allZero(section.SkyLight) {
+				pk.EmptySkyLightMask.Set(secI+1, true)
+			}
+			pk.SkyLightArrays = append(pk.SkyLightArrays, section.SkyLight)
+		}
+
 		if section.BlockLight != nil {
+			pk.BlockLightMask.Set(secI+1, true)
+			if allZero(section.BlockLight) {
+				pk.EmptyBlockLightMask.Set(secI+1, true)
+			}
 			pk.BlockLightArrays = append(pk.BlockLightArrays, section.BlockLight)
 		}
-		pk.SkyLightMask.Set(secI+1, section.Skylight != nil)
-		pk.BlockLightMask.Set(secI+1, section.BlockLight != nil)
-
-		pk.EmptySkyLightMask.Set(secI+1, section.Skylight != nil && [2048]byte(section.Skylight) == [2048]byte{})
-		pk.EmptyBlockLightMask.Set(secI+1, section.BlockLight != nil && [2048]byte(section.Skylight) == [2048]byte{})*/
 	}
+	pk.SkyLightArrays = append(pk.SkyLightArrays, emptyLightBuffer)
+	pk.SkyLightMask.Set(len(chunk.Sections), true)
+	pk.EmptySkyLightMask.Set(len(chunk.Sections), true)
+
+	pk.BlockLightArrays = append(pk.BlockLightArrays, emptyLightBuffer)
+	pk.BlockLightMask.Set(len(chunk.Sections), true)
+	pk.EmptyBlockLightMask.Set(len(chunk.Sections), true)
 
 	pk.Data = data
 
 	return pk
+}
+
+func allZero(inp []byte) bool {
+	for _, i := range inp {
+		if i != 0 {
+			return false
+		}
+	}
+	return true
 }

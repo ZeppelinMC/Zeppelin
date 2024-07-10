@@ -247,6 +247,8 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					switch field.Type().Elem().Kind() {
 					case reflect.Int8:
 						field.Set(reflect.ValueOf(*(*[]int8)(unsafe.Pointer(&data))))
+					default:
+						field.Set(reflect.ValueOf(*(*[]byte)(unsafe.Pointer(&data))))
 					}
 				case reflect.Array:
 					switch field.Type().Elem().Kind() {

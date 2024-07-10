@@ -2,8 +2,20 @@ package configuration
 
 import (
 	"aether/net/io"
+	"aether/net/registry"
 	"reflect"
 )
+
+func ConstructRegistryPackets() []*RegistryData {
+	regDatas := make([]*RegistryData, 0, len(registry.RegistryMap))
+	for key, registry := range registry.RegistryMap {
+		regDatas = append(regDatas, &RegistryData{
+			RegistryId: key,
+			Registry:   registry,
+		})
+	}
+	return regDatas
+}
 
 type RegistryData struct {
 	RegistryId string
@@ -50,6 +62,9 @@ func (r *RegistryData) Encode(w io.Writer) error {
 			}
 
 			i++
+		}
+		if r.RegistryId == "minecraft:worldgen/biome" {
+			registry.BiomeId.SetMap(m)
 		}
 	case reflect.Struct:
 		if err := w.VarInt(int32(reg.NumField())); err != nil {

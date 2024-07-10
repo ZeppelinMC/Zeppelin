@@ -72,9 +72,6 @@ func (c *ChunkDataUpdateLight) Encode(w io.Writer) error {
 		return err
 	}
 	for _, array := range c.SkyLightArrays {
-		if err := w.VarInt(int32(len(array))); err != nil {
-			return err
-		}
 		if err := w.ByteArray(array); err != nil {
 			return err
 		}
@@ -84,9 +81,6 @@ func (c *ChunkDataUpdateLight) Encode(w io.Writer) error {
 		return err
 	}
 	for _, array := range c.BlockLightArrays {
-		if err := w.VarInt(int32(len(array))); err != nil {
-			return err
-		}
 		if err := w.ByteArray(array); err != nil {
 			return err
 		}

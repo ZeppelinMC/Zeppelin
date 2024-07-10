@@ -3,12 +3,12 @@ package world
 import "aether/server/world/region"
 
 type World struct {
-	save *region.Save
+	save *region.Dimension
 }
 
 func NewWorld(path string) *World {
 	return &World{
-		save: region.NewSave(path + "/region"),
+		save: region.NewDimension(path + "/region"),
 	}
 }
 

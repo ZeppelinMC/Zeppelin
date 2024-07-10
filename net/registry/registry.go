@@ -2,7 +2,6 @@ package registry
 
 import (
 	"aether/nbt"
-	"aether/net/packet/configuration"
 	"bytes"
 	_ "embed"
 	"reflect"
@@ -33,18 +32,7 @@ var Registries registries
 
 type registries_t map[string]any
 
-var RegistryMap = make(registries_t)
-
-func (r registries_t) Packets() []*configuration.RegistryData {
-	regDatas := make([]*configuration.RegistryData, 0, len(r))
-	for key, registry := range r {
-		regDatas = append(regDatas, &configuration.RegistryData{
-			RegistryId: key,
-			Registry:   registry,
-		})
-	}
-	return regDatas
-}
+var RegistryMap = make(map[string]any)
 
 type Dimension1 struct {
 	FixedTime                   int64   `nbt:"fixed_time"`
