@@ -14,9 +14,9 @@ import (
 
 type Session struct {
 	world  *world.World
-	player *player.Player
+	Player *player.Player
 
-	conn *net.Conn
+	Conn *net.Conn
 
 	clientName string // constant
 	ClientInfo atomic.AtomicValue[configuration.ClientInformation]
@@ -24,24 +24,24 @@ type Session struct {
 
 func NewSession(conn *net.Conn, entityId int32, world *world.World) *Session {
 	return &Session{
-		conn:   conn,
+		Conn:   conn,
 		world:  world,
-		player: player.NewPlayer(entityId),
+		Player: player.NewPlayer(entityId),
 	}
 }
 
 func (session *Session) Login() error {
 	go session.handlePackets()
 	for _, packet := range configuration.ConstructRegistryPackets() {
-		if err := session.conn.WritePacket(packet); err != nil {
+		if err := session.Conn.WritePacket(packet); err != nil {
 			return err
 		}
 	}
-	if err := session.conn.WritePacket(configuration.FinishConfiguration{}); err != nil {
+	if err := session.Conn.WritePacket(configuration.FinishConfiguration{}); err != nil {
 		return err
 	}
 
-	if err := session.conn.WritePacket(&play.Login{
+	if err := session.Conn.WritePacket(&play.Login{
 		EntityID:   1,
 		Dimensions: []string{"minecraft:overworld"},
 
@@ -57,14 +57,14 @@ func (session *Session) Login() error {
 		return err
 	}
 
-	if err := session.conn.WritePacket(&play.ClientboundPluginMessage{
+	if err := session.Conn.WritePacket(&play.ClientboundPluginMessage{
 		Channel: "minecraft:brand",
 		Data:    io.AppendString(nil, "Aether"),
 	}); err != nil {
 		return err
 	}
 
-	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
+	if err := session.Conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
 		return err
 	}
 
@@ -75,18 +75,28 @@ func (session *Session) sendSpawnChunks() error {
 	viewDistance := int32(session.ClientInfo.Get().ViewDistance)
 	var buf = new(bytes.Buffer)
 
+	if err := session.Conn.WritePacket(&play.ChunkBatchStart{}); err != nil {
+		return err
+	}
+
+	var chunks int32
 	for x := 0 - viewDistance; x <= 0+viewDistance; x++ {
 		for z := 0 - viewDistance; z < 0+viewDistance; z++ {
 			c, err := session.world.GetChunk(x, z)
 			if err != nil {
-				return err
+				continue
 			}
 
-			if err := session.conn.WritePacket(c.Encode(buf)); err != nil {
+			if err := session.Conn.WritePacket(c.Encode(buf)); err != nil {
 				return err
 			}
 			buf.Reset()
+			chunks++
 		}
+	}
+
+	if err := session.Conn.WritePacket(&play.ChunkBatchFinished{BatchSize: chunks}); err != nil {
+		return err
 	}
 
 	return nil

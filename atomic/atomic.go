@@ -7,6 +7,10 @@ type AtomicValue[T any] struct {
 }
 
 func (a *AtomicValue[T]) Get() T {
+	if a.v.Load() == nil {
+		var e T
+		return e
+	}
 	return a.v.Load().(T)
 }
 

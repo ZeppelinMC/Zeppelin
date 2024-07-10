@@ -28,7 +28,7 @@ func (c *ChunkBatchFinished) Decode(r io.Reader) error {
 // clientbound
 const PacketIdChunkBatchStart = 0x0D
 
-type ChunkBatchStart packet.EmptyPacket
+type ChunkBatchStart struct{ packet.EmptyPacket }
 
 func (ChunkBatchStart) ID() int32 {
 	return 0x0D

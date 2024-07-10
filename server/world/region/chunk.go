@@ -3,6 +3,7 @@ package region
 import (
 	"bytes"
 	"fmt"
+	"math/bits"
 
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/packet/play"
@@ -108,7 +109,7 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 		// Biome Palette
 		//
 
-		biomeBitsPerEntry := byte((len(section.Biomes.Data) * 64) / 64)
+		biomeBitsPerEntry := byte(bits.Len32(uint32(len(section.Biomes.Palette))))
 		w.Ubyte(biomeBitsPerEntry)
 
 		var biomeMap = registry.BiomeId.GetMap()
@@ -128,7 +129,7 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 			}
 		case biomeBitsPerEntry == 6: // no palette
 		default:
-			fmt.Println("invalid biome bits per entry", biomeBitsPerEntry)
+			fmt.Println("invalid biome bits per entry", pk.CX, pk.CZ, section.Y, biomeBitsPerEntry)
 		}
 
 		w.VarInt(int32(len(section.Biomes.Data)))
@@ -143,9 +144,7 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 
 		if section.SkyLight != nil {
 			pk.SkyLightMask.Set(secI+1, true)
-			if allZero(section.SkyLight) {
-				pk.EmptySkyLightMask.Set(secI+1, true)
-			}
+			pk.EmptySkyLightMask.Set(secI+1, allZero(section.SkyLight))
 			pk.SkyLightArrays = append(pk.SkyLightArrays, section.SkyLight)
 		}
 

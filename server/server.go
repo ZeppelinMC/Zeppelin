@@ -3,6 +3,8 @@ package server
 import (
 	"time"
 
+	_ "github.com/dynamitemc/aether/server/session/handler"
+
 	"github.com/dynamitemc/aether/server/world"
 
 	"github.com/dynamitemc/aether/log"

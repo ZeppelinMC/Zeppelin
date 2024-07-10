@@ -36,5 +36,8 @@ var serverboundPool = map[int32]map[int32]func() packet.Packet{
 		0x0A: func() packet.Packet { return &play.ClientInformation{} },
 		0x12: func() packet.Packet { return &play.ServerboundPluginMessage{} },
 		0x18: func() packet.Packet { return &play.ServerboundKeepAlive{} },
+		0x1A: func() packet.Packet { return &play.SetPlayerPosition{} },
+		0x1B: func() packet.Packet { return &play.SetPlayerPositionAndRotation{} },
+		0x1C: func() packet.Packet { return &play.SetPlayerRotation{} },
 	},
 }

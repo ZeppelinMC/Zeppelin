@@ -1,13 +1,14 @@
 package main
 
 import (
-	"aether/log"
-	"aether/net/registry"
-	"aether/server"
-	"aether/server/world/region/blocks"
 	"net"
 	"runtime"
 	"time"
+
+	"github.com/dynamitemc/aether/log"
+	"github.com/dynamitemc/aether/net/registry"
+	"github.com/dynamitemc/aether/server"
+	"github.com/dynamitemc/aether/server/world/region/blocks"
 )
 
 var timeStart = time.Now()

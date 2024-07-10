@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
+	"fmt"
 	"io"
 	"sync"
 
@@ -36,7 +37,10 @@ func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
 		return c, nil
 	}
 
-	offset, _ := chunkLocation(loc)
+	offset, size := chunkLocation(loc)
+	if offset|size == 0 {
+		return nil, fmt.Errorf("chunk %d %d not found", x, z)
+	}
 
 	var chunkHeader = make([]byte, 5)
 
