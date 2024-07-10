@@ -1,14 +1,15 @@
 package session
 
 import (
-	"aether/atomic"
-	"aether/net"
-	"aether/net/io"
-	"aether/net/packet/configuration"
-	"aether/net/packet/play"
-	"aether/server/player"
-	"aether/server/world"
 	"bytes"
+
+	"github.com/dynamitemc/aether/atomic"
+	"github.com/dynamitemc/aether/net"
+	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/net/packet/configuration"
+	"github.com/dynamitemc/aether/net/packet/play"
+	"github.com/dynamitemc/aether/server/player"
+	"github.com/dynamitemc/aether/server/world"
 )
 
 type Session struct {

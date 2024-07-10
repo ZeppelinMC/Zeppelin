@@ -1,7 +1,7 @@
 package handshake
 
 import (
-	"aether/net/io"
+	"github.com/dynamitemc/aether/net/io"
 )
 
 const (

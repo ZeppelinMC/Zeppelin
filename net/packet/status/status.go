@@ -1,9 +1,10 @@
 package status
 
 import (
-	"aether/net/io"
 	"encoding/base64"
 	"encoding/json"
+
+	"github.com/dynamitemc/aether/net/io"
 )
 
 type StatusVersion struct {

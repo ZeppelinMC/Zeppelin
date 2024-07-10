@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"aether/net"
-	"aether/net/packet"
-	"aether/net/packet/configuration"
-	"aether/net/packet/play"
-	"aether/server/session"
+	"github.com/dynamitemc/aether/net"
+	"github.com/dynamitemc/aether/net/packet"
+	"github.com/dynamitemc/aether/net/packet/configuration"
+	"github.com/dynamitemc/aether/net/packet/play"
+	"github.com/dynamitemc/aether/server/session"
 )
 
 func init() {

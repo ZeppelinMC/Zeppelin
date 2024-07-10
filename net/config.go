@@ -1,8 +1,9 @@
 package net
 
 import (
-	"aether/net/packet/status"
 	"net"
+
+	"github.com/dynamitemc/aether/net/packet/status"
 )
 
 type Config struct {

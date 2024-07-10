@@ -1,8 +1,9 @@
 package net
 
 import (
-	"aether/net/io"
 	"net"
+
+	"github.com/dynamitemc/aether/net/io"
 )
 
 const (

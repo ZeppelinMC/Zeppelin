@@ -1,6 +1,6 @@
 package world
 
-import "aether/server/world/region"
+import "github.com/dynamitemc/aether/server/world/region"
 
 type World struct {
 	save *region.Dimension

@@ -1,12 +1,13 @@
 package region
 
 import (
-	"aether/net/io"
-	"aether/net/packet/play"
-	"aether/net/registry"
-	"aether/server/world/region/blocks"
 	"bytes"
 	"fmt"
+
+	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/net/packet/play"
+	"github.com/dynamitemc/aether/net/registry"
+	"github.com/dynamitemc/aether/server/world/region/blocks"
 )
 
 var emptyLightBuffer = make([]byte, 2048)

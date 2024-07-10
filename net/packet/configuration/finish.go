@@ -1,7 +1,7 @@
 package configuration
 
 import (
-	"aether/net/packet"
+	"github.com/dynamitemc/aether/net/packet"
 )
 
 const (

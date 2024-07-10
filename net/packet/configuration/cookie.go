@@ -1,6 +1,6 @@
 package configuration
 
-import "aether/net/packet/login"
+import "github.com/dynamitemc/aether/net/packet/login"
 
 //clientbound
 const PacketIdCookieRequest = 0x00

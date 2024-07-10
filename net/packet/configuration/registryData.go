@@ -1,9 +1,10 @@
 package configuration
 
 import (
-	"aether/net/io"
-	"aether/net/registry"
 	"reflect"
+
+	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/net/registry"
 )
 
 func ConstructRegistryPackets() []*RegistryData {

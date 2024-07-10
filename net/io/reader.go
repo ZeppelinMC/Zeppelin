@@ -1,12 +1,13 @@
 package io
 
 import (
-	"aether/chat"
-	"aether/nbt"
 	"encoding/json"
 	"fmt"
 	"io"
 	"unsafe"
+
+	"github.com/dynamitemc/aether/chat"
+	"github.com/dynamitemc/aether/nbt"
 
 	"github.com/google/uuid"
 )

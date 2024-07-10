@@ -1,17 +1,18 @@
 package net
 
 import (
-	"aether/net/io"
-	"aether/net/packet"
-	"aether/net/packet/handshake"
-	"aether/net/packet/login"
-	"aether/net/packet/status"
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"net"
 	"sync/atomic"
 	"unicode/utf16"
+
+	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/net/packet"
+	"github.com/dynamitemc/aether/net/packet/handshake"
+	"github.com/dynamitemc/aether/net/packet/login"
+	"github.com/dynamitemc/aether/net/packet/status"
 
 	"github.com/google/uuid"
 )

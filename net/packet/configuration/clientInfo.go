@@ -1,6 +1,6 @@
 package configuration
 
-import "aether/net/io"
+import "github.com/dynamitemc/aether/net/io"
 
 const (
 	ChatModeEnabled = iota

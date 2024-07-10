@@ -1,8 +1,8 @@
 package configuration
 
 import (
-	"aether/chat"
-	"aether/net/io"
+	"github.com/dynamitemc/aether/chat"
+	"github.com/dynamitemc/aether/net/io"
 )
 
 // clientbound

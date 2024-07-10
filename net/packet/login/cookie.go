@@ -1,6 +1,6 @@
 package login
 
-import "aether/net/io"
+import "github.com/dynamitemc/aether/net/io"
 
 // clientbound
 const PacketIdCookieRequest = 0x05

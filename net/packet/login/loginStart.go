@@ -1,7 +1,7 @@
 package login
 
 import (
-	"aether/net/io"
+	"github.com/dynamitemc/aether/net/io"
 
 	"github.com/google/uuid"
 )

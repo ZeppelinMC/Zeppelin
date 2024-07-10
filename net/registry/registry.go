@@ -1,11 +1,12 @@
 package registry
 
 import (
-	"aether/nbt"
 	"bytes"
 	_ "embed"
 	"reflect"
 	"sync"
+
+	"github.com/dynamitemc/aether/nbt"
 )
 
 var biome_id_mu sync.Mutex

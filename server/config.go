@@ -1,10 +1,11 @@
 package server
 
 import (
-	"aether/net"
-	"aether/net/packet/status"
-	"aether/server/world"
 	net2 "net"
+
+	"github.com/dynamitemc/aether/net"
+	"github.com/dynamitemc/aether/net/packet/status"
+	"github.com/dynamitemc/aether/server/world"
 )
 
 type ServerConfig struct {

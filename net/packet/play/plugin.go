@@ -1,8 +1,8 @@
 package play
 
 import (
-	"aether/net/io"
-	"aether/net/packet/configuration"
+	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/net/packet/configuration"
 )
 
 // clientbound

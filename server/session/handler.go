@@ -1,12 +1,13 @@
 package session
 
 import (
-	"aether/log"
-	"aether/net"
-	"aether/net/packet"
-	"aether/net/packet/configuration"
 	"fmt"
 	"runtime"
+
+	"github.com/dynamitemc/aether/log"
+	"github.com/dynamitemc/aether/net"
+	"github.com/dynamitemc/aether/net/packet"
+	"github.com/dynamitemc/aether/net/packet/configuration"
 )
 
 type handler func(*Session, packet.Packet)

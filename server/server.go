@@ -1,11 +1,13 @@
 package server
 
 import (
-	"aether/log"
-	"aether/net"
-	"aether/server/session"
-	"aether/server/world"
 	"time"
+
+	"github.com/dynamitemc/aether/server/world"
+
+	"github.com/dynamitemc/aether/log"
+	"github.com/dynamitemc/aether/net"
+	"github.com/dynamitemc/aether/server/session"
 )
 
 type Server struct {

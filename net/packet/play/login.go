@@ -1,6 +1,6 @@
 package play
 
-import "aether/net/io"
+import "github.com/dynamitemc/aether/net/io"
 
 //clientbound
 const PacketIdLogin = 0x2B

@@ -1,12 +1,12 @@
 package net
 
 import (
-	"aether/net/packet"
-	"aether/net/packet/configuration"
-	"aether/net/packet/handshake"
-	"aether/net/packet/login"
-	"aether/net/packet/play"
-	"aether/net/packet/status"
+	"github.com/dynamitemc/aether/net/packet"
+	"github.com/dynamitemc/aether/net/packet/configuration"
+	"github.com/dynamitemc/aether/net/packet/handshake"
+	"github.com/dynamitemc/aether/net/packet/login"
+	"github.com/dynamitemc/aether/net/packet/play"
+	"github.com/dynamitemc/aether/net/packet/status"
 )
 
 var serverboundPool = map[int32]map[int32]func() packet.Packet{

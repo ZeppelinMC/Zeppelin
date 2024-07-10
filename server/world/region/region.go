@@ -1,12 +1,13 @@
 package region
 
 import (
-	"aether/nbt"
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
 	"io"
 	"sync"
+
+	"github.com/dynamitemc/aether/nbt"
 )
 
 type RegionFile struct {

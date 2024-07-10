@@ -1,4 +1,4 @@
-module aether
+module github.com/dynamitemc/aether
 
 go 1.22.2
 
