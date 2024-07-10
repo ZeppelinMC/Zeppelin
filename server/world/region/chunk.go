@@ -12,6 +12,13 @@ import (
 )
 
 var emptyLightBuffer = make([]byte, 2048)
+var fullLightBuffer = make([]byte, 2048)
+
+func init() {
+	for i := range fullLightBuffer {
+		fullLightBuffer[i] = 0xFF
+	}
+}
 
 func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 	w := io.NewWriter(buffer)

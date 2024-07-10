@@ -28,6 +28,9 @@ type Conn struct {
 	loginData login.LoginSuccess
 
 	state atomic.Int32
+
+	encrypted                 bool
+	sharedSecret, verifyToken []byte
 }
 
 func (conn *Conn) Username() string {
@@ -51,23 +54,47 @@ func (conn *Conn) State() int32 {
 
 func (conn *Conn) WritePacket(pk packet.Packet) error {
 	if conn.listener.CompressionThreshold < 0 {
-		var buf = new(bytes.Buffer)
-		w := io.NewWriter(buf)
+		var packetBuf = new(bytes.Buffer)
+		w := io.NewWriter(packetBuf)
 		if err := w.VarInt(pk.ID()); err != nil {
 			return err
 		}
 		if err := pk.Encode(w); err != nil {
 			return err
 		}
-		if err := conn.writer.VarInt(int32(buf.Len())); err != nil {
-			return err
-		}
+		length := io.AppendVarInt(nil, int32(packetBuf.Len()))
 
-		return conn.writer.FixedByteArray(buf.Bytes())
+		_, err := conn.Write(append(length, packetBuf.Bytes()...))
+		return err
 	} else {
 		//compressed
 	}
 	return nil
+}
+
+func (conn *Conn) Read(dst []byte) (i int, err error) {
+	i, err = conn.Conn.Read(dst)
+	if err != nil {
+		return i, err
+	}
+	if conn.encrypted {
+		err = decrypt(conn.sharedSecret, dst, dst)
+	}
+
+	return i, err
+}
+
+func (conn *Conn) Write(data []byte) (i int, err error) {
+	if !conn.encrypted {
+		return conn.Conn.Write(data)
+	}
+	fmt.Println(data)
+	err = encrypt(conn.sharedSecret, data, data)
+	if err != nil {
+		return 0, err
+	}
+	fmt.Println("encrypted writing", data)
+	return conn.Conn.Write(data)
 }
 
 func (conn *Conn) ReadPacket() (packet.Packet, error) {
@@ -196,11 +223,13 @@ func (conn *Conn) handleHandshake() bool {
 		if !ok {
 			return false
 		}
+		//conn.Encrypt()
 		conn.loginData = login.LoginSuccess{
 			UUID:                loginStart.PlayerUUID,
 			Username:            loginStart.Name,
 			StrictErrorHandling: true,
 		}
+		fmt.Println("wrting login success")
 		if err := conn.WritePacket(&conn.loginData); err != nil {
 			return false
 		}
