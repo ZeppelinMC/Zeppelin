@@ -14,6 +14,8 @@ type Config struct {
 	IP                   net.IP
 	Port                 int
 	CompressionThreshold int32
+	Encrypt              bool
+	Authenticate         bool
 }
 
 func (c Config) New() (*Listener, error) {

@@ -8,10 +8,10 @@ import (
 	"github.com/dynamitemc/aether/server/session"
 )
 
-func init() {
-	session.Handlers[[2]int32{net.ConfigurationState, configuration.PacketIdClientInformation}] = handleClientInfo
-	session.Handlers[[2]int32{net.PlayState, play.PacketIdClientInformation}] = handleClientInfo
-}
+var (
+	_ = session.RegisterHandler(net.ConfigurationState, configuration.PacketIdClientInformation, handleClientInfo)
+	_ = session.RegisterHandler(net.PlayState, play.PacketIdClientInformation, handleClientInfo)
+)
 
 func handleClientInfo(s *session.Session, p packet.Packet) {
 	switch pk := p.(type) {

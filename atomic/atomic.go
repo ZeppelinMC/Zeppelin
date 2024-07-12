@@ -7,11 +7,14 @@ type AtomicValue[T any] struct {
 }
 
 func (a *AtomicValue[T]) Get() T {
-	if a.v.Load() == nil {
+	val := a.v.Load()
+	if val == nil {
 		var e T
 		return e
 	}
-	return a.v.Load().(T)
+	v, _ := val.(T)
+
+	return v
 }
 
 func (a *AtomicValue[T]) Set(t T) {

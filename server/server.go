@@ -1,6 +1,7 @@
 package server
 
 import (
+	"sync/atomic"
 	"time"
 
 	_ "github.com/dynamitemc/aether/server/session/handler"
@@ -18,6 +19,10 @@ type Server struct {
 	ticker   Ticker
 
 	world *world.World
+
+	broadcast *session.Broadcast
+
+	entityId atomic.Int32
 }
 
 func (srv *Server) Start(ts time.Time) {
@@ -34,6 +39,6 @@ func (srv *Server) Start(ts time.Time) {
 			continue
 		}
 		log.Infof("[%s] Player attempting to connect: %s (%s)\n", conn.RemoteAddr(), conn.Username(), conn.UUID())
-		session.NewSession(conn, 1, srv.world).Login()
+		session.NewSession(conn, srv.entityId.Add(1), srv.world, srv.broadcast).Login()
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 var blue = color.New(color.FgBlue, color.Bold).SprintFunc()
 var red = color.New(color.FgRed, color.Bold).SprintFunc()
+var orange = color.New(color.FgYellow, color.Bold).SprintFunc()
 
 func Infoln(v ...any) {
 	fmt.Printf("%s: ", blue("INFO"))
@@ -35,4 +36,8 @@ func Error(v ...any) {
 
 func Errorf(format string, v ...any) {
 	fmt.Printf("%s: %s", red("ERROR"), fmt.Sprintf(format, v...))
+}
+
+func Recover(v any) {
+	fmt.Printf("%s: %v\n", orange("RECOVER"), v)
 }

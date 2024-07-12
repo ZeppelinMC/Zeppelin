@@ -432,8 +432,8 @@ type registries struct {
 		Downfall float32 `nbt:"downfall"`
 		Effects  struct {
 			FogColor     int32 `nbt:"fog_color"`
-			FoliageColor int32 `nbt:"foliage_color"`
-			GrassColor   int32 `nbt:"grass_color"`
+			FoliageColor int32 `nbt:"foliage_color,omitempty"`
+			GrassColor   int32 `nbt:"grass_color,omitempty"`
 			MoodSound    struct {
 				BlockSearchExtent int32   `nbt:"block_search_extent"`
 				Offset            float64 `nbt:"offset"`

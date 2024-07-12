@@ -31,9 +31,11 @@ func (l *Listener) Accept() (*Conn, error) {
 	conn := &Conn{
 		Conn:     c,
 		listener: l,
+
+		//rd: bufio.NewReaderSize(c, 4096),
 	}
-	conn.reader = io.NewReader(conn, 0)
 	conn.writer = io.NewWriter(conn)
+
 	if err != nil {
 		return conn, err
 	}

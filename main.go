@@ -1,13 +1,11 @@
 package main
 
 import (
-	"net"
 	"runtime"
 	"time"
 
 	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net/registry"
-	"github.com/dynamitemc/aether/server"
 	"github.com/dynamitemc/aether/server/world/region/blocks"
 )
 
@@ -25,17 +23,10 @@ func main() {
 		log.Errorln("Error loading server registries:", err)
 		return
 	}
+	log.Infoln("Loading config")
+	cfg := loadConfig()
 
-	var ip = net.IPv4(127, 0, 0, 1)
-	var port = 25565
-
-	log.Infof("Binding server to %s:%d TCP\n", ip, port)
-	cfg := server.ServerConfig{
-		IP:                   ip,
-		Port:                 port,
-		TPS:                  20,
-		CompressionThreshold: -1,
-	}
+	log.Infof("Binding server to %s:%d TCP\n", cfg.ServerIP, cfg.ServerPort)
 	srv, err := cfg.New()
 	if err != nil {
 		log.Errorln("Error binding server:", err)

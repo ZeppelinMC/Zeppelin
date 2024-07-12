@@ -2,9 +2,9 @@ package net
 
 import (
 	"crypto/aes"
-	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/asn1"
 	"fmt"
 	"math/big"
@@ -12,28 +12,12 @@ import (
 	"github.com/dynamitemc/aether/net/packet/login"
 )
 
-func encrypt(sharedSecret, plaintext, dst []byte) error {
-	block, err := aes.NewCipher(sharedSecret)
-	if err != nil {
-		return err
-	}
-
-	stream := cipher.NewCFBEncrypter(block, sharedSecret)
-	stream.XORKeyStream(dst, plaintext)
-
-	return nil
+func (c *Conn) encrypt(plaintext, dst []byte) {
+	c.encrypter.XORKeyStream(dst, plaintext)
 }
 
-func decrypt(sharedSecret, ciphertext, dst []byte) error {
-	block, err := aes.NewCipher(sharedSecret)
-	if err != nil {
-		return nil
-	}
-
-	stream := cipher.NewCFBDecrypter(block, sharedSecret)
-	stream.XORKeyStream(dst, ciphertext)
-
-	return nil
+func (c *Conn) decrypt(ciphertext, dst []byte) {
+	c.decrypter.XORKeyStream(dst, ciphertext)
 }
 
 type AlgorithmIdentifier struct {
@@ -52,31 +36,7 @@ type RSAPublicKey struct {
 }
 
 func (c *Conn) Encrypt() error {
-	pubKey := c.listener.privKey.PublicKey
-	rsaPubKey := RSAPublicKey{
-		Modulus:        pubKey.N,
-		PublicExponent: pubKey.E,
-	}
-
-	// Marshal the RSA public key into ASN.1 DER format
-	rsaPubKeyDER, err := asn1.Marshal(rsaPubKey)
-	if err != nil {
-		return err
-	}
-
-	spki := SubjectPublicKeyInfo{
-		Algorithm: AlgorithmIdentifier{
-			Algorithm:  asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}, // OID for RSA encryption
-			Parameters: asn1.RawValue{Tag: 5},                             // NULL parameters
-		},
-		SubjectPublicKey: asn1.BitString{
-			Bytes:     rsaPubKeyDER,
-			BitLength: len(rsaPubKeyDER) * 8,
-		},
-	}
-
-	// Marshal the SubjectPublicKeyInfo into ASN.1 DER format
-	spkiDER, err := asn1.Marshal(spki)
+	key, err := x509.MarshalPKIXPublicKey(&c.listener.privKey.PublicKey)
 	if err != nil {
 		return err
 	}
@@ -85,8 +45,9 @@ func (c *Conn) Encrypt() error {
 	rand.Read(verifyToken)
 
 	c.WritePacket(&login.EncryptionRequest{
-		PublicKey:   spkiDER,
-		VerifyToken: verifyToken,
+		PublicKey:          key,
+		VerifyToken:        verifyToken,
+		ShouldAuthenticate: c.listener.Authenticate,
 	})
 	p, err := c.ReadPacket()
 	if err != nil {
@@ -111,5 +72,15 @@ func (c *Conn) Encrypt() error {
 		return fmt.Errorf("unsuccessful encryption")
 	}
 
+	block, err := aes.NewCipher(c.sharedSecret)
+	if err != nil {
+		return err
+	}
+	c.encrypter = newCFB8Encrypter(block, c.sharedSecret)
+	c.decrypter = newCFB8Decrypter(block, c.sharedSecret)
+
+	if c.listener.Authenticate {
+		return c.Authenticate()
+	}
 	return nil
 }

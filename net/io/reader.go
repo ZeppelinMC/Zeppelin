@@ -21,6 +21,10 @@ func NewReader(r io.Reader, length int) Reader {
 	return Reader{r, length}
 }
 
+func (r *Reader) SetLength(length int) {
+	r.length = length
+}
+
 func (r Reader) readBytes(l int) ([]byte, error) {
 	arr := make([]byte, l)
 	_, err := r.r.Read(arr)
@@ -184,6 +188,7 @@ func (r Reader) BitSet(data *BitSet) error {
 	return nil
 }
 
+// Length prefixed byte array
 func (r Reader) ByteArray(s *[]byte) error {
 	var l int32
 	if _, err := r.VarInt(&l); err != nil {
@@ -215,4 +220,8 @@ func (r Reader) JSONTextComponent(comp *chat.TextComponent) error {
 		return err
 	}
 	return json.Unmarshal(d, comp)
+}
+
+func (r Reader) TextComponent(comp *chat.TextComponent) error {
+	return r.NBT(comp)
 }

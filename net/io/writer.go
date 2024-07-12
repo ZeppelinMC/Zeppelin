@@ -148,6 +148,7 @@ func (w Writer) BitSet(data BitSet) error {
 	return nil
 }
 
+// Length prefixed byte array
 func (w Writer) ByteArray(s []byte) error {
 	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
@@ -163,6 +164,10 @@ func (w Writer) JSONTextComponent(comp chat.TextComponent) error {
 	d, _ := json.Marshal(comp)
 
 	return w.ByteArray(d)
+}
+
+func (w Writer) TextComponent(comp chat.TextComponent) error {
+	return w.NBT(comp)
 }
 
 func (w Writer) NBT(data any) error {

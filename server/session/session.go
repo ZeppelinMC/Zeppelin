@@ -13,21 +13,30 @@ import (
 )
 
 type Session struct {
-	world  *world.World
-	Player *player.Player
+	world     *world.World
+	Player    *player.Player
+	broadcast *Broadcast
 
 	Conn *net.Conn
 
 	clientName string // constant
 	ClientInfo atomic.AtomicValue[configuration.ClientInformation]
+
+	HasSessionData atomic.AtomicValue[bool]
+	SessionData    atomic.AtomicValue[play.PlayerSession]
 }
 
-func NewSession(conn *net.Conn, entityId int32, world *world.World) *Session {
+func NewSession(conn *net.Conn, entityId int32, world *world.World, broadcast *Broadcast) *Session {
 	return &Session{
-		Conn:   conn,
-		world:  world,
-		Player: player.NewPlayer(entityId),
+		Conn:      conn,
+		world:     world,
+		Player:    player.NewPlayer(entityId),
+		broadcast: broadcast,
 	}
+}
+
+func (session *Session) ClientName() string {
+	return session.clientName
 }
 
 func (session *Session) Login() error {
@@ -42,7 +51,7 @@ func (session *Session) Login() error {
 	}
 
 	if err := session.Conn.WritePacket(&play.Login{
-		EntityID:   1,
+		EntityID:   session.Player.EntityId(),
 		Dimensions: []string{"minecraft:overworld"},
 
 		ViewDistance:        12,
@@ -67,6 +76,8 @@ func (session *Session) Login() error {
 	if err := session.Conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
 		return err
 	}
+
+	session.broadcast.addPlayer(session)
 
 	return nil
 }

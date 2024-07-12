@@ -9,11 +9,11 @@ import (
 	"github.com/dynamitemc/aether/server/session"
 )
 
-func init() {
-	session.Handlers[[2]int32{net.PlayState, play.PacketIdSetPlayerPosition}] = handleMovement
-	session.Handlers[[2]int32{net.PlayState, play.PacketIdSetPlayerPositionAndRotation}] = handleMovement
-	session.Handlers[[2]int32{net.PlayState, play.PacketIdSetPlayerRotation}] = handleMovement
-}
+var (
+	_ = session.RegisterHandler(net.PlayState, play.PacketIdSetPlayerPosition, handleMovement)
+	_ = session.RegisterHandler(net.PlayState, play.PacketIdSetPlayerPositionAndRotation, handleMovement)
+	_ = session.RegisterHandler(net.PlayState, play.PacketIdSetPlayerRotation, handleMovement)
+)
 
 func chunkPos(pos float64) int32 {
 	return int32(math.Floor(pos / 16))

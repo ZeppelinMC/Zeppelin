@@ -7,6 +7,6 @@ Why not?
 ## Minecraft Protocol Coverage
 - NBT: reading & writing ([src](https://github.com/DynamiteMC/Aether/tree/main/nbt))
 
-- Region: reading ([src](https://github.com/DynamiteMC/Aether/tree/main/server/world/region))
+- Chunk Data: region reading & anvil encoding ([src](https://github.com/DynamiteMC/Aether/tree/main/server/world/region))
 
-- Chunk Data: work in progress
+- Encryption: yes & authentication ([src]())

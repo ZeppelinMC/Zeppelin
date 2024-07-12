@@ -1,6 +1,8 @@
 package io
 
 import (
+	"fmt"
+	"io"
 	"unsafe"
 )
 
@@ -32,10 +34,40 @@ func AppendVarInt(data []byte, value int32) []byte {
 	ux := uint32(value)
 	for ux >= 0x80 {
 		data = append(data, byte(ux&0x7F)|0x80)
-
 		ux >>= 7
 	}
 	return append(data, byte(ux))
+}
+
+func ReadVarInt(data []byte) (int32, []byte, error) {
+	var (
+		position    int
+		currentByte byte
+
+		value int32
+	)
+
+	for {
+		if len(data) == 0 {
+			return value, data, io.EOF
+		}
+		currentByte = data[0]
+		data = data[1:]
+
+		value |= int32((currentByte & 127)) << position
+
+		if (currentByte & 128) == 0 {
+			break
+		}
+
+		position += 7
+
+		if position >= 32 {
+			return value, data, fmt.Errorf("VarInt is too big")
+		}
+	}
+
+	return value, data, nil
 }
 
 func AppendVarLong(data []byte, value int64) []byte {

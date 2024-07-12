@@ -31,37 +31,37 @@ const (
 )
 
 type ClickEvent struct {
-	Action string `json:"action"`
-	Value  string `json:"value"`
+	Action string `json:"action" nbt:"action"`
+	Value  string `json:"value" nbt:"value"`
 }
 
 type HoverEventContents struct {
-	ID    string `json:"id,omitempty"`
-	Count int    `json:"count,omitempty"`
-	Tag   string `json:"tag,omitempty"`
-	Type  string `json:"type,omitempty"`
-	Name  string `json:"name,omitempty"`
+	ID    string `json:"id,omitempty" nbt:"id,omitempty"`
+	Count int    `json:"count,omitempty" nbt:"count,omitempty"`
+	Tag   string `json:"tag,omitempty" nbt:"tag,omitempty"`
+	Type  string `json:"type,omitempty" nbt:"type,omitempty"`
+	Name  string `json:"name,omitempty" nbt:"name,omitempty"`
 }
 
 type HoverEvent struct {
-	Action   string             `json:"action"`
-	Contents HoverEventContents `json:"contents"`
+	Action   string             `json:"action" nbt:"action"`
+	Contents HoverEventContents `json:"contents" nbt:"contents"`
 }
 
 type TextComponent struct {
-	Type  string          `json:"type,omitempty"`
-	Extra []TextComponent `json:"extra,omitempty"`
+	Type  string          `json:"type,omitempty" nbt:"type,omitempty"`
+	Extra []TextComponent `json:"extra,omitempty" nbt:"extra,omitempty"`
 
-	Color         string     `json:"color,omitempty"`
-	Bold          bool       `json:"bold,omitempty"`
-	Italic        bool       `json:"italic,omitempty"`
-	Underlined    bool       `json:"underlined,omitempty"`
-	Strikethrough bool       `json:"strikethrough,omitempty"`
-	Obfuscated    bool       `json:"obfuscated,omitempty"`
-	Font          string     `json:"font,omitempty"`
-	Insertion     string     `json:"insertion,omitempty"`
-	ClickEvent    ClickEvent `json:"click_event,omitempty"`
-	HoverEvent    HoverEvent `json:"hover_event,omitempty"`
+	Color         string     `json:"color,omitempty" nbt:"color,omitempty"`
+	Bold          bool       `json:"bold,omitempty" nbt:"bold,omitempty"`
+	Italic        bool       `json:"italic,omitempty" nbt:"italic,omitempty"`
+	Underlined    bool       `json:"underlined,omitempty" nbt:"underlined,omitempty"`
+	Strikethrough bool       `json:"strikethrough,omitempty" nbt:"strikethrough,omitempty"`
+	Obfuscated    bool       `json:"obfuscated,omitempty" nbt:"obfuscated,omitempty"`
+	Font          string     `json:"font,omitempty" nbt:"font,omitempty"`
+	Insertion     string     `json:"insertion,omitempty" nbt:"insertion,omitempty"`
+	ClickEvent    ClickEvent `json:"click_event,omitempty" nbt:"click_event,omitempty"`
+	HoverEvent    HoverEvent `json:"hover_event,omitempty" nbt:"hover_event,omitempty"`
 
-	Text string `json:"text"`
+	Text string `json:"text" nbt:"text"`
 }

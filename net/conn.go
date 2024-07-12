@@ -1,7 +1,9 @@
 package net
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/cipher"
 	"encoding/binary"
 	"fmt"
 	"net"
@@ -22,27 +24,33 @@ type Conn struct {
 
 	listener *Listener
 
-	reader io.Reader
 	writer io.Writer
 
-	loginData login.LoginSuccess
+	username   string
+	uuid       uuid.UUID
+	properties []login.Property
 
 	state atomic.Int32
 
 	encrypted                 bool
 	sharedSecret, verifyToken []byte
+
+	rd  *bufio.Reader
+	buf [4096]byte
+
+	decrypter, encrypter cipher.Stream
 }
 
 func (conn *Conn) Username() string {
-	return conn.loginData.Username
+	return conn.username
 }
 
 func (conn *Conn) UUID() uuid.UUID {
-	return conn.loginData.UUID
+	return conn.uuid
 }
 
 func (conn *Conn) Properties() []login.Property {
-	return conn.loginData.Properties
+	return conn.properties
 }
 
 func (conn *Conn) SetState(state int32) {
@@ -62,9 +70,10 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 		if err := pk.Encode(w); err != nil {
 			return err
 		}
-		length := io.AppendVarInt(nil, int32(packetBuf.Len()))
+		data := packetBuf.Bytes()
+		length := io.AppendVarInt(nil, int32(len(data)))
 
-		_, err := conn.Write(append(length, packetBuf.Bytes()...))
+		_, err := conn.Write(append(length, data...))
 		return err
 	} else {
 		//compressed
@@ -78,7 +87,7 @@ func (conn *Conn) Read(dst []byte) (i int, err error) {
 		return i, err
 	}
 	if conn.encrypted {
-		err = decrypt(conn.sharedSecret, dst, dst)
+		conn.decrypt(dst, dst)
 	}
 
 	return i, err
@@ -88,17 +97,16 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 	if !conn.encrypted {
 		return conn.Conn.Write(data)
 	}
-	fmt.Println(data)
-	err = encrypt(conn.sharedSecret, data, data)
+	conn.encrypt(data, data)
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println("encrypted writing", data)
+
 	return conn.Conn.Write(data)
 }
 
 func (conn *Conn) ReadPacket() (packet.Packet, error) {
-	rd := conn.reader
+	var rd = io.NewReader(conn, 0)
 	var (
 		length, packetId int32
 		data             []byte
@@ -107,6 +115,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		if _, err := rd.VarInt(&length); err != nil {
 			return nil, err
 		}
+		rd.SetLength(int(length))
 		vii, err := rd.VarInt(&packetId)
 		if err != nil {
 			return nil, err
@@ -223,14 +232,22 @@ func (conn *Conn) handleHandshake() bool {
 		if !ok {
 			return false
 		}
-		//conn.Encrypt()
-		conn.loginData = login.LoginSuccess{
-			UUID:                loginStart.PlayerUUID,
-			Username:            loginStart.Name,
+		conn.username = loginStart.Name
+		conn.uuid = loginStart.PlayerUUID
+
+		if conn.listener.Encrypt {
+			if err := conn.Encrypt(); err != nil {
+				return false
+			}
+		}
+
+		suc := &login.LoginSuccess{
+			UUID:                conn.uuid,
+			Username:            conn.username,
+			Properties:          conn.properties,
 			StrictErrorHandling: true,
 		}
-		fmt.Println("wrting login success")
-		if err := conn.WritePacket(&conn.loginData); err != nil {
+		if err := conn.WritePacket(suc); err != nil {
 			return false
 		}
 		pk, err = conn.ReadPacket()
