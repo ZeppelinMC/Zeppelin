@@ -148,6 +148,15 @@ func (w Writer) BitSet(data BitSet) error {
 	return nil
 }
 
+func (w Writer) FixedBitSet(data BitSet) error {
+	for _, l := range data {
+		if err := w.Long(l); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Length prefixed byte array
 func (w Writer) ByteArray(s []byte) error {
 	if err := w.VarInt(int32(len(s))); err != nil {

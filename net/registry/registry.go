@@ -81,25 +81,15 @@ type Dimension struct {
 	} `nbt:"monster_spawn_light_level"`
 }
 
-type ChatTypeWStyle struct {
-	Chat struct {
-		Parameters     []string `nbt:"parameters"`
-		TranslationKey string   `nbt:"translation_key"`
-		Style          struct {
-			Color  string `nbt:"color"`
-			Italic bool   `nbt:"italic"`
-		} `nbt:"style"`
-	} `nbt:"chat"`
-	Narration struct {
-		Parameters     []string `nbt:"parameters"`
-		TranslationKey string   `nbt:"translation_key"`
-	} `nbt:"narration"`
-}
-
 type ChatType struct {
 	Chat struct {
 		Parameters     []string `nbt:"parameters"`
 		TranslationKey string   `nbt:"translation_key"`
+
+		Style struct {
+			Color  string `nbt:"color"`
+			Italic bool   `nbt:"italic"`
+		} `nbt:"style,omitempty"`
 	} `nbt:"chat"`
 	Narration struct {
 		Parameters     []string `nbt:"parameters"`
@@ -112,15 +102,7 @@ type registries struct {
 		AssetId        string `nbt:"asset_id"`
 		TranslationKey string `nbt:"translation_key"`
 	} `nbt:"minecraft:banner_pattern"`
-	ChatType struct {
-		Chat                   ChatType       `nbt:"minecraft:chat"`
-		EmoteCommand           ChatType       `nbt:"minecraft:emote_command"`
-		MsgCommandIncoming     ChatTypeWStyle `nbt:"minecraft:msg_command_incoming"`
-		MsgCommandOutgoing     ChatTypeWStyle `nbt:"minecraft:msg_command_outgoing"`
-		SayCommand             ChatType       `nbt:"minecraft:say_command"`
-		TeamMsgCommandIncoming ChatType       `nbt:"minecraft:team_msg_command_incoming"`
-		TeamMsgCommandOutgoing ChatType       `nbt:"minecraft:team_msg_command_outgoing"`
-	} `nbt:"minecraft:chat_type"`
+	ChatType   map[string]ChatType `nbt:"minecraft:chat_type"`
 	DamageType map[string]struct {
 		Exhaustion       float32 `nbt:"exhaustion"`
 		MessageID        string  `nbt:"message_id"`

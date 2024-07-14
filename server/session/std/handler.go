@@ -1,10 +1,9 @@
-package session
+package std
 
 import (
 	"fmt"
 	"runtime"
 	"time"
-	"unsafe"
 
 	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net"
@@ -14,53 +13,46 @@ import (
 	"github.com/dynamitemc/aether/net/packet/play"
 )
 
-type handler func(*Session, packet.Packet)
+type handler func(*StandardSession, packet.Packet)
 
-// id = LSB: state (1:configuration,0:play), packet id
-var handlers = make(map[int32]handler)
+var handlers = make(map[[2]int32]handler)
 
-func encodeHandlerID(conf bool, packetId int32) int32 {
-	confi := int32(*(*byte)(unsafe.Pointer(&conf)))
-
-	return packetId<<1 | confi
+func RegisterHandler(state, id int32, handler handler) {
+	handlers[[2]int32{state, id}] = handler
 }
 
-func RegisterHandler(state, packetId int32, handler handler) int {
-	handlers[encodeHandlerID(state == net.ConfigurationState, packetId)] = handler
-
-	return 0
+func (session *StandardSession) inConfiguration() bool {
+	return session.conn.State() == net.ConfigurationState
 }
 
-func (session *Session) inConfiguration() bool {
-	return session.Conn.State() == net.ConfigurationState
-}
-
-func (session *Session) handlePackets() {
+func (session *StandardSession) handlePackets() {
 	keepAlive := time.NewTicker(time.Second * 20)
 	for {
 		select {
 		case <-keepAlive.C:
-			session.Conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: time.Now().UnixMilli()})
+			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: time.Now().UnixMilli()})
 		default:
-			p, err := session.Conn.ReadPacket()
+			p, err := session.conn.ReadPacket()
 			if err != nil {
-				log.Infof("[%s] Player %s disconnected\n", session.Conn.RemoteAddr(), session.Conn.Username())
+				log.Infof("[%s] Player %s disconnected\n", session.conn.RemoteAddr(), session.conn.Username())
 				return
 			}
 
-			handler, ok := handlers[encodeHandlerID(session.inConfiguration(), p.ID())]
+			handler, ok := handlers[[2]int32{session.conn.State(), p.ID()}]
 			if !ok {
 				switch pk := p.(type) {
 				case *play.PlayerSession:
-					session.HasSessionData.Set(true)
-					session.SessionData.Set(*pk)
+					session.hasSessionData.Set(true)
+					session.sessionData.Set(*pk)
+
+					session.broadcast.UpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
 						_, data, _ := io.ReadVarInt(pk.Data)
 						session.clientName = string(data)
 					}
 				case *configuration.AcknowledgeFinishConfiguration:
-					session.Conn.SetState(net.PlayState)
+					session.conn.SetState(net.PlayState)
 
 					session.sendSpawnChunks()
 

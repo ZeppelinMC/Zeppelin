@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// serverbound
 const PacketIdPlayerSession = 0x07
 
 type PlayerSession struct {

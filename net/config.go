@@ -26,10 +26,15 @@ func (c Config) New() (*Listener, error) {
 		return nil, err
 	}
 	lis := &Listener{
-		Config:   c,
+		cfg:      c,
 		Listener: l,
+
+		newConns: make(chan *Conn),
+		err:      make(chan error),
 	}
 	lis.privKey, err = rsa.GenerateKey(rand.Reader, 1024)
+
+	go lis.listen()
 
 	return lis, err
 }

@@ -21,27 +21,44 @@ const (
 
 type Listener struct {
 	net.Listener
-	Config
+	cfg Config
+
+	newConns chan *Conn
+	err      chan error
 
 	privKey *rsa.PrivateKey
 }
 
-func (l *Listener) Accept() (*Conn, error) {
-	c, err := l.Listener.Accept()
+func (l *Listener) listen() {
+	for {
+		c, err := l.Listener.Accept()
+		if err != nil {
+			l.err <- err
+			close(l.newConns)
+			return
+		}
+		conn := l.newConn(c)
+
+		if conn.handleHandshake() {
+			l.newConns <- conn
+		}
+	}
+}
+
+func (l *Listener) newConn(c net.Conn) *Conn {
 	conn := &Conn{
 		Conn:     c,
 		listener: l,
-
-		//rd: bufio.NewReaderSize(c, 4096),
 	}
 	conn.writer = io.NewWriter(conn)
 
-	if err != nil {
-		return conn, err
-	}
+	return conn
+}
 
-	if !conn.handleHandshake() {
-		conn = nil
+func (l *Listener) Accept() (*Conn, error) {
+	conn, ok := <-l.newConns
+	if !ok {
+		return nil, <-l.err
 	}
 
 	return conn, nil

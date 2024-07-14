@@ -1,8 +1,8 @@
 package net
 
 import (
-	"bufio"
 	"bytes"
+	"compress/zlib"
 	"crypto/cipher"
 	"encoding/binary"
 	"fmt"
@@ -35,10 +35,8 @@ type Conn struct {
 	encrypted                 bool
 	sharedSecret, verifyToken []byte
 
-	rd  *bufio.Reader
-	buf [4096]byte
-
 	decrypter, encrypter cipher.Stream
+	compressionSet       bool
 }
 
 func (conn *Conn) Username() string {
@@ -61,24 +59,46 @@ func (conn *Conn) State() int32 {
 }
 
 func (conn *Conn) WritePacket(pk packet.Packet) error {
-	if conn.listener.CompressionThreshold < 0 {
-		var packetBuf = new(bytes.Buffer)
-		w := io.NewWriter(packetBuf)
-		if err := w.VarInt(pk.ID()); err != nil {
-			return err
-		}
-		if err := pk.Encode(w); err != nil {
-			return err
-		}
-		data := packetBuf.Bytes()
-		length := io.AppendVarInt(nil, int32(len(data)))
+	var packetBuf = new(bytes.Buffer)
+	w := io.NewWriter(packetBuf)
+	if err := w.VarInt(pk.ID()); err != nil {
+		return err
+	}
+	if err := pk.Encode(w); err != nil {
+		return err
+	}
+	data := packetBuf.Bytes()
 
+	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet {
+		length := io.AppendVarInt(nil, int32(len(data)))
 		_, err := conn.Write(append(length, data...))
 		return err
 	} else {
-		//compressed
+		if len(data) < int(conn.listener.cfg.CompressionThreshold) {
+			data = append([]byte{0}, data...)
+			packetLength := io.AppendVarInt(nil, int32(len(data)))
+			_, err := conn.Write(append(packetLength, data...))
+			return err
+		}
+
+		dataLength := io.AppendVarInt(nil, int32(len(data)))
+
+		var packetBuf = new(bytes.Buffer)
+		comp := zlib.NewWriter(packetBuf)
+		if _, err := comp.Write(data); err != nil {
+			return err
+		}
+		if err := comp.Close(); err != nil {
+			return err
+		}
+
+		compData := append(dataLength, packetBuf.Bytes()...)
+
+		packetLength := io.AppendVarInt(nil, int32(len(compData)))
+
+		_, err := conn.Write(append(packetLength, compData...))
+		return err
 	}
-	return nil
 }
 
 func (conn *Conn) Read(dst []byte) (i int, err error) {
@@ -87,7 +107,7 @@ func (conn *Conn) Read(dst []byte) (i int, err error) {
 		return i, err
 	}
 	if conn.encrypted {
-		conn.decrypt(dst, dst)
+		conn.decryptd(dst, dst)
 	}
 
 	return i, err
@@ -97,7 +117,7 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 	if !conn.encrypted {
 		return conn.Conn.Write(data)
 	}
-	conn.encrypt(data, data)
+	conn.encryptd(data, data)
 	if err != nil {
 		return 0, err
 	}
@@ -111,7 +131,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		length, packetId int32
 		data             []byte
 	)
-	if conn.listener.CompressionThreshold < 0 {
+	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet {
 		if _, err := rd.VarInt(&length); err != nil {
 			return nil, err
 		}
@@ -128,7 +148,65 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 
 		rd = io.NewReader(bytes.NewReader(data), int(length))
 	} else {
-		//compression
+		var packetLength int32
+		if _, err := rd.VarInt(&packetLength); err != nil {
+			return nil, err
+		}
+		dli, err := rd.VarInt(&length)
+		if err != nil {
+			return nil, err
+		}
+		if length == 0 {
+			length = packetLength - 1
+
+			vii, err := rd.VarInt(&packetId)
+			if err != nil {
+				return nil, err
+			}
+			length -= int32(vii)
+			data = make([]byte, length)
+			if err := rd.FixedByteArray(data); err != nil {
+				return nil, err
+			}
+
+			rd = io.NewReader(bytes.NewReader(data), int(length))
+		} else {
+			panic("implement compression reading")
+			l := packetLength - int32(dli)
+			var packetData = make([]byte, l)
+			if _, err := conn.Read(packetData); err != nil {
+				return nil, err
+			}
+
+			compressedData := bytes.NewReader(packetData)
+			z, err := zlib.NewReader(compressedData)
+			if err != nil {
+				return nil, err
+			}
+			defer z.Close()
+			var uncompressedData = make([]byte, length)
+			fmt.Println(length, compressedData.Len())
+			if _, err := z.Read(uncompressedData); err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+
+			rd = io.NewReader(bytes.NewReader(uncompressedData), dli)
+
+			vii, err := rd.VarInt(&packetId)
+			if err != nil {
+				return nil, err
+			}
+
+			fmt.Println(packetId, vii)
+			length -= int32(vii)
+			data = make([]byte, length)
+			if err := rd.FixedByteArray(data); err != nil {
+				return nil, err
+			}
+
+			rd = io.NewReader(bytes.NewReader(data), int(length))
+		}
 	}
 
 	var pk packet.Packet
@@ -180,6 +258,7 @@ func (conn *Conn) writeLegacyDisconnect(reason string) {
 	binary.Write(conn, binary.BigEndian, strdata)
 }
 
+// returns true if the client is trying to log in to the server
 func (conn *Conn) handleHandshake() bool {
 	pk, err := conn.ReadPacket()
 	if err != nil {
@@ -188,7 +267,7 @@ func (conn *Conn) handleHandshake() bool {
 	handshaking, ok := pk.(*handshake.Handshaking)
 	if !ok {
 		if pk.ID() == 122 {
-			conn.writeLegacyStatus(conn.listener.Status())
+			conn.writeLegacyStatus(conn.listener.cfg.Status())
 		}
 		if pk.ID() == 78 {
 			conn.writeLegacyDisconnect("Your client is too old! this server supports MC 1.21")
@@ -207,7 +286,7 @@ func (conn *Conn) handleHandshake() bool {
 		if !ok {
 			return false
 		}
-		if err := conn.WritePacket(&status.StatusResponse{Data: conn.listener.Status()}); err != nil {
+		if err := conn.WritePacket(&status.StatusResponse{Data: conn.listener.cfg.Status()}); err != nil {
 			return false
 		}
 
@@ -215,6 +294,7 @@ func (conn *Conn) handleHandshake() bool {
 		if err != nil {
 			return false
 		}
+
 		p, ok := pk.(*status.Ping)
 		if !ok {
 			return false
@@ -235,11 +315,16 @@ func (conn *Conn) handleHandshake() bool {
 		conn.username = loginStart.Name
 		conn.uuid = loginStart.PlayerUUID
 
-		if conn.listener.Encrypt {
-			if err := conn.Encrypt(); err != nil {
+		if conn.listener.cfg.Encrypt {
+			if err := conn.encrypt(); err != nil {
 				return false
 			}
 		}
+
+		if err := conn.WritePacket(&login.SetCompression{Threshold: conn.listener.cfg.CompressionThreshold}); err != nil {
+			return false
+		}
+		conn.compressionSet = true
 
 		suc := &login.LoginSuccess{
 			UUID:                conn.uuid,

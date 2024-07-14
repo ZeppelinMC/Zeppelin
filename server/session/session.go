@@ -1,114 +1,41 @@
 package session
 
 import (
-	"bytes"
+	"net"
 
-	"github.com/dynamitemc/aether/atomic"
-	"github.com/dynamitemc/aether/net"
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/packet/configuration"
+	"github.com/dynamitemc/aether/chat"
+	"github.com/dynamitemc/aether/net/packet/login"
 	"github.com/dynamitemc/aether/net/packet/play"
 	"github.com/dynamitemc/aether/server/player"
-	"github.com/dynamitemc/aether/server/world"
+	"github.com/google/uuid"
 )
 
-type Session struct {
-	world     *world.World
-	Player    *player.Player
-	broadcast *Broadcast
+type Session interface {
+	// Username of the session
+	Username() string
+	// UUID of the session
+	UUID() uuid.UUID
+	// Properties (typically only textures)
+	Properties() []login.Property
 
-	Conn *net.Conn
+	// The player this session holds
+	Player() *player.Player
+	// The client name this session reports in minecraft:brand (vanilla)
+	ClientName() string
+	// The address of this connection
+	Addr() net.Addr
+	// The broadcaster this session uses
+	Broadcast() *Broadcast
 
-	clientName string // constant
-	ClientInfo atomic.AtomicValue[configuration.ClientInformation]
+	// Logins the session to the server, on the standard session this starts listening to packets too
+	Login() error
+	// Disconnects the session from the server
+	Disconnect(reason chat.TextComponent) error
+	// sends a player chat message packet to the session
+	PlayerChatMessage(pk play.ChatMessage, sender Session, chatType int) error
+	// sends a player info update packet to the session
+	PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error
 
-	HasSessionData atomic.AtomicValue[bool]
-	SessionData    atomic.AtomicValue[play.PlayerSession]
-}
-
-func NewSession(conn *net.Conn, entityId int32, world *world.World, broadcast *Broadcast) *Session {
-	return &Session{
-		Conn:      conn,
-		world:     world,
-		Player:    player.NewPlayer(entityId),
-		broadcast: broadcast,
-	}
-}
-
-func (session *Session) ClientName() string {
-	return session.clientName
-}
-
-func (session *Session) Login() error {
-	go session.handlePackets()
-	for _, packet := range configuration.ConstructRegistryPackets() {
-		if err := session.Conn.WritePacket(packet); err != nil {
-			return err
-		}
-	}
-	if err := session.Conn.WritePacket(configuration.FinishConfiguration{}); err != nil {
-		return err
-	}
-
-	if err := session.Conn.WritePacket(&play.Login{
-		EntityID:   session.Player.EntityId(),
-		Dimensions: []string{"minecraft:overworld"},
-
-		ViewDistance:        12,
-		SimulationDistance:  12,
-		EnableRespawnScreen: true,
-		DimensionType:       0,
-		DimensionName:       "minecraft:overworld",
-		GameMode:            1,
-
-		EnforcesSecureChat: true,
-	}); err != nil {
-		return err
-	}
-
-	if err := session.Conn.WritePacket(&play.ClientboundPluginMessage{
-		Channel: "minecraft:brand",
-		Data:    io.AppendString(nil, "Aether"),
-	}); err != nil {
-		return err
-	}
-
-	if err := session.Conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
-		return err
-	}
-
-	session.broadcast.addPlayer(session)
-
-	return nil
-}
-
-func (session *Session) sendSpawnChunks() error {
-	viewDistance := int32(session.ClientInfo.Get().ViewDistance)
-	var buf = new(bytes.Buffer)
-
-	if err := session.Conn.WritePacket(&play.ChunkBatchStart{}); err != nil {
-		return err
-	}
-
-	var chunks int32
-	for x := 0 - viewDistance; x <= 0+viewDistance; x++ {
-		for z := 0 - viewDistance; z < 0+viewDistance; z++ {
-			c, err := session.world.GetChunk(x, z)
-			if err != nil {
-				continue
-			}
-
-			if err := session.Conn.WritePacket(c.Encode(buf)); err != nil {
-				return err
-			}
-			buf.Reset()
-			chunks++
-		}
-	}
-
-	if err := session.Conn.WritePacket(&play.ChunkBatchFinished{BatchSize: chunks}); err != nil {
-		return err
-	}
-
-	return nil
+	// Returns the session data for this session, and if it has any
+	SessionData() (data play.PlayerSession, ok bool)
 }

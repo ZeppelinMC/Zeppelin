@@ -4,7 +4,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	_ "github.com/dynamitemc/aether/server/session/handler"
+	"github.com/dynamitemc/aether/server/session/std"
+	_ "github.com/dynamitemc/aether/server/session/std/handler"
 
 	"github.com/dynamitemc/aether/server/world"
 
@@ -35,10 +36,7 @@ func (srv *Server) Start(ts time.Time) {
 			log.Errorln("Server error: ", err)
 			return
 		}
-		if conn == nil {
-			continue
-		}
 		log.Infof("[%s] Player attempting to connect: %s (%s)\n", conn.RemoteAddr(), conn.Username(), conn.UUID())
-		session.NewSession(conn, srv.entityId.Add(1), srv.world, srv.broadcast).Login()
+		std.NewStandardSession(conn, srv.entityId.Add(1), srv.world, srv.broadcast).Login()
 	}
 }

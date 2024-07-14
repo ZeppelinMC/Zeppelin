@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (c *Conn) Authenticate() error {
+func (c *Conn) authenticate() error {
 	key, err := x509.MarshalPKIXPublicKey(&c.listener.privKey.PublicKey)
 	if err != nil {
 		return err

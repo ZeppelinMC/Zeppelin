@@ -110,6 +110,7 @@ func (r Reader) VarInt(value *int32) (i int, err error) {
 		if err := r.Ubyte(&currentByte); err != nil {
 			return size, err
 		}
+
 		*value |= int32((currentByte & SEGMENT_BITS)) << position
 		size++
 
@@ -181,6 +182,15 @@ func (r Reader) BitSet(data *BitSet) error {
 	*data = make([]int64, l)
 
 	for _, l := range *data {
+		if err := r.Long(&l); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r Reader) FixedBitSet(data BitSet) error {
+	for _, l := range data {
 		if err := r.Long(&l); err != nil {
 			return err
 		}

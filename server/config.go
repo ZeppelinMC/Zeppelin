@@ -1,8 +1,10 @@
 package server
 
 import (
+	"fmt"
 	net2 "net"
 
+	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net"
 	"github.com/dynamitemc/aether/net/packet/status"
 	"github.com/dynamitemc/aether/server/session"
@@ -59,6 +61,15 @@ func (cfg ServerConfig) New() (*Server, error) {
 		world:     world.NewWorld("world"),
 		broadcast: session.NewBroadcast(),
 	}
+
+	compstr := "compress everything"
+	if cfg.CompressionThreshold > 0 {
+		compstr = fmt.Sprintf("compress everything over %d bytes", cfg.CompressionThreshold)
+	} else if cfg.CompressionThreshold < 0 {
+		compstr = fmt.Sprintf("no compression")
+	}
+
+	log.Infof("Compression threshold is %d (%s)\n", cfg.CompressionThreshold, compstr)
 	server.createTicker()
 	return server, err
 }

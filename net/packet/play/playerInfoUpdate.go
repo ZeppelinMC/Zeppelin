@@ -34,6 +34,7 @@ type PlayerAction struct {
 	DisplayName    chat.TextComponent
 }
 
+// clientbound
 const PacketIdPlayerInfoUpdate = 0x3E
 
 type PlayerInfoUpdate struct {

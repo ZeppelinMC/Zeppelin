@@ -12,11 +12,11 @@ import (
 	"github.com/dynamitemc/aether/net/packet/login"
 )
 
-func (c *Conn) encrypt(plaintext, dst []byte) {
+func (c *Conn) encryptd(plaintext, dst []byte) {
 	c.encrypter.XORKeyStream(dst, plaintext)
 }
 
-func (c *Conn) decrypt(ciphertext, dst []byte) {
+func (c *Conn) decryptd(ciphertext, dst []byte) {
 	c.decrypter.XORKeyStream(dst, ciphertext)
 }
 
@@ -35,7 +35,7 @@ type RSAPublicKey struct {
 	PublicExponent int
 }
 
-func (c *Conn) Encrypt() error {
+func (c *Conn) encrypt() error {
 	key, err := x509.MarshalPKIXPublicKey(&c.listener.privKey.PublicKey)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (c *Conn) Encrypt() error {
 	c.WritePacket(&login.EncryptionRequest{
 		PublicKey:          key,
 		VerifyToken:        verifyToken,
-		ShouldAuthenticate: c.listener.Authenticate,
+		ShouldAuthenticate: c.listener.cfg.Authenticate,
 	})
 	p, err := c.ReadPacket()
 	if err != nil {
@@ -79,8 +79,8 @@ func (c *Conn) Encrypt() error {
 	c.encrypter = newCFB8Encrypter(block, c.sharedSecret)
 	c.decrypter = newCFB8Decrypter(block, c.sharedSecret)
 
-	if c.listener.Authenticate {
-		return c.Authenticate()
+	if c.listener.cfg.Authenticate {
+		return c.authenticate()
 	}
 	return nil
 }

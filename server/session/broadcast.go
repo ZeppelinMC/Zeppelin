@@ -3,31 +3,89 @@ package session
 import (
 	"sync"
 
+	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net/packet/play"
 	"github.com/google/uuid"
 )
 
 type Broadcast struct {
-	sessions    map[uuid.UUID]*Session
+	sessions    map[uuid.UUID]Session
 	sessions_mu sync.Mutex
 }
 
 func NewBroadcast() *Broadcast {
 	return &Broadcast{
-		sessions: make(map[uuid.UUID]*Session),
+		sessions: make(map[uuid.UUID]Session),
 	}
 }
 
-func (b *Broadcast) addPlayer(session *Session) {
+// Returns a session by uuid
+func (b *Broadcast) Session(uuid uuid.UUID) (ses Session, ok bool) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+	ses, ok = b.sessions[uuid]
+
+	return
+}
+
+// Returns a session by username
+func (b *Broadcast) SessionByUsername(username string) (ses Session, ok bool) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+
+	for _, session := range b.sessions {
+		if session.Username() == username {
+			return session, true
+		}
+	}
+
+	return nil, false
+}
+
+// Returns a session by entity id
+func (b *Broadcast) SessionByEntityId(entityId int32) (ses Session, ok bool) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+
+	for _, session := range b.sessions {
+		if session.Player().EntityId() == entityId {
+			return session, true
+		}
+	}
+
+	return nil, false
+}
+
+// when a player's session data updates
+func (b *Broadcast) UpdateSession(session Session) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+
+	for _, ses := range b.sessions {
+		sesData, ok := session.SessionData()
+		ses.PlayerInfoUpdate(&play.PlayerInfoUpdate{
+			Actions: play.ActionInitializeChat,
+			Players: map[uuid.UUID]play.PlayerAction{
+				session.UUID(): {
+					HasSignatureData: ok,
+					Session:          sesData,
+				},
+			},
+		})
+	}
+}
+
+// when a new player joins the server
+func (b *Broadcast) AddPlayer(session Session) {
 	b.sessions_mu.Lock()
 	defer b.sessions_mu.Unlock()
 
 	var toPlayerPk = &play.PlayerInfoUpdate{
 		Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat,
 		Players: map[uuid.UUID]play.PlayerAction{
-			session.Conn.UUID(): {
-				Name:       session.Conn.Username(),
-				Properties: session.Conn.Properties(),
+			session.UUID(): {
+				Name:       session.Username(),
+				Properties: session.Properties(),
 
 				Listed: true,
 			},
@@ -35,25 +93,29 @@ func (b *Broadcast) addPlayer(session *Session) {
 	}
 
 	for _, ses := range b.sessions {
-		ses.Conn.WritePacket(&play.PlayerInfoUpdate{
+		ses.PlayerInfoUpdate(&play.PlayerInfoUpdate{
 			Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat,
 			Players: map[uuid.UUID]play.PlayerAction{
-				session.Conn.UUID(): {
-					Name:       session.Conn.Username(),
-					Properties: session.Conn.Properties(),
+				session.UUID(): {
+					Name:       session.Username(),
+					Properties: session.Properties(),
 					Listed:     true,
 				},
 			},
 		})
-		toPlayerPk.Players[ses.Conn.UUID()] = play.PlayerAction{
-			Name:             ses.Conn.Username(),
-			Properties:       ses.Conn.Properties(),
+		sesData, ok := ses.SessionData()
+		toPlayerPk.Players[ses.UUID()] = play.PlayerAction{
+			Name:             ses.Username(),
+			Properties:       ses.Properties(),
 			Listed:           true,
-			HasSignatureData: ses.HasSessionData.Get(),
-			Session:          ses.SessionData.Get(),
+			HasSignatureData: ok,
+			Session:          sesData,
 		}
 	}
 
-	session.Conn.WritePacket(toPlayerPk)
-	b.sessions[session.Conn.UUID()] = session
+	posX, posY, posZ := session.Player().Position()
+	log.Infof("[%s] Player %s (%s) joined with entity id %d (%f %f %f)\n", session.Addr(), session.Username(), session.UUID(), session.Player().EntityId(), posX, posY, posZ)
+
+	session.PlayerInfoUpdate(toPlayerPk)
+	b.sessions[session.UUID()] = session
 }
