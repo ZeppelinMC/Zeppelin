@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"fmt"
+
 	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net"
 	"github.com/dynamitemc/aether/net/packet"
@@ -18,6 +20,7 @@ func handleChatMessage(s *std.StandardSession, pk packet.Packet) {
 			s.Disconnect(chat.TextComponent{Text: "Chat message over 256 characters is not allowed"})
 			return
 		}
+		fmt.Println(cm.HasSignature)
 		s.Broadcast().ChatMessage(s, *cm)
 	}
 }

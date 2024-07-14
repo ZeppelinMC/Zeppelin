@@ -78,12 +78,28 @@ func (session *StandardSession) SessionData() (play.PlayerSession, bool) {
 	return session.sessionData.Get(), session.hasSessionData.Get()
 }
 
-func (session *StandardSession) PlayerChatMessage(pk play.ChatMessage, sender session.Session, chatType int) error {
+func (session *StandardSession) PlayerChatMessage(pk play.ChatMessage, sender session.Session, chatType int32) error {
+	session.conn.WritePacket(&play.PlayerChatMessage{
+		Sender:              sender.UUID(),
+		Index:               0,
+		HasMessageSignature: pk.HasSignature,
+		MessageSignature:    pk.Signature,
+		Message:             pk.Message,
+		Timestamp:           pk.Timestamp,
+		Salt:                pk.Salt,
+
+		ChatType:   chatType,
+		SenderName: chat.TextComponent{Text: pk.Message},
+	})
 	return nil
 }
 
 func (session *StandardSession) PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error {
 	return session.conn.WritePacket(pk)
+}
+
+func (session *StandardSession) PlayerInfoRemove(uuids ...uuid.UUID) error {
+	return session.conn.WritePacket(&play.PlayerInfoRemove{UUIDs: uuids})
 }
 
 func (session *StandardSession) Disconnect(reason chat.TextComponent) error {

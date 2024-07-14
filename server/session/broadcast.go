@@ -75,6 +75,18 @@ func (b *Broadcast) UpdateSession(session Session) {
 	}
 }
 
+// when a player leaves the server
+func (b *Broadcast) RemovePlayer(session Session) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+	delete(b.sessions, session.UUID())
+
+	for _, ses := range b.sessions {
+		ses.PlayerInfoRemove(session.UUID())
+	}
+
+}
+
 // when a new player joins the server
 func (b *Broadcast) AddPlayer(session Session) {
 	b.sessions_mu.Lock()

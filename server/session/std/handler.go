@@ -35,6 +35,7 @@ func (session *StandardSession) handlePackets() {
 			p, err := session.conn.ReadPacket()
 			if err != nil {
 				log.Infof("[%s] Player %s disconnected\n", session.conn.RemoteAddr(), session.conn.Username())
+				session.broadcast.RemovePlayer(session)
 				return
 			}
 

@@ -32,9 +32,11 @@ type Session interface {
 	// Disconnects the session from the server
 	Disconnect(reason chat.TextComponent) error
 	// sends a player chat message packet to the session
-	PlayerChatMessage(pk play.ChatMessage, sender Session, chatType int) error
+	PlayerChatMessage(pk play.ChatMessage, sender Session, chatType int32) error
 	// sends a player info update packet to the session
 	PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error
+	// sends a player info remove packet to the session
+	PlayerInfoRemove(uuids ...uuid.UUID) error
 
 	// Returns the session data for this session, and if it has any
 	SessionData() (data play.PlayerSession, ok bool)
