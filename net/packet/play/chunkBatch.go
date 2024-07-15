@@ -5,7 +5,7 @@ import (
 	"github.com/dynamitemc/aether/net/packet"
 )
 
-// serverbound
+// clientbound
 const PacketIdChunkBatchFinished = 0x0D
 
 type ChunkBatchFinished struct {
@@ -13,7 +13,7 @@ type ChunkBatchFinished struct {
 }
 
 func (ChunkBatchFinished) ID() int32 {
-	return 0x0C
+	return PacketIdChunkBatchFinished
 }
 
 func (c *ChunkBatchFinished) Encode(w io.Writer) error {
@@ -31,5 +31,24 @@ const PacketIdChunkBatchStart = 0x0D
 type ChunkBatchStart struct{ packet.EmptyPacket }
 
 func (ChunkBatchStart) ID() int32 {
-	return 0x0D
+	return PacketIdChunkBatchStart
+}
+
+// serverbound
+const PacketIdChunkBatchReceived = 0x08
+
+type ChunkBatchReceived struct {
+	ChunksPerTick float32
+}
+
+func (ChunkBatchReceived) ID() int32 {
+	return PacketIdChunkBatchReceived
+}
+
+func (c *ChunkBatchReceived) Encode(w io.Writer) error {
+	return w.Float(c.ChunksPerTick)
+}
+
+func (c *ChunkBatchReceived) Decode(r io.Reader) error {
+	return r.Float(&c.ChunksPerTick)
 }

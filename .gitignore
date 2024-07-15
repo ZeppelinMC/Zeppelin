@@ -5,3 +5,4 @@
 config.toml
 main1.go
 plugin.exe
+/plugins

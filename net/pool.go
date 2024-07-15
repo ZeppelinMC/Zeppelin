@@ -42,6 +42,7 @@ var serverboundPool = map[int32]map[int32]func() packet.Packet{
 		0x1A: func() packet.Packet { return &play.SetPlayerPosition{} },
 		0x1B: func() packet.Packet { return &play.SetPlayerPositionAndRotation{} },
 		0x1C: func() packet.Packet { return &play.SetPlayerRotation{} },
+		0x25: func() packet.Packet { return &play.PlayerCommand{} },
 		0x36: func() packet.Packet { return &play.SwingArm{} },
 	},
 }

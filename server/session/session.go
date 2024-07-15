@@ -24,8 +24,6 @@ type Session interface {
 	ClientName() string
 	// The address of this connection
 	Addr() net.Addr
-	// The broadcaster this session uses
-	Broadcast() *Broadcast
 
 	// Logins the session to the server, on the standard session this starts listening to packets too
 	Login() error
@@ -51,6 +49,8 @@ type Session interface {
 
 	// sends entity animation
 	EntityAnimation(entityId int32, animation byte) error
+	// sends entity metadata
+	EntityMetadata(entityId int32, md map[byte]any) error
 
 	// teleports the player to specified location with specified rotation
 	Teleport(x, y, z float64, yaw, pitch float32) error

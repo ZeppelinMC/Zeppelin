@@ -45,6 +45,14 @@ func (session *StandardSession) handlePackets() {
 			handler, ok := handlers[[2]int32{session.conn.State(), p.ID()}]
 			if !ok {
 				switch pk := p.(type) {
+				case *play.ChunkBatchReceived:
+					if session.spawned.Get() {
+						continue
+					}
+					session.broadcast.SpawnPlayer(session)
+
+					posX, posY, posZ := session.Player().Position()
+					log.Infof("[%s] Player %s (%s) joined with entity id %d (%f %f %f)\n", session.Addr(), session.Username(), session.UUID(), session.Player().EntityId(), posX, posY, posZ)
 				case *play.ServerboundKeepAlive:
 					session.lastKeepAlive = time.Now().Unix()
 				case *play.PlayerSession:

@@ -47,6 +47,8 @@ type StandardSession struct {
 
 	spawned_ents_mu sync.Mutex
 	spawnedEntities []int32
+
+	spawned atomic.AtomicValue[bool]
 }
 
 func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast) *StandardSession {
@@ -86,6 +88,10 @@ func (session *StandardSession) UpdateEntityRotation(pk *play.UpdateEntityRotati
 
 func (session *StandardSession) EntityAnimation(entityId int32, animation byte) error {
 	return session.conn.WritePacket(&play.EntityAnimation{EntityId: entityId, Animation: animation})
+}
+
+func (session *StandardSession) EntityMetadata(entityId int32, md map[byte]any) error {
+	return session.conn.WritePacket(&play.SetEntityMetadata{EntityId: entityId, Metadata: md})
 }
 
 func (session *StandardSession) Conn() *net.Conn {
@@ -198,11 +204,7 @@ func (session *StandardSession) Login() error {
 		return err
 	}
 
-	session.Teleport(13, 65, 7, 0, 0)
-
 	session.broadcast.AddPlayer(session)
-	session.broadcast.SpawnPlayer(session)
-
 	return nil
 }
 

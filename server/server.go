@@ -2,6 +2,7 @@ package server
 
 import (
 	"os"
+	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -32,7 +33,11 @@ type Server struct {
 }
 
 func (srv *Server) Start(ts time.Time, terminalHandler func(*Server)) {
-	//srv.LoadPlugin()
+	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" && runtime.GOOS != "freebsd" {
+		log.Warnf("Your platform doesn't support plugins (yet) bozo! Supported platforms: Linux, macOS, and FreeBSD. You are using %s\n> ", runtime.GOOS)
+	} else {
+		srv.loadPlugin("./plugin")
+	}
 	srv.ticker.Start()
 	log.Infof("Started server ticker (%d TPS)\n", srv.cfg.TPS)
 	log.Infof("Done! (%s)\n", time.Since(ts))

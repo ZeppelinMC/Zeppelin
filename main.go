@@ -18,7 +18,7 @@ var timeStart = time.Now()
 
 func main() {
 	log.Infoln("Aether 1.21 Minecraft server")
-	log.Infof("Running on platform %s-%s\n", runtime.GOOS, runtime.GOARCH)
+	log.Infof("Running on %s on platform %s-%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	log.Infoln("Loading embedded 1.21 server registries")
 	if err := registry.LoadRegistry(); err != nil {
 		log.Errorln("Error loading server registries:", err)

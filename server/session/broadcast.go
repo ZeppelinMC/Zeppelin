@@ -1,11 +1,11 @@
 package session
 
 import (
+	"fmt"
 	"math"
 	"sync"
 
 	"github.com/dynamitemc/aether/chat"
-	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net/packet"
 	"github.com/dynamitemc/aether/net/packet/play"
 	"github.com/google/uuid"
@@ -140,9 +140,6 @@ func (b *Broadcast) AddPlayer(session Session) {
 		}
 	}
 
-	posX, posY, posZ := session.Player().Position()
-	log.Infof("[%s] Player %s (%s) joined with entity id %d (%f %f %f)\n", session.Addr(), session.Username(), session.UUID(), session.Player().EntityId(), posX, posY, posZ)
-
 	session.PlayerInfoUpdate(toPlayerPk)
 	b.sessions[session.UUID()] = session
 }
@@ -260,5 +257,17 @@ func (b *Broadcast) Animation(session Session, animation byte) {
 			continue
 		}
 		ses.EntityAnimation(id, animation)
+	}
+}
+
+func (b *Broadcast) EntityMetadata(session Session, md map[byte]any) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+	id := session.Player().EntityId()
+	for _, ses := range b.sessions {
+		if ses.UUID() == session.UUID() {
+			continue
+		}
+		fmt.Println(ses.EntityMetadata(id, md))
 	}
 }
