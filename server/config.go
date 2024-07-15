@@ -46,6 +46,7 @@ func (cfg ServerConfig) New() (*Server, error) {
 			Players: status.StatusPlayers{
 				Max: 20,
 			},
+			EnforcesSecureChat: true,
 		}),
 
 		IP:                   cfg.ServerIP,

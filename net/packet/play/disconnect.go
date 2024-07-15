@@ -1,4 +1,4 @@
-package configuration
+package play
 
 import (
 	"github.com/dynamitemc/aether/chat"
@@ -6,14 +6,14 @@ import (
 )
 
 // clientbound
-const PacketIdDisconnect = 0x02
+const PacketIdDisconnect = 0x1D
 
 type Disconnect struct {
 	Reason chat.TextComponent
 }
 
 func (Disconnect) ID() int32 {
-	return 0x02
+	return 0x1D
 }
 
 func (d *Disconnect) Encode(w io.Writer) error {

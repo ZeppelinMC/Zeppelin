@@ -3,6 +3,8 @@ package std
 import (
 	"bytes"
 	nnet "net"
+	"slices"
+	"sync"
 
 	"github.com/dynamitemc/aether/atomic"
 	"github.com/dynamitemc/aether/chat"
@@ -19,6 +21,15 @@ import (
 
 var _ session.Session = (*StandardSession)(nil)
 
+var updateTags = &play.UpdateTags{
+	Tags: map[string]map[string][]int32{
+		"minecraft:fluid": {
+			"minecraft:water": {1, 2},
+			"minecraft:lava":  {3, 4},
+		},
+	},
+}
+
 // StandardSession is a session that uses *net.Conn
 type StandardSession struct {
 	world     *world.World
@@ -31,15 +42,46 @@ type StandardSession struct {
 
 	hasSessionData atomic.AtomicValue[bool]
 	sessionData    atomic.AtomicValue[play.PlayerSession]
+
+	lastKeepAlive int64
+
+	spawned_ents_mu sync.Mutex
+	spawnedEntities []int32
 }
 
-func NewStandardSession(conn *net.Conn, entityId int32, world *world.World, broadcast *session.Broadcast) *StandardSession {
+func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast) *StandardSession {
 	return &StandardSession{
 		conn:      conn,
 		world:     world,
-		player:    player.NewPlayer(entityId),
+		player:    player,
 		broadcast: broadcast,
 	}
+}
+
+func (session *StandardSession) Teleport(x, y, z float64, yaw, pitch float32) error {
+	session.player.SetPosition(x, y, z)
+	session.player.SetRotation(yaw, pitch)
+	return session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
+}
+
+func (session *StandardSession) UpdateEntityPosition(pk *play.UpdateEntityPosition) error {
+	return session.conn.WritePacket(pk)
+}
+
+// additionally sends head rotation
+func (session *StandardSession) UpdateEntityPositionRotation(pk *play.UpdateEntityPositionAndRotation) error {
+	if err := session.conn.WritePacket(pk); err != nil {
+		return err
+	}
+	return session.conn.WritePacket(&play.SetHeadRotation{EntityId: pk.EntityId, HeadYaw: pk.Yaw})
+}
+
+// additionally sends head rotation
+func (session *StandardSession) UpdateEntityRotation(pk *play.UpdateEntityRotation) error {
+	if err := session.conn.WritePacket(pk); err != nil {
+		return err
+	}
+	return session.conn.WritePacket(&play.SetHeadRotation{EntityId: pk.EntityId, HeadYaw: pk.Yaw})
 }
 
 func (session *StandardSession) Conn() *net.Conn {
@@ -106,7 +148,7 @@ func (session *StandardSession) Disconnect(reason chat.TextComponent) error {
 	if session.inConfiguration() {
 		return session.conn.WritePacket(&configuration.Disconnect{Reason: reason})
 	} else {
-		panic("didnt implement play disconnect")
+		return session.conn.WritePacket(&play.Disconnect{Reason: reason})
 	}
 }
 
@@ -148,7 +190,50 @@ func (session *StandardSession) Login() error {
 		return err
 	}
 
+	if err := session.conn.WritePacket(updateTags); err != nil {
+		return err
+	}
+
+	session.Teleport(13, 65, 7, 0, 0)
+
 	session.broadcast.AddPlayer(session)
+	session.broadcast.SpawnPlayer(session)
+
+	return nil
+}
+
+func (session *StandardSession) IsSpawned(entityId int32) bool {
+	session.spawned_ents_mu.Lock()
+	defer session.spawned_ents_mu.Unlock()
+	for _, e := range session.spawnedEntities {
+		if e == entityId {
+			return true
+		}
+	}
+	return false
+}
+
+func (session *StandardSession) DespawnEntities(entityIds ...int32) error {
+	session.spawned_ents_mu.Lock()
+	defer session.spawned_ents_mu.Unlock()
+	session.spawnedEntities = slices.DeleteFunc(session.spawnedEntities, func(entityId int32) bool {
+		for _, e := range entityIds {
+			if e == entityId {
+				return true
+			}
+		}
+		return false
+	})
+	return session.conn.WritePacket(&play.RemoveEntities{EntityIDs: entityIds})
+}
+
+func (session *StandardSession) SpawnEntity(pk *play.SpawnEntity) error {
+	if err := session.conn.WritePacket(pk); err != nil {
+		return err
+	}
+	session.spawned_ents_mu.Lock()
+	defer session.spawned_ents_mu.Unlock()
+	session.spawnedEntities = append(session.spawnedEntities, pk.EntityId)
 
 	return nil
 }

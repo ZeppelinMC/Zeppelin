@@ -148,9 +148,9 @@ func (w Writer) BitSet(data BitSet) error {
 	return nil
 }
 
-func (w Writer) FixedBitSet(data BitSet) error {
+func (w Writer) FixedBitSet(data FixedBitSet) error {
 	for _, l := range data {
-		if err := w.Long(l); err != nil {
+		if err := w.Ubyte(l); err != nil {
 			return err
 		}
 	}

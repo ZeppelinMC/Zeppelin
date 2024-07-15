@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"unicode/utf16"
 
+	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/packet"
 	"github.com/dynamitemc/aether/net/packet/handshake"
@@ -17,6 +18,12 @@ import (
 	"github.com/dynamitemc/aether/net/packet/status"
 
 	"github.com/google/uuid"
+)
+
+const (
+	clientVeryOldMsg = "Your client is WAYYYYYY too old!!! this server supports MC 1.21"
+	clientTooOldMsg  = "Your client is too old! this server supports MC 1.21"
+	clientTooNewMsg  = "Your client is too new! this server supports MC 1.21"
 )
 
 type Conn struct {
@@ -135,12 +142,17 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		if _, err := rd.VarInt(&length); err != nil {
 			return nil, err
 		}
-		rd.SetLength(int(length))
 		vii, err := rd.VarInt(&packetId)
 		if err != nil {
 			return nil, err
 		}
 		length -= int32(vii)
+
+		rd.SetLength(int(length))
+		if length < 0 {
+			return nil, fmt.Errorf("malformed packet, you are being fooled")
+		}
+
 		data = make([]byte, length)
 		if err := rd.FixedByteArray(data); err != nil {
 			return nil, err
@@ -258,10 +270,21 @@ func (conn *Conn) writeLegacyDisconnect(reason string) {
 	binary.Write(conn, binary.BigEndian, strdata)
 }
 
+func (conn *Conn) writeClassicDisconnect(reason string) {
+	var data = []byte{0x0E}
+	data = append(data, reason...)
+	for len(data)-1 < 64 {
+		data = append(data, 0x20)
+	}
+
+	conn.Write(data)
+}
+
 // returns true if the client is trying to log in to the server
 func (conn *Conn) handleHandshake() bool {
 	pk, err := conn.ReadPacket()
 	if err != nil {
+		conn.writeClassicDisconnect(clientVeryOldMsg)
 		return false
 	}
 	handshaking, ok := pk.(*handshake.Handshaking)
@@ -270,7 +293,7 @@ func (conn *Conn) handleHandshake() bool {
 			conn.writeLegacyStatus(conn.listener.cfg.Status())
 		}
 		if pk.ID() == 78 {
-			conn.writeLegacyDisconnect("Your client is too old! this server supports MC 1.21")
+			conn.writeLegacyDisconnect(clientTooOldMsg)
 		}
 		return false
 	}
@@ -304,6 +327,14 @@ func (conn *Conn) handleHandshake() bool {
 		}
 	case handshake.Login:
 		conn.state.Store(LoginState)
+		if handshaking.ProtocolVersion > ProtocolVersion {
+			conn.WritePacket(&login.Disconnect{Reason: chat.TextComponent{Text: clientTooNewMsg}})
+			return false
+		}
+		if handshaking.ProtocolVersion < ProtocolVersion {
+			conn.WritePacket(&login.Disconnect{Reason: chat.TextComponent{Text: clientTooOldMsg}})
+			return false
+		}
 		pk, err := conn.ReadPacket()
 		if err != nil {
 			return false
@@ -312,12 +343,19 @@ func (conn *Conn) handleHandshake() bool {
 		if !ok {
 			return false
 		}
+		fmt.Println(loginStart.PlayerUUID)
 		conn.username = loginStart.Name
 		conn.uuid = loginStart.PlayerUUID
 
 		if conn.listener.cfg.Encrypt {
 			if err := conn.encrypt(); err != nil {
 				return false
+			}
+			if conn.listener.cfg.Authenticate {
+				if err := conn.authenticate(); err != nil {
+					conn.WritePacket(&login.Disconnect{Reason: chat.TextComponent{Text: "This server uses authenticated encryption mode, and you are using a cracked account."}})
+					return false
+				}
 			}
 		}
 

@@ -46,7 +46,6 @@ type StatusResponseData struct {
 	Description        StatusDescription `json:"description"`
 	Favicon            Favicon           `json:"favicon"`
 	EnforcesSecureChat bool              `json:"enforcesSecureChat"`
-	PreviewsChat       bool              `json:"previewsChat"`
 }
 
 type StatusResponse struct {

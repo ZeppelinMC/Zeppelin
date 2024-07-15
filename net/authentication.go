@@ -25,6 +25,10 @@ func (c *Conn) authenticate() error {
 		return err
 	}
 
+	if res.StatusCode != 200 {
+		return fmt.Errorf("authenticated error: player not joined")
+	}
+
 	var response struct {
 		ID         string `json:"id"`
 		Name       string `json:"name"`

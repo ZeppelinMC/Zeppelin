@@ -3,3 +3,5 @@
 /chunkData
 .gitignore
 config.toml
+main1.go
+plugin.exe

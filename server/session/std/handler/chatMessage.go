@@ -20,7 +20,7 @@ func handleChatMessage(s *std.StandardSession, pk packet.Packet) {
 			s.Disconnect(chat.TextComponent{Text: "Chat message over 256 characters is not allowed"})
 			return
 		}
-		fmt.Println(cm.HasSignature)
+		fmt.Println(cm.HasSignature, cm.Message)
 		s.Broadcast().ChatMessage(s, *cm)
 	}
 }

@@ -103,3 +103,14 @@ func (set BitSet) Set(i int, v bool) {
 
 	set[i/64] |= bdata << (i % 64)
 }
+
+type FixedBitSet []byte
+
+func (set FixedBitSet) Get(i int) bool {
+	return (set[i/8] & (1 << (i % 8))) != 0
+}
+
+func (set FixedBitSet) Set(i int, v bool) {
+	bdata := *(*byte)(unsafe.Pointer(&v))
+	set[i/8] |= (bdata << (i % 8))
+}

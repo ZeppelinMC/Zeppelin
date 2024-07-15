@@ -2,9 +2,9 @@ package std
 
 import (
 	"fmt"
-	"runtime"
 	"time"
 
+	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net"
 	"github.com/dynamitemc/aether/net/io"
@@ -32,6 +32,10 @@ func (session *StandardSession) handlePackets() {
 		case <-keepAlive.C:
 			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: time.Now().UnixMilli()})
 		default:
+			if session.lastKeepAlive != 0 && time.Now().Unix()-session.lastKeepAlive > 21 {
+				session.Disconnect(chat.TextComponent{Text: "Timed out"})
+				// not stopping the reader, because next iteration will fail to read a packet and then remove the player
+			}
 			p, err := session.conn.ReadPacket()
 			if err != nil {
 				log.Infof("[%s] Player %s disconnected\n", session.conn.RemoteAddr(), session.conn.Username())
@@ -42,9 +46,13 @@ func (session *StandardSession) handlePackets() {
 			handler, ok := handlers[[2]int32{session.conn.State(), p.ID()}]
 			if !ok {
 				switch pk := p.(type) {
+				case *play.ServerboundKeepAlive:
+					session.lastKeepAlive = time.Now().Unix()
 				case *play.PlayerSession:
 					session.hasSessionData.Set(true)
 					session.sessionData.Set(*pk)
+
+					fmt.Println("got session data")
 
 					session.broadcast.UpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
@@ -56,11 +64,6 @@ func (session *StandardSession) handlePackets() {
 					session.conn.SetState(net.PlayState)
 
 					session.sendSpawnChunks()
-
-					var stats runtime.MemStats
-					runtime.ReadMemStats(&stats)
-
-					fmt.Printf("Alloc: %dMiB, Total Alloc: %dMiB\n", stats.Alloc/1024/1024, stats.TotalAlloc/1024/1024)
 				default:
 					fmt.Printf("unknown packet 0x%02x\n", p.ID())
 				}

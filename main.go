@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net/registry"
+	"github.com/dynamitemc/aether/server"
 	"github.com/dynamitemc/aether/server/world/region/blocks"
+	"golang.org/x/term"
 )
 
 var timeStart = time.Now()
@@ -32,5 +37,52 @@ func main() {
 		log.Errorln("Error binding server:", err)
 		return
 	}
-	srv.Start(timeStart)
+	srv.Start(timeStart, terminalHandler)
 }
+
+func terminalHandler(srv *server.Server) {
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	fmt.Printf("> ")
+
+	var char [1]byte
+	var currentLine string
+	for {
+		os.Stdin.Read(char[:])
+
+		switch char[0] {
+		case 8:
+			if currentLine == "" {
+				continue
+			}
+			fmt.Print("\b \b")
+			currentLine = currentLine[:len(currentLine)-1]
+		case 3:
+			newText := "\r> stop"
+			fmt.Print(newText)
+			l := len(currentLine) + 3 // the addtitional 3 chars are "\r> "
+			if l > len(newText) {
+				fmt.Print(strings.Repeat(" ", l-len(newText)))
+			}
+			fmt.Println()
+			srv.Stop()
+		case 13:
+			if currentLine == "" {
+				continue
+			}
+			currentLine = ""
+			fmt.Print("\n> ")
+		default:
+			char := fmt.Sprintf("%c", char[0])
+			currentLine += char
+			fmt.Print(char)
+		}
+	}
+}
+
+//8 erase
+//3

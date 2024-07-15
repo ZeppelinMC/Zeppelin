@@ -1,8 +1,10 @@
 package play
 
-import "github.com/dynamitemc/aether/net/io"
+import (
+	"github.com/dynamitemc/aether/net/io"
+)
 
-//serverbound
+// serverbound
 const PacketIdChatMessage = 0x06
 
 type ChatMessage struct {
@@ -13,7 +15,7 @@ type ChatMessage struct {
 	Signature    [256]byte
 
 	MessageCount int32
-	Acknowledged [20]int64
+	Acknowledged io.FixedBitSet
 }
 
 func (ChatMessage) ID() int32 {
@@ -41,7 +43,7 @@ func (c *ChatMessage) Encode(w io.Writer) error {
 	if err := w.VarInt(c.MessageCount); err != nil {
 		return err
 	}
-	return w.FixedBitSet(c.Acknowledged[:])
+	return w.FixedBitSet(c.Acknowledged)
 }
 
 func (c *ChatMessage) Decode(r io.Reader) error {
@@ -65,5 +67,5 @@ func (c *ChatMessage) Decode(r io.Reader) error {
 	if _, err := r.VarInt(&c.MessageCount); err != nil {
 		return err
 	}
-	return r.FixedBitSet(c.Acknowledged[:])
+	return r.FixedBitSet(&c.Acknowledged, 20)
 }

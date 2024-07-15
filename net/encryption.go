@@ -79,8 +79,5 @@ func (c *Conn) encrypt() error {
 	c.encrypter = newCFB8Encrypter(block, c.sharedSecret)
 	c.decrypter = newCFB8Decrypter(block, c.sharedSecret)
 
-	if c.listener.cfg.Authenticate {
-		return c.authenticate()
-	}
 	return nil
 }

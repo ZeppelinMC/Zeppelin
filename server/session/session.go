@@ -38,6 +38,20 @@ type Session interface {
 	// sends a player info remove packet to the session
 	PlayerInfoRemove(uuids ...uuid.UUID) error
 
+	UpdateEntityPosition(pk *play.UpdateEntityPosition) error
+	UpdateEntityPositionRotation(pk *play.UpdateEntityPositionAndRotation) error
+	UpdateEntityRotation(pk *play.UpdateEntityRotation) error
+
+	// whether the entity is spawned for this session or not
+	IsSpawned(entityId int32) bool
+	// despawns the entities for this session
+	DespawnEntities(entityIds ...int32) error
+	// spawns the entity for this session
+	SpawnEntity(*play.SpawnEntity) error
+
+	// teleports the player to specified location with specified rotation
+	Teleport(x, y, z float64, yaw, pitch float32) error
+
 	// Returns the session data for this session, and if it has any
 	SessionData() (data play.PlayerSession, ok bool)
 }

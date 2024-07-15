@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"unsafe"
 
 	"github.com/dynamitemc/aether/chat"
@@ -189,9 +190,10 @@ func (r Reader) BitSet(data *BitSet) error {
 	return nil
 }
 
-func (r Reader) FixedBitSet(data BitSet) error {
-	for _, l := range data {
-		if err := r.Long(&l); err != nil {
+func (r Reader) FixedBitSet(data *FixedBitSet, bits int32) error {
+	*data = make(FixedBitSet, int(math.Ceil(float64(bits)/8)))
+	for _, l := range *data {
+		if err := r.Ubyte(&l); err != nil {
 			return err
 		}
 	}
