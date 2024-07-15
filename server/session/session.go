@@ -49,6 +49,9 @@ type Session interface {
 	// spawns the entity for this session
 	SpawnEntity(*play.SpawnEntity) error
 
+	// sends entity animation
+	EntityAnimation(entityId int32, animation byte) error
+
 	// teleports the player to specified location with specified rotation
 	Teleport(x, y, z float64, yaw, pitch float32) error
 

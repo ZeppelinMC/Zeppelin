@@ -84,6 +84,10 @@ func (session *StandardSession) UpdateEntityRotation(pk *play.UpdateEntityRotati
 	return session.conn.WritePacket(&play.SetHeadRotation{EntityId: pk.EntityId, HeadYaw: pk.Yaw})
 }
 
+func (session *StandardSession) EntityAnimation(entityId int32, animation byte) error {
+	return session.conn.WritePacket(&play.EntityAnimation{EntityId: entityId, Animation: animation})
+}
+
 func (session *StandardSession) Conn() *net.Conn {
 	return session.conn
 }

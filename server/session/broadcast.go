@@ -250,3 +250,15 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 		}
 	}
 }
+
+func (b *Broadcast) Animation(session Session, animation byte) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+	id := session.Player().EntityId()
+	for _, ses := range b.sessions {
+		if ses.UUID() == session.UUID() {
+			continue
+		}
+		ses.EntityAnimation(id, animation)
+	}
+}

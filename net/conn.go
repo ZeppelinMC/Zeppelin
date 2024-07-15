@@ -343,7 +343,6 @@ func (conn *Conn) handleHandshake() bool {
 		if !ok {
 			return false
 		}
-		fmt.Println(loginStart.PlayerUUID)
 		conn.username = loginStart.Name
 		conn.uuid = loginStart.PlayerUUID
 

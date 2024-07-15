@@ -1,7 +1,6 @@
 package std
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/dynamitemc/aether/chat"
@@ -52,20 +51,23 @@ func (session *StandardSession) handlePackets() {
 					session.hasSessionData.Set(true)
 					session.sessionData.Set(*pk)
 
-					fmt.Println("got session data")
-
 					session.broadcast.UpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
 						_, data, _ := io.ReadVarInt(pk.Data)
 						session.clientName = string(data)
 					}
+				case *play.SwingArm:
+					var id byte
+					if pk.Hand == 1 {
+						id = 3
+					}
+
+					session.broadcast.Animation(session, id)
 				case *configuration.AcknowledgeFinishConfiguration:
 					session.conn.SetState(net.PlayState)
 
 					session.sendSpawnChunks()
-				default:
-					fmt.Printf("unknown packet 0x%02x\n", p.ID())
 				}
 				continue
 			}
