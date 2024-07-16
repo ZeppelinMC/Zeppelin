@@ -16,8 +16,8 @@ type Ticker struct {
 func (srv *Server) createTicker() {
 	srv.ticker = Ticker{
 		srv:              srv,
-		TickingFrequency: srv.cfg.TPS,
-		ticker:           time.NewTicker(time.Second / time.Duration(srv.cfg.TPS)),
+		TickingFrequency: srv.cfg.Net.TPS,
+		ticker:           time.NewTicker(time.Second / time.Duration(srv.cfg.Net.TPS)),
 	}
 }
 

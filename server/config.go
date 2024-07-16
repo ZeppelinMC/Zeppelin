@@ -18,21 +18,29 @@ const (
 )
 
 var DefaultConfig = ServerConfig{
-	ServerIP:             net2.IPv4(127, 0, 0, 1),
-	ServerPort:           25565,
-	CompressionThreshold: -1,
-	TPS:                  20,
-	EncryptionMode:       encryptionOnline,
-	MOTD:                 "Aether Minecraft Server",
+	Net: ServerConfigNet{
+		ServerIP:             net2.IPv4(127, 0, 0, 1),
+		ServerPort:           25565,
+		CompressionThreshold: -1,
+		TPS:                  20,
+		EncryptionMode:       encryptionOnline,
+	},
+	MOTD: "Aether Minecraft Server",
 }
 
-type ServerConfig struct {
+type ServerConfigNet struct {
 	ServerIP             net2.IP
 	ServerPort           int
 	CompressionThreshold int32
 	TPS                  int
 	EncryptionMode       string
-	MOTD                 string
+}
+
+type ServerConfig struct {
+	Net                ServerConfigNet
+	MOTD               string
+	RenderDistance     int32
+	SimulationDistance int32
 }
 
 func (cfg ServerConfig) New() (*Server, error) {
@@ -49,28 +57,28 @@ func (cfg ServerConfig) New() (*Server, error) {
 			EnforcesSecureChat: true,
 		}),
 
-		IP:                   cfg.ServerIP,
-		Port:                 cfg.ServerPort,
-		CompressionThreshold: cfg.CompressionThreshold,
-		Encrypt:              cfg.EncryptionMode == encryptionYes || cfg.EncryptionMode == encryptionOnline,
-		Authenticate:         cfg.EncryptionMode == encryptionOnline,
+		IP:                   cfg.Net.ServerIP,
+		Port:                 cfg.Net.ServerPort,
+		CompressionThreshold: cfg.Net.CompressionThreshold,
+		Encrypt:              cfg.Net.EncryptionMode == encryptionYes || cfg.Net.EncryptionMode == encryptionOnline,
+		Authenticate:         cfg.Net.EncryptionMode == encryptionOnline,
 	}
 	listener, err := lcfg.New()
 	server := &Server{
 		listener:  listener,
 		cfg:       cfg,
 		world:     world.NewWorld("world"),
-		broadcast: session.NewBroadcast(),
+		Broadcast: session.NewBroadcast(),
 	}
 
 	compstr := "compress everything"
-	if cfg.CompressionThreshold > 0 {
-		compstr = fmt.Sprintf("compress everything over %d bytes", cfg.CompressionThreshold)
-	} else if cfg.CompressionThreshold < 0 {
-		compstr = fmt.Sprintf("no compression")
+	if cfg.Net.CompressionThreshold > 0 {
+		compstr = fmt.Sprintf("compress everything over %d bytes", cfg.Net.CompressionThreshold)
+	} else if cfg.Net.CompressionThreshold < 0 {
+		compstr = "no compression"
 	}
 
-	log.Infof("Compression threshold is %d (%s)\n", cfg.CompressionThreshold, compstr)
+	log.Infof("Compression threshold is %d (%s)\n", cfg.Net.CompressionThreshold, compstr)
 	server.createTicker()
 	return server, err
 }

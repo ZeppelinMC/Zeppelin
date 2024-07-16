@@ -1,14 +1,32 @@
 package server
 
 import (
+	"io/fs"
+	"os"
 	"plugin"
 
 	"github.com/dynamitemc/aether/log"
 )
 
 type Plugin interface {
-	Name() string
-	OnStart(*Server)
+	Identifier() string
+	OnLoad(*Server)
+	Unload()
+}
+
+func (srv *Server) loadPlugins() {
+	fs.WalkDir(os.DirFS("plugins"), ".", func(path string, _ fs.DirEntry, err error) error {
+		if path == "." {
+			return nil
+		}
+
+		if err != nil {
+			return nil
+		}
+
+		srv.loadPlugin("plugins/" + path)
+		return nil
+	})
 }
 
 func (srv *Server) loadPlugin(name string) {
@@ -27,5 +45,5 @@ func (srv *Server) loadPlugin(name string) {
 		log.Errorf("Invalid plugin export for %s\n", name)
 		return
 	}
-	plugin.OnStart(srv)
+	plugin.OnLoad(srv)
 }

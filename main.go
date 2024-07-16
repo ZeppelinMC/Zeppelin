@@ -31,7 +31,7 @@ func main() {
 	log.Infoln("Loading config")
 	cfg := loadConfig()
 
-	log.Infof("Binding server to %s:%d TCP\n", cfg.ServerIP, cfg.ServerPort)
+	log.Infof("Binding server to %s:%d TCP\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
 	srv, err := cfg.New()
 	if err != nil {
 		log.Errorln("Error binding server:", err)
@@ -47,21 +47,19 @@ func terminalHandler(srv *server.Server) {
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-	fmt.Printf("> ")
-
 	var char [1]byte
 	var currentLine string
 	for {
 		os.Stdin.Read(char[:])
 
 		switch char[0] {
-		case 8:
+		case 8: //backspace
 			if currentLine == "" {
 				continue
 			}
 			fmt.Print("\b \b")
 			currentLine = currentLine[:len(currentLine)-1]
-		case 3:
+		case 3: //ctrl-c
 			newText := "\r> stop"
 			fmt.Print(newText)
 			l := len(currentLine) + 3 // the addtitional 3 chars are "\r> "
@@ -70,12 +68,12 @@ func terminalHandler(srv *server.Server) {
 			}
 			fmt.Println()
 			srv.Stop()
-		case 13:
+		case 13: // enter
 			if currentLine == "" {
 				continue
 			}
 			currentLine = ""
-			fmt.Print("\n> ")
+			fmt.Print("\n\r> ")
 		default:
 			char := fmt.Sprintf("%c", char[0])
 			currentLine += char

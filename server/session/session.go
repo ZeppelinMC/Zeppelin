@@ -25,8 +25,6 @@ type Session interface {
 	// The address of this connection
 	Addr() net.Addr
 
-	// Logins the session to the server, on the standard session this starts listening to packets too
-	Login() error
 	// Disconnects the session from the server
 	Disconnect(reason chat.TextComponent) error
 	// sends a player chat message packet to the session
