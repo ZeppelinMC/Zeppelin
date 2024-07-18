@@ -6,7 +6,10 @@ import (
 	"github.com/dynamitemc/aether/atomic"
 	"github.com/dynamitemc/aether/net/metadata"
 	"github.com/dynamitemc/aether/net/packet/configuration"
+	"github.com/dynamitemc/aether/server/entity"
 )
+
+var _ entity.Entity = (*Player)(nil)
 
 type Player struct {
 	entityId int32
