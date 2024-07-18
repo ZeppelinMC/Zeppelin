@@ -32,6 +32,7 @@ type ClientInformation struct {
 	ChatMode            int32
 	ChatColors          bool
 	DisplayedSkinParts  byte
+	MainHand            int32
 	EnableTextFiltering bool
 	AllowServerListing  bool
 }
@@ -56,6 +57,9 @@ func (c *ClientInformation) Encode(w io.Writer) error {
 	if err := w.Ubyte(c.DisplayedSkinParts); err != nil {
 		return err
 	}
+	if err := w.VarInt(c.MainHand); err != nil {
+		return err
+	}
 	if err := w.Bool(c.EnableTextFiltering); err != nil {
 		return err
 	}
@@ -76,6 +80,9 @@ func (c *ClientInformation) Decode(r io.Reader) error {
 		return err
 	}
 	if err := r.Ubyte(&c.DisplayedSkinParts); err != nil {
+		return err
+	}
+	if _, err := r.VarInt(&c.MainHand); err != nil {
 		return err
 	}
 	if err := r.Bool(&c.EnableTextFiltering); err != nil {

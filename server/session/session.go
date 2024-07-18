@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/dynamitemc/aether/chat"
+	"github.com/dynamitemc/aether/net/metadata"
 	"github.com/dynamitemc/aether/net/packet/login"
 	"github.com/dynamitemc/aether/net/packet/play"
 	"github.com/dynamitemc/aether/server/player"
@@ -44,11 +45,13 @@ type Session interface {
 	DespawnEntities(entityIds ...int32) error
 	// spawns the entity for this session
 	SpawnEntity(*play.SpawnEntity) error
+	// spawns a player
+	SpawnPlayer(Session) error
 
 	// sends entity animation
 	EntityAnimation(entityId int32, animation byte) error
 	// sends entity metadata
-	EntityMetadata(entityId int32, md map[byte]any) error
+	EntityMetadata(entityId int32, md metadata.Metadata) error
 
 	// teleports the player to specified location with specified rotation
 	Teleport(x, y, z float64, yaw, pitch float32) error

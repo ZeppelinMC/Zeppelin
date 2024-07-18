@@ -10,12 +10,14 @@ import (
 	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net"
 	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/net/metadata"
 	"github.com/dynamitemc/aether/net/packet/configuration"
 	"github.com/dynamitemc/aether/net/packet/login"
 	"github.com/dynamitemc/aether/net/packet/play"
 	"github.com/dynamitemc/aether/server/player"
 	"github.com/dynamitemc/aether/server/session"
 	"github.com/dynamitemc/aether/server/world"
+	"github.com/dynamitemc/aether/util"
 	"github.com/google/uuid"
 )
 
@@ -43,12 +45,10 @@ type StandardSession struct {
 	hasSessionData atomic.AtomicValue[bool]
 	sessionData    atomic.AtomicValue[play.PlayerSession]
 
-	lastKeepAlive int64
-
 	spawned_ents_mu sync.Mutex
 	spawnedEntities []int32
 
-	spawned atomic.AtomicValue[bool]
+	Spawned atomic.AtomicValue[bool]
 }
 
 func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast) *StandardSession {
@@ -90,7 +90,7 @@ func (session *StandardSession) EntityAnimation(entityId int32, animation byte) 
 	return session.conn.WritePacket(&play.EntityAnimation{EntityId: entityId, Animation: animation})
 }
 
-func (session *StandardSession) EntityMetadata(entityId int32, md map[byte]any) error {
+func (session *StandardSession) EntityMetadata(entityId int32, md metadata.Metadata) error {
 	return session.conn.WritePacket(&play.SetEntityMetadata{EntityId: entityId, Metadata: md})
 }
 
@@ -244,13 +244,26 @@ func (session *StandardSession) SpawnEntity(pk *play.SpawnEntity) error {
 	return nil
 }
 
+func (session *StandardSession) SpawnPlayer(ses session.Session) error {
+	x, y, z := ses.Player().Position()
+	yaw, pitch := ses.Player().Rotation()
+	pk := &play.SpawnEntity{
+		EntityId:   ses.Player().EntityId(),
+		EntityUUID: ses.UUID(),
+		Type:       128,
+		X:          x,
+		Y:          y,
+		Z:          z,
+		Yaw:        util.DegreesToAngle(yaw),
+		Pitch:      util.DegreesToAngle(pitch),
+		HeadYaw:    util.DegreesToAngle(yaw),
+	}
+	return session.SpawnEntity(pk)
+}
+
 func (session *StandardSession) sendSpawnChunks() error {
 	viewDistance := int32(session.Player().ClientInformation().ViewDistance)
 	var buf = new(bytes.Buffer)
-
-	if err := session.conn.WritePacket(&play.ChunkBatchStart{}); err != nil {
-		return err
-	}
 
 	var chunks int32
 	for x := 0 - viewDistance; x <= 0+viewDistance; x++ {
@@ -266,10 +279,6 @@ func (session *StandardSession) sendSpawnChunks() error {
 			buf.Reset()
 			chunks++
 		}
-	}
-
-	if err := session.conn.WritePacket(&play.ChunkBatchFinished{BatchSize: chunks}); err != nil {
-		return err
 	}
 
 	return nil

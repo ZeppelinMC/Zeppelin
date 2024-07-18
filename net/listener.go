@@ -2,6 +2,7 @@ package net
 
 import (
 	"crypto/rsa"
+	"fmt"
 	"net"
 
 	"github.com/dynamitemc/aether/net/io"
@@ -53,6 +54,13 @@ func (l *Listener) newConn(c net.Conn) *Conn {
 	conn.writer = io.NewWriter(conn)
 
 	return conn
+}
+
+func (l *Listener) Close() error {
+	close(l.newConns)
+	l.err <- fmt.Errorf("listener closed")
+
+	return nil
 }
 
 func (l *Listener) Accept() (*Conn, error) {

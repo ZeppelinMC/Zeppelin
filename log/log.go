@@ -13,7 +13,8 @@ var yellow = color.New(color.FgYellow, color.Bold).SprintFunc()
 // this function should be used instead of fmt's because of the custom terminal
 func Println(v ...any) {
 	fmt.Print("\r")
-	fmt.Println(v...)
+	fmt.Print(v...)
+	fmt.Println("\r")
 }
 
 // this function should be used instead of fmt's because of the custom terminal
@@ -28,6 +29,12 @@ func Printf(format string, v ...any) {
 	fmt.Printf(format, v...)
 }
 
+func Printlnf(format string, v ...any) {
+	fmt.Print("\r")
+	fmt.Printf(format, v...)
+	fmt.Println("\r")
+}
+
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a newline and "> "
 func Infoln(v ...any) {
 	fmt.Printf("\r%s: ", blue("INFO"))
@@ -38,7 +45,8 @@ func Infoln(v ...any) {
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a new line
 func InfolnClean(v ...any) {
 	fmt.Printf("\r%s: ", blue("INFO"))
-	fmt.Println(v...)
+	fmt.Print(v...)
+	fmt.Println("\r")
 }
 
 // prints the contents prefixed by a carriage return + blue info text
@@ -67,7 +75,8 @@ func Errorln(v ...any) {
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a new line
 func ErrorlnClean(v ...any) {
 	fmt.Printf("\r%s: ", red("ERROR"))
-	fmt.Println(v...)
+	fmt.Print(v...)
+	fmt.Println("\r")
 }
 
 // prints the contents prefixed by a carriage return + blue info text
@@ -96,7 +105,8 @@ func Warnln(v ...any) {
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a new line
 func WarnlnClean(v ...any) {
 	fmt.Printf("\r%s: ", yellow("WARN"))
-	fmt.Println(v...)
+	fmt.Print(v...)
+	fmt.Println("\r")
 }
 
 // prints the contents prefixed by a carriage return + blue info text

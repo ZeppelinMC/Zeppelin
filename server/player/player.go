@@ -1,7 +1,10 @@
 package player
 
 import (
+	"sync"
+
 	"github.com/dynamitemc/aether/atomic"
+	"github.com/dynamitemc/aether/net/metadata"
 	"github.com/dynamitemc/aether/net/packet/configuration"
 )
 
@@ -12,10 +15,13 @@ type Player struct {
 	yaw, pitch atomic.AtomicValue[float32]
 
 	clientInfo atomic.AtomicValue[configuration.ClientInformation]
+
+	md_mu    sync.Mutex
+	metadata metadata.Metadata
 }
 
 func NewPlayer(entityId int32) *Player {
-	return &Player{entityId: entityId}
+	return &Player{entityId: entityId, metadata: make(metadata.Metadata)}
 }
 
 func (p *Player) Position() (x, y, z float64) {
@@ -47,4 +53,36 @@ func (p *Player) SetClientInformation(info configuration.ClientInformation) {
 
 func (p *Player) ClientInformation() configuration.ClientInformation {
 	return p.clientInfo.Get()
+}
+
+func (p *Player) Metadata() metadata.Metadata {
+	p.md_mu.Lock()
+	defer p.md_mu.Unlock()
+	return p.metadata
+}
+
+func (p *Player) SetMetadata(md metadata.Metadata) {
+	p.md_mu.Lock()
+	defer p.md_mu.Unlock()
+	p.metadata = md
+}
+
+func (p *Player) MetadataIndex(i byte) any {
+	p.md_mu.Lock()
+	defer p.md_mu.Unlock()
+	return p.metadata[i]
+}
+
+func (p *Player) SetMetadataIndex(i byte, v any) {
+	p.md_mu.Lock()
+	defer p.md_mu.Unlock()
+	p.metadata[i] = v
+}
+
+func (p *Player) SetMetadataIndexes(md metadata.Metadata) {
+	p.md_mu.Lock()
+	defer p.md_mu.Unlock()
+	for index, value := range md {
+		p.metadata[index] = value
+	}
 }

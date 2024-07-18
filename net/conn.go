@@ -76,11 +76,11 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	}
 	data := packetBuf.Bytes()
 
-	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet {
+	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no encryption
 		length := io.AppendVarInt(nil, int32(len(data)))
 		_, err := conn.Write(append(length, data...))
 		return err
-	} else {
+	} else { // with encryption
 		if len(data) < int(conn.listener.cfg.CompressionThreshold) {
 			data = append([]byte{0}, data...)
 			packetLength := io.AppendVarInt(nil, int32(len(data)))

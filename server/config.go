@@ -67,7 +67,7 @@ func (cfg ServerConfig) New() (*Server, error) {
 	server := &Server{
 		listener:  listener,
 		cfg:       cfg,
-		world:     world.NewWorld("world"),
+		World:     world.NewWorld("world"),
 		Broadcast: session.NewBroadcast(),
 	}
 

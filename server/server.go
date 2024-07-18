@@ -1,7 +1,6 @@
 package server
 
 import (
-	"os"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -23,7 +22,7 @@ type Server struct {
 	listener *net.Listener
 	ticker   Ticker
 
-	world *world.World
+	World *world.World
 
 	Broadcast *session.Broadcast
 
@@ -40,7 +39,7 @@ func (srv *Server) NewEntityId() int32 {
 	return srv.entityId.Add(1)
 }
 
-func (srv *Server) Start(ts time.Time, terminalHandler func(*Server)) {
+func (srv *Server) Start(ts time.Time) {
 	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" && runtime.GOOS != "freebsd" {
 		log.Warnf("Your platform doesn't support plugins (yet) bozo! Supported platforms: Linux, macOS, and FreeBSD. You are using %s\n> ", runtime.GOOS)
 	} else {
@@ -48,9 +47,8 @@ func (srv *Server) Start(ts time.Time, terminalHandler func(*Server)) {
 		srv.loadPlugins()
 	}
 	srv.ticker.Start()
-	log.Infof("Started server ticker (%d TPS)\n", srv.cfg.Net.TPS)
-	log.Infof("Done! (%s)\n\r> ", time.Since(ts))
-	go terminalHandler(srv)
+	log.Infolnf("Started server ticker (%d TPS)", srv.cfg.Net.TPS)
+	log.Infolnf("Done! (%s)", time.Since(ts))
 	for {
 		conn, err := srv.listener.Accept()
 		if err != nil {
@@ -59,17 +57,15 @@ func (srv *Server) Start(ts time.Time, terminalHandler func(*Server)) {
 			}
 			return
 		}
-		log.Infof("[%s] Player attempting to connect: %s (%s)\n", conn.RemoteAddr(), conn.Username(), conn.UUID())
+		log.Infolnf("[%s] Player attempting to connect: %s (%s)", conn.RemoteAddr(), conn.Username(), conn.UUID())
 		player := player.NewPlayer(srv.entityId.Add(1))
-		std.NewStandardSession(conn, player, srv.world, srv.Broadcast).Login()
-
+		std.NewStandardSession(conn, player, srv.World, srv.Broadcast).Login()
 	}
 }
 
 func (srv *Server) Stop() {
 	log.InfolnClean("Stopping server")
 	srv.closed = true
-	srv.listener.Close()
 	srv.Broadcast.DisconnectAll(chat.TextComponent{Text: "Server closed"})
-	os.Exit(0)
+	srv.listener.Close()
 }

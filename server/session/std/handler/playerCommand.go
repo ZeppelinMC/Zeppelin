@@ -1,9 +1,8 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/dynamitemc/aether/net"
+	"github.com/dynamitemc/aether/net/metadata"
 	"github.com/dynamitemc/aether/net/packet"
 	"github.com/dynamitemc/aether/net/packet/play"
 	"github.com/dynamitemc/aether/server/session/std"
@@ -17,15 +16,29 @@ func handlePlayerCommand(session *std.StandardSession, pk packet.Packet) {
 	if command, ok := pk.(*play.PlayerCommand); ok {
 		switch command.ActionId {
 		case play.ActionIdStartSneaking:
-			session.Broadcast().EntityMetadata(session, map[byte]any{
-				6: play.Sneaking,
-			})
-			fmt.Println(session.Username(), "started sneaking")
+			session.Player().SetMetadataIndex(metadata.PoseIndex, metadata.Sneaking)
+			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
+			base |= metadata.IsCrouching
+			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
+
+			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
 		case play.ActionIdStopSneaking:
-			session.Broadcast().EntityMetadata(session, map[byte]any{
-				6: play.Standing,
-			})
-			//TODO add entity data (i0), for crouching, sprinting etc
+			session.Player().SetMetadataIndex(metadata.PoseIndex, metadata.Standing)
+			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
+			base &= ^metadata.IsCrouching
+			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
+
+			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
+		case play.ActionIdStartSprinting:
+			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
+			base |= metadata.IsSprinting
+			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
+			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
+		case play.ActionIdStopSprinting:
+			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
+			base &= ^metadata.IsSprinting
+			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
+			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
 		}
 	}
 }

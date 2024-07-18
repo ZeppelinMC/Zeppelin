@@ -16,6 +16,15 @@ import (
 
 var timeStart = time.Now()
 
+func hasArgument(name string) bool {
+	for _, arg := range os.Args {
+		if arg == name {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
 	log.Infoln("Aether 1.21 Minecraft server")
 	log.Infof("Running on %s on platform %s-%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
@@ -32,23 +41,35 @@ func main() {
 	cfg := loadConfig()
 
 	log.Infof("Binding server to %s:%d TCP\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
+
+	rawTerminal := !hasArgument("--no-raw-terminal")
+
 	srv, err := cfg.New()
 	if err != nil {
 		log.Errorln("Error binding server:", err)
 		return
 	}
-	srv.Start(timeStart, terminalHandler)
+	var oldState *term.State
+	if rawTerminal {
+		oldState, err = term.MakeRaw(int(os.Stdin.Fd()))
+		if err != nil {
+			panic(err)
+		}
+
+		go terminalHandler(srv)
+	}
+	srv.Start(timeStart)
+
+	if rawTerminal {
+		term.Restore(int(os.Stdin.Fd()), oldState)
+	}
 }
 
 func terminalHandler(srv *server.Server) {
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
-
 	var char [1]byte
 	var currentLine string
+
+charl:
 	for {
 		os.Stdin.Read(char[:])
 
@@ -68,6 +89,7 @@ func terminalHandler(srv *server.Server) {
 			}
 			fmt.Println()
 			srv.Stop()
+			break charl
 		case 13: // enter
 			if currentLine == "" {
 				continue

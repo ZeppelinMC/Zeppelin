@@ -3,8 +3,6 @@ package std
 import (
 	"time"
 
-	"github.com/dynamitemc/aether/chat"
-	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net"
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/packet"
@@ -31,13 +29,8 @@ func (session *StandardSession) handlePackets() {
 		case <-keepAlive.C:
 			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: time.Now().UnixMilli()})
 		default:
-			if session.lastKeepAlive != 0 && time.Now().Unix()-session.lastKeepAlive > 21 {
-				session.Disconnect(chat.TextComponent{Text: "Timed out"})
-				// not stopping the reader, because next iteration will fail to read a packet and then remove the player
-			}
 			p, err := session.conn.ReadPacket()
 			if err != nil {
-				log.Infof("[%s] Player %s disconnected\n", session.conn.RemoteAddr(), session.conn.Username())
 				session.broadcast.RemovePlayer(session)
 				return
 			}
@@ -45,16 +38,6 @@ func (session *StandardSession) handlePackets() {
 			handler, ok := handlers[[2]int32{session.conn.State(), p.ID()}]
 			if !ok {
 				switch pk := p.(type) {
-				case *play.ChunkBatchReceived:
-					if session.spawned.Get() {
-						continue
-					}
-					session.broadcast.SpawnPlayer(session)
-
-					posX, posY, posZ := session.Player().Position()
-					log.Infof("[%s] Player %s (%s) joined with entity id %d (%f %f %f)\n", session.Addr(), session.Username(), session.UUID(), session.Player().EntityId(), posX, posY, posZ)
-				case *play.ServerboundKeepAlive:
-					session.lastKeepAlive = time.Now().Unix()
 				case *play.PlayerSession:
 					session.hasSessionData.Set(true)
 					session.sessionData.Set(*pk)

@@ -21,6 +21,10 @@ func chunkPos(x, z float64) (cx, cz int32) {
 }
 
 func handleMovement(s *std.StandardSession, p packet.Packet) {
+	if !s.Spawned.Get() {
+		s.Broadcast().SpawnPlayer(s)
+		s.Spawned.Set(true)
+	}
 	switch pk := p.(type) {
 	case *play.SetPlayerPosition:
 		oldX, oldY, oldZ := s.Player().Position()
