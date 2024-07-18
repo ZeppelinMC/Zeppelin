@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime"
 	"strings"
 	"time"
@@ -57,11 +58,39 @@ func main() {
 		}
 
 		go terminalHandler(srv)
+	} else {
+		go notRawTerminal(srv)
 	}
 	srv.Start(timeStart)
 
 	if rawTerminal {
 		term.Restore(int(os.Stdin.Fd()), oldState)
+	}
+}
+
+func notRawTerminal(srv *server.Server) {
+	var line string
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+cmdl:
+	for {
+		select {
+		case <-interrupt:
+			newText := "\r> stop"
+			fmt.Print(newText)
+			l := len(line) + 3 // the addtitional 3 chars are "\r> "
+			if l > len(newText) {
+				fmt.Print(strings.Repeat(" ", l-len(newText)))
+			}
+			fmt.Println()
+			srv.Stop()
+			break cmdl
+		default:
+			fmt.Scanln(&line)
+			fmt.Print("\r> ")
+		}
 	}
 }
 
