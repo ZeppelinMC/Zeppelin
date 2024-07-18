@@ -1,4 +1,4 @@
-package chat
+package text
 
 const (
 	Text         = "text"

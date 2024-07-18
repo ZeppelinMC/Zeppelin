@@ -7,8 +7,8 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/nbt"
+	"github.com/dynamitemc/aether/text"
 
 	"github.com/google/uuid"
 )
@@ -169,13 +169,13 @@ func (w Writer) FixedByteArray(s []byte) error {
 	return w.writeBytes(s...)
 }
 
-func (w Writer) JSONTextComponent(comp chat.TextComponent) error {
+func (w Writer) JSONTextComponent(comp text.TextComponent) error {
 	d, _ := json.Marshal(comp)
 
 	return w.ByteArray(d)
 }
 
-func (w Writer) TextComponent(comp chat.TextComponent) error {
+func (w Writer) TextComponent(comp text.TextComponent) error {
 	return w.NBT(comp)
 }
 

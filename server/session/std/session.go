@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/dynamitemc/aether/atomic"
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net"
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/metadata"
@@ -17,6 +16,7 @@ import (
 	"github.com/dynamitemc/aether/server/player"
 	"github.com/dynamitemc/aether/server/session"
 	"github.com/dynamitemc/aether/server/world"
+	"github.com/dynamitemc/aether/text"
 	"github.com/dynamitemc/aether/util"
 	"github.com/google/uuid"
 )
@@ -141,7 +141,7 @@ func (session *StandardSession) PlayerChatMessage(pk play.ChatMessage, sender se
 		Salt:                pk.Salt,
 
 		ChatType:   chatType,
-		SenderName: chat.TextComponent{Text: pk.Message},
+		SenderName: text.TextComponent{Text: pk.Message},
 	})
 	return nil
 }
@@ -154,7 +154,7 @@ func (session *StandardSession) PlayerInfoRemove(uuids ...uuid.UUID) error {
 	return session.conn.WritePacket(&play.PlayerInfoRemove{UUIDs: uuids})
 }
 
-func (session *StandardSession) Disconnect(reason chat.TextComponent) error {
+func (session *StandardSession) Disconnect(reason text.TextComponent) error {
 	if session.inConfiguration() {
 		return session.conn.WritePacket(&configuration.Disconnect{Reason: reason})
 	} else {

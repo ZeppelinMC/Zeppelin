@@ -7,8 +7,8 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/nbt"
+	"github.com/dynamitemc/aether/text"
 
 	"github.com/google/uuid"
 )
@@ -226,7 +226,7 @@ func (r Reader) NBT(v any) error {
 	return err
 }
 
-func (r Reader) JSONTextComponent(comp *chat.TextComponent) error {
+func (r Reader) JSONTextComponent(comp *text.TextComponent) error {
 	var d []byte
 	if err := r.ByteArray(&d); err != nil {
 		return err
@@ -234,6 +234,6 @@ func (r Reader) JSONTextComponent(comp *chat.TextComponent) error {
 	return json.Unmarshal(d, comp)
 }
 
-func (r Reader) TextComponent(comp *chat.TextComponent) error {
+func (r Reader) TextComponent(comp *text.TextComponent) error {
 	return r.NBT(comp)
 }

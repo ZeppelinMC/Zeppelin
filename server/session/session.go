@@ -3,11 +3,11 @@ package session
 import (
 	"net"
 
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net/metadata"
 	"github.com/dynamitemc/aether/net/packet/login"
 	"github.com/dynamitemc/aether/net/packet/play"
 	"github.com/dynamitemc/aether/server/player"
+	"github.com/dynamitemc/aether/text"
 	"github.com/google/uuid"
 )
 
@@ -27,7 +27,7 @@ type Session interface {
 	Addr() net.Addr
 
 	// Disconnects the session from the server
-	Disconnect(reason chat.TextComponent) error
+	Disconnect(reason text.TextComponent) error
 	// sends a player chat message packet to the session
 	PlayerChatMessage(pk play.ChatMessage, sender Session, chatType int32) error
 	// sends a player info update packet to the session

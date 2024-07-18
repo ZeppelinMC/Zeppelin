@@ -1,9 +1,9 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/packet/login"
+	"github.com/dynamitemc/aether/text"
 	"github.com/google/uuid"
 )
 
@@ -31,7 +31,7 @@ type PlayerAction struct {
 	Ping int32
 	// Update Display Name
 	HasDisplayName bool
-	DisplayName    chat.TextComponent
+	DisplayName    text.TextComponent
 }
 
 // clientbound

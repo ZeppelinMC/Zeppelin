@@ -1,7 +1,7 @@
 package metadata
 
 import (
-	"github.com/dynamitemc/aether/chat"
+	"github.com/dynamitemc/aether/text"
 	"github.com/google/uuid"
 )
 
@@ -21,8 +21,8 @@ type (
 	Float   float32 //3
 	String  string  //4
 
-	TextComponent         chat.TextComponent  //5
-	OptionalTextComponent *chat.TextComponent //6
+	TextComponent         text.TextComponent  //5
+	OptionalTextComponent *text.TextComponent //6
 	//Slot //7
 	Boolean            bool       //8
 	Rotations          [3]Float   //9

@@ -5,10 +5,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/server/player"
 	"github.com/dynamitemc/aether/server/session/std"
 	_ "github.com/dynamitemc/aether/server/session/std/handler"
+	"github.com/dynamitemc/aether/text"
 
 	"github.com/dynamitemc/aether/server/world"
 
@@ -66,6 +66,6 @@ func (srv *Server) Start(ts time.Time) {
 func (srv *Server) Stop() {
 	log.InfolnClean("Stopping server")
 	srv.closed = true
-	srv.Broadcast.DisconnectAll(chat.TextComponent{Text: "Server closed"})
+	srv.Broadcast.DisconnectAll(text.TextComponent{Text: "Server closed"})
 	srv.listener.Close()
 }

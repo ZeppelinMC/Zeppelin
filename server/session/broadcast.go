@@ -3,11 +3,11 @@ package session
 import (
 	"sync"
 
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/log"
 	"github.com/dynamitemc/aether/net/metadata"
 	"github.com/dynamitemc/aether/net/packet"
 	"github.com/dynamitemc/aether/net/packet/play"
+	"github.com/dynamitemc/aether/text"
 	"github.com/dynamitemc/aether/util"
 	"github.com/google/uuid"
 )
@@ -24,7 +24,7 @@ func NewBroadcast() *Broadcast {
 }
 
 // Disconnects all the players on the broadcast
-func (b *Broadcast) DisconnectAll(reason chat.TextComponent) {
+func (b *Broadcast) DisconnectAll(reason text.TextComponent) {
 	b.sessions_mu.Lock()
 	defer func() {
 		b.sessions_mu.Unlock()

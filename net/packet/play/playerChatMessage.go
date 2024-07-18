@@ -1,8 +1,8 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/text"
 	"github.com/google/uuid"
 )
 
@@ -26,14 +26,14 @@ type PlayerChatMessage struct {
 
 	PreviousMessages map[int32]*[256]byte
 
-	UnsignedContent *chat.TextComponent
+	UnsignedContent *text.TextComponent
 	FilterType      int32
 	FilterBits      io.BitSet
 
 	ChatType   int32
-	SenderName chat.TextComponent
+	SenderName text.TextComponent
 
-	TargetName *chat.TextComponent
+	TargetName *text.TextComponent
 }
 
 func (PlayerChatMessage) ID() int32 {

@@ -10,12 +10,12 @@ import (
 	"sync/atomic"
 	"unicode/utf16"
 
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/packet"
 	"github.com/dynamitemc/aether/net/packet/handshake"
 	"github.com/dynamitemc/aether/net/packet/login"
 	"github.com/dynamitemc/aether/net/packet/status"
+	"github.com/dynamitemc/aether/text"
 
 	"github.com/google/uuid"
 )
@@ -328,11 +328,11 @@ func (conn *Conn) handleHandshake() bool {
 	case handshake.Login:
 		conn.state.Store(LoginState)
 		if handshaking.ProtocolVersion > ProtocolVersion {
-			conn.WritePacket(&login.Disconnect{Reason: chat.TextComponent{Text: clientTooNewMsg}})
+			conn.WritePacket(&login.Disconnect{Reason: text.TextComponent{Text: clientTooNewMsg}})
 			return false
 		}
 		if handshaking.ProtocolVersion < ProtocolVersion {
-			conn.WritePacket(&login.Disconnect{Reason: chat.TextComponent{Text: clientTooOldMsg}})
+			conn.WritePacket(&login.Disconnect{Reason: text.TextComponent{Text: clientTooOldMsg}})
 			return false
 		}
 		pk, err := conn.ReadPacket()
@@ -352,7 +352,7 @@ func (conn *Conn) handleHandshake() bool {
 			}
 			if conn.listener.cfg.Authenticate {
 				if err := conn.authenticate(); err != nil {
-					conn.WritePacket(&login.Disconnect{Reason: chat.TextComponent{Text: "This server uses authenticated encryption mode, and you are using a cracked account."}})
+					conn.WritePacket(&login.Disconnect{Reason: text.TextComponent{Text: "This server uses authenticated encryption mode, and you are using a cracked account."}})
 					return false
 				}
 			}

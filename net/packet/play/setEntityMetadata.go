@@ -1,9 +1,9 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/chat"
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/metadata"
+	"github.com/dynamitemc/aether/text"
 )
 
 // clientbound
@@ -66,7 +66,7 @@ func (s *SetEntityMetadata) Encode(w io.Writer) error {
 			if err := w.VarInt(5); err != nil {
 				return err
 			}
-			if err := w.TextComponent(chat.TextComponent(val)); err != nil {
+			if err := w.TextComponent(text.TextComponent(val)); err != nil {
 				return err
 			}
 		case metadata.OptionalTextComponent:
@@ -77,7 +77,7 @@ func (s *SetEntityMetadata) Encode(w io.Writer) error {
 				return err
 			}
 			if val != nil {
-				if err := w.TextComponent(chat.TextComponent(*val)); err != nil {
+				if err := w.TextComponent(text.TextComponent(*val)); err != nil {
 					return err
 				}
 			}
