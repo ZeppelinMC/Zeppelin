@@ -1,6 +1,8 @@
 package play
 
-import "github.com/dynamitemc/aether/net/io"
+import (
+	"github.com/dynamitemc/aether/net/io"
+)
 
 type BlockEntity struct {
 	X, Y, Z int32
@@ -8,7 +10,7 @@ type BlockEntity struct {
 	Data    any
 }
 
-//clientbound
+// clientbound
 const PacketIdChunkDataUpdateLight = 0x27
 
 type ChunkDataUpdateLight struct {

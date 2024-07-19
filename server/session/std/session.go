@@ -10,6 +10,7 @@ import (
 	"github.com/dynamitemc/aether/net"
 	"github.com/dynamitemc/aether/net/io"
 	"github.com/dynamitemc/aether/net/metadata"
+	"github.com/dynamitemc/aether/net/packet"
 	"github.com/dynamitemc/aether/net/packet/configuration"
 	"github.com/dynamitemc/aether/net/packet/login"
 	"github.com/dynamitemc/aether/net/packet/play"
@@ -58,6 +59,14 @@ func NewStandardSession(conn *net.Conn, player *player.Player, world *world.Worl
 		player:    player,
 		broadcast: broadcast,
 	}
+}
+
+func (session *StandardSession) WritePacket(pk packet.Packet) error {
+	return session.conn.WritePacket(pk)
+}
+
+func (session *StandardSession) ReadPacket() (packet.Packet, error) {
+	return session.conn.ReadPacket()
 }
 
 func (session *StandardSession) Teleport(x, y, z float64, yaw, pitch float32) error {

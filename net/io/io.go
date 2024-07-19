@@ -3,7 +3,6 @@ package io
 import (
 	"fmt"
 	"io"
-	"unsafe"
 )
 
 func AppendByte(data []byte, b int8) []byte {
@@ -98,10 +97,12 @@ func (set BitSet) Get(i int) bool {
 	return (set[i/64] & (1 << (i % 64))) != 0
 }
 
-func (set BitSet) Set(i int, v bool) {
-	bdata := int64(*(*byte)(unsafe.Pointer(&v)))
+func (set BitSet) Set(i int) {
+	set[i/64] |= 1 << (i % 64)
+}
 
-	set[i/64] |= bdata << (i % 64)
+func (set BitSet) Unset(i int) {
+	set[i/64] &= ^(1 << (i % 64))
 }
 
 type FixedBitSet []byte
@@ -110,7 +111,10 @@ func (set FixedBitSet) Get(i int) bool {
 	return (set[i/8] & (1 << (i % 8))) != 0
 }
 
-func (set FixedBitSet) Set(i int, v bool) {
-	bdata := *(*byte)(unsafe.Pointer(&v))
-	set[i/8] |= (bdata << (i % 8))
+func (set FixedBitSet) Set(i int) {
+	set[i/8] |= (1 << (i % 8))
+}
+
+func (set FixedBitSet) Unset(i int) {
+	set[i/8] &= ^(1 << (i % 8))
 }

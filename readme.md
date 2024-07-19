@@ -12,3 +12,8 @@ Why not?
 - Encryption / Authentication
 
 [Discord Server](https://discord.gg/T8qEtDWPak)
+
+## Boot Arguments
+`--no-raw-terminal`: disables the raw terminal option which might be useful for systems that don't work well with it
+
+`--no-plugins`: disables plugins which might be useful if you don't have plugins and want to remove the warning message or if you dislike fun

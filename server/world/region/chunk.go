@@ -37,12 +37,12 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 		BlockLightArrays:    make([][]byte, 0, len(chunk.Sections)+2),
 	}
 	pk.SkyLightArrays = append(pk.SkyLightArrays, emptyLightBuffer)
-	pk.SkyLightMask.Set(0, true)
-	pk.EmptySkyLightMask.Set(0, true)
+	pk.SkyLightMask.Set(0)
+	pk.EmptySkyLightMask.Set(0)
 
 	pk.BlockLightArrays = append(pk.BlockLightArrays, emptyLightBuffer)
-	pk.BlockLightMask.Set(0, true)
-	pk.EmptyBlockLightMask.Set(0, true)
+	pk.BlockLightMask.Set(0)
+	pk.EmptyBlockLightMask.Set(0)
 
 	for secI, section := range chunk.Sections {
 		var blockCount int16
@@ -150,26 +150,28 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 		//
 
 		if section.SkyLight != nil {
-			pk.SkyLightMask.Set(secI+1, true)
-			pk.EmptySkyLightMask.Set(secI+1, allZero(section.SkyLight))
+			pk.SkyLightMask.Set(secI + 1)
+			if allZero(section.SkyLight) {
+				pk.EmptySkyLightMask.Set(secI + 1)
+			}
 			pk.SkyLightArrays = append(pk.SkyLightArrays, section.SkyLight)
 		}
 
 		if section.BlockLight != nil {
-			pk.BlockLightMask.Set(secI+1, true)
+			pk.BlockLightMask.Set(secI + 1)
 			if allZero(section.BlockLight) {
-				pk.EmptyBlockLightMask.Set(secI+1, true)
+				pk.EmptyBlockLightMask.Set(secI + 1)
 			}
 			pk.BlockLightArrays = append(pk.BlockLightArrays, section.BlockLight)
 		}
 	}
 	pk.SkyLightArrays = append(pk.SkyLightArrays, emptyLightBuffer)
-	pk.SkyLightMask.Set(len(chunk.Sections), true)
-	pk.EmptySkyLightMask.Set(len(chunk.Sections), true)
+	pk.SkyLightMask.Set(len(chunk.Sections))
+	pk.EmptySkyLightMask.Set(len(chunk.Sections))
 
 	pk.BlockLightArrays = append(pk.BlockLightArrays, emptyLightBuffer)
-	pk.BlockLightMask.Set(len(chunk.Sections), true)
-	pk.EmptyBlockLightMask.Set(len(chunk.Sections), true)
+	pk.BlockLightMask.Set(len(chunk.Sections))
+	pk.EmptyBlockLightMask.Set(len(chunk.Sections))
 
 	pk.Data = buffer.Bytes()
 

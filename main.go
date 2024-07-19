@@ -12,19 +12,11 @@ import (
 	"github.com/dynamitemc/aether/net/registry"
 	"github.com/dynamitemc/aether/server"
 	"github.com/dynamitemc/aether/server/world/region/blocks"
+	"github.com/dynamitemc/aether/util"
 	"golang.org/x/term"
 )
 
 var timeStart = time.Now()
-
-func hasArgument(name string) bool {
-	for _, arg := range os.Args {
-		if arg == name {
-			return true
-		}
-	}
-	return false
-}
 
 func main() {
 	log.Infoln("Aether 1.21 Minecraft server")
@@ -43,7 +35,7 @@ func main() {
 
 	log.Infof("Binding server to %s:%d TCP\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
 
-	rawTerminal := !hasArgument("--no-raw-terminal")
+	rawTerminal := !util.HasArgument("--no-raw-terminal")
 
 	srv, err := cfg.New()
 	if err != nil {

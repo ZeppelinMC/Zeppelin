@@ -23,8 +23,27 @@ type Player struct {
 	metadata metadata.Metadata
 }
 
+// NewPlayer creates a player struct with the entity id specified and initalizes an entity metadata map for it
 func NewPlayer(entityId int32) *Player {
-	return &Player{entityId: entityId, metadata: make(metadata.Metadata)}
+	return &Player{
+		entityId: entityId,
+		metadata: metadata.Metadata{
+			// Entity
+			metadata.BaseIndex:                      metadata.Byte(0),
+			metadata.AirTicksIndex:                  metadata.VarInt(300),
+			metadata.CustomNameIndex:                metadata.OptionalTextComponent(nil),
+			metadata.IsCustomNameVisibleIndex:       metadata.Boolean(false),
+			metadata.IsSilentIndex:                  metadata.Boolean(false),
+			metadata.HasNoGravityIndex:              metadata.Boolean(false),
+			metadata.PoseIndex:                      metadata.Standing,
+			metadata.TicksFrozenInPowderedSnowIndex: metadata.VarInt(0),
+			// Player extends Living Entity
+			metadata.PlayerAdditionalHeartsIndex:   metadata.Float(0),
+			metadata.PlayerScoreIndex:              metadata.VarInt(0),
+			metadata.PlayerDisplayedSkinPartsIndex: metadata.Byte(0),
+			metadata.PlayerMainHandIndex:           metadata.Byte(1),
+		},
+	}
 }
 
 func (p *Player) Position() (x, y, z float64) {

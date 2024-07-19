@@ -10,29 +10,75 @@ var blue = color.New(color.FgBlue, color.Bold).SprintFunc()
 var red = color.New(color.FgRed, color.Bold).SprintFunc()
 var yellow = color.New(color.FgYellow, color.Bold).SprintFunc()
 
-// this function should be used instead of fmt's because of the custom terminal
-func Println(v ...any) {
-	fmt.Print("\r")
-	fmt.Print(v...)
-	fmt.Println("\r")
+/*
+Println prints the content prefixed and suffixed with a carriage return with an endline in the end.
+Unlike fmt.Println, this doesn't add spaces between the elements
+
+This should be used if raw terminal is enabled, but it works without it aswell
+*/
+func Println(v ...any) (i int, err error) {
+	if i0, err := fmt.Print("\r"); err != nil {
+		return i0, err
+	} else {
+		i += i0
+	}
+
+	if i0, err := fmt.Print(v...); err != nil {
+		return i0, err
+	} else {
+		i += i0
+	}
+	i0, err := fmt.Println("\r")
+
+	return i + i0, err
 }
 
-// this function should be used instead of fmt's because of the custom terminal
-func Print(v ...any) {
-	fmt.Print("\r")
-	fmt.Print(v...)
+/*
+Print prints the content prefixed and suffixed with a carriage return.
+
+This should be used if raw terminal is enabled, but it works without it aswell
+*/
+func Print(v ...any) (i int, err error) {
+	if i0, err := fmt.Print("\r"); err != nil {
+		return i0, err
+	} else {
+		i += i0
+	}
+
+	i0, err := fmt.Print(v...)
+	return i + i0, err
 }
 
-// this function should be used instead of fmt's because of the custom terminal
-func Printf(format string, v ...any) {
-	fmt.Print("\r")
-	fmt.Printf(format, v...)
+/*
+Printf prints the content formatted, and prefixed and suffixed with a carriage return.
+
+This should be used if raw terminal is enabled, but it works without it aswell
+*/
+func Printf(format string, v ...any) (i int, err error) {
+	return fmt.Printf("\r"+format, v...)
 }
 
-func Printlnf(format string, v ...any) {
-	fmt.Print("\r")
-	fmt.Printf(format, v...)
-	fmt.Println("\r")
+/*
+Println prints the content formatted, and prefixed and suffixed with a carriage return with an endline in the end.
+Unlike fmt.Println, this doesn't add spaces between the elements
+
+This should be used if raw terminal is enabled, but it works without it aswell
+*/
+func Printlnf(format string, v ...any) (i int, err error) {
+	if i0, err := fmt.Print("\r"); err != nil {
+		return i0, err
+	} else {
+		i += i0
+	}
+
+	if i0, err := fmt.Printf(format, v...); err != nil {
+		return i0, err
+	} else {
+		i += i0
+	}
+	i0, err := fmt.Println("\r")
+
+	return i + i0, err
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a newline and "> "

@@ -9,6 +9,7 @@ import (
 	"github.com/dynamitemc/aether/server/session/std"
 	_ "github.com/dynamitemc/aether/server/session/std/handler"
 	"github.com/dynamitemc/aether/text"
+	"github.com/dynamitemc/aether/util"
 
 	"github.com/dynamitemc/aether/server/world"
 
@@ -40,11 +41,13 @@ func (srv *Server) NewEntityId() int32 {
 }
 
 func (srv *Server) Start(ts time.Time) {
-	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" && runtime.GOOS != "freebsd" {
-		log.Warnf("Your platform doesn't support plugins (yet) bozo! Supported platforms: Linux, macOS, and FreeBSD. You are using %s\n> ", runtime.GOOS)
-	} else {
-		log.Infoln("Loading plugins")
-		srv.loadPlugins()
+	if !util.HasArgument("--no-plugins") {
+		if runtime.GOOS != "darwin" && runtime.GOOS != "linux" && runtime.GOOS != "freebsd" {
+			log.Warnf("Your platform doesn't support plugins (yet) bozo! Supported platforms: Linux, macOS, and FreeBSD. You are using %s\n> ", runtime.GOOS)
+		} else {
+			log.Infoln("Loading plugins")
+			srv.loadPlugins()
+		}
 	}
 	srv.ticker.Start()
 	log.Infolnf("Started server ticker (%d TPS)", srv.cfg.Net.TPS)

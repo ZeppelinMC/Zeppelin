@@ -125,9 +125,6 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 		return conn.Conn.Write(data)
 	}
 	conn.encryptd(data, data)
-	if err != nil {
-		return 0, err
-	}
 
 	return conn.Conn.Write(data)
 }
@@ -138,7 +135,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		length, packetId int32
 		data             []byte
 	)
-	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet {
+	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
 		if _, err := rd.VarInt(&length); err != nil {
 			return nil, err
 		}
@@ -159,7 +156,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		}
 
 		rd = io.NewReader(bytes.NewReader(data), int(length))
-	} else {
+	} else { // yes compression
 		var packetLength int32
 		if _, err := rd.VarInt(&packetLength); err != nil {
 			return nil, err

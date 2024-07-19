@@ -33,7 +33,10 @@ func (r Reader) readBytes(l int) ([]byte, error) {
 }
 
 func (r Reader) Bool(b *bool) error {
-	return r.Ubyte((*byte)(unsafe.Pointer(&b)))
+	var byt byte
+	err := r.Ubyte(&byt)
+	*b = byt != 0
+	return err
 }
 
 func (r Reader) ReadAll(data *[]byte) (err error) {

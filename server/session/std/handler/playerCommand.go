@@ -14,31 +14,40 @@ func init() {
 
 func handlePlayerCommand(session *std.StandardSession, pk packet.Packet) {
 	if command, ok := pk.(*play.PlayerCommand); ok {
+		var newmd metadata.Metadata
 		switch command.ActionId {
 		case play.ActionIdStartSneaking:
-			session.Player().SetMetadataIndex(metadata.PoseIndex, metadata.Sneaking)
 			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
 			base |= metadata.IsCrouching
-			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
 
-			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
+			newmd = metadata.Metadata{
+				metadata.BaseIndex: base,
+				metadata.PoseIndex: metadata.Sneaking,
+			}
 		case play.ActionIdStopSneaking:
-			session.Player().SetMetadataIndex(metadata.PoseIndex, metadata.Standing)
 			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
 			base &= ^metadata.IsCrouching
-			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
 
-			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
+			newmd = metadata.Metadata{
+				metadata.BaseIndex: base,
+				metadata.PoseIndex: metadata.Sneaking,
+			}
 		case play.ActionIdStartSprinting:
 			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
 			base |= metadata.IsSprinting
-			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
-			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
+
+			newmd = metadata.Metadata{
+				metadata.BaseIndex: base,
+			}
 		case play.ActionIdStopSprinting:
 			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)
 			base &= ^metadata.IsSprinting
-			session.Player().SetMetadataIndex(metadata.BaseIndex, base)
-			session.Broadcast().EntityMetadata(session, session.Player().Metadata())
+
+			newmd = metadata.Metadata{
+				metadata.BaseIndex: base,
+			}
 		}
+		session.Player().SetMetadataIndexes(newmd)
+		session.Broadcast().EntityMetadata(session, newmd)
 	}
 }

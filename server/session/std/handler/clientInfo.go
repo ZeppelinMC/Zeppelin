@@ -27,8 +27,10 @@ func handleClientInfo(s *std.StandardSession, p packet.Packet) {
 		return
 	}
 
-	s.Player().SetMetadataIndexes(metadata.Metadata{
+	new := metadata.Metadata{
 		metadata.PlayerDisplayedSkinPartsIndex: metadata.Byte(inf.DisplayedSkinParts),
 		metadata.PlayerMainHandIndex:           metadata.Byte(inf.MainHand),
-	})
+	}
+	s.Player().SetMetadataIndexes(new)
+	s.Broadcast().EntityMetadata(s, new)
 }

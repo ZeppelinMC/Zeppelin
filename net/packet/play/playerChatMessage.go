@@ -47,9 +47,6 @@ func (p *PlayerChatMessage) Encode(w io.Writer) error {
 	if err := w.VarInt(p.Index); err != nil {
 		return err
 	}
-	if err := w.UUID(p.Sender); err != nil {
-		return err
-	}
 	if err := w.Bool(p.HasMessageSignature); err != nil {
 		return err
 	}
