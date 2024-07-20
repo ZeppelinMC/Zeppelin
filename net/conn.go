@@ -76,11 +76,11 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	}
 	data := packetBuf.Bytes()
 
-	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no encryption
+	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
 		length := io.AppendVarInt(nil, int32(len(data)))
 		_, err := conn.Write(append(length, data...))
 		return err
-	} else { // with encryption
+	} else { // yes compression
 		if len(data) < int(conn.listener.cfg.CompressionThreshold) {
 			data = append([]byte{0}, data...)
 			packetLength := io.AppendVarInt(nil, int32(len(data)))
@@ -150,8 +150,12 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 			return nil, fmt.Errorf("malformed packet, you are being fooled")
 		}
 
+		if length == 0 {
+			goto proc
+		}
+
 		data = make([]byte, length)
-		if err := rd.FixedByteArray(data); err != nil {
+		if _, err := conn.Read(data); err != nil {
 			return nil, err
 		}
 
@@ -218,6 +222,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		}
 	}
 
+proc:
 	var pk packet.Packet
 	pc, ok := serverboundPool[conn.state.Load()][packetId]
 	if !ok {
@@ -277,7 +282,8 @@ func (conn *Conn) writeClassicDisconnect(reason string) {
 	conn.Write(data)
 }
 
-// returns true if the client is trying to log in to the server
+// Handles the handshake, and status/login state for the connection
+// Returns true if the client is logging in
 func (conn *Conn) handleHandshake() bool {
 	pk, err := conn.ReadPacket()
 	if err != nil {
@@ -302,25 +308,25 @@ func (conn *Conn) handleHandshake() bool {
 		if err != nil {
 			return false
 		}
-		_, ok := pk.(*status.StatusRequest)
-		if !ok {
-			return false
-		}
-		if err := conn.WritePacket(&status.StatusResponse{Data: conn.listener.cfg.Status()}); err != nil {
-			return false
-		}
+		switch pk.(type) {
+		case *status.StatusRequest:
+			if err := conn.WritePacket(&status.StatusResponse{Data: conn.listener.cfg.Status()}); err != nil {
+				return false
+			}
 
-		pk, err = conn.ReadPacket()
-		if err != nil {
-			return false
-		}
+			pk, err = conn.ReadPacket()
+			if err != nil {
+				return false
+			}
 
-		p, ok := pk.(*status.Ping)
-		if !ok {
-			return false
-		}
-		if err := conn.WritePacket(p); err != nil {
-			return false
+			p, ok := pk.(*status.Ping)
+			if !ok {
+				return false
+			}
+
+			conn.WritePacket(p)
+		case *status.Ping:
+			conn.WritePacket(pk)
 		}
 	case handshake.Login:
 		conn.state.Store(LoginState)

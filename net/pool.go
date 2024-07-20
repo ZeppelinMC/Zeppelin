@@ -46,3 +46,7 @@ var serverboundPool = map[int32]map[int32]func() packet.Packet{
 		0x36: func() packet.Packet { return &play.SwingArm{} },
 	},
 }
+
+func OverrideSBPool(state, packetId int32, newPacket func() packet.Packet) {
+	serverboundPool[state][packetId] = newPacket
+}

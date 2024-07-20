@@ -5,10 +5,9 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/asn1"
 	"fmt"
-	"math/big"
 
+	"github.com/dynamitemc/aether/net/cfb8"
 	"github.com/dynamitemc/aether/net/packet/login"
 )
 
@@ -18,21 +17,6 @@ func (c *Conn) encryptd(plaintext, dst []byte) {
 
 func (c *Conn) decryptd(ciphertext, dst []byte) {
 	c.decrypter.XORKeyStream(dst, ciphertext)
-}
-
-type AlgorithmIdentifier struct {
-	Algorithm  asn1.ObjectIdentifier
-	Parameters asn1.RawValue `asn1:"optional"`
-}
-
-type SubjectPublicKeyInfo struct {
-	Algorithm        AlgorithmIdentifier
-	SubjectPublicKey asn1.BitString
-}
-
-type RSAPublicKey struct {
-	Modulus        *big.Int
-	PublicExponent int
 }
 
 func (c *Conn) encrypt() error {
@@ -76,8 +60,8 @@ func (c *Conn) encrypt() error {
 	if err != nil {
 		return err
 	}
-	c.encrypter = newCFB8Encrypter(block, c.sharedSecret)
-	c.decrypter = newCFB8Decrypter(block, c.sharedSecret)
+	c.encrypter = cfb8.NewCFB8(block, c.sharedSecret, false)
+	c.decrypter = cfb8.NewCFB8(block, c.sharedSecret, true)
 
 	return nil
 }

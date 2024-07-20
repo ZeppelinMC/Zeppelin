@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/dynamitemc/aether/net/io"
+	"github.com/dynamitemc/aether/text"
 )
 
 type StatusVersion struct {
@@ -15,13 +16,10 @@ type StatusSample struct {
 	Name string `json:"name"`
 	ID   string `json:"id"`
 }
-type StatusDescription struct {
-	Text string `json:"text"`
-}
 type StatusPlayers struct {
 	Max    int            `json:"max"`
 	Online int            `json:"online"`
-	Sample []StatusSample `json:"sample"`
+	Sample []StatusSample `json:"sample,omitempty"`
 }
 
 type Favicon []byte
@@ -41,11 +39,11 @@ func (f Favicon) MarshalJSON() ([]byte, error) {
 }
 
 type StatusResponseData struct {
-	Version            StatusVersion     `json:"version"`
-	Players            StatusPlayers     `json:"players"`
-	Description        StatusDescription `json:"description"`
-	Favicon            Favicon           `json:"favicon"`
-	EnforcesSecureChat bool              `json:"enforcesSecureChat"`
+	Version            StatusVersion      `json:"version"`
+	Players            StatusPlayers      `json:"players"`
+	Description        text.TextComponent `json:"description"`
+	Favicon            Favicon            `json:"favicon,omitempty"`
+	EnforcesSecureChat bool               `json:"enforcesSecureChat"`
 }
 
 type StatusResponse struct {

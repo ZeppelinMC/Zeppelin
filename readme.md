@@ -16,4 +16,4 @@ Why not?
 ## Boot Arguments
 `--no-raw-terminal`: disables the raw terminal option which might be useful for systems that don't work well with it
 
-`--no-plugins`: disables plugins which might be useful if you don't have plugins and want to remove the warning message or if you dislike fun
+`--no-plugins`: disables plugin loading which might be useful if your system doesn't support plugins and want to remove the warning message

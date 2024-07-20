@@ -9,6 +9,7 @@ import (
 	"github.com/dynamitemc/aether/net/packet/status"
 	"github.com/dynamitemc/aether/server/session"
 	"github.com/dynamitemc/aether/server/world"
+	"github.com/dynamitemc/aether/text"
 )
 
 const (
@@ -50,7 +51,7 @@ func (cfg ServerConfig) New() (*Server, error) {
 				Name:     "1.21",
 				Protocol: net.ProtocolVersion,
 			},
-			Description: status.StatusDescription{Text: cfg.MOTD},
+			Description: text.TextComponent{Text: cfg.MOTD},
 			Players: status.StatusPlayers{
 				Max: 20,
 			},

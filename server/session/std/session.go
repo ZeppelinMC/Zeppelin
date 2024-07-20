@@ -150,7 +150,7 @@ func (session *StandardSession) PlayerChatMessage(pk play.ChatMessage, sender se
 		Salt:                pk.Salt,
 
 		ChatType:   chatType,
-		SenderName: text.TextComponent{Text: pk.Message},
+		SenderName: text.TextComponent{Text: session.Username()},
 	})
 	return nil
 }
