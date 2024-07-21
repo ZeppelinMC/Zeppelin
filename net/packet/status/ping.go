@@ -1,6 +1,6 @@
 package status
 
-import "github.com/dynamitemc/aether/net/io"
+import "github.com/zeppelinmc/zeppelin/net/io"
 
 type Ping struct {
 	Payload int64

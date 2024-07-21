@@ -3,13 +3,13 @@ package session
 import (
 	"sync"
 
-	"github.com/dynamitemc/aether/log"
-	"github.com/dynamitemc/aether/net/metadata"
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/text"
-	"github.com/dynamitemc/aether/util"
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/text"
+	"github.com/zeppelinmc/zeppelin/util"
 )
 
 type Broadcast struct {

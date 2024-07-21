@@ -1,25 +1,75 @@
 package server
 
 import (
+	"fmt"
 	"runtime"
 	"sync/atomic"
 	"time"
 
-	"github.com/dynamitemc/aether/server/player"
-	"github.com/dynamitemc/aether/server/session/std"
-	_ "github.com/dynamitemc/aether/server/session/std/handler"
-	"github.com/dynamitemc/aether/text"
-	"github.com/dynamitemc/aether/util"
+	"github.com/zeppelinmc/zeppelin/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/server/config"
+	"github.com/zeppelinmc/zeppelin/server/player"
+	"github.com/zeppelinmc/zeppelin/server/session/std"
+	_ "github.com/zeppelinmc/zeppelin/server/session/std/handler"
+	"github.com/zeppelinmc/zeppelin/text"
+	"github.com/zeppelinmc/zeppelin/util"
 
-	"github.com/dynamitemc/aether/server/world"
+	"github.com/zeppelinmc/zeppelin/server/world"
 
-	"github.com/dynamitemc/aether/log"
-	"github.com/dynamitemc/aether/net"
-	"github.com/dynamitemc/aether/server/session"
+	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/net"
+	"github.com/zeppelinmc/zeppelin/server/session"
 )
 
+// Creates a new server instance using the specified config, returns an error if unable to bind listener
+func New(cfg config.ServerConfig) (*Server, error) {
+	lcfg := net.Config{
+		Status: net.Status(status.StatusResponseData{
+			Version: status.StatusVersion{
+				Name:     "1.21",
+				Protocol: net.ProtocolVersion,
+			},
+			Description: text.Unmarshal(cfg.MOTD, rune(cfg.Chat.Formatter[0])),
+			Players: status.StatusPlayers{
+				Max: 20,
+			},
+			EnforcesSecureChat: true,
+		}),
+
+		IP:                   cfg.Net.ServerIP,
+		Port:                 cfg.Net.ServerPort,
+		CompressionThreshold: cfg.Net.CompressionThreshold,
+		Encrypt:              cfg.Net.EncryptionMode == config.EncryptionYes || cfg.Net.EncryptionMode == config.EncryptionOnline,
+		Authenticate:         cfg.Net.EncryptionMode == config.EncryptionOnline,
+	}
+
+	w, err := world.NewWorld("world")
+	if err != nil {
+		return nil, fmt.Errorf("error loading world: %v", err)
+	}
+
+	listener, err := lcfg.New()
+	server := &Server{
+		listener:  listener,
+		cfg:       cfg,
+		World:     w,
+		Broadcast: session.NewBroadcast(),
+	}
+
+	compstr := "compress everything"
+	if cfg.Net.CompressionThreshold > 0 {
+		compstr = fmt.Sprintf("compress everything over %d bytes", cfg.Net.CompressionThreshold)
+	} else if cfg.Net.CompressionThreshold < 0 {
+		compstr = "no compression"
+	}
+
+	log.Infof("Compression threshold is %d (%s)\n", cfg.Net.CompressionThreshold, compstr)
+	server.createTicker()
+	return server, err
+}
+
 type Server struct {
-	cfg      ServerConfig
+	cfg      config.ServerConfig
 	listener *net.Listener
 	ticker   Ticker
 
@@ -32,7 +82,7 @@ type Server struct {
 	closed bool
 }
 
-func (srv *Server) Config() ServerConfig {
+func (srv *Server) Config() config.ServerConfig {
 	return srv.cfg
 }
 
@@ -60,10 +110,19 @@ func (srv *Server) Start(ts time.Time) {
 			}
 			return
 		}
-		log.Infolnf("[%s] Player attempting to connect: %s (%s)", conn.RemoteAddr(), conn.Username(), conn.UUID())
-		player := player.NewPlayer(srv.entityId.Add(1))
-		std.NewStandardSession(conn, player, srv.World, srv.Broadcast).Login()
+		srv.handleNewConnection(conn)
 	}
+}
+
+func (srv *Server) handleNewConnection(conn *net.Conn) {
+	log.Infolnf("[%s] Player attempting to connect: %s (%s)", conn.RemoteAddr(), conn.Username(), conn.UUID())
+	playerData, err := srv.World.PlayerData(conn.UUID().String())
+	if err != nil {
+		playerData = srv.World.NewPlayerData(conn.UUID())
+	}
+
+	player := player.NewPlayer(srv.entityId.Add(1), playerData)
+	std.NewStandardSession(conn, player, srv.World, srv.Broadcast, srv.cfg).Login()
 }
 
 func (srv *Server) Stop() {

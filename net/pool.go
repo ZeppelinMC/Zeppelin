@@ -1,12 +1,12 @@
 package net
 
 import (
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/configuration"
-	"github.com/dynamitemc/aether/net/packet/handshake"
-	"github.com/dynamitemc/aether/net/packet/login"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/net/packet/handshake"
+	"github.com/zeppelinmc/zeppelin/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/net/packet/status"
 )
 
 var serverboundPool = map[int32]map[int32]func() packet.Packet{

@@ -1,10 +1,10 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/packet/login"
-	"github.com/dynamitemc/aether/text"
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 const (

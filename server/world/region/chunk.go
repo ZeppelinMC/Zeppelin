@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"math/bits"
 
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/net/registry"
-	"github.com/dynamitemc/aether/server/world/region/blocks"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/net/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/region/blocks"
 )
 
 var emptyLightBuffer = make([]byte, 2048)

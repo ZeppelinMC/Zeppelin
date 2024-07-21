@@ -1,8 +1,8 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/packet"
 )
 
 // serverbound

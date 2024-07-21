@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/dynamitemc/aether/net/io"
+	"github.com/zeppelinmc/zeppelin/net/io"
 )
 
 const (
@@ -40,9 +40,11 @@ func (l *Listener) listen() {
 		}
 		conn := l.newConn(c)
 
-		if conn.handleHandshake() {
-			l.newConns <- conn
-		}
+		go func() {
+			if conn.handleHandshake() {
+				l.newConns <- conn
+			}
+		}()
 	}
 }
 

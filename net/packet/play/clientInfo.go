@@ -1,6 +1,6 @@
 package play
 
-import "github.com/dynamitemc/aether/net/packet/configuration"
+import "github.com/zeppelinmc/zeppelin/net/packet/configuration"
 
 //serverbound
 const PacketIdClientInformation = 0x0A

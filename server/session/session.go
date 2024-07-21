@@ -3,12 +3,13 @@ package session
 import (
 	"net"
 
-	"github.com/dynamitemc/aether/net/metadata"
-	"github.com/dynamitemc/aether/net/packet/login"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/server/player"
-	"github.com/dynamitemc/aether/text"
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/player"
+	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 type Session interface {
@@ -25,6 +26,9 @@ type Session interface {
 	ClientName() string
 	// The address of this connection
 	Addr() net.Addr
+
+	// The dimension this session is in, as a dimension struct
+	Dimension() *region.Dimension
 
 	// Disconnects the session from the server
 	Disconnect(reason text.TextComponent) error
@@ -54,7 +58,9 @@ type Session interface {
 	EntityMetadata(entityId int32, md metadata.Metadata) error
 
 	// teleports the player to specified location with specified rotation
-	Teleport(x, y, z float64, yaw, pitch float32) error
+	SynchronizePosition(x, y, z float64, yaw, pitch float32) error
+	// sends a system (unsigned) chat message to the client
+	SystemMessage(msg text.TextComponent) error
 
 	// Returns the session data for this session, and if it has any
 	SessionData() (data play.PlayerSession, ok bool)

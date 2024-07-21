@@ -138,7 +138,11 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
 						field.Set(reflect.ValueOf(d))
 					} else {
-						return fmt.Errorf("cannot assign byte to type %s for field %s", field.Type(), name)
+						if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+							field.Set(reflect.ValueOf(d).Convert(field.Type()))
+						} else {
+							return fmt.Errorf("cannot assign byte to type %s for field %s", field.Type(), name)
+						}
 					}
 				}
 			}
@@ -156,7 +160,11 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
 						field.Set(reflect.ValueOf(d))
 					} else {
-						return fmt.Errorf("cannot assign short to type %s for field %s", field.Type(), name)
+						if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+							field.Set(reflect.ValueOf(d).Convert(field.Type()))
+						} else {
+							return fmt.Errorf("cannot assign short to type %s for field %s", field.Type(), name)
+						}
 					}
 				}
 			}
@@ -170,11 +178,17 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				switch field.Kind() {
 				case reflect.Uint32:
 					field.SetUint(uint64(d))
+				case reflect.Int32:
+					field.SetInt(int64(d))
 				default:
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
 						field.Set(reflect.ValueOf(d))
 					} else {
-						return fmt.Errorf("cannot assign int to type %s for field %s", field.Type(), name)
+						if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+							field.Set(reflect.ValueOf(d).Convert(field.Type()))
+						} else {
+							return fmt.Errorf("cannot assign int to type %s for field %s", field.Type(), name)
+						}
 					}
 				}
 			}
@@ -188,11 +202,17 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				switch field.Kind() {
 				case reflect.Uint64:
 					field.SetUint(uint64(d))
+				case reflect.Int64:
+					field.SetInt(int64(d))
 				default:
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
 						field.Set(reflect.ValueOf(d))
 					} else {
-						return fmt.Errorf("cannot assign long to type %s for field %s", field.Type(), name)
+						if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+							field.Set(reflect.ValueOf(d).Convert(field.Type()))
+						} else {
+							return fmt.Errorf("cannot assign long to type %s for field %s", field.Type(), name)
+						}
 					}
 				}
 			}
@@ -206,7 +226,11 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(field.Type()) {
 					field.Set(reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign string to type %s for field %s", field.Type(), name)
+					if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+						field.Set(reflect.ValueOf(d).Convert(field.Type()))
+					} else {
+						return fmt.Errorf("cannot assign string to type %s for field %s", field.Type(), name)
+					}
 				}
 			}
 		case Float:
@@ -219,7 +243,11 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(field.Type()) {
 					field.Set(reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign float to type %s for field %s", field.Type(), name)
+					if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+						field.Set(reflect.ValueOf(d).Convert(field.Type()))
+					} else {
+						return fmt.Errorf("cannot assign float to type %s for field %s", field.Type(), name)
+					}
 				}
 			}
 		case Double:
@@ -232,7 +260,11 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(field.Type()) {
 					field.Set(reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign double to type %s for field %s", field.Type(), name)
+					if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+						field.Set(reflect.ValueOf(d).Convert(field.Type()))
+					} else {
+						return fmt.Errorf("cannot assign double to type %s for field %s", field.Type(), name)
+					}
 				}
 			}
 		case ByteArray:
@@ -260,9 +292,13 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					}
 				default:
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
-						field.Set(reflect.ValueOf(data))
+						field.Set(reflect.ValueOf(d))
 					} else {
-						return fmt.Errorf("cannot assign byte array to type %s for field %s", field.Type(), name)
+						if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+							field.Set(reflect.ValueOf(d).Convert(field.Type()))
+						} else {
+							return fmt.Errorf("cannot assign byte array to type %s for field %s", field.Type(), name)
+						}
 					}
 				}
 			}
@@ -283,7 +319,11 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
 						field.Set(reflect.ValueOf(d))
 					} else {
-						return fmt.Errorf("cannot assign int array to type %s for field %s", field.Type(), name)
+						if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+							field.Set(reflect.ValueOf(d).Convert(field.Type()))
+						} else {
+							return fmt.Errorf("cannot assign int array to type %s for field %s", field.Type(), name)
+						}
 					}
 				}
 			}
@@ -304,7 +344,11 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
 						field.Set(reflect.ValueOf(d))
 					} else {
-						return fmt.Errorf("cannot assign long array to type %s for field %s", field.Type(), name)
+						if reflect.TypeOf(d).ConvertibleTo(field.Type()) {
+							field.Set(reflect.ValueOf(d).Convert(field.Type()))
+						} else {
+							return fmt.Errorf("cannot assign long array to type %s for field %s", field.Type(), name)
+						}
 					}
 				}
 			}
@@ -390,7 +434,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign byte to type %s for field %s", _map.Type().Elem(), name)
+					if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+						_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+					} else {
+						return fmt.Errorf("cannot assign byte to type %s for field %s", _map.Type().Elem(), name)
+					}
 				}
 			}
 		case Short:
@@ -406,7 +454,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign short to type %s for field %s", _map.Type().Elem(), name)
+					if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+						_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+					} else {
+						return fmt.Errorf("cannot assign short to type %s for field %s", _map.Type().Elem(), name)
+					}
 				}
 			}
 		case Int:
@@ -422,7 +474,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign int to type %s for field %s", _map.Type().Elem(), name)
+					if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+						_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+					} else {
+						return fmt.Errorf("cannot assign int to type %s for field %s", _map.Type().Elem(), name)
+					}
 				}
 			}
 		case Long:
@@ -438,7 +494,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign long to type %s for field %s", _map.Type().Elem(), name)
+					if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+						_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+					} else {
+						return fmt.Errorf("cannot assign long to type %s for field %s", _map.Type().Elem(), name)
+					}
 				}
 			}
 		case String:
@@ -450,7 +510,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 			if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 				_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 			} else {
-				return fmt.Errorf("cannot assign long to type %s for field %s", _map.Type().Elem(), name)
+				if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+				} else {
+					return fmt.Errorf("cannot assign string to type %s for field %s", _map.Type().Elem(), name)
+				}
 			}
 		case Float:
 			d, err := d.readFloat()
@@ -461,7 +525,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 			if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 				_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 			} else {
-				return fmt.Errorf("cannot assign float to type %s for field %s", _map.Type().Elem(), name)
+				if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+				} else {
+					return fmt.Errorf("cannot assign float to type %s for field %s", _map.Type().Elem(), name)
+				}
 			}
 		case Double:
 			d, err := d.readDouble()
@@ -472,7 +540,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 			if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 				_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 			} else {
-				return fmt.Errorf("cannot assign float to type %s for field %s", _map.Type().Elem(), name)
+				if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+					_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+				} else {
+					return fmt.Errorf("cannot assign double to type %s for field %s", _map.Type().Elem(), name)
+				}
 			}
 		case ByteArray:
 			d, err := d.readByteArray()
@@ -490,7 +562,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign byte array to type %s for field %s", _map.Type().Elem(), name)
+					if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+						_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+					} else {
+						return fmt.Errorf("cannot assign byte array to type %s for field %s", _map.Type().Elem(), name)
+					}
 				}
 			}
 		case IntArray:
@@ -509,7 +585,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign int array to type %s for field %s", _map.Type().Elem(), name)
+					if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+						_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+					} else {
+						return fmt.Errorf("cannot assign int array to type %s for field %s", _map.Type().Elem(), name)
+					}
 				}
 			}
 		case LongArray:
@@ -528,7 +608,11 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 				if reflect.TypeOf(d).AssignableTo(_map.Type().Elem()) {
 					_map.SetMapIndex(nameVal, reflect.ValueOf(d))
 				} else {
-					return fmt.Errorf("cannot assign long array to type %s for field %s", _map.Type().Elem(), name)
+					if reflect.TypeOf(d).ConvertibleTo(_map.Type().Elem()) {
+						_map.SetMapIndex(nameVal, reflect.ValueOf(d).Convert(_map.Type().Elem()))
+					} else {
+						return fmt.Errorf("cannot assign long array to type %s for field %s", _map.Type().Elem(), name)
+					}
 				}
 			}
 		case List:

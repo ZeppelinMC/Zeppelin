@@ -1,4 +1,4 @@
-# Aether
+# Zeppelin
 Minecraft Java Edition 1.21 server implementation written in [Go](https://go.dev)
 
 ## Why

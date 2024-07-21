@@ -8,36 +8,28 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dynamitemc/aether/log"
-	"github.com/dynamitemc/aether/net/registry"
-	"github.com/dynamitemc/aether/server"
-	"github.com/dynamitemc/aether/server/world/region/blocks"
-	"github.com/dynamitemc/aether/util"
+	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/server"
+	"github.com/zeppelinmc/zeppelin/server/world/region/blocks"
+	"github.com/zeppelinmc/zeppelin/util"
 	"golang.org/x/term"
 )
 
 var timeStart = time.Now()
 
 func main() {
-	log.Infoln("Aether 1.21 Minecraft server")
-	log.Infof("Running on %s on platform %s-%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-	log.Infoln("Loading embedded 1.21 server registries")
-	if err := registry.LoadRegistry(); err != nil {
-		log.Errorln("Error loading server registries:", err)
-		return
-	}
+	log.Infolnf("Zeppelin 1.21 Minecraft server with %s on platform %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	if err := blocks.LoadBlockCache(); err != nil {
 		log.Errorln("Error loading server registries:", err)
 		return
 	}
-	log.Infoln("Loading config")
 	cfg := loadConfig()
 
-	log.Infof("Binding server to %s:%d TCP\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
+	log.Infof("Binding server to %s:%d\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
 
 	rawTerminal := !util.HasArgument("--no-raw-terminal")
 
-	srv, err := cfg.New()
+	srv, err := server.New(cfg)
 	if err != nil {
 		log.Errorln("Error binding server:", err)
 		return

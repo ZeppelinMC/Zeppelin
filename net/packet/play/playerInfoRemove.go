@@ -1,8 +1,8 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/net/io"
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/net/io"
 )
 
 const PacketIdPlayerInfoRemove = 0x3D

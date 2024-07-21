@@ -1,17 +1,30 @@
 package world
 
-import "github.com/dynamitemc/aether/server/world/region"
+import "github.com/zeppelinmc/zeppelin/server/world/region"
 
 type World struct {
-	save *region.Dimension
+	Level
+	Overworld *region.Dimension
+
+	path string
 }
 
-func NewWorld(path string) *World {
-	return &World{
-		save: region.NewDimension(path + "/region"),
+func NewWorld(path string) (*World, error) {
+	var err error
+	w := &World{
+		Overworld: region.NewDimension(path + "/region"),
+		path:      path,
 	}
+	w.Level, err = loadWorldLevel(path + "/level.dat")
+
+	return w, err
 }
 
-func (w *World) GetChunk(x, z int32) (*region.Chunk, error) {
-	return w.save.GetChunk(x, z)
+func (w *World) Dimension(name string) *region.Dimension {
+	switch name {
+	case "minecraft:overworld", "overworld":
+		return w.Overworld
+	default:
+		return nil
+	}
 }

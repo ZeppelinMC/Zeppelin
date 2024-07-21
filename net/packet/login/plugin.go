@@ -1,6 +1,6 @@
 package login
 
-import "github.com/dynamitemc/aether/net/io"
+import "github.com/zeppelinmc/zeppelin/net/io"
 
 //clientbound
 const PacketIdLoginPluginRequest = 0x04

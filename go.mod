@@ -1,4 +1,4 @@
-module github.com/dynamitemc/aether
+module github.com/zeppelinmc/zeppelin
 
 go 1.22.2
 

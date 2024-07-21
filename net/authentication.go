@@ -10,8 +10,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/dynamitemc/aether/net/packet/login"
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/net/packet/login"
 )
 
 func (c *Conn) authenticate() error {

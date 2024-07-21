@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"github.com/dynamitemc/aether/net/io"
+	"github.com/zeppelinmc/zeppelin/net/io"
 )
 
 type Packet interface {

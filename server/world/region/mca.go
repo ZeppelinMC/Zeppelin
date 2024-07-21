@@ -8,7 +8,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/dynamitemc/aether/nbt"
+	"github.com/zeppelinmc/zeppelin/nbt"
 )
 
 type RegionFile struct {

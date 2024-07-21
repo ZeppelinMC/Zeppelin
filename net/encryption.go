@@ -7,8 +7,8 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/dynamitemc/aether/net/cfb8"
-	"github.com/dynamitemc/aether/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/net/cfb8"
+	"github.com/zeppelinmc/zeppelin/net/packet/login"
 )
 
 func (c *Conn) encryptd(plaintext, dst []byte) {

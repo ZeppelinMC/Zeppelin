@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/net/io"
+	"github.com/zeppelinmc/zeppelin/net/io"
 )
 
 type BlockEntity struct {

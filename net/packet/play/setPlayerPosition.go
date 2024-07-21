@@ -1,6 +1,6 @@
 package play
 
-import "github.com/dynamitemc/aether/net/io"
+import "github.com/zeppelinmc/zeppelin/net/io"
 
 // serverbound
 const PacketIdSetPlayerPosition = 0x1A

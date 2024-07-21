@@ -5,7 +5,7 @@ import (
 	"os"
 	"plugin"
 
-	"github.com/dynamitemc/aether/log"
+	"github.com/zeppelinmc/zeppelin/log"
 )
 
 type Plugin interface {
@@ -35,7 +35,7 @@ func (srv *Server) loadPlugin(name string) {
 		log.Errorf("Error loading plugin %s: %v\n", name, err)
 		return
 	}
-	sym, err := pl.Lookup("AetherPluginExport")
+	sym, err := pl.Lookup("ZeppelinPluginExport")
 	if err != nil {
 		log.Errorf("Couldn't find plugin export for %s: %v\n", name, err)
 		return

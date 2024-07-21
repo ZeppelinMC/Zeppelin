@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/text"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 type StatusVersion struct {

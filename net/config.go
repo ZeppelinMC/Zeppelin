@@ -5,7 +5,7 @@ import (
 	"crypto/rsa"
 	"net"
 
-	"github.com/dynamitemc/aether/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/net/packet/status"
 )
 
 type Config struct {

@@ -3,19 +3,19 @@ package configuration
 import (
 	"reflect"
 
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/registry"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/registry"
 )
 
-func ConstructRegistryPackets() []*RegistryData {
-	regDatas := make([]*RegistryData, 0, len(registry.RegistryMap))
+var RegistryPackets = make([]*RegistryData, 0, len(registry.RegistryMap))
+
+func init() {
 	for key, registry := range registry.RegistryMap {
-		regDatas = append(regDatas, &RegistryData{
+		RegistryPackets = append(RegistryPackets, &RegistryData{
 			RegistryId: key,
 			Registry:   registry,
 		})
 	}
-	return regDatas
 }
 
 // clientbound

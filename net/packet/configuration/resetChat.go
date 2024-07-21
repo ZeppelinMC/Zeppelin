@@ -1,6 +1,6 @@
 package configuration
 
-import "github.com/dynamitemc/aether/net/packet"
+import "github.com/zeppelinmc/zeppelin/net/packet"
 
 //clientbound
 const PacketIdResetChat = 0x06

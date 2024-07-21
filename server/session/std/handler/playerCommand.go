@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"github.com/dynamitemc/aether/net"
-	"github.com/dynamitemc/aether/net/metadata"
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/server/session/std"
+	"github.com/zeppelinmc/zeppelin/net"
+	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/session/std"
 )
 
 func init() {

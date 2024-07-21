@@ -3,11 +3,10 @@ package handler
 import (
 	"math"
 
-	"github.com/dynamitemc/aether/log"
-	"github.com/dynamitemc/aether/net"
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/server/session/std"
+	"github.com/zeppelinmc/zeppelin/net"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/session/std"
 )
 
 func init() {
@@ -27,7 +26,7 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 	}
 	switch pk := p.(type) {
 	case *play.SetPlayerPosition:
-		oldX, oldY, oldZ := s.Player().Position()
+		oldX, _, oldZ := s.Player().Position()
 		oldChunkPosX, oldChunkPosZ := chunkPos(oldX, oldZ)
 		newChunkPosX, newChunkPosZ := chunkPos(pk.X, pk.Z)
 
@@ -35,20 +34,21 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 			s.Conn().WritePacket(&play.SetCenterChunk{ChunkX: newChunkPosX, ChunkZ: newChunkPosZ})
 		}
 
-		distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
-
 		yaw, pitch := s.Player().Rotation()
+
+		/*distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
+
 		if distance > 100 {
 			s.Teleport(oldX, oldY, oldZ, yaw, pitch)
 			log.Infof("%s moved too quickly! (%f %f %f)\n", s.Username(), pk.X-oldX, pk.Y-oldY, pk.Z-oldZ)
 			return
-		}
+		}*/
 
 		s.Broadcast().BroadcastPlayerMovement(s, pk.X, pk.Y, pk.Z, yaw, pitch)
 
 		s.Player().SetPosition(pk.X, pk.Y, pk.Z)
 	case *play.SetPlayerPositionAndRotation:
-		oldX, oldY, oldZ := s.Player().Position()
+		oldX, _, oldZ := s.Player().Position()
 		oldChunkPosX, oldChunkPosZ := chunkPos(oldX, oldZ)
 		newChunkPosX, newChunkPosZ := chunkPos(pk.X, pk.Z)
 
@@ -56,13 +56,13 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 			s.Conn().WritePacket(&play.SetCenterChunk{ChunkX: newChunkPosX, ChunkZ: newChunkPosZ})
 		}
 
-		distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
+		/*distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
 
 		if distance > 100 {
 			s.Teleport(oldX, oldY, oldZ, pk.Yaw, pk.Pitch)
 			log.Infof("%s moved too quickly! (%f %f %f)\n", s.Username(), pk.X-oldX, pk.Y-oldY, pk.Z-oldZ)
 			return
-		}
+		}*/
 
 		s.Broadcast().BroadcastPlayerMovement(s, pk.X, pk.Y, pk.Z, pk.Yaw, pk.Pitch)
 

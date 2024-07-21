@@ -10,12 +10,12 @@ import (
 	"sync/atomic"
 	"unicode/utf16"
 
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/handshake"
-	"github.com/dynamitemc/aether/net/packet/login"
-	"github.com/dynamitemc/aether/net/packet/status"
-	"github.com/dynamitemc/aether/text"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/handshake"
+	"github.com/zeppelinmc/zeppelin/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/text"
 
 	"github.com/google/uuid"
 )

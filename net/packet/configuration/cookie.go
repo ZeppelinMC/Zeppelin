@@ -1,6 +1,6 @@
 package configuration
 
-import "github.com/dynamitemc/aether/net/packet/login"
+import "github.com/zeppelinmc/zeppelin/net/packet/login"
 
 //clientbound
 const PacketIdCookieRequest = 0x00

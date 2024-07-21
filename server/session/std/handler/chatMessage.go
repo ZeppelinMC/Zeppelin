@@ -1,11 +1,14 @@
 package handler
 
 import (
-	"github.com/dynamitemc/aether/net"
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/server/session/std"
-	"github.com/dynamitemc/aether/text"
+	"fmt"
+	"runtime"
+
+	"github.com/zeppelinmc/zeppelin/net"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/session/std"
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 func init() {
@@ -18,6 +21,15 @@ func handleChatMessage(s *std.StandardSession, pk packet.Packet) {
 			s.Disconnect(text.TextComponent{Text: "Chat message over 256 characters is not allowed"})
 			return
 		}
-		s.Broadcast().ChatMessage(s, *cm)
+		if cm.Message == "#stat" {
+			var stats runtime.MemStats
+			runtime.ReadMemStats(&stats)
+
+			s.SystemMessage(text.TextComponent{
+				Text: fmt.Sprintf("Server stats: \n\n Alloc: %dMiB, Total Alloc: %dMiB\n\n Why are you using illegal commands though?", stats.Alloc/1024/1024, stats.TotalAlloc/1024/1024),
+			})
+		} else {
+			s.Broadcast().ChatMessage(s, *cm)
+		}
 	}
 }

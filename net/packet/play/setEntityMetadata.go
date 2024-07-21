@@ -1,9 +1,9 @@
 package play
 
 import (
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/metadata"
-	"github.com/dynamitemc/aether/text"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 // clientbound

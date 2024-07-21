@@ -20,3 +20,9 @@ func (a *AtomicValue[T]) Get() T {
 func (a *AtomicValue[T]) Set(t T) {
 	a.v.Store(t)
 }
+
+func Value[T any](value T) AtomicValue[T] {
+	val := AtomicValue[T]{}
+	val.Set(value)
+	return val
+}

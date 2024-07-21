@@ -3,11 +3,11 @@ package std
 import (
 	"time"
 
-	"github.com/dynamitemc/aether/net"
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/configuration"
-	"github.com/dynamitemc/aether/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/net"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
 )
 
 type handler func(*StandardSession, packet.Packet)
@@ -58,7 +58,7 @@ func (session *StandardSession) handlePackets() {
 				case *configuration.AcknowledgeFinishConfiguration:
 					session.conn.SetState(net.PlayState)
 
-					session.sendSpawnChunks()
+					session.spawn()
 				}
 				continue
 			}

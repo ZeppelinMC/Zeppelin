@@ -7,8 +7,8 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/dynamitemc/aether/nbt"
-	"github.com/dynamitemc/aether/text"
+	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/zeppelinmc/zeppelin/text"
 
 	"github.com/google/uuid"
 )

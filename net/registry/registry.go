@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/dynamitemc/aether/nbt"
+	"github.com/zeppelinmc/zeppelin/nbt"
 )
 
 var biome_id_mu sync.Mutex
@@ -440,16 +440,11 @@ type registries struct {
 //go:embed registries.nbt
 var registriesFile []byte
 
-func LoadRegistry() error {
-	_, err := nbt.NewDecoder(bytes.NewReader(registriesFile)).Decode(&Registries)
+func init() {
+	nbt.NewDecoder(bytes.NewReader(registriesFile)).Decode(&Registries)
 
-	if err != nil {
-		return err
-	}
 	v := reflect.ValueOf(Registries)
 	for i := 0; i < v.NumField(); i++ {
 		RegistryMap[v.Type().Field(i).Tag.Get("nbt")] = v.Field(i).Interface()
 	}
-
-	return err
 }

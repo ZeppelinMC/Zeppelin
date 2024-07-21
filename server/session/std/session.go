@@ -2,24 +2,27 @@ package std
 
 import (
 	"bytes"
+	"math"
 	nnet "net"
 	"slices"
 	"sync"
 
-	"github.com/dynamitemc/aether/atomic"
-	"github.com/dynamitemc/aether/net"
-	"github.com/dynamitemc/aether/net/io"
-	"github.com/dynamitemc/aether/net/metadata"
-	"github.com/dynamitemc/aether/net/packet"
-	"github.com/dynamitemc/aether/net/packet/configuration"
-	"github.com/dynamitemc/aether/net/packet/login"
-	"github.com/dynamitemc/aether/net/packet/play"
-	"github.com/dynamitemc/aether/server/player"
-	"github.com/dynamitemc/aether/server/session"
-	"github.com/dynamitemc/aether/server/world"
-	"github.com/dynamitemc/aether/text"
-	"github.com/dynamitemc/aether/util"
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/atomic"
+	"github.com/zeppelinmc/zeppelin/net"
+	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/net/packet"
+	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/config"
+	"github.com/zeppelinmc/zeppelin/server/player"
+	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world"
+	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/text"
+	"github.com/zeppelinmc/zeppelin/util"
 )
 
 var _ session.Session = (*StandardSession)(nil)
@@ -38,6 +41,7 @@ type StandardSession struct {
 	world     *world.World
 	player    *player.Player
 	broadcast *session.Broadcast
+	config    config.ServerConfig
 
 	conn *net.Conn
 
@@ -52,12 +56,13 @@ type StandardSession struct {
 	Spawned atomic.AtomicValue[bool]
 }
 
-func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast) *StandardSession {
+func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast, config config.ServerConfig) *StandardSession {
 	return &StandardSession{
 		conn:      conn,
 		world:     world,
 		player:    player,
 		broadcast: broadcast,
+		config:    config,
 	}
 }
 
@@ -69,10 +74,13 @@ func (session *StandardSession) ReadPacket() (packet.Packet, error) {
 	return session.conn.ReadPacket()
 }
 
-func (session *StandardSession) Teleport(x, y, z float64, yaw, pitch float32) error {
+func (session *StandardSession) SynchronizePosition(x, y, z float64, yaw, pitch float32) error {
 	session.player.SetPosition(x, y, z)
 	session.player.SetRotation(yaw, pitch)
-	return session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
+	if err := session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch}); err != nil {
+		return err
+	}
+	return session.conn.WritePacket(&play.SetCenterChunk{ChunkX: int32(x * 16), ChunkZ: int32(z * 16)})
 }
 
 func (session *StandardSession) UpdateEntityPosition(pk *play.UpdateEntityPosition) error {
@@ -173,7 +181,7 @@ func (session *StandardSession) Disconnect(reason text.TextComponent) error {
 
 func (session *StandardSession) Login() error {
 	go session.handlePackets()
-	for _, packet := range configuration.ConstructRegistryPackets() {
+	for _, packet := range configuration.RegistryPackets {
 		if err := session.conn.WritePacket(packet); err != nil {
 			return err
 		}
@@ -186,8 +194,8 @@ func (session *StandardSession) Login() error {
 		EntityID:   session.player.EntityId(),
 		Dimensions: []string{"minecraft:overworld"},
 
-		ViewDistance:        12,
-		SimulationDistance:  12,
+		ViewDistance:        session.config.RenderDistance,
+		SimulationDistance:  session.config.SimulationDistance,
 		EnableRespawnScreen: true,
 		DimensionType:       0,
 		DimensionName:       "minecraft:overworld",
@@ -200,12 +208,8 @@ func (session *StandardSession) Login() error {
 
 	if err := session.conn.WritePacket(&play.ClientboundPluginMessage{
 		Channel: "minecraft:brand",
-		Data:    io.AppendString(nil, "Aether"),
+		Data:    io.AppendString(nil, session.config.Brand),
 	}); err != nil {
-		return err
-	}
-
-	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
 		return err
 	}
 
@@ -217,6 +221,10 @@ func (session *StandardSession) Login() error {
 	return nil
 }
 
+func (session *StandardSession) SystemMessage(msg text.TextComponent) error {
+	return session.conn.WritePacket(&play.SystemChatMessage{Content: msg})
+}
+
 func (session *StandardSession) IsSpawned(entityId int32) bool {
 	session.spawned_ents_mu.Lock()
 	defer session.spawned_ents_mu.Unlock()
@@ -226,6 +234,24 @@ func (session *StandardSession) IsSpawned(entityId int32) bool {
 		}
 	}
 	return false
+}
+
+func (session *StandardSession) Dimension() *region.Dimension {
+	return session.world.Dimension(session.player.Dimension())
+}
+
+/*
+The view distance of the client, in chunks
+
+Returns the server's render distance if the client's view distance is bigger or not set
+*/
+func (session *StandardSession) ViewDistance() int32 {
+	plVd := int32(session.player.ClientInformation().ViewDistance)
+	if plVd == 0 || plVd > session.config.RenderDistance {
+		return session.config.RenderDistance
+	}
+
+	return plVd
 }
 
 func (session *StandardSession) DespawnEntities(entityIds ...int32) error {
@@ -271,13 +297,19 @@ func (session *StandardSession) SpawnPlayer(ses session.Session) error {
 }
 
 func (session *StandardSession) sendSpawnChunks() error {
-	viewDistance := int32(session.Player().ClientInformation().ViewDistance)
+	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
+		return err
+	}
+
+	viewDistance := session.ViewDistance()
 	var buf = new(bytes.Buffer)
 
-	var chunks int32
-	for x := 0 - viewDistance; x <= 0+viewDistance; x++ {
-		for z := 0 - viewDistance; z < 0+viewDistance; z++ {
-			c, err := session.world.GetChunk(x, z)
+	x, _, z := session.player.Position()
+	chunkX, chunkZ := int32(math.Floor(x/16)), int32(math.Floor(z/16))
+
+	for x := chunkX - viewDistance; x <= chunkX+viewDistance; x++ {
+		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
+			c, err := session.world.Overworld.GetChunk(x, z)
 			if err != nil {
 				continue
 			}
@@ -286,8 +318,30 @@ func (session *StandardSession) sendSpawnChunks() error {
 				return err
 			}
 			buf.Reset()
-			chunks++
 		}
+	}
+
+	return nil
+}
+
+func (session *StandardSession) spawn() error {
+	if err := session.WritePacket(&play.SetDefaultSpawnPosition{
+		X:     session.world.Data.SpawnX,
+		Y:     session.world.Data.SpawnY,
+		Z:     session.world.Data.SpawnZ,
+		Angle: session.world.Data.SpawnAngle,
+	}); err != nil {
+		return err
+	}
+
+	x, y, z := session.player.Position()
+	yaw, pitch := session.player.Rotation()
+	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
+		return err
+	}
+
+	if err := session.sendSpawnChunks(); err != nil {
+		return err
 	}
 
 	return nil

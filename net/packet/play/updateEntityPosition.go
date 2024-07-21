@@ -1,6 +1,6 @@
 package play
 
-import "github.com/dynamitemc/aether/net/io"
+import "github.com/zeppelinmc/zeppelin/net/io"
 
 // clientbound
 const PacketIdUpdateEntityPosition = 0x2E

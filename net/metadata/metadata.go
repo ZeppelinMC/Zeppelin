@@ -1,8 +1,8 @@
 package metadata
 
 import (
-	"github.com/dynamitemc/aether/text"
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 /*

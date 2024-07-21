@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/dynamitemc/aether/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
 )
 
 func (b *Broadcast) ChatMessage(session Session, pk play.ChatMessage) {
