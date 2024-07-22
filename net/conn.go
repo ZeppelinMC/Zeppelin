@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"sync"
 	"sync/atomic"
 	"unicode/utf16"
 
@@ -44,6 +45,9 @@ type Conn struct {
 
 	decrypter, encrypter cipher.Stream
 	compressionSet       bool
+
+	write_mu sync.Mutex
+	read_mu  sync.Mutex
 }
 
 func (conn *Conn) Username() string {
@@ -66,6 +70,9 @@ func (conn *Conn) State() int32 {
 }
 
 func (conn *Conn) WritePacket(pk packet.Packet) error {
+	conn.write_mu.Lock()
+	defer conn.write_mu.Unlock()
+
 	var packetBuf = new(bytes.Buffer)
 	w := io.NewWriter(packetBuf)
 	if err := w.VarInt(pk.ID()); err != nil {
@@ -130,6 +137,9 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 }
 
 func (conn *Conn) ReadPacket() (packet.Packet, error) {
+	conn.read_mu.Lock()
+	defer conn.read_mu.Unlock()
+
 	var rd = io.NewReader(conn, 0)
 	var (
 		length, packetId int32

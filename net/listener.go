@@ -30,6 +30,14 @@ type Listener struct {
 	privKey *rsa.PrivateKey
 }
 
+func (l *Listener) SetStatusProvider(p StatusProvider) {
+	l.cfg.Status = p
+}
+
+func (l *Listener) StatusProvider() StatusProvider {
+	return l.cfg.Status
+}
+
 func (l *Listener) listen() {
 	for {
 		c, err := l.Listener.Accept()

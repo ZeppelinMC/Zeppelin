@@ -64,4 +64,7 @@ type Session interface {
 
 	// Returns the session data for this session, and if it has any
 	SessionData() (data play.PlayerSession, ok bool)
+
+	// updates the time for the client
+	UpdateTime(worldAge, dayTime int64) error
 }

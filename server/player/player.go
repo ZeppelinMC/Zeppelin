@@ -1,6 +1,8 @@
 package player
 
 import (
+	"maps"
+	"slices"
 	"sync"
 
 	"github.com/google/uuid"
@@ -27,10 +29,17 @@ type Player struct {
 
 	clientInfo atomic.AtomicValue[configuration.ClientInformation]
 
+	abilities atomic.AtomicValue[world.PlayerAbilities]
+
 	dimension atomic.AtomicValue[string]
 
-	md_mu    sync.Mutex
+	gameMode atomic.AtomicValue[world.GameType]
+
+	md_mu    sync.RWMutex
 	metadata metadata.Metadata
+
+	att_mu     sync.RWMutex
+	attributes []entity.Attribute
 }
 
 // NewPlayer creates a player struct with the entity id specified and initalizes an entity metadata map for it
@@ -63,10 +72,16 @@ func NewPlayer(entityId int32, data world.PlayerData) *Player {
 
 		dimension: atomic.Value(data.Dimension),
 
+		gameMode: atomic.Value(data.PlayerGameType),
+
 		health:         atomic.Value(data.Health),
 		food:           atomic.Value(data.FoodLevel),
 		foodExhaustion: atomic.Value(data.FoodExhaustionLevel),
 		foodSaturation: atomic.Value(data.FoodSaturationLevel),
+
+		abilities: atomic.Value(data.Abilities),
+
+		attributes: data.Attributes,
 	}
 }
 
@@ -105,10 +120,11 @@ func (p *Player) ClientInformation() configuration.ClientInformation {
 	return p.clientInfo.Get()
 }
 
+// returns a clone of the metadata of this player
 func (p *Player) Metadata() metadata.Metadata {
-	p.md_mu.Lock()
-	defer p.md_mu.Unlock()
-	return p.metadata
+	p.md_mu.RLock()
+	defer p.md_mu.RUnlock()
+	return maps.Clone(p.metadata)
 }
 
 func (p *Player) SetMetadata(md metadata.Metadata) {
@@ -118,8 +134,8 @@ func (p *Player) SetMetadata(md metadata.Metadata) {
 }
 
 func (p *Player) MetadataIndex(i byte) any {
-	p.md_mu.Lock()
-	defer p.md_mu.Unlock()
+	p.md_mu.RLock()
+	defer p.md_mu.RUnlock()
 	return p.metadata[i]
 }
 
@@ -175,4 +191,47 @@ func (p *Player) FoodExhaustion() float32 {
 
 func (p *Player) SetFoodExhaustion(fh float32) {
 	p.foodExhaustion.Set(fh)
+}
+
+func (p *Player) Abilities() world.PlayerAbilities {
+	return p.abilities.Get()
+}
+
+func (p *Player) SetAbilities(abs world.PlayerAbilities) {
+	p.abilities.Set(abs)
+}
+
+func (p *Player) GameMode() world.GameType {
+	return p.gameMode.Get()
+}
+
+func (p *Player) SetGameMode(mode world.GameType) {
+	p.gameMode.Set(mode)
+}
+
+func (p *Player) Attribute(id string) *entity.Attribute {
+	p.att_mu.RLock()
+	defer p.att_mu.RUnlock()
+	i := slices.IndexFunc(p.attributes, func(att entity.Attribute) bool { return att.Id == id })
+	if i == -1 {
+		return nil
+	}
+	return &p.attributes[i]
+}
+
+// returns a clone of the attributes of this player
+func (p *Player) Attributes() []entity.Attribute {
+	p.att_mu.RLock()
+	defer p.att_mu.RUnlock()
+	return slices.Clone(p.attributes)
+}
+
+func (p *Player) SetAttribute(id string, base float64) {
+	p.att_mu.Lock()
+	defer p.att_mu.Unlock()
+	i := slices.IndexFunc(p.attributes, func(att entity.Attribute) bool { return att.Id == id })
+	if i == -1 {
+		return
+	}
+	p.attributes[i].Base = base
 }

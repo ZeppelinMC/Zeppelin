@@ -14,7 +14,7 @@ import (
 
 type Broadcast struct {
 	sessions    map[uuid.UUID]Session
-	sessions_mu sync.Mutex
+	sessions_mu sync.RWMutex
 }
 
 func NewBroadcast() *Broadcast {
@@ -25,10 +25,8 @@ func NewBroadcast() *Broadcast {
 
 // Disconnects all the players on the broadcast
 func (b *Broadcast) DisconnectAll(reason text.TextComponent) {
-	b.sessions_mu.Lock()
-	defer func() {
-		b.sessions_mu.Unlock()
-	}()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 	for _, ses := range b.sessions {
 		ses.Disconnect(reason)
 	}
@@ -36,8 +34,8 @@ func (b *Broadcast) DisconnectAll(reason text.TextComponent) {
 
 // Returns a session by uuid
 func (b *Broadcast) Session(uuid uuid.UUID) (ses Session, ok bool) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 	ses, ok = b.sessions[uuid]
 
 	return
@@ -45,8 +43,8 @@ func (b *Broadcast) Session(uuid uuid.UUID) (ses Session, ok bool) {
 
 // Returns a session by username
 func (b *Broadcast) SessionByUsername(username string) (ses Session, ok bool) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 
 	for _, session := range b.sessions {
 		if session.Username() == username {
@@ -59,8 +57,8 @@ func (b *Broadcast) SessionByUsername(username string) (ses Session, ok bool) {
 
 // Returns a session by entity id
 func (b *Broadcast) SessionByEntityId(entityId int32) (ses Session, ok bool) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 
 	for _, session := range b.sessions {
 		if session.Player().EntityId() == entityId {
@@ -73,8 +71,8 @@ func (b *Broadcast) SessionByEntityId(entityId int32) (ses Session, ok bool) {
 
 // when a player's session data updates
 func (b *Broadcast) UpdateSession(session Session) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 
 	sesData, ok := session.SessionData()
 
@@ -149,8 +147,8 @@ func (b *Broadcast) AddPlayer(session Session) {
 }
 
 func (b *Broadcast) SpawnPlayer(session Session) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 
 	x, y, z := session.Player().Position()
 
@@ -168,8 +166,8 @@ func (b *Broadcast) SpawnPlayer(session Session) {
 
 // broadcasts the position and rotation changes to the server. should be used before setting the properties on the player
 func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, yaw, pitch float32) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 
 	var (
 		oldX, oldY, oldZ = session.Player().Position()
@@ -223,8 +221,8 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 }
 
 func (b *Broadcast) Animation(session Session, animation byte) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 	id := session.Player().EntityId()
 	for _, ses := range b.sessions {
 		if ses.UUID() == session.UUID() {
@@ -235,13 +233,22 @@ func (b *Broadcast) Animation(session Session, animation byte) {
 }
 
 func (b *Broadcast) EntityMetadata(session Session, md metadata.Metadata) {
-	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
 	id := session.Player().EntityId()
 	for _, ses := range b.sessions {
 		if ses.UUID() == session.UUID() {
 			continue
 		}
 		ses.EntityMetadata(id, md)
+	}
+}
+
+func (b *Broadcast) UpdateTimeForAll(worldAge, dayTime int64) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	for _, ses := range b.sessions {
+		ses.UpdateTime(worldAge, dayTime)
 	}
 }

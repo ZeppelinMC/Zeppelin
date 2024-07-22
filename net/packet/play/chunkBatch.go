@@ -6,7 +6,7 @@ import (
 )
 
 // clientbound
-const PacketIdChunkBatchFinished = 0x0D
+const PacketIdChunkBatchFinished = 0x0C
 
 type ChunkBatchFinished struct {
 	BatchSize int32

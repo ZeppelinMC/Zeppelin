@@ -2,8 +2,9 @@ package blocks
 
 import (
 	_ "embed"
-	"encoding/json"
 	"reflect"
+
+	"github.com/zeppelinmc/zeppelin/nbt"
 )
 
 type Block struct {
@@ -24,9 +25,10 @@ func (b Block) FindState(properties map[string]string) (id int32, ok bool) {
 
 var Blocks map[string]Block
 
-//go:embed blocks.json
+//go:embed blocks.nbt
 var blockData []byte
 
 func LoadBlockCache() error {
-	return json.Unmarshal(blockData, &Blocks)
+	_, err := nbt.Unmarshal(blockData, &Blocks)
+	return err
 }

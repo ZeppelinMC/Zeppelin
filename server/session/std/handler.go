@@ -57,8 +57,7 @@ func (session *StandardSession) handlePackets() {
 					session.broadcast.Animation(session, id)
 				case *configuration.AcknowledgeFinishConfiguration:
 					session.conn.SetState(net.PlayState)
-
-					session.spawn()
+					session.login()
 				}
 				continue
 			}

@@ -23,6 +23,7 @@ func main() {
 		log.Errorln("Error loading server registries:", err)
 		return
 	}
+
 	cfg := loadConfig()
 
 	log.Infof("Binding server to %s:%d\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
@@ -46,6 +47,8 @@ func main() {
 		go notRawTerminal(srv)
 	}
 	srv.Start(timeStart)
+
+	log.InfolnClean("See you next time")
 
 	if rawTerminal {
 		term.Restore(int(os.Stdin.Fd()), oldState)

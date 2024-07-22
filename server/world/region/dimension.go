@@ -7,11 +7,12 @@ import (
 	"sync"
 )
 
-func NewDimension(regionPath string) *Dimension {
+func NewDimension(regionPath string, typ int) *Dimension {
 	return &Dimension{
 		regions: make(map[uint64]*RegionFile),
 
 		regionPath: regionPath,
+		typ:        typ,
 	}
 }
 
@@ -19,7 +20,13 @@ type Dimension struct {
 	reg_mu  sync.Mutex
 	regions map[uint64]*RegionFile
 
+	typ int
+
 	regionPath string
+}
+
+func (s *Dimension) Type() int {
+	return s.typ
 }
 
 func (s *Dimension) GetChunk(x, z int32) (*Chunk, error) {

@@ -3,6 +3,8 @@ package world
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/binary"
 	"io"
 	"os"
 	"strconv"
@@ -33,7 +35,7 @@ func (stamp UnixMilliTimestamp) Time() time.Time {
 type GameType int32
 
 const (
-	GameTypeSurvival = iota
+	GameTypeSurvival GameType = iota
 	GameTypeCreative
 	GameTypeAdventure
 	GameTypeSpectator
@@ -104,7 +106,7 @@ type Level struct {
 			BonusChest       bool
 			Dimensions       map[string]DimensionGenerationSettings
 			GenerateFeatures bool
-			Seed             int64
+			Seed             Seed
 		}
 
 		AllowCommands    bool  `nbt:"allowCommands"`
@@ -139,4 +141,13 @@ func loadWorldLevel(path string) (Level, error) {
 	_, err = nbt.NewDecoder(bytes.NewReader(buf)).Decode(&level)
 
 	return level, err
+}
+
+type Seed int64
+
+// First 8 bytes of the SHA-256 hash of the world's seed. Used client side for biome noise
+func (s Seed) HashedSeed() int64 {
+	hash := sha256.Sum256(binary.BigEndian.AppendUint64(nil, uint64(s)))
+
+	return int64(binary.BigEndian.Uint64(hash[:8]))
 }

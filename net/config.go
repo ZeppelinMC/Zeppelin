@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	Status func() status.StatusResponseData
+	Status StatusProvider
 
 	IP                   net.IP
 	Port                 int
@@ -17,6 +17,8 @@ type Config struct {
 	Encrypt              bool
 	Authenticate         bool
 }
+
+type StatusProvider func() status.StatusResponseData
 
 func (c Config) New() (*Listener, error) {
 	l, err := net.ListenTCP("tcp", &net.TCPAddr{
@@ -39,7 +41,7 @@ func (c Config) New() (*Listener, error) {
 	return lis, err
 }
 
-func Status(s status.StatusResponseData) func() status.StatusResponseData {
+func Status(s status.StatusResponseData) StatusProvider {
 	return func() status.StatusResponseData {
 		return s
 	}

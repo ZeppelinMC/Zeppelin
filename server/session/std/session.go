@@ -47,6 +47,8 @@ type StandardSession struct {
 
 	clientName string // constant
 
+	statusProviderProvider func() net.StatusProvider
+
 	hasSessionData atomic.AtomicValue[bool]
 	sessionData    atomic.AtomicValue[play.PlayerSession]
 
@@ -56,13 +58,14 @@ type StandardSession struct {
 	Spawned atomic.AtomicValue[bool]
 }
 
-func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast, config config.ServerConfig) *StandardSession {
+func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast, config config.ServerConfig, statusProviderProvider func() net.StatusProvider) *StandardSession {
 	return &StandardSession{
-		conn:      conn,
-		world:     world,
-		player:    player,
-		broadcast: broadcast,
-		config:    config,
+		conn:                   conn,
+		world:                  world,
+		player:                 player,
+		broadcast:              broadcast,
+		config:                 config,
+		statusProviderProvider: statusProviderProvider,
 	}
 }
 
@@ -77,10 +80,7 @@ func (session *StandardSession) ReadPacket() (packet.Packet, error) {
 func (session *StandardSession) SynchronizePosition(x, y, z float64, yaw, pitch float32) error {
 	session.player.SetPosition(x, y, z)
 	session.player.SetRotation(yaw, pitch)
-	if err := session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch}); err != nil {
-		return err
-	}
-	return session.conn.WritePacket(&play.SetCenterChunk{ChunkX: int32(x * 16), ChunkZ: int32(z * 16)})
+	return session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
 }
 
 func (session *StandardSession) UpdateEntityPosition(pk *play.UpdateEntityPosition) error {
@@ -179,8 +179,15 @@ func (session *StandardSession) Disconnect(reason text.TextComponent) error {
 	}
 }
 
-func (session *StandardSession) Login() error {
+// finishes configuration
+func (session *StandardSession) Configure() error {
 	go session.handlePackets()
+	if err := session.conn.WritePacket(&configuration.ClientboundPluginMessage{
+		Channel: "minecraft:brand",
+		Data:    io.AppendString(nil, session.config.Brand),
+	}); err != nil {
+		return err
+	}
 	for _, packet := range configuration.RegistryPackets {
 		if err := session.conn.WritePacket(packet); err != nil {
 			return err
@@ -190,34 +197,77 @@ func (session *StandardSession) Login() error {
 		return err
 	}
 
+	if err := session.conn.WritePacket(updateTags); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (session *StandardSession) login() error {
 	if err := session.conn.WritePacket(&play.Login{
 		EntityID:   session.player.EntityId(),
-		Dimensions: []string{"minecraft:overworld"},
+		Dimensions: []string{session.player.Dimension()},
 
-		ViewDistance:        session.config.RenderDistance,
-		SimulationDistance:  session.config.SimulationDistance,
+		Hardcore: session.world.Data.Hardcore,
+
+		ViewDistance:       session.config.RenderDistance,
+		SimulationDistance: session.config.SimulationDistance,
+
+		HashedSeed: session.world.Data.WorldGenSettings.Seed.HashedSeed(),
+
 		EnableRespawnScreen: true,
-		DimensionType:       0,
-		DimensionName:       "minecraft:overworld",
-		GameMode:            1,
+		DimensionType:       int32(session.Dimension().Type()),
+		DimensionName:       session.player.Dimension(),
+		GameMode:            byte(session.player.GameMode()),
 
 		EnforcesSecureChat: true,
 	}); err != nil {
 		return err
 	}
 
-	if err := session.conn.WritePacket(&play.ClientboundPluginMessage{
-		Channel: "minecraft:brand",
-		Data:    io.AppendString(nil, session.config.Brand),
+	if err := session.conn.WritePacket(&play.ChangeDifficulty{
+		Difficulty: session.world.Data.Difficulty,
+		Locked:     session.world.Data.DifficultyLocked,
 	}); err != nil {
 		return err
 	}
 
-	if err := session.conn.WritePacket(updateTags); err != nil {
+	if err := session.conn.WritePacket(
+		session.player.Abilities().Encode(float32(session.player.Attribute("minecraft:generic.movement_speed").Base)),
+	); err != nil {
+		return err
+	}
+
+	x, y, z := session.player.Position()
+	yaw, pitch := session.player.Rotation()
+	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
+		return err
+	}
+
+	status := session.statusProviderProvider()()
+
+	if err := session.conn.WritePacket(&play.ServerData{
+		MOTD: status.Description,
+		Icon: status.Favicon,
+	}); err != nil {
 		return err
 	}
 
 	session.broadcast.AddPlayer(session)
+
+	if err := session.WritePacket(&play.SetDefaultSpawnPosition{
+		X:     session.world.Data.SpawnX,
+		Y:     session.world.Data.SpawnY,
+		Z:     session.world.Data.SpawnZ,
+		Angle: session.world.Data.SpawnAngle,
+	}); err != nil {
+		return err
+	}
+
+	if err := session.sendSpawnChunks(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -307,8 +357,18 @@ func (session *StandardSession) sendSpawnChunks() error {
 	x, _, z := session.player.Position()
 	chunkX, chunkZ := int32(math.Floor(x/16)), int32(math.Floor(z/16))
 
+	if err := session.conn.WritePacket(&play.SetCenterChunk{ChunkX: chunkX, ChunkZ: chunkZ}); err != nil {
+		return err
+	}
+
+	var chunks int32
+
+	if err := session.conn.WritePacket(&play.ChunkBatchStart{}); err != nil {
+		return err
+	}
+
 	for x := chunkX - viewDistance; x <= chunkX+viewDistance; x++ {
-		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
+		for z := chunkZ - viewDistance; z <= chunkZ+viewDistance; z++ {
 			c, err := session.world.Overworld.GetChunk(x, z)
 			if err != nil {
 				continue
@@ -318,31 +378,19 @@ func (session *StandardSession) sendSpawnChunks() error {
 				return err
 			}
 			buf.Reset()
+			chunks++
 		}
+	}
+
+	if err := session.conn.WritePacket(&play.ChunkBatchFinished{
+		BatchSize: chunks,
+	}); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (session *StandardSession) spawn() error {
-	if err := session.WritePacket(&play.SetDefaultSpawnPosition{
-		X:     session.world.Data.SpawnX,
-		Y:     session.world.Data.SpawnY,
-		Z:     session.world.Data.SpawnZ,
-		Angle: session.world.Data.SpawnAngle,
-	}); err != nil {
-		return err
-	}
-
-	x, y, z := session.player.Position()
-	yaw, pitch := session.player.Rotation()
-	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
-		return err
-	}
-
-	if err := session.sendSpawnChunks(); err != nil {
-		return err
-	}
-
-	return nil
+func (session *StandardSession) UpdateTime(worldAge, dayTime int64) error {
+	return session.conn.WritePacket(&play.UpdateTime{WorldAge: worldAge, TimeOfDay: dayTime})
 }

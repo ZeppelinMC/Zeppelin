@@ -25,6 +25,9 @@ func (t Ticker) Start() {
 	go func() {
 		for range t.ticker.C {
 			t.tick++
+			//t.srv.World.IncrementTime()
+			age, time := t.srv.World.IncrementTime()
+			t.srv.Broadcast.UpdateTimeForAll(age, time)
 		}
 	}()
 }

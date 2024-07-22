@@ -1,6 +1,7 @@
 package nbt
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"math"
@@ -42,6 +43,12 @@ func (d *Decoder) DisallowUnknownFields(v bool) {
 	d.disallowUnknownFields = v
 }
 
+// Unmarshal is the same as making a new decoder and using it on a bytes.Reader of the input
+func Unmarshal(input []byte, v any) (rootName string, err error) {
+	return NewDecoder(bytes.NewReader(input)).Decode(v)
+}
+
+// Decode will decode the nbt file into v and return the root name of the file
 func (d *Decoder) Decode(v any) (rootName string, err error) {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Pointer {

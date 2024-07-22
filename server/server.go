@@ -23,18 +23,19 @@ import (
 
 // Creates a new server instance using the specified config, returns an error if unable to bind listener
 func New(cfg config.ServerConfig) (*Server, error) {
+	var statusProvider = net.Status(status.StatusResponseData{
+		Version: status.StatusVersion{
+			Name:     "1.21",
+			Protocol: net.ProtocolVersion,
+		},
+		Description: text.Unmarshal(cfg.MOTD, rune(cfg.Chat.Formatter[0])),
+		Players: status.StatusPlayers{
+			Max: 20,
+		},
+		EnforcesSecureChat: true,
+	})
 	lcfg := net.Config{
-		Status: net.Status(status.StatusResponseData{
-			Version: status.StatusVersion{
-				Name:     "1.21",
-				Protocol: net.ProtocolVersion,
-			},
-			Description: text.Unmarshal(cfg.MOTD, rune(cfg.Chat.Formatter[0])),
-			Players: status.StatusPlayers{
-				Max: 20,
-			},
-			EnforcesSecureChat: true,
-		}),
+		Status: statusProvider,
 
 		IP:                   cfg.Net.ServerIP,
 		Port:                 cfg.Net.ServerPort,
@@ -82,6 +83,10 @@ type Server struct {
 	closed bool
 }
 
+func (srv *Server) SetStatusProvider(sp net.StatusProvider) {
+	srv.listener.SetStatusProvider(sp)
+}
+
 func (srv *Server) Config() config.ServerConfig {
 	return srv.cfg
 }
@@ -122,11 +127,13 @@ func (srv *Server) handleNewConnection(conn *net.Conn) {
 	}
 
 	player := player.NewPlayer(srv.entityId.Add(1), playerData)
-	std.NewStandardSession(conn, player, srv.World, srv.Broadcast, srv.cfg).Login()
+	std.NewStandardSession(conn, player, srv.World, srv.Broadcast, srv.cfg, func() net.StatusProvider {
+		return srv.listener.StatusProvider()
+	}).Configure()
 }
 
 func (srv *Server) Stop() {
-	log.InfolnClean("Stopping server")
+	log.Infoln("Stopping server")
 	srv.closed = true
 	srv.Broadcast.DisconnectAll(text.TextComponent{Text: "Server closed"})
 	srv.listener.Close()

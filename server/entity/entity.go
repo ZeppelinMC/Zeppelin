@@ -17,6 +17,8 @@ type Entity interface {
 	Rotation() (yaw, pitch float32)
 	// The metadata of this entity
 	Metadata() metadata.Metadata
+	// The attributes of this entity
+	Attributes() []Attribute
 	// The name of the dimension this entity is in
 	Dimension() string
 }

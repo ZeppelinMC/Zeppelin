@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/item"
 )
@@ -84,15 +85,7 @@ type PlayerData struct {
 	XpSeed  int32
 	XpTotal int32
 
-	Abilities struct {
-		FlySpeed     float32 `nbt:"flySpeed"`
-		Flying       bool    `nbt:"flying"`
-		Instabuild   bool    `nbt:"instabuild"`
-		Invulnerable bool    `nbt:"invulnerable"`
-		MayBuild     bool    `nbt:"mayBuild"`
-		MayFly       bool    `nbt:"mayfly"`
-		WalkSpeed    float32 `nbt:"walkSpeed"`
-	} `nbt:"abilities"`
+	Abilities PlayerAbilities `nbt:"abilities"`
 
 	ActiveEffects []struct {
 		Duration      int32  `nbt:"duration"`
@@ -168,5 +161,37 @@ func (w *World) NewPlayerData(uuid uuid.UUID) PlayerData {
 		Dimension:           "minecraft:overworld",
 		OnGround:            true,
 		PlayerGameType:      w.Data.GameType,
+	}
+}
+
+type PlayerAbilities struct {
+	FlySpeed     float32 `nbt:"flySpeed"`
+	Flying       bool    `nbt:"flying"`
+	Instabuild   bool    `nbt:"instabuild"`
+	Invulnerable bool    `nbt:"invulnerable"`
+	MayBuild     bool    `nbt:"mayBuild"`
+	MayFly       bool    `nbt:"mayfly"`
+	WalkSpeed    float32 `nbt:"walkSpeed"`
+}
+
+func (a PlayerAbilities) Encode(fovModifier float32) *play.PlayerAbilitiesClientbound {
+	var flags int8
+	if a.Invulnerable {
+		flags |= 0x01
+	}
+	if a.Flying {
+		flags |= 0x02
+	}
+	if a.MayFly {
+		flags |= 0x04
+	}
+	if a.Instabuild {
+		flags |= 0x08
+	}
+
+	return &play.PlayerAbilitiesClientbound{
+		Flags:       flags,
+		FlyingSpeed: a.FlySpeed,
+		FOVModifier: fovModifier,
 	}
 }
