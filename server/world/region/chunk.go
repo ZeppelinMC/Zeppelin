@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/bits"
 
+	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/net/registry"
@@ -99,7 +100,10 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 		case blockBitsPerEntry >= 4 && blockBitsPerEntry <= 8:
 			w.VarInt(int32(len(section.BlockStates.Palette)))
 			for _, e := range section.BlockStates.Palette {
-				stateId, _ := blocks.Blocks[e.Name].FindState(e.Properties)
+				stateId, ok := blocks.Blocks[e.Name].FindState(e.Properties)
+				if !ok {
+					log.Println(e.Name, e.Properties)
+				}
 				w.VarInt(stateId)
 			}
 		case blockBitsPerEntry == 15: // no palette

@@ -48,8 +48,6 @@ func main() {
 	}
 	srv.Start(timeStart)
 
-	log.InfolnClean("See you next time")
-
 	if rawTerminal {
 		term.Restore(int(os.Stdin.Fd()), oldState)
 	}
