@@ -12,6 +12,11 @@ const (
 	FilterTypePartiallyFiltered
 )
 
+type PreviousMessage struct {
+	MessageID int32
+	Signature *[256]byte
+}
+
 // clientbound
 const PacketIdPlayerChatMessage = 0x39
 
@@ -24,7 +29,7 @@ type PlayerChatMessage struct {
 	Message         string
 	Timestamp, Salt int64
 
-	PreviousMessages map[int32]*[256]byte
+	PreviousMessages []PreviousMessage
 
 	UnsignedContent *text.TextComponent
 	FilterType      int32
@@ -69,12 +74,12 @@ func (p *PlayerChatMessage) Encode(w io.Writer) error {
 	if err := w.VarInt(int32(len(p.PreviousMessages))); err != nil {
 		return err
 	}
-	for msgId, sig := range p.PreviousMessages {
-		if err := w.VarInt(msgId + 1); err != nil {
+	for _, sig := range p.PreviousMessages {
+		if err := w.VarInt(sig.MessageID + 1); err != nil {
 			return err
 		}
-		if msgId+1 == 0 {
-			if err := w.FixedByteArray(sig[:]); err != nil {
+		if sig.MessageID+1 == 0 {
+			if err := w.FixedByteArray(sig.Signature[:]); err != nil {
 				return err
 			}
 		}

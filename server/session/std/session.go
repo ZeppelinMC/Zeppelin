@@ -17,6 +17,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/config"
+	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
@@ -26,15 +27,6 @@ import (
 )
 
 var _ session.Session = (*StandardSession)(nil)
-
-var updateTags = &play.UpdateTags{
-	Tags: map[string]map[string][]int32{
-		"minecraft:fluid": {
-			"minecraft:water": {1, 2},
-			"minecraft:lava":  {3, 4},
-		},
-	},
-}
 
 // StandardSession is a session that uses *net.Conn
 type StandardSession struct {
@@ -56,6 +48,14 @@ type StandardSession struct {
 	spawnedEntities []int32
 
 	Spawned atomic.AtomicValue[bool]
+
+	registryIndexes map[string][]string
+
+	// the index that should be sent in player chat messages
+	ChatIndex atomic.AtomicValue[int32]
+	// the previous messages of this player
+	prev_msgs_mu     sync.Mutex
+	previousMessages []play.PreviousMessage
 }
 
 func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast, config config.ServerConfig, statusProviderProvider func() net.StatusProvider) *StandardSession {
@@ -66,6 +66,8 @@ func NewStandardSession(conn *net.Conn, player *player.Player, world *world.Worl
 		broadcast:              broadcast,
 		config:                 config,
 		statusProviderProvider: statusProviderProvider,
+
+		registryIndexes: make(map[string][]string),
 	}
 }
 
@@ -115,6 +117,10 @@ func (session *StandardSession) Conn() *net.Conn {
 	return session.conn
 }
 
+func (session *StandardSession) Config() config.ServerConfig {
+	return session.config
+}
+
 func (session *StandardSession) Broadcast() *session.Broadcast {
 	return session.broadcast
 }
@@ -147,20 +153,57 @@ func (session *StandardSession) SessionData() (play.PlayerSession, bool) {
 	return session.sessionData.Get(), session.hasSessionData.Get()
 }
 
-func (session *StandardSession) PlayerChatMessage(pk play.ChatMessage, sender session.Session, chatType int32) error {
-	session.conn.WritePacket(&play.PlayerChatMessage{
+func (session *StandardSession) PlayerChatMessage(
+	pk play.ChatMessage, sender session.Session, chatType string,
+	index int32, prevMsgs []play.PreviousMessage,
+) error {
+	chatTypeIndex := slices.Index(session.registryIndexes["minecraft:chat_type"], chatType)
+
+	return session.conn.WritePacket(&play.PlayerChatMessage{
 		Sender:              sender.UUID(),
-		Index:               0,
+		Index:               index,
 		HasMessageSignature: pk.HasSignature,
 		MessageSignature:    pk.Signature,
 		Message:             pk.Message,
 		Timestamp:           pk.Timestamp,
 		Salt:                pk.Salt,
 
-		ChatType:   chatType,
-		SenderName: text.TextComponent{Text: session.Username()},
+		PreviousMessages: session.previousMessages,
+
+		ChatType:   int32(chatTypeIndex + 1),
+		SenderName: text.Unmarshal(sender.Username(), rune(session.config.Chat.Formatter[0])),
 	})
-	return nil
+}
+
+func (session *StandardSession) DisguisedChatMessage(content text.TextComponent, sender session.Session, chatType string) error {
+	chatTypeIndex := slices.Index(session.registryIndexes["minecraft:chat_type"], chatType)
+
+	return session.conn.WritePacket(&play.DisguisedChatMessage{
+		Message: content,
+
+		ChatType:   int32(chatTypeIndex + 1),
+		SenderName: text.Unmarshal(sender.Username(), rune(session.config.Chat.Formatter[0])),
+	})
+}
+
+func (session *StandardSession) AppendMessage(sig [256]byte) {
+	index := session.ChatIndex.Get() + 1
+	session.ChatIndex.Set(index)
+
+	session.prev_msgs_mu.Lock()
+	defer session.prev_msgs_mu.Unlock()
+	session.previousMessages = append(session.previousMessages, play.PreviousMessage{MessageID: -1, Signature: &sig})
+
+	if len(session.previousMessages) > 20 {
+		session.previousMessages = session.previousMessages[1:21]
+	}
+}
+
+func (session *StandardSession) SecureChatData() (index int32, prevMsgs []play.PreviousMessage) {
+	session.prev_msgs_mu.Lock()
+	defer session.prev_msgs_mu.Unlock()
+
+	return session.ChatIndex.Get(), session.previousMessages
 }
 
 func (session *StandardSession) PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error {
@@ -192,12 +235,13 @@ func (session *StandardSession) Configure() error {
 		if err := session.conn.WritePacket(packet); err != nil {
 			return err
 		}
-	}
-	if err := session.conn.WritePacket(configuration.FinishConfiguration{}); err != nil {
-		return err
+		session.registryIndexes[packet.RegistryId] = slices.Clone(packet.Indexes)
 	}
 
 	if err := session.conn.WritePacket(updateTags); err != nil {
+		return err
+	}
+	if err := session.conn.WritePacket(configuration.FinishConfiguration{}); err != nil {
 		return err
 	}
 	return nil
@@ -232,8 +276,17 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
+	movementSpeed := session.player.Attribute("minecraft:generic.movement_speed")
+	if movementSpeed == nil {
+		movementSpeed = &entity.Attribute{
+			Id:   "minecraft:generic.movement_speed",
+			Base: 0.1,
+		}
+		session.player.SetAttribute("minecraft:generic.movement_speed", 0.1)
+	}
+
 	if err := session.conn.WritePacket(
-		session.player.Abilities().Encode(float32(session.player.Attribute("minecraft:generic.movement_speed").Base)),
+		session.player.Abilities().Encode(float32(movementSpeed.Base)),
 	); err != nil {
 		return err
 	}
@@ -318,13 +371,32 @@ func (session *StandardSession) DespawnEntities(entityIds ...int32) error {
 	return session.conn.WritePacket(&play.RemoveEntities{EntityIDs: entityIds})
 }
 
+func (session *StandardSession) bundleDelimiter() error {
+	return session.conn.WritePacket(&play.BundleDelimiter{})
+}
+
 func (session *StandardSession) SpawnEntity(pk *play.SpawnEntity) error {
+	if err := session.bundleDelimiter(); err != nil {
+		return err
+	}
 	if err := session.conn.WritePacket(pk); err != nil {
 		return err
 	}
+
 	session.spawned_ents_mu.Lock()
 	defer session.spawned_ents_mu.Unlock()
 	session.spawnedEntities = append(session.spawnedEntities, pk.EntityId)
+
+	if err := session.conn.WritePacket(&play.SetEntityMetadata{
+		EntityId: pk.EntityId,
+		//TODO add metadata here
+	}); err != nil {
+		return err
+	}
+
+	if err := session.bundleDelimiter(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -374,7 +446,7 @@ func (session *StandardSession) sendSpawnChunks() error {
 				continue
 			}
 
-			if err := session.conn.WritePacket(c.Encode(buf)); err != nil {
+			if err := session.conn.WritePacket(c.Encode(buf, session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
 				return err
 			}
 			buf.Reset()

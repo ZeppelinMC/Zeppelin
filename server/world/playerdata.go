@@ -154,13 +154,38 @@ func (w *World) PlayerData(uuid string) (PlayerData, error) {
 
 func (w *World) NewPlayerData(uuid uuid.UUID) PlayerData {
 	return PlayerData{
-		Pos:                 [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},
+		Pos: [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},
+
 		Health:              20,
-		FoodSaturationLevel: 0.5,
-		UUID:                NewDataUUID(uuid),
-		Dimension:           "minecraft:overworld",
-		OnGround:            true,
-		PlayerGameType:      w.Data.GameType,
+		FoodSaturationLevel: 5,
+		FoodLevel:           20,
+
+		UUID:           NewDataUUID(uuid),
+		Dimension:      "minecraft:overworld",
+		OnGround:       true,
+		PlayerGameType: w.Data.GameType,
+		Abilities: PlayerAbilities{
+			FlySpeed:     0.5,
+			Instabuild:   w.Data.GameType == GameTypeCreative,
+			Invulnerable: w.Data.GameType == GameTypeCreative,
+			MayFly:       w.Data.GameType == GameTypeCreative,
+			MayBuild:     w.Data.GameType != GameTypeAdventure,
+			WalkSpeed:    0.1,
+		},
+		Attributes: []entity.Attribute{
+			{
+				Base: 4.5,
+				Id:   "minecraft:player.block_interaction_range",
+			},
+			{
+				Base: 0.1,
+				Id:   "minecraft:generic.movement_speed",
+			},
+			{
+				Base: 3,
+				Id:   "minecraft:player.entity_interaction_range",
+			},
+		},
 	}
 }
 

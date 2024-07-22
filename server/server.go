@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/status"
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/player"
@@ -42,6 +43,11 @@ func New(cfg config.ServerConfig) (*Server, error) {
 		CompressionThreshold: cfg.Net.CompressionThreshold,
 		Encrypt:              cfg.Net.EncryptionMode == config.EncryptionYes || cfg.Net.EncryptionMode == config.EncryptionOnline,
 		Authenticate:         cfg.Net.EncryptionMode == config.EncryptionOnline,
+	}
+
+	if cfg.Chat.ChatMode == "secure" && cfg.Net.EncryptionMode != config.EncryptionOnline {
+		log.Warnln("You can't use secure chat without encryption mode set to online! Using disguised chat mode instead.")
+		cfg.Chat.ChatMode = "disguised"
 	}
 
 	w, err := world.NewWorld("world")
@@ -121,6 +127,12 @@ func (srv *Server) Start(ts time.Time) {
 
 func (srv *Server) handleNewConnection(conn *net.Conn) {
 	log.Infolnf("[%s] Player attempting to connect: %s (%s)", conn.RemoteAddr(), conn.Username(), conn.UUID())
+	if _, ok := srv.Broadcast.SessionByUsername(conn.Username()); ok {
+		conn.WritePacket(&configuration.Disconnect{
+			Reason: text.TextComponent{Text: "You are already connected to the server from another session. Please disconnect then try again"},
+		})
+		return
+	}
 	playerData, err := srv.World.PlayerData(conn.UUID().String())
 	if err != nil {
 		playerData = srv.World.NewPlayerData(conn.UUID())

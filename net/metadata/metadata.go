@@ -119,6 +119,12 @@ const (
 	IsFlyingWithElytra
 )
 
+const (
+	IsHandActive = 1 << iota
+	IsOffhandActive
+	IsInRiptideSpinAttack
+)
+
 // base entity
 const (
 	// Byte (0)
@@ -137,6 +143,24 @@ const (
 	PoseIndex
 	// VarInt (1)
 	TicksFrozenInPowderedSnowIndex
+)
+
+// living entity extends entity
+const (
+	// Byte (0)
+	LivingEntityHandstatesIndex = iota + 8
+	// Float (3)
+	LivingEntityHealthIndex
+	// VarInt (1)
+	LivingEntityPotionEffectColorIndex
+	// Boolean (8)
+	LivingEntityPotionEffectAmbientIndex
+	// VarInt (1)
+	LivingEntityArrowCountIndex
+	// VarInt (1)
+	LivingEntityBeeStingersCountIndex
+	// Optional Position (11)
+	LivingEntitySleepingBedPositionIndex
 )
 
 // player extends living entity

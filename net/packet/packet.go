@@ -38,3 +38,25 @@ func (pk EmptyPacket) Encode(io.Writer) error {
 func (pk EmptyPacket) Decode(io.Reader) error {
 	return nil
 }
+
+// packet that writes the specified payload without length prefix
+type raw struct {
+	payload []byte
+	id      int32
+}
+
+func (pk raw) ID() int32 {
+	return pk.id
+}
+
+func (pk raw) Encode(w io.Writer) error {
+	return w.FixedByteArray(pk.payload)
+}
+
+func (raw) Decode(r io.Reader) error {
+	return nil
+}
+
+func Raw(id int32, payload []byte) Packet {
+	return raw{id: id, payload: payload}
+}

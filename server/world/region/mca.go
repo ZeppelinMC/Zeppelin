@@ -82,6 +82,12 @@ func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
 	_, err = nbt.NewDecoder(bytes.NewReader(data)).Decode(r.chunks[loc])
 
 	return r.chunks[loc], err
+
+	/*chunk, ok := r.chunks[loc]
+	if !ok {
+		return chunk, fmt.Errorf("not found chunk")
+	}
+	return chunk, nil*/
 }
 
 func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
@@ -98,6 +104,58 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 		locations: locationTable,
 		chunks:    make(map[int32]*Chunk),
 	}
+
+	/*var chunkBuffer = new(bytes.Buffer)
+
+	for i := 0; i < 1024; i++ {
+		loc := int32(locationTable[(i*4)+0])<<24 | int32(locationTable[(i*4)+1])<<16 | int32(locationTable[(i*4)+2])<<8 | int32(locationTable[(i*4)+3])
+
+		offset, size := chunkLocation(loc)
+		if offset == 0 && size == 0 {
+			continue
+		}
+		var chunkHeader [5]byte
+		if _, err := r.ReadAt(chunkHeader[:], int64(offset)); err != nil {
+			return err
+		}
+
+		var length = binary.BigEndian.Uint32(chunkHeader[:4]) - 1
+		var compressionScheme = chunkHeader[4]
+
+		var chunkData = make([]byte, length-1)
+
+		_, err = r.ReadAt(chunkData, int64(offset)+5)
+		if err != nil {
+			return err
+		}
+
+		var rd io.ReadCloser
+
+		switch compressionScheme {
+		case 1:
+			rd, err = gzip.NewReader(bytes.NewReader(chunkData))
+			if err != nil {
+				return err
+			}
+			defer rd.Close()
+		case 2:
+			rd, err = zlib.NewReader(bytes.NewReader(chunkData))
+			if err != nil {
+				return err
+			}
+			defer rd.Close()
+		}
+
+		chunkBuffer.Reset()
+		chunkBuffer.ReadFrom(rd)
+
+		f.chunks[loc] = &Chunk{}
+
+		_, err = nbt.NewDecoder(chunkBuffer).Decode(f.chunks[loc])
+		if err != nil {
+			return err
+		}
+	}*/
 
 	return nil
 }

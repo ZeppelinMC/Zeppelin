@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -22,6 +23,12 @@ func main() {
 	if err := blocks.LoadBlockCache(); err != nil {
 		log.Errorln("Error loading server registries:", err)
 		return
+	}
+
+	if util.HasArgument("-cpuprof") {
+		f, _ := os.Create("zeppelin-cpu-profile")
+		pprof.StartCPUProfile(f)
+		log.Infoln("Started CPU profiler (writing to zeppelin-cpu-profile)")
 	}
 
 	cfg := loadConfig()
@@ -50,6 +57,16 @@ func main() {
 
 	if rawTerminal {
 		term.Restore(int(os.Stdin.Fd()), oldState)
+	}
+	if util.HasArgument("-cpuprof") {
+		log.Infoln("Stopped CPU profiler")
+		pprof.StopCPUProfile()
+	}
+	if util.HasArgument("-memprof") {
+		log.Infoln("Writing memory profile to zeppelin-mem-profile")
+		f, _ := os.Create("zeppelin-mem-profile")
+		pprof.WriteHeapProfile(f)
+		f.Close()
 	}
 }
 

@@ -30,7 +30,7 @@ func handlePlayerCommand(session *std.StandardSession, pk packet.Packet) {
 
 			newmd = metadata.Metadata{
 				metadata.BaseIndex: base,
-				metadata.PoseIndex: metadata.Sneaking,
+				metadata.PoseIndex: metadata.Standing,
 			}
 		case play.ActionIdStartSprinting:
 			base := session.Player().MetadataIndex(metadata.BaseIndex).(metadata.Byte)

@@ -56,6 +56,14 @@ func NewPlayer(entityId int32, data world.PlayerData) *Player {
 			metadata.HasNoGravityIndex:              metadata.Boolean(false),
 			metadata.PoseIndex:                      metadata.Standing,
 			metadata.TicksFrozenInPowderedSnowIndex: metadata.VarInt(0),
+			// Living Entity extends Entity
+			metadata.LivingEntityHandstatesIndex:          metadata.Byte(0),
+			metadata.LivingEntityHealthIndex:              metadata.Float(data.Health),
+			metadata.LivingEntityPotionEffectColorIndex:   metadata.VarInt(0),
+			metadata.LivingEntityPotionEffectAmbientIndex: metadata.Boolean(false),
+			metadata.LivingEntityArrowCountIndex:          metadata.VarInt(0),
+			metadata.LivingEntityBeeStingersCountIndex:    metadata.VarInt(0),
+			metadata.LivingEntitySleepingBedPositionIndex: metadata.Position([3]int32{}),
 			// Player extends Living Entity
 			metadata.PlayerAdditionalHeartsIndex:   metadata.Float(0),
 			metadata.PlayerScoreIndex:              metadata.VarInt(0),

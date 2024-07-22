@@ -24,6 +24,8 @@ const PacketIdRegistryData = 0x07
 type RegistryData struct {
 	RegistryId string
 	Registry   any
+
+	Indexes []string
 }
 
 func (RegistryData) ID() int32 {
@@ -37,13 +39,9 @@ func (r *RegistryData) Encode(w io.Writer) error {
 
 	reg := reflect.ValueOf(r.Registry)
 
-	var i int32
-	var m map[string]int32
-	if r.RegistryId == "minecraft:worldgen/biome" {
-		m = make(map[string]int32)
-	}
 	switch reg.Kind() {
 	case reflect.Map:
+		r.Indexes = make([]string, 0, reg.Len())
 		if err := w.VarInt(int32(reg.Len())); err != nil {
 			return err
 		}
@@ -60,17 +58,11 @@ func (r *RegistryData) Encode(w io.Writer) error {
 			if err := w.NBT(v); err != nil {
 				return err
 			}
-
-			if r.RegistryId == "minecraft:worldgen/biome" {
-				m[key.String()] = i
-			}
-
-			i++
-		}
-		if r.RegistryId == "minecraft:worldgen/biome" {
-			registry.BiomeId.SetMap(m)
+			r.Indexes = append(r.Indexes, key.String())
 		}
 	case reflect.Struct:
+		r.Indexes = make([]string, 0, reg.NumField())
+
 		if err := w.VarInt(int32(reg.NumField())); err != nil {
 			return err
 		}
@@ -89,6 +81,7 @@ func (r *RegistryData) Encode(w io.Writer) error {
 			if err := w.NBT(v); err != nil {
 				return err
 			}
+			r.Indexes = append(r.Indexes, nbtname)
 		}
 	}
 	return nil

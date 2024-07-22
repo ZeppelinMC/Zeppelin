@@ -4,36 +4,29 @@ import (
 	"bytes"
 	_ "embed"
 	"reflect"
-	"sync"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
 )
 
-var biome_id_mu sync.Mutex
-var BiomeId = biomeIdMap{m: make(map[string]int32)}
-
-type biomeIdMap struct {
-	mu sync.Mutex
-	m  map[string]int32
-}
-
-func (b *biomeIdMap) SetMap(m map[string]int32) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.m = m
-}
-
-func (b *biomeIdMap) GetMap() map[string]int32 {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	return b.m
-}
-
 var Registries registries
 
-type registries_t map[string]any
-
 var RegistryMap = make(map[string]any)
+
+type ChatType struct {
+	Chat struct {
+		Parameters     []string `nbt:"parameters"`
+		TranslationKey string   `nbt:"translation_key"`
+
+		Style struct {
+			Color  string `nbt:"color"`
+			Italic bool   `nbt:"italic"`
+		} `nbt:"style,omitempty"`
+	} `nbt:"chat"`
+	Narration struct {
+		Parameters     []string `nbt:"parameters"`
+		TranslationKey string   `nbt:"translation_key"`
+	} `nbt:"narration"`
+}
 
 type Dimension1 struct {
 	FixedTime                   int64   `nbt:"fixed_time"`
@@ -79,22 +72,6 @@ type Dimension struct {
 		MinInclusive int32  `nbt:"min_inclusive"`
 		Type         string `nbt:"type"`
 	} `nbt:"monster_spawn_light_level"`
-}
-
-type ChatType struct {
-	Chat struct {
-		Parameters     []string `nbt:"parameters"`
-		TranslationKey string   `nbt:"translation_key"`
-
-		Style struct {
-			Color  string `nbt:"color"`
-			Italic bool   `nbt:"italic"`
-		} `nbt:"style,omitempty"`
-	} `nbt:"chat"`
-	Narration struct {
-		Parameters     []string `nbt:"parameters"`
-		TranslationKey string   `nbt:"translation_key"`
-	} `nbt:"narration"`
 }
 
 type registries struct {

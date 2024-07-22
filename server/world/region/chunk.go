@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"math/bits"
+	"slices"
 
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/net/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/region/blocks"
 )
 
@@ -21,7 +21,7 @@ func init() {
 	}
 }
 
-func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
+func (chunk Chunk) Encode(buffer *bytes.Buffer, biomeIndexes []string) *play.ChunkDataUpdateLight {
 	w := io.NewWriter(buffer)
 	pk := &play.ChunkDataUpdateLight{
 		CX: chunk.XPos,
@@ -123,18 +123,16 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer) *play.ChunkDataUpdateLight {
 		biomeBitsPerEntry := byte(bits.Len32(uint32(len(section.Biomes.Palette))))
 		w.Ubyte(biomeBitsPerEntry)
 
-		var biomeMap = registry.BiomeId.GetMap()
-
 		switch {
 		case biomeBitsPerEntry == 0:
 			pale := section.Biomes.Palette[0]
-			stateId := biomeMap[pale]
+			stateId := int32(slices.Index(biomeIndexes, pale))
 
 			w.VarInt(stateId)
 		case biomeBitsPerEntry >= 1 && biomeBitsPerEntry <= 3:
 			w.VarInt(int32(len(section.Biomes.Palette)))
 			for _, e := range section.Biomes.Palette {
-				stateId := biomeMap[e]
+				stateId := int32(slices.Index(biomeIndexes, e))
 
 				w.VarInt(stateId)
 			}

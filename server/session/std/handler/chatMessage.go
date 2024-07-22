@@ -29,7 +29,20 @@ func handleChatMessage(s *std.StandardSession, pk packet.Packet) {
 				Text: fmt.Sprintf("Server stats: \n\n Alloc: %dMiB, Total Alloc: %dMiB\n\n Why are you using illegal commands though?", stats.Alloc/1024/1024, stats.TotalAlloc/1024/1024),
 			})
 		} else {
-			s.Broadcast().ChatMessage(s, *cm)
+			switch s.Config().Chat.ChatMode {
+			case "secure":
+				i, p := s.SecureChatData()
+				s.Broadcast().SecureChatMessage(s, *cm, i, p)
+				s.AppendMessage(cm.Signature)
+			case "disguised":
+				comp := text.TextComponent{Text: cm.Message}
+				if s.Config().Chat.Colors {
+					comp = text.Unmarshal(cm.Message, rune(s.Config().Chat.Formatter[0]))
+				}
+				s.Broadcast().DisguisedChatMessage(s, comp)
+			default: // off
+				return
+			}
 		}
 	}
 }

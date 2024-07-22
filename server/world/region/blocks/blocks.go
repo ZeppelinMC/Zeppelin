@@ -6,11 +6,13 @@ import (
 	"github.com/zeppelinmc/zeppelin/nbt"
 )
 
+type blockState struct {
+	Id         int32             `json:"id"`
+	Properties map[string]string `json:"properties"`
+}
+
 type Block struct {
-	States []struct {
-		Id         int32             `json:"id"`
-		Properties map[string]string `json:"properties"`
-	} `json:"states"`
+	States []blockState `json:"states"`
 }
 
 func (b Block) FindState(properties map[string]string) (id int32, ok bool) {

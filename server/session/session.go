@@ -33,11 +33,14 @@ type Session interface {
 	// Disconnects the session from the server
 	Disconnect(reason text.TextComponent) error
 	// sends a player chat message packet to the session
-	PlayerChatMessage(pk play.ChatMessage, sender Session, chatType int32) error
+	PlayerChatMessage(pk play.ChatMessage, sender Session, chatType string, index int32, prevMsgs []play.PreviousMessage) error
 	// sends a player info update packet to the session
 	PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error
 	// sends a player info remove packet to the session
 	PlayerInfoRemove(uuids ...uuid.UUID) error
+
+	// sends a disguised chat message
+	DisguisedChatMessage(content text.TextComponent, sender Session, chatType string) error
 
 	UpdateEntityPosition(pk *play.UpdateEntityPosition) error
 	UpdateEntityPositionRotation(pk *play.UpdateEntityPositionAndRotation) error

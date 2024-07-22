@@ -10,3 +10,5 @@ plugin.exe
 .DS_Store
 pcm
 worldold
+zeppelin-cpu-profile
+zeppelin-mem-profile
