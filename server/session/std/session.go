@@ -254,6 +254,10 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
+	if err := session.conn.WritePacket(session.commandManager.Encode()); err != nil {
+		return err
+	}
+
 	recipeBook := session.player.RecipeBook()
 
 	if err := session.conn.WritePacket(&play.UpdateRecipeBook{

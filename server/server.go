@@ -62,7 +62,6 @@ func New(cfg config.ServerConfig) (*Server, error) {
 		cfg:      cfg,
 		World:    w,
 	}
-	server.CommandManager = command.NewManager(server)
 	server.Console = &Console{Server: server}
 	server.Broadcast = session.NewBroadcast(server.Console)
 

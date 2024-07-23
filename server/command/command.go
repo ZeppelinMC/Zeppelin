@@ -1,6 +1,8 @@
 package command
 
-import "github.com/zeppelinmc/zeppelin/server/session"
+import (
+	"github.com/zeppelinmc/zeppelin/server/session"
+)
 
 type Command struct {
 	Name      string

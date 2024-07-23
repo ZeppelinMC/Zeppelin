@@ -4,6 +4,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/text"
 )
@@ -12,6 +13,8 @@ type Manager struct {
 	commands []Command
 	mu       sync.RWMutex
 	srv      any
+
+	graph *play.Commands
 }
 
 func NewManager(srv any, cmds ...Command) *Manager {
@@ -22,6 +25,7 @@ func (mgr *Manager) Register(cmds ...Command) {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 	mgr.commands = append(mgr.commands, cmds...)
+	mgr.graph = nil
 }
 
 func (mgr *Manager) Call(command string, caller session.Session) {
@@ -68,6 +72,11 @@ func (mgr *Manager) findCommand(name string) *Command {
 	for _, cmd := range mgr.commands {
 		if cmd.Name == name {
 			return &cmd
+		}
+		for _, alias := range cmd.Aliases {
+			if alias == name {
+				return &cmd
+			}
 		}
 	}
 	return nil

@@ -9,8 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zeppelinmc/zeppelin/core_commands"
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/server"
+	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/world/region/blocks"
 	"github.com/zeppelinmc/zeppelin/util"
 	"golang.org/x/term"
@@ -42,6 +44,9 @@ func main() {
 		log.Errorln("Error binding server:", err)
 		return
 	}
+	srv.CommandManager = command.NewManager(srv,
+		core_commands.MemCommand,
+	)
 	var oldState *term.State
 	if rawTerminal {
 		oldState, err = term.MakeRaw(int(os.Stdin.Fd()))
@@ -125,8 +130,10 @@ charl:
 			if currentLine == "" {
 				continue
 			}
+			fmt.Println()
+			srv.CommandManager.Call(currentLine, srv.Console)
 			currentLine = ""
-			fmt.Print("\n\r> ")
+			fmt.Print("\r> ")
 		default:
 			char := fmt.Sprintf("%c", char[0])
 			currentLine += char
