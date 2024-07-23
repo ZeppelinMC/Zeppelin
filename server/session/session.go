@@ -7,6 +7,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 	"github.com/zeppelinmc/zeppelin/text"
@@ -26,6 +27,9 @@ type Session interface {
 	ClientName() string
 	// The address of this connection
 	Addr() net.Addr
+
+	// the server config used by this session
+	Config() config.ServerConfig
 
 	// The dimension this session is in, as a dimension struct
 	Dimension() *region.Dimension

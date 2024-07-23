@@ -8,6 +8,7 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
@@ -57,11 +58,13 @@ func New(cfg config.ServerConfig) (*Server, error) {
 
 	listener, err := lcfg.New()
 	server := &Server{
-		listener:  listener,
-		cfg:       cfg,
-		World:     w,
-		Broadcast: session.NewBroadcast(),
+		listener: listener,
+		cfg:      cfg,
+		World:    w,
 	}
+	server.CommandManager = command.NewManager(server)
+	server.Console = &Console{Server: server}
+	server.Broadcast = session.NewBroadcast(server.Console)
 
 	compstr := "compress everything"
 	if cfg.Net.CompressionThreshold > 0 {
@@ -82,7 +85,11 @@ type Server struct {
 
 	World *world.World
 
+	Console *Console
+
 	Broadcast *session.Broadcast
+
+	CommandManager *command.Manager
 
 	entityId atomic.Int32
 
@@ -141,11 +148,11 @@ func (srv *Server) handleNewConnection(conn *net.Conn) {
 	player := player.NewPlayer(srv.entityId.Add(1), playerData)
 	std.NewStandardSession(conn, player, srv.World, srv.Broadcast, srv.cfg, func() net.StatusProvider {
 		return srv.listener.StatusProvider()
-	}).Configure()
+	}, srv.CommandManager).Configure()
 }
 
 func (srv *Server) Stop() {
-	log.Infoln("Stopping server")
+	log.InfolnClean("Stopping server")
 	srv.closed = true
 	srv.Broadcast.DisconnectAll(text.TextComponent{Text: "Server closed"})
 	srv.listener.Close()

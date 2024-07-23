@@ -16,6 +16,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
@@ -47,6 +48,8 @@ type StandardSession struct {
 	spawned_ents_mu sync.Mutex
 	spawnedEntities []int32
 
+	commandManager *command.Manager
+
 	Spawned atomic.AtomicValue[bool]
 
 	registryIndexes map[string][]string
@@ -58,7 +61,15 @@ type StandardSession struct {
 	previousMessages []play.PreviousMessage
 }
 
-func NewStandardSession(conn *net.Conn, player *player.Player, world *world.World, broadcast *session.Broadcast, config config.ServerConfig, statusProviderProvider func() net.StatusProvider) *StandardSession {
+func NewStandardSession(
+	conn *net.Conn,
+	player *player.Player,
+	world *world.World,
+	broadcast *session.Broadcast,
+	config config.ServerConfig,
+	statusProviderProvider func() net.StatusProvider,
+	commandManager *command.Manager,
+) *StandardSession {
 	return &StandardSession{
 		conn:                   conn,
 		world:                  world,
@@ -66,9 +77,14 @@ func NewStandardSession(conn *net.Conn, player *player.Player, world *world.Worl
 		broadcast:              broadcast,
 		config:                 config,
 		statusProviderProvider: statusProviderProvider,
+		commandManager:         commandManager,
 
 		registryIndexes: make(map[string][]string),
 	}
+}
+
+func (session *StandardSession) CommandManager() *command.Manager {
+	return session.commandManager
 }
 
 func (session *StandardSession) WritePacket(pk packet.Packet) error {
@@ -151,59 +167,6 @@ func (session *StandardSession) Properties() []login.Property {
 
 func (session *StandardSession) SessionData() (play.PlayerSession, bool) {
 	return session.sessionData.Get(), session.hasSessionData.Get()
-}
-
-func (session *StandardSession) PlayerChatMessage(
-	pk play.ChatMessage, sender session.Session, chatType string,
-	index int32, prevMsgs []play.PreviousMessage,
-) error {
-	chatTypeIndex := slices.Index(session.registryIndexes["minecraft:chat_type"], chatType)
-
-	return session.conn.WritePacket(&play.PlayerChatMessage{
-		Sender:              sender.UUID(),
-		Index:               index,
-		HasMessageSignature: pk.HasSignature,
-		MessageSignature:    pk.Signature,
-		Message:             pk.Message,
-		Timestamp:           pk.Timestamp,
-		Salt:                pk.Salt,
-
-		PreviousMessages: session.previousMessages,
-
-		ChatType:   int32(chatTypeIndex + 1),
-		SenderName: text.Unmarshal(sender.Username(), rune(session.config.Chat.Formatter[0])),
-	})
-}
-
-func (session *StandardSession) DisguisedChatMessage(content text.TextComponent, sender session.Session, chatType string) error {
-	chatTypeIndex := slices.Index(session.registryIndexes["minecraft:chat_type"], chatType)
-
-	return session.conn.WritePacket(&play.DisguisedChatMessage{
-		Message: content,
-
-		ChatType:   int32(chatTypeIndex + 1),
-		SenderName: text.Unmarshal(sender.Username(), rune(session.config.Chat.Formatter[0])),
-	})
-}
-
-func (session *StandardSession) AppendMessage(sig [256]byte) {
-	index := session.ChatIndex.Get() + 1
-	session.ChatIndex.Set(index)
-
-	session.prev_msgs_mu.Lock()
-	defer session.prev_msgs_mu.Unlock()
-	session.previousMessages = append(session.previousMessages, play.PreviousMessage{MessageID: -1, Signature: &sig})
-
-	if len(session.previousMessages) > 20 {
-		session.previousMessages = session.previousMessages[1:21]
-	}
-}
-
-func (session *StandardSession) SecureChatData() (index int32, prevMsgs []play.PreviousMessage) {
-	session.prev_msgs_mu.Lock()
-	defer session.prev_msgs_mu.Unlock()
-
-	return session.ChatIndex.Get(), session.previousMessages
 }
 
 func (session *StandardSession) PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error {
@@ -291,6 +254,28 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
+	recipeBook := session.player.RecipeBook()
+
+	if err := session.conn.WritePacket(&play.UpdateRecipeBook{
+		Action:                         play.UpdateRecipeBookActionInit,
+		CraftingRecipeBookOpen:         recipeBook.IsGuiOpen,
+		CraftingRecipeBookFilterActive: recipeBook.IsFilteringCraftable,
+
+		SmeltingRecipeBookOpen:         recipeBook.IsFurnaceGuiOpen,
+		SmeltingRecipeBookFilterActive: recipeBook.IsFurnaceFilteringCraftable,
+
+		BlastFurnaceRecipeBookOpen:         recipeBook.IsBlastingFurnaceGuiOpen,
+		BlastFurnaceRecipeBookFilterActive: recipeBook.IsBlastingFurnaceFilteringCraftable,
+
+		SmokerRecipeBookOpen:         recipeBook.IsSmokerGuiOpen,
+		SmokerRecipeBookFilterActive: recipeBook.IsSmokerFilteringCraftable,
+
+		Array1: recipeBook.ToBeDisplayed,
+		Array2: recipeBook.Recipes,
+	}); err != nil {
+		return err
+	}
+
 	x, y, z := session.player.Position()
 	yaw, pitch := session.player.Rotation()
 	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
@@ -322,10 +307,6 @@ func (session *StandardSession) login() error {
 	}
 
 	return nil
-}
-
-func (session *StandardSession) SystemMessage(msg text.TextComponent) error {
-	return session.conn.WritePacket(&play.SystemChatMessage{Content: msg})
 }
 
 func (session *StandardSession) IsSpawned(entityId int32) bool {

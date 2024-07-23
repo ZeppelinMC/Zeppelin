@@ -106,19 +106,7 @@ type PlayerData struct {
 	IgnoreFallDamageFromCurrentExplosion bool     `nbt:"ignore_fall_damage_from_current_explosion"`
 	PlayerGameType                       GameType `nbt:"playerGameType"`
 
-	RecipeBook struct {
-		IsBlastingFurnaceFilteringCraftable bool `nbt:"isBlastingFurnaceFilteringCraftable"`
-		IsBlastingFurnaceGuiOpen            bool `nbt:"isBlastingFurnaceGuiOpen"`
-		IsFilteringCraftable                bool `nbt:"isFilteringCraftable"`
-		IsFurnaceFilteringCraftable         bool `nbt:"isFurnaceFilteringCraftable"`
-		IsFurnaceGuiOpen                    bool `nbt:"isFurnaceGuiOpen"`
-		IsGuiOpen                           bool `nbt:"isGuiOpen"`
-		IsSmokerFilteringCraftable          bool `nbt:"isSmokerFilteringCraftable"`
-		IsSmokerGuiOpen                     bool `nbt:"isSmokerGuiOpen"`
-
-		Recipes       []string `nbt:"recipes"`
-		ToBeDisplayed []string `nbt:"toBeDisplayed"`
-	} `nbt:"recipeBook"`
+	RecipeBook RecipeBook `nbt:"recipeBook"`
 
 	SeenCredits               bool `nbt:"seenCredits"`
 	SpawnExtraParticlesOnFall bool `nbt:"spawn_extra_particles_on_fall"`
@@ -127,6 +115,20 @@ type PlayerData struct {
 		TicksSinceLastWarning int32 `nbt:"ticks_since_last_warning"`
 		WarningLevel          int32 `nbt:"warning_level"`
 	} `nbt:"warden_spawn_tracker"`
+}
+
+type RecipeBook struct {
+	IsBlastingFurnaceFilteringCraftable bool `nbt:"isBlastingFurnaceFilteringCraftable"`
+	IsBlastingFurnaceGuiOpen            bool `nbt:"isBlastingFurnaceGuiOpen"`
+	IsFilteringCraftable                bool `nbt:"isFilteringCraftable"`
+	IsFurnaceFilteringCraftable         bool `nbt:"isFurnaceFilteringCraftable"`
+	IsFurnaceGuiOpen                    bool `nbt:"isFurnaceGuiOpen"`
+	IsGuiOpen                           bool `nbt:"isGuiOpen"`
+	IsSmokerFilteringCraftable          bool `nbt:"isSmokerFilteringCraftable"`
+	IsSmokerGuiOpen                     bool `nbt:"isSmokerGuiOpen"`
+
+	Recipes       []string `nbt:"recipes"`
+	ToBeDisplayed []string `nbt:"toBeDisplayed"`
 }
 
 func (w *World) PlayerData(uuid string) (PlayerData, error) {

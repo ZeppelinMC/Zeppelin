@@ -15,11 +15,14 @@ import (
 type Broadcast struct {
 	sessions    map[uuid.UUID]Session
 	sessions_mu sync.RWMutex
+
+	console Session
 }
 
-func NewBroadcast() *Broadcast {
+func NewBroadcast(console Session) *Broadcast {
 	return &Broadcast{
 		sessions: make(map[uuid.UUID]Session),
+		console:  console,
 	}
 }
 
@@ -86,6 +89,19 @@ func (b *Broadcast) UpdateSession(session Session) {
 				},
 			},
 		})
+	}
+}
+
+func (b *Broadcast) RemoveUUIDs(disconnectionReason text.TextComponent, uuids ...uuid.UUID) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+	for _, uuid := range uuids {
+		session, ok := b.sessions[uuid]
+		if !ok {
+			continue
+		}
+		session.Disconnect(disconnectionReason)
+		delete(b.sessions, uuid)
 	}
 }
 

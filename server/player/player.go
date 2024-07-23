@@ -35,6 +35,8 @@ type Player struct {
 
 	gameMode atomic.AtomicValue[world.GameType]
 
+	recipeBook atomic.AtomicValue[world.RecipeBook]
+
 	md_mu    sync.RWMutex
 	metadata metadata.Metadata
 
@@ -81,6 +83,8 @@ func NewPlayer(entityId int32, data world.PlayerData) *Player {
 		dimension: atomic.Value(data.Dimension),
 
 		gameMode: atomic.Value(data.PlayerGameType),
+
+		recipeBook: atomic.Value(data.RecipeBook),
 
 		health:         atomic.Value(data.Health),
 		food:           atomic.Value(data.FoodLevel),
@@ -242,4 +246,12 @@ func (p *Player) SetAttribute(id string, base float64) {
 		return
 	}
 	p.attributes[i].Base = base
+}
+
+func (p *Player) RecipeBook() world.RecipeBook {
+	return p.recipeBook.Get()
+}
+
+func (p *Player) SetRecipeBook(book world.RecipeBook) {
+	p.recipeBook.Set(book)
 }

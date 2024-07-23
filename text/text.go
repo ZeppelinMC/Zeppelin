@@ -1,5 +1,7 @@
 package text
 
+import "fmt"
+
 const (
 	Text         = "text"
 	Translatable = "translatable"
@@ -64,6 +66,10 @@ type TextComponent struct {
 	HoverEvent    HoverEvent `json:"hover_event,omitempty" nbt:"hover_event,omitempty"`
 
 	Text string `json:"text" nbt:"text"`
+}
+
+func Unmarshalf(codeChar rune, format string, v ...any) TextComponent {
+	return Unmarshal(fmt.Sprintf(format, v...), codeChar)
 }
 
 // Parses the text and color codes. The codeChar argument is what's used for color codes (i.e &)

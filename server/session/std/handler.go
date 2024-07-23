@@ -48,13 +48,6 @@ func (session *StandardSession) handlePackets() {
 						_, data, _ := io.ReadVarInt(pk.Data)
 						session.clientName = string(data)
 					}
-				case *play.SwingArm:
-					var id byte
-					if pk.Hand == 1 {
-						id = 3
-					}
-
-					session.broadcast.Animation(session, id)
 				case *configuration.AcknowledgeFinishConfiguration:
 					session.conn.SetState(net.PlayState)
 					session.login()

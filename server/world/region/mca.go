@@ -18,6 +18,10 @@ type RegionFile struct {
 
 	chunks map[int32]*Chunk
 	chu_mu sync.Mutex
+
+	chunkData []byte
+
+	buf *bytes.Buffer
 }
 
 func chunkLocation(l int32) (offset, size int32) {
@@ -75,11 +79,12 @@ func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
 		defer rd.Close()
 	}
 
-	var data, _ = io.ReadAll(rd)
+	r.buf.Reset()
+	r.buf.ReadFrom(rd)
 
 	r.chunks[loc] = &Chunk{}
 
-	_, err = nbt.NewDecoder(bytes.NewReader(data)).Decode(r.chunks[loc])
+	_, err = nbt.NewDecoder(r.buf).Decode(r.chunks[loc])
 
 	return r.chunks[loc], err
 
@@ -103,6 +108,7 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 
 		locations: locationTable,
 		chunks:    make(map[int32]*Chunk),
+		buf:       new(bytes.Buffer),
 	}
 
 	/*var chunkBuffer = new(bytes.Buffer)
