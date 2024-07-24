@@ -16,7 +16,7 @@ const PacketIdChunkDataUpdateLight = 0x27
 type ChunkDataUpdateLight struct {
 	CX, CZ     int32
 	Heightmaps struct {
-		MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE []int64
+		MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE [37]int64
 	}
 	Data                                                                 []byte
 	BlockEntities                                                        []BlockEntity

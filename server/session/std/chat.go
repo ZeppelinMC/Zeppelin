@@ -13,7 +13,6 @@ func (session *StandardSession) PlayerChatMessage(
 	index int32, prevMsgs []play.PreviousMessage,
 ) error {
 	chatTypeIndex := slices.Index(session.registryIndexes["minecraft:chat_type"], chatType)
-	session.bumpChatIndex()
 
 	return session.conn.WritePacket(&play.PlayerChatMessage{
 		Sender:              sender.UUID(),
@@ -33,7 +32,6 @@ func (session *StandardSession) PlayerChatMessage(
 
 func (session *StandardSession) DisguisedChatMessage(content text.TextComponent, sender session.Session, chatType string) error {
 	chatTypeIndex := slices.Index(session.registryIndexes["minecraft:chat_type"], chatType)
-	session.bumpChatIndex()
 
 	return session.conn.WritePacket(&play.DisguisedChatMessage{
 		Message: content,
@@ -46,6 +44,7 @@ func (session *StandardSession) DisguisedChatMessage(content text.TextComponent,
 func (session *StandardSession) AppendMessage(sig [256]byte) {
 	session.prev_msgs_mu.Lock()
 	defer session.prev_msgs_mu.Unlock()
+	session.bumpChatIndex()
 	session.previousMessages = append(session.previousMessages, play.PreviousMessage{MessageID: -1, Signature: &sig})
 
 	if len(session.previousMessages) > 20 {
@@ -65,6 +64,5 @@ func (session *StandardSession) SecureChatData() (index int32, prevMsgs []play.P
 }
 
 func (session *StandardSession) SystemMessage(msg text.TextComponent) error {
-	session.bumpChatIndex()
 	return session.conn.WritePacket(&play.SystemChatMessage{Content: msg})
 }

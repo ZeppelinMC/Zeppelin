@@ -22,12 +22,9 @@ var timeStart = time.Now()
 
 func main() {
 	log.Infolnf("Zeppelin 1.21 Minecraft server with %s on platform %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-	if err := blocks.LoadBlockCache(); err != nil {
-		log.Errorln("Error loading server registries:", err)
-		return
-	}
+	blocks.LoadBlockCache()
 
-	if util.HasArgument("-cpuprof") {
+	if util.HasArgument("--cpuprof") {
 		f, _ := os.Create("zeppelin-cpu-profile")
 		pprof.StartCPUProfile(f)
 		log.Infoln("Started CPU profiler (writing to zeppelin-cpu-profile)")
@@ -63,11 +60,11 @@ func main() {
 	if rawTerminal {
 		term.Restore(int(os.Stdin.Fd()), oldState)
 	}
-	if util.HasArgument("-cpuprof") {
+	if util.HasArgument("--cpuprof") {
 		log.Infoln("Stopped CPU profiler")
 		pprof.StopCPUProfile()
 	}
-	if util.HasArgument("-memprof") {
+	if util.HasArgument("--memprof") {
 		log.Infoln("Writing memory profile to zeppelin-mem-profile")
 		f, _ := os.Create("zeppelin-mem-profile")
 		pprof.WriteHeapProfile(f)

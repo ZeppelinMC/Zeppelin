@@ -404,10 +404,6 @@ func (session *StandardSession) SpawnPlayer(ses session.Session) error {
 }
 
 func (session *StandardSession) sendSpawnChunks() error {
-	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
-		return err
-	}
-
 	viewDistance := session.ViewDistance()
 	var buf = new(bytes.Buffer)
 
@@ -415,6 +411,10 @@ func (session *StandardSession) sendSpawnChunks() error {
 	chunkX, chunkZ := int32(math.Floor(x/16)), int32(math.Floor(z/16))
 
 	if err := session.conn.WritePacket(&play.SetCenterChunk{ChunkX: chunkX, ChunkZ: chunkZ}); err != nil {
+		return err
+	}
+
+	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
 		return err
 	}
 

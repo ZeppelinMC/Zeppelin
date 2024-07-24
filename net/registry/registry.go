@@ -1,14 +1,9 @@
 package registry
 
 import (
-	"bytes"
 	_ "embed"
 	"reflect"
-
-	"github.com/zeppelinmc/zeppelin/nbt"
 )
-
-var Registries registries
 
 var RegistryMap = make(map[string]any)
 
@@ -414,12 +409,7 @@ type registries struct {
 	} `nbt:"minecraft:worldgen/biome"`
 }
 
-//go:embed registries.nbt
-var registriesFile []byte
-
 func init() {
-	nbt.NewDecoder(bytes.NewReader(registriesFile)).Decode(&Registries)
-
 	v := reflect.ValueOf(Registries)
 	for i := 0; i < v.NumField(); i++ {
 		RegistryMap[v.Type().Field(i).Tag.Get("nbt")] = v.Field(i).Interface()

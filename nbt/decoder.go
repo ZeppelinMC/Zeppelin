@@ -91,12 +91,13 @@ func (d *Decoder) Decode(v any) (rootName string, err error) {
 }
 
 func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
+	var typeId [1]byte
 	for {
-		typeId, err := d.readByte()
+		err := d.readTo(typeId[:])
 		if err != nil {
 			return err
 		}
-		if typeId == End {
+		if typeId[0] == End {
 			return nil
 		}
 
@@ -128,7 +129,7 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 		}
 		field := _struct.FieldByName(fieldType.Name)
 
-		switch typeId {
+		switch typeId[0] {
 		case Byte:
 			d, err := d.readByte()
 			if err != nil {
@@ -287,7 +288,7 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 					case reflect.Int8:
 						field.Set(reflect.ValueOf(*(*[]int8)(unsafe.Pointer(&data))))
 					default:
-						field.Set(reflect.ValueOf(*(*[]byte)(unsafe.Pointer(&data))))
+						field.Set(reflect.ValueOf(data))
 					}
 				case reflect.Array:
 					switch field.Type().Elem().Kind() {
@@ -335,7 +336,7 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				}
 			}
 		case LongArray:
-			d, err := d.readLongArray()
+			l, err := d.readInt()
 			if err != nil {
 				return err
 			}
@@ -345,7 +346,31 @@ func (d *Decoder) decodeCompoundStruct(_struct reflect.Value) error {
 				case reflect.Slice:
 					switch field.Type().Elem().Kind() {
 					case reflect.Int64:
-						field.Set(reflect.ValueOf(*(*[]int64)(unsafe.Pointer(&d))))
+						if field.Len() < int(l) {
+							field.Set(reflect.MakeSlice(field.Type(), int(l), int(l)))
+						}
+						for i := 0; i < int(l); i++ {
+							l, err := d.readLong()
+							if err != nil {
+								return err
+							}
+							field.Index(i).Set(reflect.ValueOf(l))
+						}
+					}
+				case reflect.Array:
+					switch field.Type().Elem().Kind() {
+					case reflect.Int64:
+						if field.Len() < int(l) {
+							return fmt.Errorf("array too small for field %s", name)
+						}
+
+						for i := 0; i < field.Len(); i++ {
+							l, err := d.readLong()
+							if err != nil {
+								return err
+							}
+							field.Index(i).Set(reflect.ValueOf(l))
+						}
 					}
 				default:
 					if reflect.TypeOf(d).AssignableTo(field.Type()) {
@@ -665,6 +690,7 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 	}
 }
 
+// TODO add byte, int, long array IMPORTANT!
 func (d *Decoder) decodeList(list reflect.Value) error {
 	typeId, err := d.readByte()
 	if err != nil {
@@ -677,7 +703,7 @@ func (d *Decoder) decodeList(list reflect.Value) error {
 	if list.Len() < int(length) {
 		switch list.Kind() {
 		case reflect.Slice:
-			list.Set(reflect.AppendSlice(list, reflect.MakeSlice(list.Type(), int(length)-list.Len(), int(length)-list.Len())))
+			list.Set(reflect.MakeSlice(list.Type(), int(length)-list.Len(), int(length)-list.Len()))
 		case reflect.Array:
 			return fmt.Errorf("list of size %d is too big for array %s", length, list.Type())
 		}
@@ -960,6 +986,11 @@ func (d *Decoder) readByte() (int8, error) {
 	var data [1]byte
 	_, err := d.rd.Read(data[:])
 	return int8(data[0]), err
+}
+
+func (d *Decoder) readTo(t []byte) error {
+	_, err := d.rd.Read(t)
+	return err
 }
 
 func (d *Decoder) readShort() (int16, error) {

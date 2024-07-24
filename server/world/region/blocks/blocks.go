@@ -1,6 +1,7 @@
 package blocks
 
 import (
+	"bytes"
 	_ "embed"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
@@ -44,8 +45,37 @@ var Blocks map[string]Block
 
 //go:embed blocks.nbt
 var blockData []byte
+var blockBuf = bytes.NewReader(blockData)
 
 func LoadBlockCache() error {
-	_, err := nbt.Unmarshal(blockData, &Blocks)
-	return err
+	rd := nbt.NewStaticReader(blockBuf)
+	_, _, _ = rd.ReadRoot(true)
+	var compoundReader nbt.CompoundReader
+	Blocks = make(map[string]Block)
+
+	for {
+		name, err, end := rd.Compound(&compoundReader)
+		if end {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		if err := compoundReader.ReadAll(func(len int32, rd nbt.ListReader) {
+			states := make([]blockState, len)
+			for i := int32(0); i < len; i++ {
+				states[i].Properties = make(map[string]string)
+				rd.Read([]any{&states[i].Id, states[i].Properties})
+
+			}
+			Blocks[name] = Block{
+				States: states,
+			}
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
