@@ -103,10 +103,10 @@ type Level struct {
 		WasModded                  bool
 
 		WorldGenSettings struct {
-			BonusChest       bool
-			Dimensions       map[string]DimensionGenerationSettings
-			GenerateFeatures bool
-			Seed             Seed
+			BonusChest       bool                                   `nbt:"bonus_chest"`
+			Dimensions       map[string]DimensionGenerationSettings `nbt:"dimensions"`
+			GenerateFeatures bool                                   `nbt:"generate_features"`
+			Seed             Seed                                   `nbt:"seed"`
 		}
 
 		AllowCommands    bool  `nbt:"allowCommands"`
