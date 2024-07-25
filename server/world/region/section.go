@@ -20,7 +20,7 @@ type Section struct {
 	blockBitsPerEntry int
 }
 
-func (s Section) indexOffset(x, y, z int) (long int, offset int) {
+func (s *Section) offset(x, y, z int) (long int, offset int) {
 	usedBitsPerLong := (64 / s.blockBitsPerEntry) * s.blockBitsPerEntry
 	blockNumber := (((y * 16) + z) * 16) + x
 	startLong := (blockNumber * s.blockBitsPerEntry) / usedBitsPerLong
@@ -30,12 +30,12 @@ func (s Section) indexOffset(x, y, z int) (long int, offset int) {
 }
 
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
-func (sec Section) block(x, y, z byte) Block {
+func (sec *Section) block(x, y, z byte) Block {
 	if len(sec.blockStates) == 0 {
 		return sec.blockPalette[0]
 	}
 
-	long, off := sec.indexOffset(int(x), int(y), int(z))
+	long, off := sec.offset(int(x), int(y), int(z))
 	l := sec.blockStates[long]
 	index := (l >> off) & (1<<sec.blockBitsPerEntry - 1)
 
@@ -44,12 +44,12 @@ func (sec Section) block(x, y, z byte) Block {
 
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
 func (sec *Section) setBlock(x, y, z byte, b Block) {
-	state, ok := sec.entryIndex(b)
+	state, ok := sec.index(b)
 	if !ok {
 		oldBPE := sec.blockBitsPerEntry
-		sec.addBlockToPalette(b)
+		sec.add(b)
 		if oldBPE == sec.blockBitsPerEntry {
-			state = len(sec.blockPalette) - 1
+			state = int64(len(sec.blockPalette) - 1)
 		} else {
 			data := make([]int64, 4096/(64/sec.blockBitsPerEntry))
 			newSec := Section{
@@ -72,26 +72,26 @@ func (sec *Section) setBlock(x, y, z byte, b Block) {
 		}
 	}
 
-	long, off := sec.indexOffset(int(x), int(y), int(z))
-	mask := int64((1<<sec.blockBitsPerEntry)-1) << off
+	long, off := sec.offset(int(x), int(y), int(z))
+	mask := int64(^((1<<sec.blockBitsPerEntry - 1) << off))
 
-	sec.blockStates[long] &= ^mask
-	sec.blockStates[long] |= int64(state) << off
+	sec.blockStates[long] &= mask
+	sec.blockStates[long] |= state << off
 }
 
-func (sec Section) entryIndex(b Block) (i int, ok bool) {
+func (sec *Section) index(b Block) (i int64, ok bool) {
 	for i, entry := range sec.blockPalette {
 		if entry.Name != b.Name {
 			continue
 		}
 		if mapEqual(b.Properties, entry.Properties) {
-			return i, true
+			return int64(i), true
 		}
 	}
 	return 0, false
 }
 
-func (sec *Section) addBlockToPalette(b Block) {
+func (sec *Section) add(b Block) {
 	sec.blockPalette = append(sec.blockPalette, b)
 	sec.blockBitsPerEntry = blockBitsPerEntry(len(sec.blockPalette))
 }

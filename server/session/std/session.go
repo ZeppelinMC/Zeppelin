@@ -203,6 +203,7 @@ func (session *StandardSession) Configure() error {
 	if err := session.conn.WritePacket(updateTags); err != nil {
 		return err
 	}
+
 	if err := session.conn.WritePacket(configuration.FinishConfiguration{}); err != nil {
 		return err
 	}

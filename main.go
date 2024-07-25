@@ -62,9 +62,9 @@ func main() {
 		pprof.StopCPUProfile()
 	}
 	if util.HasArgument("--memprof") {
-		log.Infoln("Writing memory profile to zeppelin-mem-profile")
+		log.InfolnClean("Writing memory profile to zeppelin-mem-profile")
 		f, _ := os.Create("zeppelin-mem-profile")
-		pprof.WriteHeapProfile(f)
+		pprof.Lookup("allocs").WriteTo(f, 0)
 		f.Close()
 	}
 }

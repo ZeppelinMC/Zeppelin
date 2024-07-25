@@ -27,11 +27,14 @@ func NewChunk(x, z int32) Chunk {
 
 		sections: make([]*Section, 24),
 	}
+
 	for i := range c.sections {
 		s := Section{}
 		s.y = int8(i - MinChunkY)
-		s.biomes.Palette = []string{"minecraft:plains"}
+
 		s.blockPalette = []Block{{Name: "minecraft:air"}}
+		s.biomes.Palette = []string{"minecraft:plains"}
+
 		s.skyLight = fullLightBuffer
 
 		c.sections[i] = &s

@@ -101,7 +101,6 @@ func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
 		Z:          chunk.ZPos,
 		Heightmaps: chunk.Heightmaps,
 	}
-	fmt.Println(len(chunk.Sections))
 
 	r.chunks[loc].sections = make([]*Section, len(chunk.Sections))
 	for i, sec := range chunk.Sections {

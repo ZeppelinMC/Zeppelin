@@ -88,7 +88,7 @@ func (w Writer) String(s string) error {
 
 func (w Writer) Identifier(s string) error {
 	if len(s) > 32767 {
-		return fmt.Errorf("expected identifier len to be > 32767, got %d", len(s))
+		return fmt.Errorf("expected identifier len to be smaller than 32767, got %d", len(s))
 	}
 	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
@@ -162,11 +162,15 @@ func (w Writer) ByteArray(s []byte) error {
 	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
 	}
-	return w.writeBytes(s...)
+	_, err := w.w.Write(s)
+
+	return err
 }
 
 func (w Writer) FixedByteArray(s []byte) error {
-	return w.writeBytes(s...)
+	_, err := w.w.Write(s)
+
+	return err
 }
 
 func (w Writer) JSONTextComponent(comp text.TextComponent) error {

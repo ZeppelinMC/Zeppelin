@@ -73,11 +73,19 @@ func (conn *Conn) State() int32 {
 	return conn.state.Load()
 }
 
+var pkpool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(nil)
+	},
+}
+
 func (conn *Conn) WritePacket(pk packet.Packet) error {
 	conn.write_mu.Lock()
 	defer conn.write_mu.Unlock()
 
-	var packetBuf = new(bytes.Buffer)
+	var packetBuf = pkpool.Get().(*bytes.Buffer)
+	packetBuf.Reset()
+	defer pkpool.Put(packetBuf)
 	w := io.NewWriter(packetBuf)
 	if err := w.VarInt(pk.ID()); err != nil {
 		return err
@@ -85,13 +93,15 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	if err := pk.Encode(w); err != nil {
 		return err
 	}
-	data := packetBuf.Bytes()
 
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
-		length := io.AppendVarInt(nil, int32(len(data)))
-		_, err := conn.Write(append(length, data...))
+		w = io.NewWriter(conn)
+		w.VarInt(int32(packetBuf.Len()))
+
+		_, err := packetBuf.WriteTo(conn)
 		return err
 	} else { // yes compression
+		data := packetBuf.Bytes()
 		if len(data) < int(conn.listener.cfg.CompressionThreshold) {
 			data = append([]byte{0}, data...)
 			packetLength := io.AppendVarInt(nil, int32(len(data)))

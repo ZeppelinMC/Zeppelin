@@ -14,10 +14,12 @@ import (
 var emptyLightBuffer = make([]byte, 2048)
 var fullLightBuffer = make([]byte, 2048)
 
-func (chunk Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
+func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	buf := buffers.Get().(*bytes.Buffer)
-	buf.Reset()
-	defer buffers.Put(buf)
+	defer func() {
+		buf.Reset()
+		buffers.Put(buf)
+	}()
 
 	w := io.NewWriter(buf)
 	pk := &play.ChunkDataUpdateLight{
