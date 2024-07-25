@@ -53,8 +53,9 @@ type ServerConfig struct {
 }
 
 type ServerConfigChat struct {
-	ChatMode   string    `comment:"Can be secure, disguised, system, or off\n Secure will encrypt all chat messages and enable player reporting, and requires encryption mode set to online\n Disguised will use the default chat format unauthenticated\n System will use the format specified, unauthenticated\n Off will disable the chat entirely"`
-	ChatFormat string    `comment:"Can only be used with system chat mode"`
-	Formatter  formatter `comment:"Character used for text formatting"`
-	Colors     bool      `comment:"Whether to allow color codes or not"`
+	ChatMode       string    `comment:"Can be secure, disguised, system, or off\n Secure will encrypt all chat messages and enable player reporting, and requires encryption mode set to online\n Disguised will use the default chat format unauthenticated\n System will use the format specified, unauthenticated\n Off will disable the chat entirely"`
+	ChatFormat     string    `comment:"Can only be used with system chat mode"`
+	Formatter      formatter `comment:"Character used for text formatting"`
+	Colors         bool      `comment:"Whether to allow color codes or not"`
+	DisableWarning bool      `comment:"If enabled, will disable the warning about insecure chat. Note: this can get your server banned from the authentication servers, so it is not recommended"`
 }

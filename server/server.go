@@ -17,6 +17,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/util"
 
 	"github.com/zeppelinmc/zeppelin/server/world"
+	_ "github.com/zeppelinmc/zeppelin/server/world/terrain"
 
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net"
@@ -45,10 +46,20 @@ func New(cfg config.ServerConfig) (*Server, error) {
 		Encrypt:              cfg.Net.EncryptionMode == config.EncryptionYes || cfg.Net.EncryptionMode == config.EncryptionOnline,
 		Authenticate:         cfg.Net.EncryptionMode == config.EncryptionOnline,
 	}
+	if cfg.Net.EncryptionMode != config.EncryptionOnline {
+		log.Warnln("Server is running in offline mode. The server will let anyone log as any username and potentially harm the server. Proceed with caution")
+	}
 
 	if cfg.Chat.ChatMode == "secure" && cfg.Net.EncryptionMode != config.EncryptionOnline {
 		log.Warnln("You can't use secure chat without encryption mode set to online! Using disguised chat mode instead.")
 		cfg.Chat.ChatMode = "disguised"
+	}
+	if cfg.Chat.ChatMode == "secure" && cfg.Chat.DisableWarning {
+		log.Warnln("Enabling Chat.DisableWarning is redundant when using secure chat mode.")
+		cfg.Chat.DisableWarning = false
+	}
+	if cfg.Chat.DisableWarning {
+		log.Warnln("Using Chat.DisableWarning violates the MUG (Minecraft Usage Guidelines) and could get your server banned. Proceed with caution")
 	}
 
 	w, err := world.NewWorld("world")
@@ -109,9 +120,7 @@ func (srv *Server) NewEntityId() int32 {
 
 func (srv *Server) Start(ts time.Time) {
 	if !util.HasArgument("--no-plugins") {
-		if runtime.GOOS != "darwin" && runtime.GOOS != "linux" && runtime.GOOS != "freebsd" {
-			log.Warnf("Your platform doesn't support plugins (yet) bozo! Supported platforms: Linux, macOS, and FreeBSD. You are using %s\n> ", runtime.GOOS)
-		} else {
+		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" || runtime.GOOS == "freebsd" {
 			log.Infoln("Loading plugins")
 			srv.loadPlugins()
 		}

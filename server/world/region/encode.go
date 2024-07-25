@@ -14,8 +14,12 @@ import (
 var emptyLightBuffer = make([]byte, 2048)
 var fullLightBuffer = make([]byte, 2048)
 
-func (chunk Chunk) Encode(buffer *bytes.Buffer, biomeIndexes []string) *play.ChunkDataUpdateLight {
-	w := io.NewWriter(buffer)
+func (chunk Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
+	buf := buffers.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer buffers.Put(buf)
+
+	w := io.NewWriter(buf)
 	pk := &play.ChunkDataUpdateLight{
 		CX: chunk.X,
 		CZ: chunk.Z,
@@ -131,7 +135,6 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer, biomeIndexes []string) *play.Chu
 
 		w.VarInt(int32(len(section.biomes.Data)))
 		for _, long := range section.biomes.Data {
-
 			w.Long(long)
 		}
 
@@ -163,7 +166,7 @@ func (chunk Chunk) Encode(buffer *bytes.Buffer, biomeIndexes []string) *play.Chu
 	pk.BlockLightMask.Set(len(chunk.sections))
 	pk.EmptyBlockLightMask.Set(len(chunk.sections))
 
-	pk.Data = buffer.Bytes()
+	pk.Data = buf.Bytes()
 
 	return pk
 }

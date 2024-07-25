@@ -1,6 +1,6 @@
 package region
 
-type anvilBlock struct {
+type Block struct {
 	Name       string
 	Properties map[string]string
 }
@@ -30,8 +30,8 @@ type anvilChunk struct {
 			Palette []string `nbt:"palette"`
 		} `nbt:"biomes"`
 		BlockStates struct {
-			Data    []int64      `nbt:"data"`
-			Palette []anvilBlock `nbt:"palette"`
+			Data    []int64 `nbt:"data"`
+			Palette []Block `nbt:"palette"`
 		} `nbt:"block_states"`
 	} `nbt:"sections"`
 

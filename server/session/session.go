@@ -8,6 +8,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/config"
+	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 	"github.com/zeppelinmc/zeppelin/text"
@@ -55,7 +56,7 @@ type Session interface {
 	// despawns the entities for this session
 	DespawnEntities(entityIds ...int32) error
 	// spawns the entity for this session
-	SpawnEntity(*play.SpawnEntity) error
+	SpawnEntity(entity.Entity) error
 	// spawns a player
 	SpawnPlayer(Session) error
 

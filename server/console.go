@@ -10,6 +10,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/config"
+	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
@@ -97,7 +98,7 @@ func (c *Console) SessionData() (play.PlayerSession, bool) {
 	return play.PlayerSession{}, false
 }
 
-func (c *Console) SpawnEntity(*play.SpawnEntity) error {
+func (c *Console) SpawnEntity(entity.Entity) error {
 	return fmt.Errorf("unsupported function for console session")
 }
 

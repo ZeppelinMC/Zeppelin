@@ -31,7 +31,7 @@ var posinfo = command.Command{
 			})
 			return
 		}
-		block := c.Block(xb&0x0f, yb-1, zb&0x0f)
+		onBlock := c.Block(xb&0x0f, yb-1, zb&0x0f)
 
 		ccc.Executor.SystemMessage(text.Unmarshalf(
 			ccc.Executor.Config().Chat.Formatter.Rune(),
@@ -41,7 +41,7 @@ var posinfo = command.Command{
 			xb&0xf, yb&0xf, zb&0xf,
 			chunkX, chunkY, chunkZ,
 			rx, rz,
-			block.Name, block.Properties,
+			onBlock.Name, onBlock.Properties,
 		))
 	},
 }

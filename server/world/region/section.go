@@ -1,10 +1,15 @@
 package region
 
+import (
+	"math/bits"
+)
+
+// Section is a 16x16x16 chunk
 type Section struct {
 	blockLight, skyLight []byte
 	y                    int8
 
-	blockPalette []anvilBlock
+	blockPalette []Block
 	blockStates  []int64
 
 	biomes struct {
@@ -25,8 +30,8 @@ func (s Section) indexOffset(x, y, z int) (long int, offset int) {
 }
 
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
-func (sec Section) block(x, y, z byte) anvilBlock {
-	if sec.blockBitsPerEntry == 0 {
+func (sec Section) block(x, y, z byte) Block {
+	if len(sec.blockStates) == 0 {
 		return sec.blockPalette[0]
 	}
 
@@ -38,23 +43,43 @@ func (sec Section) block(x, y, z byte) anvilBlock {
 }
 
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
-func (sec Section) setBlock(x, y, z byte, b anvilBlock) {
-	i, ok := sec.entryIndex(b)
+func (sec *Section) setBlock(x, y, z byte, b Block) {
+	state, ok := sec.entryIndex(b)
 	if !ok {
-		panic("nah")
+		oldBPE := sec.blockBitsPerEntry
+		sec.addBlockToPalette(b)
+		if oldBPE == sec.blockBitsPerEntry {
+			state = len(sec.blockPalette) - 1
+		} else {
+			data := make([]int64, 4096/(64/sec.blockBitsPerEntry))
+			newSec := Section{
+				y:                 sec.y,
+				blockLight:        sec.blockLight,
+				skyLight:          sec.skyLight,
+				blockPalette:      sec.blockPalette,
+				blockStates:       data,
+				biomes:            sec.biomes,
+				blockBitsPerEntry: sec.blockBitsPerEntry,
+			}
+			for x := byte(0); x < 16; x++ {
+				for y := byte(0); y < 16; y++ {
+					for z := byte(0); z < 16; z++ {
+						newSec.setBlock(x, y, z, sec.block(x, y, z))
+					}
+				}
+			}
+			*sec = newSec
+		}
 	}
 
 	long, off := sec.indexOffset(int(x), int(y), int(z))
-	l := sec.blockStates[long]
-	pos := l & ((1<<sec.blockBitsPerEntry - 1) << off)
+	mask := int64((1<<sec.blockBitsPerEntry)-1) << off
 
-	l &= ^pos
-	l |= int64(i) << pos
-
-	sec.blockStates[long] = l
+	sec.blockStates[long] &= ^mask
+	sec.blockStates[long] |= int64(state) << off
 }
 
-func (sec Section) entryIndex(b anvilBlock) (i int, ok bool) {
+func (sec Section) entryIndex(b Block) (i int, ok bool) {
 	for i, entry := range sec.blockPalette {
 		if entry.Name != b.Name {
 			continue
@@ -64,6 +89,11 @@ func (sec Section) entryIndex(b anvilBlock) (i int, ok bool) {
 		}
 	}
 	return 0, false
+}
+
+func (sec *Section) addBlockToPalette(b Block) {
+	sec.blockPalette = append(sec.blockPalette, b)
+	sec.blockBitsPerEntry = blockBitsPerEntry(len(sec.blockPalette))
 }
 
 func mapEqual(a, b map[string]string) bool {
@@ -82,4 +112,13 @@ func mapEqual(a, b map[string]string) bool {
 	}
 
 	return true
+}
+
+func blockBitsPerEntry(paletteSize int) int {
+	ln := bits.Len32(uint32(paletteSize) - 1)
+	if ln <= 4 && ln != 0 {
+		ln = 4
+	}
+
+	return ln
 }

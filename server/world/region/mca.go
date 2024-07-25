@@ -33,7 +33,12 @@ var buffers = sync.Pool{
 	},
 }
 
+var Def Generator
+
 func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
+	c := Def.NewChunk(x, z)
+
+	return &c, nil
 	l := r.locations[((uint32(x)%32)+(uint32(z)%32)*32)*4:][:4]
 	loc := int32(l[0])<<24 | int32(l[1])<<16 | int32(l[2])<<8 | int32(l[3])
 
@@ -96,11 +101,12 @@ func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
 		Z:          chunk.ZPos,
 		Heightmaps: chunk.Heightmaps,
 	}
+	fmt.Println(len(chunk.Sections))
 
-	r.chunks[loc].sections = make([]Section, len(chunk.Sections))
+	r.chunks[loc].sections = make([]*Section, len(chunk.Sections))
 	for i, sec := range chunk.Sections {
-		r.chunks[loc].sections[i] = Section{
-			blockBitsPerEntry: len(sec.BlockStates.Data) * 64 / 4096,
+		r.chunks[loc].sections[i] = &Section{
+			blockBitsPerEntry: blockBitsPerEntry(len(sec.BlockStates.Palette)),
 			blockPalette:      sec.BlockStates.Palette,
 			blockStates:       sec.BlockStates.Data,
 

@@ -97,6 +97,10 @@ func NewPlayer(entityId int32, data world.PlayerData) *Player {
 	}
 }
 
+func (p *Player) Type() int32 {
+	return 0x80
+}
+
 func (p *Player) UUID() uuid.UUID {
 	return p.data.UUID.UUID()
 }

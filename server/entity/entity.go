@@ -7,6 +7,8 @@ import (
 
 // The interface all entities should implement
 type Entity interface {
+	// The type of entity this is
+	Type() int32
 	// The unique global identifier of this entity
 	UUID() uuid.UUID
 	// The unique identifier of this entity for this server

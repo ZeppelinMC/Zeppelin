@@ -1,7 +1,6 @@
 package std
 
 import (
-	"bytes"
 	"math"
 	nnet "net"
 	"slices"
@@ -227,7 +226,7 @@ func (session *StandardSession) login() error {
 		DimensionName:       session.player.Dimension(),
 		GameMode:            byte(session.player.GameMode()),
 
-		EnforcesSecureChat: true,
+		EnforcesSecureChat: session.config.Chat.ChatMode == "secure" || session.config.Chat.DisableWarning,
 	}); err != nil {
 		return err
 	}
@@ -360,21 +359,35 @@ func (session *StandardSession) bundleDelimiter() error {
 	return session.conn.WritePacket(&play.BundleDelimiter{})
 }
 
-func (session *StandardSession) SpawnEntity(pk *play.SpawnEntity) error {
+func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 	if err := session.bundleDelimiter(); err != nil {
 		return err
 	}
-	if err := session.conn.WritePacket(pk); err != nil {
+	x, y, z := e.Position()
+	yaw, pitch := e.Rotation()
+	id := e.EntityId()
+
+	if err := session.conn.WritePacket(&play.SpawnEntity{
+		EntityId:   id,
+		EntityUUID: e.UUID(),
+		Type:       e.Type(),
+		X:          x,
+		Y:          y,
+		Z:          z,
+		Yaw:        util.DegreesToAngle(yaw),
+		Pitch:      util.DegreesToAngle(pitch),
+		HeadYaw:    util.DegreesToAngle(yaw),
+	}); err != nil {
 		return err
 	}
 
 	session.spawned_ents_mu.Lock()
 	defer session.spawned_ents_mu.Unlock()
-	session.spawnedEntities = append(session.spawnedEntities, pk.EntityId)
+	session.spawnedEntities = append(session.spawnedEntities, id)
 
 	if err := session.conn.WritePacket(&play.SetEntityMetadata{
-		EntityId: pk.EntityId,
-		//TODO add metadata here
+		EntityId: id,
+		Metadata: e.Metadata(),
 	}); err != nil {
 		return err
 	}
@@ -387,25 +400,11 @@ func (session *StandardSession) SpawnEntity(pk *play.SpawnEntity) error {
 }
 
 func (session *StandardSession) SpawnPlayer(ses session.Session) error {
-	x, y, z := ses.Player().Position()
-	yaw, pitch := ses.Player().Rotation()
-	pk := &play.SpawnEntity{
-		EntityId:   ses.Player().EntityId(),
-		EntityUUID: ses.UUID(),
-		Type:       128,
-		X:          x,
-		Y:          y,
-		Z:          z,
-		Yaw:        util.DegreesToAngle(yaw),
-		Pitch:      util.DegreesToAngle(pitch),
-		HeadYaw:    util.DegreesToAngle(yaw),
-	}
-	return session.SpawnEntity(pk)
+	return session.SpawnEntity(ses.Player())
 }
 
 func (session *StandardSession) sendSpawnChunks() error {
 	viewDistance := session.ViewDistance()
-	var buf = new(bytes.Buffer)
 
 	x, _, z := session.player.Position()
 	chunkX, chunkZ := int32(math.Floor(x/16)), int32(math.Floor(z/16))
@@ -431,10 +430,9 @@ func (session *StandardSession) sendSpawnChunks() error {
 				continue
 			}
 
-			if err := session.conn.WritePacket(c.Encode(buf, session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
+			if err := session.conn.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
 				return err
 			}
-			buf.Reset()
 			chunks++
 		}
 	}
