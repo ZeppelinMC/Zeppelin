@@ -26,7 +26,7 @@ func (session *StandardSession) PlayerChatMessage(
 		PreviousMessages: session.previousMessages,
 
 		ChatType:   int32(chatTypeIndex + 1),
-		SenderName: text.Unmarshal(sender.Username(), rune(session.config.Chat.Formatter[0])),
+		SenderName: text.Unmarshal(sender.Username(), session.config.Chat.Formatter.Rune()),
 	})
 }
 
@@ -37,7 +37,7 @@ func (session *StandardSession) DisguisedChatMessage(content text.TextComponent,
 		Message: content,
 
 		ChatType:   int32(chatTypeIndex + 1),
-		SenderName: text.Unmarshal(sender.Username(), rune(session.config.Chat.Formatter[0])),
+		SenderName: text.Unmarshal(sender.Username(), session.config.Chat.Formatter.Rune()),
 	})
 }
 

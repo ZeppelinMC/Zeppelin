@@ -26,7 +26,7 @@ func handleChatMessage(s *std.StandardSession, pk packet.Packet) {
 		case "disguised":
 			comp := text.TextComponent{Text: cm.Message}
 			if s.Config().Chat.Colors {
-				comp = text.Unmarshal(cm.Message, rune(s.Config().Chat.Formatter[0]))
+				comp = text.Unmarshal(cm.Message, s.Config().Chat.Formatter.Rune())
 			}
 			s.Broadcast().DisguisedChatMessage(s, comp)
 		default: // off

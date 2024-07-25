@@ -1,4 +1,4 @@
-package blocks
+package block
 
 import (
 	"bytes"
@@ -47,25 +47,32 @@ var Blocks map[string]Block
 var blockData []byte
 var blockBuf = bytes.NewReader(blockData)
 
-func LoadBlockCache() error {
+// LoadBlockCache uses the NBT static reader but you should not
+func init() {
 	rd := nbt.NewStaticReader(blockBuf)
+	// Read the compound root type id and name
 	_, _, _ = rd.ReadRoot(true)
+	// reuse the compound reader struct
 	var compoundReader nbt.CompoundReader
+	// initialize the map
 	Blocks = make(map[string]Block)
 
 	for {
+		// read a type id (Compound), name from the reader. The name is a block name in this example
 		name, err, end := rd.Compound(&compoundReader)
 		if end {
 			break
 		}
 		if err != nil {
-			return err
+			return
 		}
 
+		// Read all the fields from this compound, "states" - list - func(int32,nbt.ListReader)
 		if err := compoundReader.ReadAll(func(len int32, rd nbt.ListReader) {
 			states := make([]blockState, len)
 			for i := int32(0); i < len; i++ {
 				states[i].Properties = make(map[string]string)
+				// read a type id (compound) and read the specified values from it, Id: string, Properties: map[string]string
 				rd.Read([]any{&states[i].Id, states[i].Properties})
 
 			}
@@ -73,9 +80,8 @@ func LoadBlockCache() error {
 				States: states,
 			}
 		}); err != nil {
-			return err
+			return
 		}
 	}
 
-	return nil
 }

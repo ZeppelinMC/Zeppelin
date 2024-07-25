@@ -30,7 +30,7 @@ func New(cfg config.ServerConfig) (*Server, error) {
 			Name:     "1.21",
 			Protocol: net.ProtocolVersion,
 		},
-		Description: text.Unmarshal(cfg.MOTD, rune(cfg.Chat.Formatter[0])),
+		Description: text.Unmarshal(cfg.MOTD, cfg.Chat.Formatter.Rune()),
 		Players: status.StatusPlayers{
 			Max: 20,
 		},

@@ -18,10 +18,6 @@ type RegionFile struct {
 
 	chunks map[int32]*Chunk
 	chu_mu sync.Mutex
-
-	chunkData []byte
-
-	buf *bytes.Buffer
 }
 
 func chunkLocation(l int32) (offset, size int32) {
@@ -29,6 +25,12 @@ func chunkLocation(l int32) (offset, size int32) {
 	size = l & 0xFF
 
 	return offset * 4096, size * 4096
+}
+
+var buffers = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(make([]byte, 0, 1024*10))
+	},
 }
 
 func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
@@ -79,12 +81,35 @@ func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
 		defer rd.Close()
 	}
 
-	r.buf.Reset()
-	r.buf.ReadFrom(rd)
+	buf := buffers.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.ReadFrom(rd)
+	defer buffers.Put(buf)
 
-	r.chunks[loc] = &Chunk{}
+	var chunk anvilChunk
 
-	_, err = nbt.NewDecoder(r.buf).Decode(r.chunks[loc])
+	_, err = nbt.NewDecoder(buf).Decode(&chunk)
+
+	r.chunks[loc] = &Chunk{
+		X:          chunk.XPos,
+		Y:          chunk.YPos,
+		Z:          chunk.ZPos,
+		Heightmaps: chunk.Heightmaps,
+	}
+
+	r.chunks[loc].sections = make([]Section, len(chunk.Sections))
+	for i, sec := range chunk.Sections {
+		r.chunks[loc].sections[i] = Section{
+			blockBitsPerEntry: len(sec.BlockStates.Data) * 64 / 4096,
+			blockPalette:      sec.BlockStates.Palette,
+			blockStates:       sec.BlockStates.Data,
+
+			biomes:     sec.Biomes,
+			y:          sec.Y,
+			blockLight: sec.BlockLight,
+			skyLight:   sec.SkyLight,
+		}
+	}
 
 	return r.chunks[loc], err
 
@@ -108,7 +133,6 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 
 		locations: locationTable,
 		chunks:    make(map[int32]*Chunk),
-		buf:       new(bytes.Buffer),
 	}
 
 	/*var chunkBuffer = new(bytes.Buffer)

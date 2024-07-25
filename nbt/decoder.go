@@ -464,9 +464,9 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 
 			if valid {
 				switch z.Type().Kind() {
-				case reflect.Uint32:
+				case reflect.Uint32, reflect.Uint:
 					z.SetUint(uint64(d))
-				case reflect.Int32:
+				case reflect.Int32, reflect.Int:
 					z.SetInt(int64(d))
 				default:
 					if reflect.TypeOf(d).AssignableTo(z.Type()) {
@@ -523,6 +523,7 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 			}
 		case Float:
 			d, err := d.readFloat()
+
 			if err != nil {
 				return err
 			}
@@ -584,6 +585,7 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 			}
 		case IntArray:
 			d, err := d.readIntArray()
+
 			if err != nil {
 				return err
 			}
@@ -650,6 +652,7 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 				d._decodeList()
 			}
 		case Compound:
+
 			if valid {
 				switch z.Type().Kind() {
 				case reflect.Struct:

@@ -9,7 +9,7 @@ type Heightmaps struct {
 	MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE [37]int64
 }
 
-type Chunk struct {
+type anvilChunk struct {
 	DataVersion   int32
 	Heightmaps    Heightmaps
 	InhabitedTime int64

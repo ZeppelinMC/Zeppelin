@@ -1,0 +1,47 @@
+package core_commands
+
+import (
+	"math"
+
+	"github.com/zeppelinmc/zeppelin/server/command"
+	"github.com/zeppelinmc/zeppelin/text"
+)
+
+var posinfo = command.Command{
+	Name: "posinfo",
+	Callback: func(ccc command.CommandCallContext) {
+		player := ccc.Executor.Player()
+		if player == nil {
+			ccc.Executor.SystemMessage(text.TextComponent{
+				Text:  "This command should be used by a player.",
+				Color: "red",
+			})
+			return
+		}
+		x, y, z := player.Position()
+		chunkX, chunkY, chunkZ := int32(math.Floor(float64(x)/16)), int32(math.Floor(float64(y)/16)), int32(math.Floor(float64(z)/16))
+		xb, yb, zb := int32(math.Floor(x)), int32(math.Floor(y)), int32(math.Floor(z))
+		rx, rz := chunkX%32, chunkZ%32
+
+		c, err := ccc.Executor.Dimension().GetChunk(chunkX, chunkZ)
+		if err != nil {
+			ccc.Executor.SystemMessage(text.TextComponent{
+				Text:  "Unrendered chunk",
+				Color: "red",
+			})
+			return
+		}
+		block := c.Block(xb&0x0f, yb-1, zb&0x0f)
+
+		ccc.Executor.SystemMessage(text.Unmarshalf(
+			ccc.Executor.Config().Chat.Formatter.Rune(),
+			"XYZ: %.03f / %.05f / %.03f\nBlock: %d %d %d [%d %d %d]\nChunk: %d %d %d [r.%d.%d.mca]\nStanding on: %s [%v]",
+			x, y, z,
+			xb, yb, zb,
+			xb&0xf, yb&0xf, zb&0xf,
+			chunkX, chunkY, chunkZ,
+			rx, rz,
+			block.Name, block.Properties,
+		))
+	},
+}

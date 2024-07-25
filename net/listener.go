@@ -1,6 +1,7 @@
 package net
 
 import (
+	"bufio"
 	"crypto/rsa"
 	"fmt"
 	"net"
@@ -60,6 +61,7 @@ func (l *Listener) newConn(c net.Conn) *Conn {
 	conn := &Conn{
 		Conn:     c,
 		listener: l,
+		rd:       bufio.NewReaderSize(c, 4096),
 	}
 	conn.writer = io.NewWriter(conn)
 

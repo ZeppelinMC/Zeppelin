@@ -33,7 +33,7 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 	if len(arguments) == 0 {
 		caller.SystemMessage(
 			text.Unmarshalf(
-				rune(caller.Config().Chat.Formatter[0]),
+				caller.Config().Chat.Formatter.Rune(),
 				"%scInvalid command",
 				caller.Config().Chat.Formatter,
 			),
@@ -44,7 +44,7 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 	if cmd == nil {
 		caller.SystemMessage(
 			text.Unmarshalf(
-				rune(caller.Config().Chat.Formatter[0]),
+				caller.Config().Chat.Formatter.Rune(),
 				"%scUnknown command %s",
 				caller.Config().Chat.Formatter,
 				command,

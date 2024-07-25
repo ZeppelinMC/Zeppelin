@@ -10,7 +10,7 @@ import (
 
 var memStats runtime.MemStats
 
-var MemCommand = command.Command{
+var mem = command.Command{
 	Name: "mem",
 	Callback: func(ccc command.CommandCallContext) {
 		runtime.ReadMemStats(&memStats)

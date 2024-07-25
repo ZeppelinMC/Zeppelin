@@ -1,6 +1,7 @@
 package net
 
 import (
+	"bufio"
 	"bytes"
 	"compress/zlib"
 	"crypto/cipher"
@@ -45,6 +46,9 @@ type Conn struct {
 
 	decrypter, encrypter cipher.Stream
 	compressionSet       bool
+
+	rd  *bufio.Reader
+	buf [4096]byte
 
 	write_mu sync.Mutex
 	read_mu  sync.Mutex
@@ -116,7 +120,7 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 }
 
 func (conn *Conn) Read(dst []byte) (i int, err error) {
-	i, err = conn.Conn.Read(dst)
+	i, err = conn.rd.Read(dst)
 	if err != nil {
 		return i, err
 	}
@@ -143,7 +147,6 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 	var rd = io.NewReader(conn, 0)
 	var (
 		length, packetId int32
-		data             []byte
 	)
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
 		if _, err := rd.VarInt(&length); err != nil {
@@ -164,73 +167,14 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 			goto proc
 		}
 
-		data = make([]byte, length)
-		if _, err := conn.Read(data); err != nil {
+		if _, err := conn.Read(conn.buf[:length]); err != nil {
 			return nil, err
 		}
 
-		rd = io.NewReader(bytes.NewReader(data), int(length))
-	} else { // yes compression
-		var packetLength int32
-		if _, err := rd.VarInt(&packetLength); err != nil {
-			return nil, err
-		}
-		dli, err := rd.VarInt(&length)
-		if err != nil {
-			return nil, err
-		}
-		if length == 0 {
-			length = packetLength - 1
-
-			vii, err := rd.VarInt(&packetId)
-			if err != nil {
-				return nil, err
-			}
-			length -= int32(vii)
-			data = make([]byte, length)
-			if err := rd.FixedByteArray(data); err != nil {
-				return nil, err
-			}
-
-			rd = io.NewReader(bytes.NewReader(data), int(length))
-		} else {
-			panic("implement compression reading")
-			l := packetLength - int32(dli)
-			var packetData = make([]byte, l)
-			if _, err := conn.Read(packetData); err != nil {
-				return nil, err
-			}
-
-			compressedData := bytes.NewReader(packetData)
-			z, err := zlib.NewReader(compressedData)
-			if err != nil {
-				return nil, err
-			}
-			defer z.Close()
-			var uncompressedData = make([]byte, length)
-			fmt.Println(length, compressedData.Len())
-			if _, err := z.Read(uncompressedData); err != nil {
-				fmt.Println(err)
-				return nil, err
-			}
-
-			rd = io.NewReader(bytes.NewReader(uncompressedData), dli)
-
-			vii, err := rd.VarInt(&packetId)
-			if err != nil {
-				return nil, err
-			}
-
-			fmt.Println(packetId, vii)
-			length -= int32(vii)
-			data = make([]byte, length)
-			if err := rd.FixedByteArray(data); err != nil {
-				return nil, err
-			}
-
-			rd = io.NewReader(bytes.NewReader(data), int(length))
-		}
-	}
+		rd = io.NewReader(bytes.NewReader(conn.buf[:length]), int(length))
+	} else {
+		panic("decompression not available yet")
+	} //TODO DECOMPRESSION
 
 proc:
 	var pk packet.Packet

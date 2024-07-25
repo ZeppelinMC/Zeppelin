@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"os/signal"
@@ -13,7 +14,6 @@ import (
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/server"
 	"github.com/zeppelinmc/zeppelin/server/command"
-	"github.com/zeppelinmc/zeppelin/server/world/region/blocks"
 	"github.com/zeppelinmc/zeppelin/util"
 	"golang.org/x/term"
 )
@@ -22,7 +22,6 @@ var timeStart = time.Now()
 
 func main() {
 	log.Infolnf("Zeppelin 1.21 Minecraft server with %s on platform %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-	blocks.LoadBlockCache()
 
 	if util.HasArgument("--cpuprof") {
 		f, _ := os.Create("zeppelin-cpu-profile")
@@ -41,9 +40,7 @@ func main() {
 		log.Errorln("Error binding server:", err)
 		return
 	}
-	srv.CommandManager = command.NewManager(srv,
-		core_commands.MemCommand,
-	)
+	srv.CommandManager = command.NewManager(srv, core_commands.Commands...)
 	var oldState *term.State
 	if rawTerminal {
 		oldState, err = term.MakeRaw(int(os.Stdin.Fd()))
