@@ -5,7 +5,9 @@ Minecraft Java Edition 1.21 server implementation written in [Go](https://go.dev
 Why not?
 
 ## Progress
-- Chunk reading & sending to the client
+- Chunk reading & manipulation (get/set block, resize palettes)
+
+- Terrain generation (WIP)
 
 - Player movement
 
