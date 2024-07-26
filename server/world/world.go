@@ -1,6 +1,8 @@
 package world
 
 import (
+	"math"
+
 	"github.com/zeppelinmc/zeppelin/atomic"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
@@ -46,4 +48,16 @@ func (w *World) IncrementTime() (worldAge, dayTime int64) {
 	w.dayTime.Set(dayTime)
 
 	return
+}
+
+// HashCode is an implementation of Java's hashCode function. It used to turn any string seed into a long seed
+func HashCode(s string) int64 {
+	var result int64
+	n := len(s)
+
+	for i := 0; i < len(s)-1; i++ {
+		result += int64(s[i]) * int64(math.Pow(31, float64(n-(i+1))))
+	}
+
+	return result + int64(s[int(n)-1])
 }

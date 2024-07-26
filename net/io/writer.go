@@ -21,11 +21,6 @@ func NewWriter(w io.Writer) Writer {
 	return Writer{w}
 }
 
-func (w Writer) writeBytes(bytes ...byte) error {
-	_, err := w.w.Write(bytes)
-	return err
-}
-
 func (w Writer) Write(data []byte) (i int, err error) {
 	return w.w.Write(data)
 }
@@ -35,45 +30,53 @@ func (w Writer) Bool(b bool) error {
 }
 
 func (w Writer) Byte(i int8) error {
-	return w.writeBytes(byte(i))
+	return w.Ubyte(uint8(i))
 }
 func (w Writer) Ubyte(i uint8) error {
-	return w.writeBytes(i)
+	_, err := w.Write([]byte{i})
+
+	return err
 }
 
 func (w Writer) Short(i int16) error {
-	return w.writeBytes(
-		byte(i>>8),
-		byte(i),
-	)
+	return w.Ushort(uint16(i))
 }
 func (w Writer) Ushort(i uint16) error {
-	return w.writeBytes(
-		byte(i>>8),
-		byte(i),
+	_, err := w.Write(
+		[]byte{
+			byte(i >> 8),
+			byte(i),
+		},
 	)
+	return err
 }
 
 func (w Writer) Int(i int32) error {
-	return w.writeBytes(
-		byte(i>>24),
-		byte(i>>16),
-		byte(i>>8),
-		byte(i),
+	_, err := w.Write(
+		[]byte{
+			byte(i >> 24),
+			byte(i >> 16),
+			byte(i >> 8),
+			byte(i),
+		},
 	)
+	return err
 }
 
 func (w Writer) Long(i int64) error {
-	return w.writeBytes(
-		byte(i>>56),
-		byte(i>>48),
-		byte(i>>40),
-		byte(i>>32),
-		byte(i>>24),
-		byte(i>>16),
-		byte(i>>8),
-		byte(i),
+	_, err := w.Write(
+		[]byte{
+			byte(i >> 56),
+			byte(i >> 48),
+			byte(i >> 40),
+			byte(i >> 32),
+			byte(i >> 24),
+			byte(i >> 16),
+			byte(i >> 8),
+			byte(i),
+		},
 	)
+	return err
 }
 
 func (w Writer) Float(f float32) error {
@@ -87,7 +90,8 @@ func (w Writer) String(s string) error {
 	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
 	}
-	return w.writeBytes(*(*[]byte)(unsafe.Pointer(&s))...)
+	_, err := w.Write(*(*[]byte)(unsafe.Pointer(&s)))
+	return err
 }
 
 func (w Writer) Identifier(s string) error {
@@ -97,7 +101,8 @@ func (w Writer) Identifier(s string) error {
 	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
 	}
-	return w.writeBytes(*(*[]byte)(unsafe.Pointer(&s))...)
+	_, err := w.Write(*(*[]byte)(unsafe.Pointer(&s)))
+	return err
 }
 
 func (w Writer) VarInt(value int32) error {
@@ -137,7 +142,8 @@ func (w Writer) Position(x, y, z int32) error {
 
 func (w Writer) UUID(u uuid.UUID) error {
 	d := [16]byte(u)
-	return w.writeBytes(d[:]...)
+	_, err := w.Write(d[:])
+	return err
 }
 
 func (w Writer) BitSet(data BitSet) error {

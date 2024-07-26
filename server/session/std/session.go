@@ -58,6 +58,8 @@ type StandardSession struct {
 	// the previous messages of this player
 	prev_msgs_mu     sync.Mutex
 	previousMessages []play.PreviousMessage
+
+	inBundle atomic.AtomicValue[bool]
 }
 
 func NewStandardSession(
@@ -282,9 +284,6 @@ func (session *StandardSession) login() error {
 
 	x, y, z := session.player.Position()
 	yaw, pitch := session.player.Rotation()
-	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
-		return err
-	}
 
 	status := session.statusProviderProvider()()
 
@@ -309,6 +308,16 @@ func (session *StandardSession) login() error {
 	if err := session.sendSpawnChunks(); err != nil {
 		return err
 	}
+
+	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
+		return err
+	}
+
+	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
+		return err
+	}
+
+	session.broadcast.SpawnPlayer(session)
 
 	return nil
 }
@@ -356,14 +365,26 @@ func (session *StandardSession) DespawnEntities(entityIds ...int32) error {
 	return session.conn.WritePacket(&play.RemoveEntities{EntityIDs: entityIds})
 }
 
-func (session *StandardSession) bundleDelimiter() error {
+func (session *StandardSession) bundleStart() error {
+	if session.inBundle.Get() {
+		return nil
+	}
+	session.inBundle.Set(true)
+	return session.conn.WritePacket(&play.BundleDelimiter{})
+}
+
+func (session *StandardSession) bundleStop() error {
+	if !session.inBundle.Get() {
+		return nil
+	}
+	session.inBundle.Set(false)
 	return session.conn.WritePacket(&play.BundleDelimiter{})
 }
 
 func (session *StandardSession) SpawnEntity(e entity.Entity) error {
-	if err := session.bundleDelimiter(); err != nil {
-		return err
-	}
+	//if err := session.bundleDelimiter(); err != nil {
+	//	return err
+	//}
 	x, y, z := e.Position()
 	yaw, pitch := e.Rotation()
 	id := e.EntityId()
@@ -386,7 +407,7 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 	defer session.spawned_ents_mu.Unlock()
 	session.spawnedEntities = append(session.spawnedEntities, id)
 
-	if err := session.conn.WritePacket(&play.SetEntityMetadata{
+	/*if err := session.conn.WritePacket(&play.SetEntityMetadata{
 		EntityId: id,
 		Metadata: e.Metadata(),
 	}); err != nil {
@@ -395,7 +416,7 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 
 	if err := session.bundleDelimiter(); err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }
@@ -411,10 +432,6 @@ func (session *StandardSession) sendSpawnChunks() error {
 	chunkX, chunkZ := int32(math.Floor(x/16)), int32(math.Floor(z/16))
 
 	if err := session.conn.WritePacket(&play.SetCenterChunk{ChunkX: chunkX, ChunkZ: chunkZ}); err != nil {
-		return err
-	}
-
-	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
 		return err
 	}
 

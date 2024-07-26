@@ -16,7 +16,7 @@ type RegionFile struct {
 
 	locations []byte
 
-	chunks map[int32]*Chunk
+	chunks map[uint64]*Chunk
 	chu_mu sync.Mutex
 }
 
@@ -33,10 +33,11 @@ var buffers = sync.Pool{
 	},
 }
 
-var Def Generator
-
 func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
+	hash := chunkHash(x, z)
 	c := generator.NewChunk(x, z)
+
+	r.chunks[hash] = &c
 
 	return &c, nil
 	l := r.locations[((uint32(x)%32)+(uint32(z)%32)*32)*4:][:4]
@@ -44,7 +45,7 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 
 	r.chu_mu.Lock()
 	defer r.chu_mu.Unlock()
-	if c, ok := r.chunks[loc]; ok {
+	if c, ok := r.chunks[hash]; ok {
 		return c, nil
 	}
 
@@ -95,16 +96,16 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 
 	_, err = nbt.NewDecoder(buf).Decode(&chunk)
 
-	r.chunks[loc] = &Chunk{
+	r.chunks[hash] = &Chunk{
 		X:          chunk.XPos,
 		Y:          chunk.YPos,
 		Z:          chunk.ZPos,
 		Heightmaps: chunk.Heightmaps,
 	}
 
-	r.chunks[loc].sections = make([]*Section, len(chunk.Sections))
+	r.chunks[hash].sections = make([]*Section, len(chunk.Sections))
 	for i, sec := range chunk.Sections {
-		r.chunks[loc].sections[i] = &Section{
+		r.chunks[hash].sections[i] = &Section{
 			blockBitsPerEntry: blockBitsPerEntry(len(sec.BlockStates.Palette)),
 			blockPalette:      sec.BlockStates.Palette,
 			blockStates:       sec.BlockStates.Data,
@@ -116,7 +117,7 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 		}
 	}
 
-	return r.chunks[loc], err
+	return r.chunks[hash], err
 
 	/*chunk, ok := r.chunks[loc]
 	if !ok {
@@ -137,7 +138,7 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 		reader: r,
 
 		locations: locationTable,
-		chunks:    make(map[int32]*Chunk),
+		chunks:    make(map[uint64]*Chunk),
 	}
 
 	/*var chunkBuffer = new(bytes.Buffer)
@@ -193,4 +194,8 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 	}*/
 
 	return nil
+}
+
+func chunkHash(x, z int32) uint64 {
+	return uint64(z)<<32 | uint64(x)
 }

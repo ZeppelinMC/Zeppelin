@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"crypto/cipher"
+	"crypto/md5"
 	"encoding/binary"
 	"fmt"
 	"net"
@@ -325,6 +326,9 @@ func (conn *Conn) handleHandshake() bool {
 				}
 			}
 		}
+		if !conn.listener.cfg.Authenticate {
+			conn.uuid = username2v3(conn.username)
+		}
 
 		if err := conn.WritePacket(&login.SetCompression{Threshold: conn.listener.cfg.CompressionThreshold}); err != nil {
 			return false
@@ -352,4 +356,16 @@ func (conn *Conn) handleHandshake() bool {
 		return true
 	}
 	return false
+}
+
+func username2v3(username string) uuid.UUID {
+	d := append([]byte("OfflinePlayer:"), username...)
+
+	sum := md5.Sum(d)
+	sum[6] &= 0x0f /* clear version        */
+	sum[6] |= 0x30 /* set to version 3     */
+	sum[8] &= 0x3f /* clear variant        */
+	sum[8] |= 0x80 /* set to IETF variant  */
+
+	return uuid.UUID(sum)
 }

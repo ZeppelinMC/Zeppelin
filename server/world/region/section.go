@@ -21,10 +21,9 @@ type Section struct {
 }
 
 func (s *Section) offset(x, y, z int) (long int, offset int) {
-	usedBitsPerLong := (64 / s.blockBitsPerEntry) * s.blockBitsPerEntry
 	blockNumber := (((y * 16) + z) * 16) + x
-	startLong := (blockNumber * s.blockBitsPerEntry) / usedBitsPerLong
-	stateOffset := (blockNumber * s.blockBitsPerEntry) % usedBitsPerLong
+	startLong := (blockNumber * s.blockBitsPerEntry) >> 6
+	stateOffset := (blockNumber * s.blockBitsPerEntry) & 63
 
 	return startLong, stateOffset
 }

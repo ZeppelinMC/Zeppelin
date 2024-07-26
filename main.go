@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	_ "embed"
 	"fmt"
 	"os"
@@ -71,6 +72,7 @@ func main() {
 
 func notRawTerminal(srv *server.Server) {
 	var line string
+	var scanner = bufio.NewScanner(os.Stdin)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -89,7 +91,11 @@ cmdl:
 			srv.Stop()
 			break cmdl
 		default:
-			fmt.Scanln(&line)
+			if !scanner.Scan() {
+				break
+			}
+			line = scanner.Text()
+			srv.CommandManager.Call(line, srv.Console)
 			fmt.Print("\r> ")
 		}
 	}

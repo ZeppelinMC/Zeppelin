@@ -94,6 +94,8 @@ func NewPlayer(entityId int32, data world.PlayerData) *Player {
 		abilities: atomic.Value(data.Abilities),
 
 		attributes: data.Attributes,
+
+		data: data,
 	}
 }
 

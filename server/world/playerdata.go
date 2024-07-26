@@ -16,10 +16,10 @@ import (
 
 func NewDataUUID(u uuid.UUID) DataUUID {
 	return DataUUID{
-		int32(u[0])<<24 | int32(u[0])<<16 | int32(u[0])<<8 | int32(u[0]),
-		int32(u[1])<<24 | int32(u[1])<<16 | int32(u[1])<<8 | int32(u[1]),
-		int32(u[2])<<24 | int32(u[2])<<16 | int32(u[2])<<8 | int32(u[2]),
-		int32(u[3])<<24 | int32(u[3])<<16 | int32(u[3])<<8 | int32(u[3]),
+		int32(u[0])<<24 | int32(u[1])<<16 | int32(u[2])<<8 | int32(u[3]),
+		int32(u[4])<<24 | int32(u[5])<<16 | int32(u[6])<<8 | int32(u[7]),
+		int32(u[8])<<24 | int32(u[9])<<16 | int32(u[10])<<8 | int32(u[11]),
+		int32(u[12])<<24 | int32(u[13])<<16 | int32(u[14])<<8 | int32(u[15]),
 	}
 }
 
@@ -161,13 +161,14 @@ func (w *World) NewPlayerData(uuid uuid.UUID) PlayerData {
 		Health:              20,
 		FoodSaturationLevel: 5,
 		FoodLevel:           20,
+		Fire:                -20,
 
 		UUID:           NewDataUUID(uuid),
 		Dimension:      "minecraft:overworld",
 		OnGround:       true,
 		PlayerGameType: w.Data.GameType,
 		Abilities: PlayerAbilities{
-			FlySpeed:     0.5,
+			FlySpeed:     0.05,
 			Instabuild:   w.Data.GameType == GameTypeCreative,
 			Invulnerable: w.Data.GameType == GameTypeCreative,
 			MayFly:       w.Data.GameType == GameTypeCreative,

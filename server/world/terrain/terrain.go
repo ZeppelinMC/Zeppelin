@@ -49,7 +49,9 @@ func (g TerrainGenerator) NewChunk(cx, cz int32) region.Chunk {
 	return c
 }
 
+// tree, woody plant that regularly renews its growth (perennial). Most plants classified as trees have a single self-supporting trunk containing woody tissues, and in most species the trunk produces secondary limbs, called branches
 func (g TerrainGenerator) generateTree(c region.Chunk, x, z, surface int32) {
+	c.SetBlock(x, surface, z, dirt)
 	c.SetBlock(x, surface+1, z, oakLog)
 	c.SetBlock(x, surface+2, z, oakLog)
 	c.SetBlock(x, surface+3, z, oakLog)
