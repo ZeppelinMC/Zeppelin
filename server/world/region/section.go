@@ -48,9 +48,8 @@ func (sec *Section) setBlock(x, y, z byte, b Block) {
 	if !ok {
 		oldBPE := sec.blockBitsPerEntry
 		sec.add(b)
-		if oldBPE == sec.blockBitsPerEntry {
-			state = int64(len(sec.blockPalette) - 1)
-		} else {
+		state = int64(len(sec.blockPalette) - 1)
+		if oldBPE != sec.blockBitsPerEntry {
 			data := make([]int64, 4096/(64/sec.blockBitsPerEntry))
 			newSec := Section{
 				y:                 sec.y,

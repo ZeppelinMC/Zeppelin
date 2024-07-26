@@ -7,18 +7,21 @@ import (
 	"sync"
 )
 
-func NewDimension(regionPath string, typ int) *Dimension {
+func NewDimension(regionPath string, typ int, generator Generator) *Dimension {
 	return &Dimension{
 		regions: make(map[uint64]*RegionFile),
 
 		regionPath: regionPath,
 		typ:        typ,
+		generator:  generator,
 	}
 }
 
 type Dimension struct {
 	reg_mu  sync.Mutex
 	regions map[uint64]*RegionFile
+
+	generator Generator
 
 	typ int
 
@@ -35,7 +38,7 @@ func (s *Dimension) GetChunk(x, z int32) (*Chunk, error) {
 		return nil, err
 	}
 
-	return region.GetChunk(x, z)
+	return region.GetChunk(x, z, s.generator)
 }
 
 func (s *Dimension) getRegion(rx, rz int32) (*RegionFile, error) {

@@ -32,6 +32,10 @@ func (r Reader) readBytes(l int) ([]byte, error) {
 	return arr, err
 }
 
+func (r Reader) Read(dst []byte) (i int, err error) {
+	return r.r.Read(dst)
+}
+
 func (r Reader) Bool(b *bool) error {
 	var byt byte
 	err := r.Ubyte(&byt)

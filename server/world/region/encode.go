@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/bits"
 	"slices"
+	"sync"
 
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
@@ -14,11 +15,17 @@ import (
 var emptyLightBuffer = make([]byte, 2048)
 var fullLightBuffer = make([]byte, 2048)
 
+var chunkEncPool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(nil)
+	},
+}
+
 func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
-	buf := buffers.Get().(*bytes.Buffer)
+	buf := chunkEncPool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
-		buffers.Put(buf)
+		chunkEncPool.Put(buf)
 	}()
 
 	w := io.NewWriter(buf)

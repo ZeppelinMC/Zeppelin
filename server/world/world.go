@@ -3,6 +3,7 @@ package world
 import (
 	"github.com/zeppelinmc/zeppelin/atomic"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/terrain"
 )
 
 type World struct {
@@ -16,12 +17,12 @@ type World struct {
 func NewWorld(path string) (*World, error) {
 	var err error
 	w := &World{
-		Overworld: region.NewDimension(path+"/region", 0),
-		path:      path,
+		path: path,
 	}
 	w.Level, err = loadWorldLevel(path + "/level.dat")
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
+	w.Overworld = region.NewDimension(path+"/region", 0, terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed)))
 
 	return w, err
 }

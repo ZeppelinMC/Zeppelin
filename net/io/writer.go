@@ -26,6 +26,10 @@ func (w Writer) writeBytes(bytes ...byte) error {
 	return err
 }
 
+func (w Writer) Write(data []byte) (i int, err error) {
+	return w.w.Write(data)
+}
+
 func (w Writer) Bool(b bool) error {
 	return w.Ubyte(*(*byte)(unsafe.Pointer(&b)))
 }

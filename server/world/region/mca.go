@@ -35,8 +35,8 @@ var buffers = sync.Pool{
 
 var Def Generator
 
-func (r *RegionFile) GetChunk(x, z int32) (*Chunk, error) {
-	c := Def.NewChunk(x, z)
+func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
+	c := generator.NewChunk(x, z)
 
 	return &c, nil
 	l := r.locations[((uint32(x)%32)+(uint32(z)%32)*32)*4:][:4]
