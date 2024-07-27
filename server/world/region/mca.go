@@ -29,12 +29,6 @@ func chunkLocation(l int32) (offset, size int32) {
 	return offset * 4096, size * 4096
 }
 
-/*var buffers = sync.Pool{
-	New: func() any {
-		return bytes.NewBuffer(make([]byte, 0, 1024*10))
-	},
-}*/
-
 func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 	hash := chunkHash(x, z)
 	c := generator.NewChunk(x, z)

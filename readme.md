@@ -1,5 +1,5 @@
 # Zeppelin
-Minecraft Java Edition 1.21 server implementation written in [Go](https://go.dev)
+Blazingly fast, highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21
 
 ## Why
 Why not?
