@@ -5,43 +5,33 @@ import (
 	_ "embed"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/zeppelinmc/zeppelin/util"
 )
+
+type Block struct {
+	Name       string
+	Properties map[string]string
+}
 
 type blockState struct {
 	Id         int32             `json:"id"`
 	Properties map[string]string `json:"properties"`
 }
 
-type Block struct {
+type block struct {
 	States []blockState `json:"states"`
 }
 
-func (b Block) FindState(properties map[string]string) (id int32, ok bool) {
+func (b block) FindState(properties map[string]string) (id int32, ok bool) {
 	for _, state := range b.States {
-		if isMapEqual(state.Properties, properties) {
+		if util.MapEqual(state.Properties, properties) {
 			return state.Id, true
 		}
 	}
 	return 0, false
 }
 
-func isMapEqual(m1, m2 map[string]string) bool {
-	if m1 == nil && m2 == nil {
-		return true
-	}
-	if len(m1) != len(m2) {
-		return false
-	}
-	for key, value1 := range m1 {
-		if m2[key] != value1 {
-			return false
-		}
-	}
-
-	return true
-}
-
-var Blocks map[string]Block
+var Blocks map[string]block
 
 //go:embed blocks.nbt
 var blockData []byte
@@ -55,7 +45,7 @@ func init() {
 	// reuse the compound reader struct
 	var compoundReader nbt.CompoundReader
 	// initialize the map
-	Blocks = make(map[string]Block)
+	Blocks = make(map[string]block)
 
 	for {
 		// read a type id (Compound), name from the reader. The name is a block name in this example
@@ -76,7 +66,7 @@ func init() {
 				rd.Read([]any{&states[i].Id, states[i].Properties})
 
 			}
-			Blocks[name] = Block{
+			Blocks[name] = block{
 				States: states,
 			}
 		}); err != nil {

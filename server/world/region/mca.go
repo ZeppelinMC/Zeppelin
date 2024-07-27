@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/zeppelinmc/zeppelin/net/buffers"
+	"github.com/zeppelinmc/zeppelin/server/world/region/section"
 )
 
 type RegionFile struct {
@@ -27,11 +29,11 @@ func chunkLocation(l int32) (offset, size int32) {
 	return offset * 4096, size * 4096
 }
 
-var buffers = sync.Pool{
+/*var buffers = sync.Pool{
 	New: func() any {
 		return bytes.NewBuffer(make([]byte, 0, 1024*10))
 	},
-}
+}*/
 
 func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 	hash := chunkHash(x, z)
@@ -87,10 +89,10 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 		defer rd.Close()
 	}
 
-	buf := buffers.Get().(*bytes.Buffer)
+	buf := buffers.Buffers.Get().(*bytes.Buffer)
 	buf.Reset()
 	buf.ReadFrom(rd)
-	defer buffers.Put(buf)
+	defer buffers.Buffers.Put(buf)
 
 	var chunk anvilChunk
 
@@ -103,18 +105,9 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 		Heightmaps: chunk.Heightmaps,
 	}
 
-	r.chunks[hash].sections = make([]*Section, len(chunk.Sections))
+	r.chunks[hash].sections = make([]*section.Section, len(chunk.Sections))
 	for i, sec := range chunk.Sections {
-		r.chunks[hash].sections[i] = &Section{
-			blockBitsPerEntry: blockBitsPerEntry(len(sec.BlockStates.Palette)),
-			blockPalette:      sec.BlockStates.Palette,
-			blockStates:       sec.BlockStates.Data,
-
-			biomes:     sec.Biomes,
-			y:          sec.Y,
-			blockLight: sec.BlockLight,
-			skyLight:   sec.SkyLight,
-		}
+		r.chunks[hash].sections[i] = section.New(sec.Y, sec.BlockStates.Palette, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, sec.SkyLight, sec.BlockLight)
 	}
 
 	return r.chunks[hash], err

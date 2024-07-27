@@ -5,8 +5,6 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"net"
-
-	"github.com/zeppelinmc/zeppelin/net/io"
 )
 
 const (
@@ -63,7 +61,7 @@ func (l *Listener) newConn(c net.Conn) *Conn {
 		listener: l,
 		rd:       bufio.NewReaderSize(c, 4096),
 	}
-	conn.writer = io.NewWriter(conn)
+	//conn.writer = io.NewWriter(conn)
 
 	return conn
 }

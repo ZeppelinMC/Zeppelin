@@ -97,8 +97,9 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	}
 
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
-		w = io.NewWriter(conn)
-		w.VarInt(int32(packetBuf.Len()))
+		if err := io.WriteVarInt(conn, int32(packetBuf.Len())); err != nil {
+			return err
+		}
 
 		_, err := packetBuf.WriteTo(conn)
 		return err

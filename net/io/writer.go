@@ -1,9 +1,9 @@
 package io
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"unsafe"
 
@@ -14,10 +14,10 @@ import (
 )
 
 type Writer struct {
-	w io.Writer
+	w *bytes.Buffer
 }
 
-func NewWriter(w io.Writer) Writer {
+func NewWriter(w *bytes.Buffer) Writer {
 	return Writer{w}
 }
 

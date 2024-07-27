@@ -5,6 +5,7 @@ import (
 
 	"github.com/aquilax/go-perlin"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/region/block"
 )
 
 type TerrainGenerator struct {
@@ -59,21 +60,18 @@ func (g TerrainGenerator) generateTree(c region.Chunk, x, z, surface int32) {
 
 	for i := x - 2; i <= x+2; i++ {
 		for j := z - 2; j <= z+2; j++ {
-			if isborder(i, j, x-2, z-2, x+2, z+2) {
-				continue
+			if !isborder(i, j, x-2, z-2, x+2, z+2) {
+				c.SetBlock(i, surface+5, j, oakLeaves)
+				if i != x || j != z {
+					c.SetBlock(i, surface+4, j, oakLeaves)
+				}
 			}
-			c.SetBlock(i, surface+5, j, oakLeaves)
-			if i != x || j != z {
-				c.SetBlock(i, surface+4, j, oakLeaves)
-			}
-		}
-	}
-	for i := x - 1; i <= x+1; i++ {
-		for j := z - 1; j <= z+1; j++ {
-			c.SetBlock(i, surface+6, j, oakLeaves)
+			if i >= x-1 && i <= x+1 && j >= z-1 && j <= z+1 {
+				c.SetBlock(i, surface+6, j, oakLeaves)
 
-			if !isborder(i, j, x-1, z-1, x+1, z+1) {
-				c.SetBlock(i, surface+7, j, oakLeaves)
+				if !isborder(i, j, x-1, z-1, x+1, z+1) {
+					c.SetBlock(i, surface+7, j, oakLeaves)
+				}
 			}
 		}
 	}
@@ -90,11 +88,11 @@ func isborder(x, z, minX, minZ, maxX, maxZ int32) bool {
 	return (x == minX && z == minZ) || (x == maxX && z == maxZ) || (x == maxX && z == minZ) || (x == minZ && z == maxZ)
 }
 
-var grassBlock = region.Block{Name: "minecraft:grass_block", Properties: map[string]string{"snowy": "false"}}
-var dirt = region.Block{Name: "minecraft:dirt"}
-var bedrock = region.Block{Name: "minecraft:bedrock"}
-var oakLog = region.Block{Name: "minecraft:oak_log", Properties: map[string]string{"axis": "y"}}
-var oakLeaves = region.Block{Name: "minecraft:oak_leaves", Properties: map[string]string{
+var grassBlock = block.Block{Name: "minecraft:grass_block", Properties: map[string]string{"snowy": "false"}}
+var dirt = block.Block{Name: "minecraft:dirt"}
+var bedrock = block.Block{Name: "minecraft:bedrock"}
+var oakLog = block.Block{Name: "minecraft:oak_log", Properties: map[string]string{"axis": "y"}}
+var oakLeaves = block.Block{Name: "minecraft:oak_leaves", Properties: map[string]string{
 	"distance":    "1",
 	"persistent":  "false",
 	"waterlogged": "false",

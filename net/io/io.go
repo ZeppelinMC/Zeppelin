@@ -38,6 +38,20 @@ func AppendVarInt(data []byte, value int32) []byte {
 	return append(data, byte(ux))
 }
 
+func WriteVarInt(w io.Writer, value int32) error {
+	ux := uint32(value)
+	for ux >= 0x80 {
+		if _, err := w.Write([]byte{byte(ux&0x7F) | 0x80}); err != nil {
+			return err
+		}
+
+		ux >>= 7
+	}
+
+	_, err := w.Write([]byte{byte(ux)})
+	return err
+}
+
 func ReadVarInt(data []byte) (int32, []byte, error) {
 	var (
 		position    int
