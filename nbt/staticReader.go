@@ -1,6 +1,7 @@
 package nbt
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"unsafe"
@@ -12,10 +13,10 @@ Reader is an NBT decoder that uses no reflection. it should be used for static s
 The read functions read the type id, name and value
 */
 type StaticReader struct {
-	r io.ReadSeeker
+	r *bytes.Reader
 }
 
-func NewStaticReader(r io.ReadSeeker) StaticReader {
+func NewStaticReader(r *bytes.Reader) StaticReader {
 	return StaticReader{r}
 }
 

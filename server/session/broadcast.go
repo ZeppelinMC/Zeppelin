@@ -190,6 +190,8 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 		oldYaw, oldPitch = session.Player().Rotation()
 	)
 
+	//fmt.Printf("%s new: %f %f %f, old: %f %f %f\n", session.Username(), x, y, z, oldX, oldY, oldZ)
+
 	eid := session.Player().EntityId()
 
 	var pk packet.Packet

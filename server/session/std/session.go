@@ -49,8 +49,6 @@ type StandardSession struct {
 
 	commandManager *command.Manager
 
-	Spawned atomic.AtomicValue[bool]
-
 	registryIndexes map[string][]string
 
 	// the index that should be sent in player chat messages
@@ -305,6 +303,10 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
+	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
+		return err
+	}
+
 	if err := session.sendSpawnChunks(); err != nil {
 		return err
 	}
@@ -318,6 +320,7 @@ func (session *StandardSession) login() error {
 	}
 
 	session.broadcast.SpawnPlayer(session)
+	session.initializeInventory()
 
 	return nil
 }
@@ -466,4 +469,11 @@ func (session *StandardSession) sendSpawnChunks() error {
 
 func (session *StandardSession) UpdateTime(worldAge, dayTime int64) error {
 	return session.conn.WritePacket(&play.UpdateTime{WorldAge: worldAge, TimeOfDay: dayTime})
+}
+
+func (session *StandardSession) initializeInventory() error {
+	return session.conn.WritePacket(&play.SetContainerContent{
+		StateId: 1,
+		Slots:   session.player.Inventory().Network(),
+	})
 }

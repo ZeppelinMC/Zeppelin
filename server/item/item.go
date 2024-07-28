@@ -30,4 +30,8 @@ type Item struct {
 	Count int32 `nbt:"count"`
 	// The string id of this item
 	Id string `nbt:"id"`
+	// Components of this item (https://minecraft.wiki/w/Data_component_format#List_of_components)
+	Components struct {
+		AttributeModifiers AttributeModifiers `nbt:"minecraft:attribute_modifiers"`
+	} `nbt:"components"`
 }

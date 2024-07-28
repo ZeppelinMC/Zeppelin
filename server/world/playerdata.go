@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
-	"github.com/zeppelinmc/zeppelin/server/item"
 )
 
 func NewDataUUID(u uuid.UUID) DataUUID {
@@ -58,13 +58,13 @@ type PlayerData struct {
 	DataVersion       int32
 	DeathTime         int16
 	Dimension         string
-	EnderItems        []item.Item
+	EnderItems        container.Container
 	FallFlying        bool
 	Fire              int16
 	Health            float32
 	HurtByTimestamp   int32
 	HurtTime          int16
-	Inventory         []item.Item
+	Inventory         container.Container
 	Invulnerable      bool
 	LastDeathLocation struct {
 		Dimension string   `nbt:"dimension"`

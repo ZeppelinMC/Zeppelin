@@ -3,6 +3,7 @@ package handler
 import (
 	"math"
 
+	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
@@ -22,7 +23,7 @@ func chunkPos(x, z float64) (cx, cz int32) {
 func handleMovement(s *std.StandardSession, p packet.Packet) {
 	switch pk := p.(type) {
 	case *play.SetPlayerPosition:
-		oldX, _, oldZ := s.Player().Position()
+		oldX, oldY, oldZ := s.Player().Position()
 		oldChunkPosX, oldChunkPosZ := chunkPos(oldX, oldZ)
 		newChunkPosX, newChunkPosZ := chunkPos(pk.X, pk.Z)
 
@@ -32,19 +33,19 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 
 		yaw, pitch := s.Player().Rotation()
 
-		/*distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
+		distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
 
 		if distance > 100 {
-			s.Teleport(oldX, oldY, oldZ, yaw, pitch)
+			s.SynchronizePosition(oldX, oldY, oldZ, yaw, pitch)
 			log.Infof("%s moved too quickly! (%f %f %f)\n", s.Username(), pk.X-oldX, pk.Y-oldY, pk.Z-oldZ)
 			return
-		}*/
+		}
 
 		s.Broadcast().BroadcastPlayerMovement(s, pk.X, pk.Y, pk.Z, yaw, pitch)
 
 		s.Player().SetPosition(pk.X, pk.Y, pk.Z)
 	case *play.SetPlayerPositionAndRotation:
-		oldX, _, oldZ := s.Player().Position()
+		oldX, oldY, oldZ := s.Player().Position()
 		oldChunkPosX, oldChunkPosZ := chunkPos(oldX, oldZ)
 		newChunkPosX, newChunkPosZ := chunkPos(pk.X, pk.Z)
 
@@ -52,13 +53,13 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 			s.Conn().WritePacket(&play.SetCenterChunk{ChunkX: newChunkPosX, ChunkZ: newChunkPosZ})
 		}
 
-		/*distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
+		distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))
 
 		if distance > 100 {
-			s.Teleport(oldX, oldY, oldZ, pk.Yaw, pk.Pitch)
+			s.SynchronizePosition(oldX, oldY, oldZ, pk.Yaw, pk.Pitch)
 			log.Infof("%s moved too quickly! (%f %f %f)\n", s.Username(), pk.X-oldX, pk.Y-oldY, pk.Z-oldZ)
 			return
-		}*/
+		}
 
 		s.Broadcast().BroadcastPlayerMovement(s, pk.X, pk.Y, pk.Z, pk.Yaw, pk.Pitch)
 
@@ -72,8 +73,4 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 
 		s.Player().SetRotation(pk.Yaw, pk.Pitch)
 	}
-	//if s.Spawned.Get() {
-	//	s.Broadcast().SpawnPlayer(s)
-	//	s.Spawned.Set(true)
-	//}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/atomic"
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/world"
 )
@@ -39,6 +40,8 @@ type Player struct {
 
 	md_mu    sync.RWMutex
 	metadata metadata.Metadata
+
+	inventory container.Container
 
 	att_mu     sync.RWMutex
 	attributes []entity.Attribute
@@ -92,6 +95,8 @@ func NewPlayer(entityId int32, data world.PlayerData) *Player {
 		foodSaturation: atomic.Value(data.FoodSaturationLevel),
 
 		abilities: atomic.Value(data.Abilities),
+
+		inventory: data.Inventory.Grow(46),
 
 		attributes: data.Attributes,
 
@@ -260,4 +265,8 @@ func (p *Player) RecipeBook() world.RecipeBook {
 
 func (p *Player) SetRecipeBook(book world.RecipeBook) {
 	p.recipeBook.Set(book)
+}
+
+func (p *Player) Inventory() container.Container {
+	return p.inventory
 }
