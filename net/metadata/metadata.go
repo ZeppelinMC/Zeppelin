@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/net/slot"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
@@ -23,16 +24,16 @@ type (
 
 	TextComponent         text.TextComponent  //5
 	OptionalTextComponent *text.TextComponent //6
-	//Slot //7
-	Boolean            bool       //8
-	Rotations          [3]Float   //9
-	Position           [3]int32   //10
-	OptionalPosition   *[3]int32  //11
-	Direction          VarInt     //12
-	OptionalUUID       *uuid.UUID //13
-	BlockState         VarInt     //14
-	OptionalBlockState VarInt     //15
-	NBT                any        //16
+	Slot                  = slot.Slot         //7
+	Boolean               bool                //8
+	Rotations             [3]Float            //9
+	Position              [3]int32            //10
+	OptionalPosition      *[3]int32           //11
+	Direction             VarInt              //12
+	OptionalUUID          *uuid.UUID          //13
+	BlockState            VarInt              //14
+	OptionalBlockState    VarInt              //15
+	NBT                   any                 //16
 	// Particle //17
 	VillagerData   [3]Float //18 | [type, profession, level]
 	OptionalVarInt VarInt   //19

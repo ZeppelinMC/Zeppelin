@@ -12,7 +12,7 @@ type Container []item.Item
 func (c Container) Network() []slot.Slot {
 	s := make([]slot.Slot, len(c))
 	for _, item := range c {
-		id, ok := registry.Item.Get(item.Id)
+		id, ok := registry.Item.Lookup(item.Id)
 		if !ok {
 			continue
 		}

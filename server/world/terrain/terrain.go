@@ -52,7 +52,9 @@ func (g TerrainGenerator) NewChunk(cx, cz int32) region.Chunk {
 
 // tree, woody plant that regularly renews its growth (perennial). Most plants classified as trees have a single self-supporting trunk containing woody tissues, and in most species the trunk produces secondary limbs, called branches
 func (g TerrainGenerator) generateTree(c region.Chunk, x, z, surface int32) {
+	// set the block under the tree to be dirt
 	c.SetBlock(x, surface, z, dirt)
+	// set 4 layers of oak logs
 	c.SetBlock(x, surface+1, z, oakLog)
 	c.SetBlock(x, surface+2, z, oakLog)
 	c.SetBlock(x, surface+3, z, oakLog)
@@ -60,16 +62,18 @@ func (g TerrainGenerator) generateTree(c region.Chunk, x, z, surface int32) {
 
 	for i := x - 2; i <= x+2; i++ {
 		for j := z - 2; j <= z+2; j++ {
-			if !isborder(i, j, x-2, z-2, x+2, z+2) {
+			// generate the bottom 2 layers of the tree's leaves (3x3 excluding corners)
+			if !isCorner(i, j, x-2, z-2, x+2, z+2) {
 				c.SetBlock(i, surface+5, j, oakLeaves)
 				if i != x || j != z {
 					c.SetBlock(i, surface+4, j, oakLeaves)
 				}
 			}
+			// generate the top 2 layers of the tree's leaves (both 2x2 and one excluding corners)
 			if i >= x-1 && i <= x+1 && j >= z-1 && j <= z+1 {
 				c.SetBlock(i, surface+6, j, oakLeaves)
 
-				if !isborder(i, j, x-1, z-1, x+1, z+1) {
+				if !isCorner(i, j, x-1, z-1, x+1, z+1) {
 					c.SetBlock(i, surface+7, j, oakLeaves)
 				}
 			}
@@ -84,7 +88,7 @@ func NewTerrainGenerator(seed int64) TerrainGenerator {
 	}
 }
 
-func isborder(x, z, minX, minZ, maxX, maxZ int32) bool {
+func isCorner(x, z, minX, minZ, maxX, maxZ int32) bool {
 	return (x == minX && z == minZ) || (x == maxX && z == maxZ) || (x == maxX && z == minZ) || (x == minZ && z == maxZ)
 }
 

@@ -81,7 +81,13 @@ func (s *SetEntityMetadata) Encode(w io.Writer) error {
 					return err
 				}
 			}
-		//case Slot:
+		case metadata.Slot:
+			if err := w.VarInt(7); err != nil {
+				return err
+			}
+			if err := val.Encode(w); err != nil {
+				return err
+			}
 		case metadata.Boolean:
 			if err := w.VarInt(8); err != nil {
 				return err

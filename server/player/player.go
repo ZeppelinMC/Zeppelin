@@ -11,6 +11,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
+	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world"
 )
 
@@ -105,7 +106,7 @@ func NewPlayer(entityId int32, data world.PlayerData) *Player {
 }
 
 func (p *Player) Type() int32 {
-	return 0x80
+	return registry.EntityType.Get("minecraft:player")
 }
 
 func (p *Player) UUID() uuid.UUID {

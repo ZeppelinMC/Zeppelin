@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+// This packet contains registries that are sent to the client. Because of the way Go maps aren't ordered, sending a registry data packet will set its Indexes field to the order in which its entries were encoded, which can then be used to get registry ids
+
 var RegistryMap = make(map[string]any)
 
 type ChatType struct {
