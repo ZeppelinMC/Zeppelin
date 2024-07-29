@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"runtime"
-	"sync/atomic"
 	"time"
 
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
@@ -72,6 +71,7 @@ func New(cfg config.ServerConfig) (*Server, error) {
 		listener: listener,
 		cfg:      cfg,
 		World:    w,
+		Players:  player.NewPlayerManager(),
 	}
 	server.Console = &Console{Server: server}
 	server.Broadcast = session.NewBroadcast(server.Console)
@@ -101,9 +101,9 @@ type Server struct {
 
 	CommandManager *command.Manager
 
-	entityId atomic.Int32
-
 	closed bool
+
+	Players *player.PlayerManager
 }
 
 func (srv *Server) SetStatusProvider(sp net.StatusProvider) {
@@ -112,10 +112,6 @@ func (srv *Server) SetStatusProvider(sp net.StatusProvider) {
 
 func (srv *Server) Config() config.ServerConfig {
 	return srv.cfg
-}
-
-func (srv *Server) NewEntityId() int32 {
-	return srv.entityId.Add(1)
 }
 
 func (srv *Server) Start(ts time.Time) {
@@ -153,7 +149,7 @@ func (srv *Server) handleNewConnection(conn *net.Conn) {
 		playerData = srv.World.NewPlayerData(conn.UUID())
 	}
 
-	player := player.New(srv.entityId.Add(1), playerData)
+	player := srv.Players.New(playerData)
 	std.NewStandardSession(conn, player, srv.World, srv.Broadcast, srv.cfg, func() net.StatusProvider {
 		return srv.listener.StatusProvider()
 	}, srv.CommandManager).Configure()

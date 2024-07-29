@@ -1,9 +1,17 @@
 package entity
 
 import (
+	"sync/atomic"
+
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 )
+
+var entityId atomic.Int32
+
+func NewEntityId() int32 {
+	return entityId.Add(1)
+}
 
 // The interface all entities should implement
 type Entity interface {

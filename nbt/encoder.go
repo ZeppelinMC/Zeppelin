@@ -128,6 +128,9 @@ func (e *Encoder) encodeCompoundStruct(val reflect.Value) error {
 		if v, ok := tf.Tag.Lookup("nbt"); ok {
 			name = v
 		}
+		if name == "-" {
+			continue
+		}
 		var omitempty bool
 
 		i := strings.Index(name, ",omitempty")

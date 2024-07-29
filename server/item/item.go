@@ -1,5 +1,12 @@
 package item
 
+import (
+	"fmt"
+
+	"github.com/zeppelinmc/zeppelin/net/slot"
+	"github.com/zeppelinmc/zeppelin/server/registry"
+)
+
 type DataSlot int8
 
 func (slot DataSlot) Network() int32 {
@@ -23,6 +30,27 @@ func (slot DataSlot) Network() int32 {
 	}
 }
 
+func dataSlot(network int32) DataSlot {
+	switch {
+	case network == 8:
+		return 100
+	case network == 7:
+		return 101
+	case network == 6:
+		return 102
+	case network == 5:
+		return 103
+	case network == 45:
+		return -106
+	case network >= 36 && network <= 44:
+		return DataSlot(network - 36)
+	case network >= 1 && network <= 4:
+		return DataSlot(network + 79)
+	default:
+		return DataSlot(network)
+	}
+}
+
 type Item struct {
 	// The slot (as stored in the player data)
 	Slot DataSlot `nbt:"Slot"`
@@ -34,4 +62,20 @@ type Item struct {
 	Components struct {
 		AttributeModifiers AttributeModifiers `nbt:"minecraft:attribute_modifiers"`
 	} `nbt:"components"`
+}
+
+// New creates an item from the slot provided
+func New(slot int32, item slot.Slot) (Item, error) {
+	i := Item{
+		Slot:  dataSlot(slot),
+		Count: item.ItemCount,
+	}
+	id, ok := registry.Item.NameOf(item.ItemId)
+	if !ok {
+		return i, fmt.Errorf("invalid item id")
+	}
+
+	i.Id = id
+
+	return i, nil
 }

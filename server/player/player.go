@@ -42,16 +42,20 @@ type Player struct {
 	md_mu    sync.RWMutex
 	metadata metadata.Metadata
 
-	inventory container.Container
+	inventory *container.Container
 
 	att_mu     sync.RWMutex
 	attributes []entity.Attribute
 }
 
-// NewPlayer creates a player struct with the entity id specified and initalizes an entity metadata map for it
-func New(entityId int32, data world.PlayerData) *Player {
-	return &Player{
-		entityId: entityId,
+// looks up a player in the cache or creates one if not found
+func (mgr *PlayerManager) New(data world.PlayerData) *Player {
+	if p, ok := mgr.lookup(data.UUID.UUID()); ok {
+		return p
+	}
+
+	pl := &Player{
+		entityId: entity.NewEntityId(),
 		metadata: metadata.Metadata{
 			// Entity
 			metadata.BaseIndex:                      metadata.Byte(0),
@@ -97,12 +101,15 @@ func New(entityId int32, data world.PlayerData) *Player {
 
 		abilities: atomic.Value(data.Abilities),
 
-		inventory: data.Inventory.Grow(46),
+		inventory: &data.Inventory,
 
 		attributes: data.Attributes,
 
 		data: data,
 	}
+	mgr.add(pl)
+
+	return pl
 }
 
 func (p *Player) Type() int32 {
@@ -268,6 +275,6 @@ func (p *Player) SetRecipeBook(book world.RecipeBook) {
 	p.recipeBook.Set(book)
 }
 
-func (p *Player) Inventory() container.Container {
+func (p *Player) Inventory() *container.Container {
 	return p.inventory
 }
