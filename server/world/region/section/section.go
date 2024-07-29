@@ -2,6 +2,7 @@ package section
 
 import (
 	"fmt"
+	"math"
 	"math/bits"
 
 	"github.com/zeppelinmc/zeppelin/server/world/region/block"
@@ -148,6 +149,52 @@ func (sec *Section) index(b block.Block) (i int64, ok bool) {
 func (sec *Section) add(b block.Block) {
 	sec.blockPalette = append(sec.blockPalette, b)
 	sec.blockBitsPerEntry = blockBitsPerEntry(len(sec.blockPalette))
+}
+
+func (sec *Section) SetSkylightLevel(x, y, z int, level byte) error {
+	if level > 0x0F {
+		return fmt.Errorf("light level must not exceed 4 bits (15)")
+	}
+	index := (y << 8) | (z << 4) | x
+	if int(index) > len(sec.skyLight) {
+		return fmt.Errorf("light index exceeds light length")
+	}
+
+	var mask uint8 = 0x0f
+	if math.Remainder(float64(index), 2) != 0 {
+		mask = 0xf0
+		level <<= 4
+	}
+
+	index /= 2
+
+	sec.skyLight[index] &= ^mask
+	sec.skyLight[index] |= level
+
+	return nil
+}
+
+func (sec *Section) SetBlocklightLevel(x, y, z int, level byte) error {
+	if level > 0x0F {
+		return fmt.Errorf("light level must not exceed 4 bits (15)")
+	}
+	index := (y << 8) | (z << 4) | x
+	if int(index) > len(sec.blockLight) {
+		return fmt.Errorf("light index exceeds light length")
+	}
+
+	var mask uint8 = 0x0f
+	if math.Remainder(float64(index), 2) != 0 {
+		mask = 0xf0
+		level <<= 4
+	}
+
+	index /= 2
+
+	sec.blockLight[index] &= ^mask
+	sec.blockLight[index] |= level
+
+	return nil
 }
 
 func blockBitsPerEntry(paletteSize int) int {

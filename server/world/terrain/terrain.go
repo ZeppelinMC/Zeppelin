@@ -22,7 +22,7 @@ func (g TerrainGenerator) NewChunk(cx, cz int32) region.Chunk {
 
 	for x := int32(0); x < 16; x++ {
 		for z := int32(0); z < 16; z++ {
-			absX, absZ := cx*16+x, cz*16+z
+			absX, absZ := (cx<<4)+x, (cz<<4)+z
 
 			y := int32(g.noise.Noise2D(float64(absX)/30, float64(absZ)/30)*10) + 80
 

@@ -47,9 +47,9 @@ type Session interface {
 	// sends a disguised chat message
 	DisguisedChatMessage(content text.TextComponent, sender Session, chatType string) error
 
-	UpdateEntityPosition(pk *play.UpdateEntityPosition) error
-	UpdateEntityPositionRotation(pk *play.UpdateEntityPositionAndRotation) error
-	UpdateEntityRotation(pk *play.UpdateEntityRotation) error
+	UpdateEntityPosition(entity entity.Entity, pk *play.UpdateEntityPosition) error
+	UpdateEntityPositionRotation(entity entity.Entity, pk *play.UpdateEntityPositionAndRotation) error
+	UpdateEntityRotation(entity entity.Entity, pk *play.UpdateEntityRotation) error
 
 	// whether the entity is spawned for this session or not
 	IsSpawned(entityId int32) bool
@@ -75,4 +75,7 @@ type Session interface {
 
 	// updates the time for the client
 	UpdateTime(worldAge, dayTime int64) error
+
+	// the textures of this client
+	Textures() (login.Textures, error)
 }

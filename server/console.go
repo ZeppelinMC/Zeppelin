@@ -119,20 +119,24 @@ func (c *Console) UUID() uuid.UUID {
 	return uuid.Nil
 }
 
-func (c *Console) UpdateEntityPosition(*play.UpdateEntityPosition) error {
+func (c *Console) UpdateEntityPosition(entity.Entity, *play.UpdateEntityPosition) error {
 	return fmt.Errorf("unsupported function for console session")
 }
 
-func (c *Console) UpdateEntityPositionRotation(*play.UpdateEntityPositionAndRotation) error {
+func (c *Console) UpdateEntityPositionRotation(entity.Entity, *play.UpdateEntityPositionAndRotation) error {
 	return fmt.Errorf("unsupported function for console session")
 }
 
-func (c *Console) UpdateEntityRotation(*play.UpdateEntityRotation) error {
+func (c *Console) UpdateEntityRotation(entity.Entity, *play.UpdateEntityRotation) error {
 	return fmt.Errorf("unsupported function for console session")
 }
 
 func (c *Console) UpdateTime(int64, int64) error {
 	return fmt.Errorf("unsupported function for console session")
+}
+
+func (c *Console) Textures() (login.Textures, error) {
+	return login.Textures{}, fmt.Errorf("unsupported function for console session")
 }
 
 func (c *Console) Username() string {

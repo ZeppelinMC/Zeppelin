@@ -49,7 +49,7 @@ type Player struct {
 }
 
 // NewPlayer creates a player struct with the entity id specified and initalizes an entity metadata map for it
-func NewPlayer(entityId int32, data world.PlayerData) *Player {
+func New(entityId int32, data world.PlayerData) *Player {
 	return &Player{
 		entityId: entityId,
 		metadata: metadata.Metadata{

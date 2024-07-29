@@ -6,6 +6,24 @@ import (
 	"github.com/google/uuid"
 )
 
+type Textures struct {
+	Timestamp         int64  `json:"timestamp"`
+	ProfileId         string `json:"profileId"`
+	ProfileName       string `json:"profileName"`
+	SignatureRequired bool   `json:"signatureRequired"`
+	Textures          struct {
+		Skin struct {
+			URL      string `json:"url"`
+			Metadata struct {
+				Model string `json:"model"`
+			} `json:"metadata"`
+		} `json:"SKIN"`
+		Cape struct {
+			URL string `json:"url"`
+		} `json:"CAPE"`
+	} `json:"textures"`
+}
+
 type Property struct {
 	Name      string
 	Value     string

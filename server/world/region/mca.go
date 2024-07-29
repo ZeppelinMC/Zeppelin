@@ -99,9 +99,9 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 		Heightmaps: chunk.Heightmaps,
 	}
 
-	r.chunks[hash].sections = make([]*section.Section, len(chunk.Sections))
+	r.chunks[hash].Sections = make([]*section.Section, len(chunk.Sections))
 	for i, sec := range chunk.Sections {
-		r.chunks[hash].sections[i] = section.New(sec.Y, sec.BlockStates.Palette, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, sec.SkyLight, sec.BlockLight)
+		r.chunks[hash].Sections[i] = section.New(sec.Y, sec.BlockStates.Palette, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, sec.SkyLight, sec.BlockLight)
 	}
 
 	return r.chunks[hash], err

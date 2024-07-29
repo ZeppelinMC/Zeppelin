@@ -28,11 +28,11 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 
 		SkyLightMask:      make(io.BitSet, 1),
 		EmptySkyLightMask: make(io.BitSet, 1),
-		SkyLightArrays:    make([][]byte, 1, len(chunk.sections)+1),
+		SkyLightArrays:    make([][]byte, 1, len(chunk.Sections)+1),
 
 		BlockLightMask:      make(io.BitSet, 1),
 		EmptyBlockLightMask: make(io.BitSet, 1),
-		BlockLightArrays:    make([][]byte, 1, len(chunk.sections)+1),
+		BlockLightArrays:    make([][]byte, 1, len(chunk.Sections)+1),
 	}
 	pk.SkyLightArrays[0] = emptyLightBuffer
 	pk.SkyLightMask.Set(0)
@@ -42,7 +42,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	pk.BlockLightMask.Set(0)
 	pk.EmptyBlockLightMask.Set(0)
 
-	for secI, section := range chunk.sections {
+	for secI, section := range chunk.Sections {
 		var blockCount int16
 		var airId = -1
 		skyLight, blockLight := section.Light()

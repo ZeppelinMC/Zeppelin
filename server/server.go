@@ -153,7 +153,7 @@ func (srv *Server) handleNewConnection(conn *net.Conn) {
 		playerData = srv.World.NewPlayerData(conn.UUID())
 	}
 
-	player := player.NewPlayer(srv.entityId.Add(1), playerData)
+	player := player.New(srv.entityId.Add(1), playerData)
 	std.NewStandardSession(conn, player, srv.World, srv.Broadcast, srv.cfg, func() net.StatusProvider {
 		return srv.listener.StatusProvider()
 	}, srv.CommandManager).Configure()

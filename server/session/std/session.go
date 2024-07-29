@@ -1,7 +1,9 @@
 package std
 
 import (
-	"math"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	nnet "net"
 	"slices"
 	"sync"
@@ -100,12 +102,12 @@ func (session *StandardSession) SynchronizePosition(x, y, z float64, yaw, pitch 
 	return session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
 }
 
-func (session *StandardSession) UpdateEntityPosition(pk *play.UpdateEntityPosition) error {
+func (session *StandardSession) UpdateEntityPosition(entity entity.Entity, pk *play.UpdateEntityPosition) error {
 	return session.conn.WritePacket(pk)
 }
 
 // additionally sends head rotation
-func (session *StandardSession) UpdateEntityPositionRotation(pk *play.UpdateEntityPositionAndRotation) error {
+func (session *StandardSession) UpdateEntityPositionRotation(entity entity.Entity, pk *play.UpdateEntityPositionAndRotation) error {
 	if err := session.conn.WritePacket(pk); err != nil {
 		return err
 	}
@@ -113,7 +115,7 @@ func (session *StandardSession) UpdateEntityPositionRotation(pk *play.UpdateEnti
 }
 
 // additionally sends head rotation
-func (session *StandardSession) UpdateEntityRotation(pk *play.UpdateEntityRotation) error {
+func (session *StandardSession) UpdateEntityRotation(entity entity.Entity, pk *play.UpdateEntityRotation) error {
 	if err := session.conn.WritePacket(pk); err != nil {
 		return err
 	}
@@ -432,7 +434,7 @@ func (session *StandardSession) sendSpawnChunks() error {
 	viewDistance := session.ViewDistance()
 
 	x, _, z := session.player.Position()
-	chunkX, chunkZ := int32(math.Floor(x/16)), int32(math.Floor(z/16))
+	chunkX, chunkZ := int32(x)>>4, int32(z)>>4
 
 	if err := session.conn.WritePacket(&play.SetCenterChunk{ChunkX: chunkX, ChunkZ: chunkZ}); err != nil {
 		return err
@@ -476,4 +478,19 @@ func (session *StandardSession) initializeInventory() error {
 		StateId: 1,
 		Slots:   session.player.Inventory().Network(),
 	})
+}
+
+func (session *StandardSession) Textures() (login.Textures, error) {
+	var textures login.Textures
+	properties := session.conn.Properties()
+	if len(properties) == 0 {
+		return textures, fmt.Errorf("client has no textures")
+	}
+	property := properties[0].Value
+	data, err := base64.StdEncoding.DecodeString(property)
+	if err != nil {
+		return textures, err
+	}
+	err = json.Unmarshal(data, &textures)
+	return textures, err
 }

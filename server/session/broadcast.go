@@ -44,6 +44,13 @@ func (b *Broadcast) Session(uuid uuid.UUID) (ses Session, ok bool) {
 	return
 }
 
+// Returns a session by uuid without locking the mutex
+func (b *Broadcast) AsyncSession(uuid uuid.UUID) (ses Session, ok bool) {
+	ses, ok = b.sessions[uuid]
+
+	return
+}
+
 // Returns a session by username
 func (b *Broadcast) SessionByUsername(username string) (ses Session, ok bool) {
 	b.sessions_mu.RLock()
@@ -190,6 +197,8 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 		oldYaw, oldPitch = session.Player().Rotation()
 	)
 
+	player := session.Player()
+
 	//fmt.Printf("%s new: %f %f %f, old: %f %f %f\n", session.Username(), x, y, z, oldX, oldY, oldZ)
 
 	eid := session.Player().EntityId()
@@ -229,11 +238,11 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 		}
 		switch p := pk.(type) {
 		case *play.UpdateEntityPosition:
-			ses.UpdateEntityPosition(p)
+			ses.UpdateEntityPosition(player, p)
 		case *play.UpdateEntityPositionAndRotation:
-			ses.UpdateEntityPositionRotation(p)
+			ses.UpdateEntityPositionRotation(player, p)
 		case *play.UpdateEntityRotation:
-			ses.UpdateEntityRotation(p)
+			ses.UpdateEntityRotation(player, p)
 		}
 	}
 }

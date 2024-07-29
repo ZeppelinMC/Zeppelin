@@ -19,7 +19,7 @@ var posinfo = command.Command{
 			return
 		}
 		x, y, z := player.Position()
-		chunkX, chunkY, chunkZ := int32(math.Floor(float64(x)/16)), int32(math.Floor(float64(y)/16)), int32(math.Floor(float64(z)/16))
+		chunkX, chunkY, chunkZ := int32(x)>>4, int32(y)>>4, int32(z)>>4
 		xb, yb, zb := int32(math.Floor(x)), int32(math.Floor(y)), int32(math.Floor(z))
 		rx, rz := chunkX%32, chunkZ%32
 
