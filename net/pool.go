@@ -33,7 +33,7 @@ var serverboundPool = map[int32]map[int32]func() packet.Packet{
 		0x05: func() packet.Packet { return &configuration.Pong{} },
 	},
 	PlayState: {
-		0x00: func() packet.Packet { return &play.ConfirmTeleporation{} },
+		0x00: func() packet.Packet { return &play.ConfirmTeleportation{} },
 		0x04: func() packet.Packet { return &play.ChatCommand{} },
 		0x05: func() packet.Packet { return &play.SignedChatCommand{} },
 		0x06: func() packet.Packet { return &play.ChatMessage{} },

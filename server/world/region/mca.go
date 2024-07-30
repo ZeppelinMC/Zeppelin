@@ -114,6 +114,12 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 	return chunk, nil*/
 }
 
+func EmptyRegion(f *RegionFile) {
+	*f = RegionFile{
+		chunks: make(map[uint64]*Chunk),
+	}
+}
+
 func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 	var locationTable = make([]byte, 4096)
 
@@ -185,5 +191,5 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 }
 
 func chunkHash(x, z int32) uint64 {
-	return uint64(x)<<32 | uint64(z)
+	return uint64(uint32(z))<<32 | uint64(uint32(x))
 }

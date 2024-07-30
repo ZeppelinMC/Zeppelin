@@ -38,6 +38,8 @@ func (session *StandardSession) handlePackets() {
 			handler, ok := handlers[[2]int32{session.conn.State(), p.ID()}]
 			if !ok {
 				switch pk := p.(type) {
+				case *play.ConfirmTeleportation:
+					session.AwaitingTeleportAcknowledgement.Set(false)
 				case *play.PlayerSession:
 					session.hasSessionData.Set(true)
 					session.sessionData.Set(*pk)

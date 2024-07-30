@@ -2,7 +2,6 @@ package play
 
 import (
 	"github.com/zeppelinmc/zeppelin/net/io"
-	"github.com/zeppelinmc/zeppelin/net/packet"
 )
 
 // serverbound
@@ -70,15 +69,4 @@ func (s *SynchronizePlayerPosition) Decode(r io.Reader) error {
 	}
 	_, err := r.VarInt(&s.TeleportID)
 	return err
-}
-
-// serverbound
-const PacketIdConfirmTeleporation = 0x00
-
-type ConfirmTeleporation struct {
-	packet.EmptyPacket
-}
-
-func (ConfirmTeleporation) ID() int32 {
-	return PacketIdConfirmTeleporation
 }

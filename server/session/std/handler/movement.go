@@ -21,6 +21,9 @@ func chunkPos(x, z float64) (cx, cz int32) {
 }
 
 func handleMovement(s *std.StandardSession, p packet.Packet) {
+	if s.AwaitingTeleportAcknowledgement.Get() {
+		return
+	}
 	switch pk := p.(type) {
 	case *play.SetPlayerPosition:
 		oldX, oldY, oldZ := s.Player().Position()

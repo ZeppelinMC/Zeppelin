@@ -61,6 +61,8 @@ type StandardSession struct {
 	previousMessages []play.PreviousMessage
 
 	inBundle atomic.AtomicValue[bool]
+
+	AwaitingTeleportAcknowledgement atomic.AtomicValue[bool]
 }
 
 func NewStandardSession(
@@ -100,6 +102,7 @@ func (session *StandardSession) ReadPacket() (packet.Packet, error) {
 func (session *StandardSession) SynchronizePosition(x, y, z float64, yaw, pitch float32) error {
 	session.player.SetPosition(x, y, z)
 	session.player.SetRotation(yaw, pitch)
+	session.AwaitingTeleportAcknowledgement.Set(true)
 	return session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
 }
 

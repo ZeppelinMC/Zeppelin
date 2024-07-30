@@ -33,12 +33,27 @@ func (s *Dimension) Type() int {
 }
 
 func (s *Dimension) GetChunk(x, z int32) (*Chunk, error) {
-	region, err := s.getRegion(s.chunkPosToRegionPos(x, z))
+	rx, rz := s.chunkPosToRegionPos(x, z)
+	region, err := s.getRegion(rx, rz)
 	if err != nil {
-		return nil, err
+		if s.generator != nil {
+			region = s.newRegion(rx, rz)
+		} else {
+			return nil, err
+		}
 	}
 
 	return region.GetChunk(x, z, s.generator)
+}
+
+func (s *Dimension) newRegion(rx, rz int32) *RegionFile {
+	s.reg_mu.Lock()
+	defer s.reg_mu.Unlock()
+	hash := s.regionHash(rx, rz)
+	s.regions[hash] = new(RegionFile)
+	EmptyRegion(s.regions[hash])
+
+	return s.regions[hash]
 }
 
 func (s *Dimension) getRegion(rx, rz int32) (*RegionFile, error) {
