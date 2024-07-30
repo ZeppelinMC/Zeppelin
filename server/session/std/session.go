@@ -315,10 +315,6 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
-	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
-		return err
-	}
-
 	if err := session.sendSpawnChunks(); err != nil {
 		return err
 	}
@@ -396,9 +392,9 @@ func (session *StandardSession) bundleStop() error {
 }
 
 func (session *StandardSession) SpawnEntity(e entity.Entity) error {
-	//if err := session.bundleDelimiter(); err != nil {
-	//	return err
-	//}
+	if err := session.bundleStart(); err != nil {
+		return err
+	}
 	x, y, z := e.Position()
 	yaw, pitch := e.Rotation()
 	id := e.EntityId()
@@ -426,11 +422,11 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 		Metadata: e.Metadata(),
 	}); err != nil {
 		return err
-	}
-
-	if err := session.bundleDelimiter(); err != nil {
-		return err
 	}*/
+
+	if err := session.bundleStop(); err != nil {
+		return err
+	}
 
 	return nil
 }
