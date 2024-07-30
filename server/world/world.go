@@ -2,6 +2,7 @@ package world
 
 import (
 	"math"
+	"strings"
 
 	"github.com/zeppelinmc/zeppelin/atomic"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
@@ -10,7 +11,7 @@ import (
 
 type World struct {
 	Level
-	Overworld *region.Dimension
+	dimensions map[string]*region.Dimension
 
 	path              string
 	worldAge, dayTime atomic.AtomicValue[int64]
@@ -24,19 +25,24 @@ func NewWorld(path string) (*World, error) {
 	w.Level, err = loadWorldLevel(path + "/level.dat")
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
-	w.Overworld = region.NewDimension(path+"/region", 0, terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed)))
+	w.dimensions = map[string]*region.Dimension{
+		"minecraft:overworld": region.NewDimension(path+"/region", 0, terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed))),
+	}
 
 	return w, err
 }
 
 // returns the dimension struct for the dimension name
 func (w *World) Dimension(name string) *region.Dimension {
-	switch name {
-	case "minecraft:overworld", "overworld":
-		return w.Overworld
-	default:
-		return nil
+	if !strings.Contains(name, ":") {
+		name = "minecraft:" + name
 	}
+
+	return w.dimensions[name]
+}
+
+func (w *World) RegisterDimension(name string, dim *region.Dimension) {
+	w.dimensions[name] = dim
 }
 
 // increments the day time and world age by one tick and returns the updated time

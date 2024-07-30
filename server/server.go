@@ -24,7 +24,7 @@ import (
 )
 
 // Creates a new server instance using the specified config, returns an error if unable to bind listener
-func New(cfg config.ServerConfig) (*Server, error) {
+func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 	var statusProvider = net.Status(status.StatusResponseData{
 		Version: status.StatusVersion{
 			Name:     "1.21",
@@ -61,17 +61,13 @@ func New(cfg config.ServerConfig) (*Server, error) {
 		log.Warnln("Using Chat.DisableWarning violates the MUG (Minecraft Usage Guidelines) and could get your server banned. Proceed with caution")
 	}
 
-	w, err := world.NewWorld("world")
-	if err != nil {
-		return nil, fmt.Errorf("error loading world: %v", err)
-	}
-
 	listener, err := lcfg.New()
 	server := &Server{
 		listener: listener,
 		cfg:      cfg,
-		World:    w,
+		World:    world,
 		Players:  player.NewPlayerManager(),
+		stopLoop: make(chan int),
 	}
 	server.Console = &Console{Server: server}
 	server.Broadcast = session.NewBroadcast(server.Console)
@@ -101,7 +97,8 @@ type Server struct {
 
 	CommandManager *command.Manager
 
-	closed bool
+	closed   bool
+	stopLoop chan int
 
 	Players *player.PlayerManager
 }
@@ -130,6 +127,7 @@ func (srv *Server) Start(ts time.Time) {
 			if !srv.closed {
 				log.Errorln("Server error: ", err)
 			}
+			<-srv.stopLoop
 			return
 		}
 		srv.handleNewConnection(conn)
@@ -158,6 +156,10 @@ func (srv *Server) handleNewConnection(conn *net.Conn) {
 func (srv *Server) Stop() {
 	log.InfolnClean("Stopping server")
 	srv.closed = true
-	srv.Broadcast.DisconnectAll(text.TextComponent{Text: "Server closed"})
 	srv.listener.Close()
+	srv.Broadcast.DisconnectAll(text.TextComponent{Text: "Server closed"})
+
+	log.InfolnClean("Saving player data")
+	srv.Players.SaveAll()
+	srv.stopLoop <- 0
 }

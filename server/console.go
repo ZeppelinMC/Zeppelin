@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/config"
@@ -41,7 +42,7 @@ func (c *Console) DespawnEntities(...int32) error {
 }
 
 func (c *Console) Dimension() *region.Dimension {
-	return c.Server.World.Overworld
+	return c.Server.World.Dimension("minecraft:overworld")
 }
 
 func (c *Console) Disconnect(text.TextComponent) error {
@@ -104,6 +105,10 @@ func (c *Console) SpawnEntity(entity.Entity) error {
 
 func (c *Console) SpawnPlayer(session.Session) error {
 	return fmt.Errorf("unsupported function for console session")
+}
+
+func (c *Console) ClientInformation() configuration.ClientInformation {
+	return configuration.ClientInformation{}
 }
 
 func (c *Console) SynchronizePosition(float64, float64, float64, float32, float32) error {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/config"
@@ -26,6 +27,8 @@ type Session interface {
 	Player() *player.Player
 	// The client name this session reports in minecraft:brand (vanilla)
 	ClientName() string
+	// the client settings of this client
+	ClientInformation() configuration.ClientInformation
 	// The address of this connection
 	Addr() net.Addr
 

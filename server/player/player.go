@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/atomic"
 	"github.com/zeppelinmc/zeppelin/net/metadata"
-	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/registry"
@@ -28,8 +27,6 @@ type Player struct {
 	food           atomic.AtomicValue[int32]
 	foodExhaustion atomic.AtomicValue[float32]
 	foodSaturation atomic.AtomicValue[float32]
-
-	clientInfo atomic.AtomicValue[configuration.ClientInformation]
 
 	abilities atomic.AtomicValue[world.PlayerAbilities]
 
@@ -141,14 +138,6 @@ func (p *Player) SetRotation(yaw, pitch float32) {
 
 func (p *Player) EntityId() int32 {
 	return p.entityId
-}
-
-func (p *Player) SetClientInformation(info configuration.ClientInformation) {
-	p.clientInfo.Set(info)
-}
-
-func (p *Player) ClientInformation() configuration.ClientInformation {
-	return p.clientInfo.Get()
 }
 
 // returns a clone of the metadata of this player
@@ -277,4 +266,28 @@ func (p *Player) SetRecipeBook(book world.RecipeBook) {
 
 func (p *Player) Inventory() *container.Container {
 	return p.inventory
+}
+
+func (p *Player) sync() {
+	x, y, z := p.Position()
+	yaw, pitch := p.Rotation()
+
+	p.data.Abilities = p.abilities.Get()
+	p.data.Pos = [3]float64{x, y, z}
+	p.data.Rotation = [2]float32{yaw, pitch}
+	p.data.Dimension = p.dimension.Get()
+	p.data.Inventory = *p.inventory
+	p.data.RecipeBook = p.recipeBook.Get()
+
+	p.att_mu.RLock()
+	p.data.Attributes = p.attributes
+	p.att_mu.RUnlock()
+
+	p.data.Health = p.health.Get()
+	p.data.FoodLevel = p.food.Get()
+	p.data.FoodExhaustionLevel = p.foodExhaustion.Get()
+	p.data.FoodSaturationLevel = p.foodSaturation.Get()
+	p.data.PlayerGameType = p.gameMode.Get()
+
+	//TODO motion(velocity), xp, onground, selected item slot, etc
 }

@@ -19,10 +19,10 @@ func handleClientInfo(s *std.StandardSession, p packet.Packet) {
 	switch pk := p.(type) {
 	case *configuration.ClientInformation:
 		inf = *pk
-		s.Player().SetClientInformation(*pk)
+		s.ClientInfo.Set(*pk)
 	case *play.ClientInformation:
 		inf = pk.ClientInformation
-		s.Player().SetClientInformation(pk.ClientInformation)
+		s.ClientInfo.Set(pk.ClientInformation)
 	default:
 		return
 	}

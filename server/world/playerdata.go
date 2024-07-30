@@ -50,6 +50,9 @@ func (u DataUUID) UUID() uuid.UUID {
 }
 
 type PlayerData struct {
+	// the path of this playerdata file, not a field in the nbt
+	path string `nbt:"-"`
+
 	AbsorptionAmount float32
 	Air              int16
 	Brain            struct {
@@ -131,6 +134,22 @@ type RecipeBook struct {
 	ToBeDisplayed []string `nbt:"toBeDisplayed"`
 }
 
+func (data *PlayerData) Save() error {
+	file, err := os.Create(data.path)
+	if err != nil {
+		return err
+	}
+	gzip := gzip.NewWriter(file)
+	if err := nbt.NewEncoder(gzip).Encode("", *data); err != nil {
+		return err
+	}
+
+	if err := gzip.Close(); err != nil {
+		return err
+	}
+	return file.Close()
+}
+
 func (w *World) PlayerData(uuid string) (PlayerData, error) {
 	var playerData PlayerData
 	path := fmt.Sprintf("%s/playerdata/%s.dat", w.path, uuid)
@@ -150,13 +169,15 @@ func (w *World) PlayerData(uuid string) (PlayerData, error) {
 	file.Close()
 
 	_, err = nbt.NewDecoder(bytes.NewReader(buf)).Decode(&playerData)
+	playerData.path = path
 
 	return playerData, err
 }
 
 func (w *World) NewPlayerData(uuid uuid.UUID) PlayerData {
 	return PlayerData{
-		Pos: [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},
+		path: fmt.Sprintf("%s/playerdata/%s.dat", w.path, uuid),
+		Pos:  [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},
 
 		Health:              20,
 		FoodSaturationLevel: 5,

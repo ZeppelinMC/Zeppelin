@@ -40,6 +40,7 @@ type StandardSession struct {
 	conn *net.Conn
 
 	clientName string // constant
+	ClientInfo atomic.AtomicValue[configuration.ClientInformation]
 
 	statusProviderProvider func() net.StatusProvider
 
@@ -152,6 +153,10 @@ func (session *StandardSession) Addr() nnet.Addr {
 
 func (session *StandardSession) ClientName() string {
 	return session.clientName
+}
+
+func (session *StandardSession) ClientInformation() configuration.ClientInformation {
+	return session.ClientInfo.Get()
 }
 
 func (session *StandardSession) Username() string {
@@ -296,6 +301,8 @@ func (session *StandardSession) login() error {
 
 	session.broadcast.AddPlayer(session)
 
+	session.initializeInventory()
+
 	if err := session.WritePacket(&play.SetDefaultSpawnPosition{
 		X:     session.world.Data.SpawnX,
 		Y:     session.world.Data.SpawnY,
@@ -322,7 +329,6 @@ func (session *StandardSession) login() error {
 	}
 
 	session.broadcast.SpawnPlayer(session)
-	session.initializeInventory()
 
 	return nil
 }
@@ -348,7 +354,7 @@ The view distance of the client, in chunks
 Returns the server's render distance if the client's view distance is bigger or not set
 */
 func (session *StandardSession) ViewDistance() int32 {
-	plVd := int32(session.player.ClientInformation().ViewDistance)
+	plVd := int32(session.ClientInformation().ViewDistance)
 	if plVd == 0 || plVd > session.config.RenderDistance {
 		return session.config.RenderDistance
 	}
@@ -446,9 +452,9 @@ func (session *StandardSession) sendSpawnChunks() error {
 		return err
 	}
 
-	for x := chunkX - viewDistance; x <= chunkX+viewDistance; x++ {
-		for z := chunkZ - viewDistance; z <= chunkZ+viewDistance; z++ {
-			c, err := session.world.Overworld.GetChunk(x, z)
+	for x := chunkX - viewDistance; x < chunkX+viewDistance; x++ {
+		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
+			c, err := session.Dimension().GetChunk(x, z)
 			if err != nil {
 				continue
 			}

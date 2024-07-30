@@ -31,6 +31,13 @@ func chunkLocation(l int32) (offset, size int32) {
 
 func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 	hash := chunkHash(x, z)
+
+	r.chu_mu.Lock()
+	defer r.chu_mu.Unlock()
+	if c, ok := r.chunks[hash]; ok {
+		return c, nil
+	}
+
 	c := generator.NewChunk(x, z)
 
 	r.chunks[hash] = &c
@@ -38,12 +45,6 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 	return &c, nil
 	l := r.locations[((uint32(x)%32)+(uint32(z)%32)*32)*4:][:4]
 	loc := int32(l[0])<<24 | int32(l[1])<<16 | int32(l[2])<<8 | int32(l[3])
-
-	r.chu_mu.Lock()
-	defer r.chu_mu.Unlock()
-	if c, ok := r.chunks[hash]; ok {
-		return c, nil
-	}
 
 	offset, size := chunkLocation(loc)
 	if offset|size == 0 {
@@ -184,5 +185,5 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 }
 
 func chunkHash(x, z int32) uint64 {
-	return uint64(z)<<32 | uint64(x)
+	return uint64(x)<<32 | uint64(z)
 }

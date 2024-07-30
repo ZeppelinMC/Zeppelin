@@ -8,10 +8,16 @@ import (
 	"github.com/zeppelinmc/zeppelin/log"
 )
 
-type Plugin interface {
-	Identifier() string
-	OnLoad(*Server)
-	Unload()
+type Plugin struct {
+	srv        *Server
+	Identifier string
+
+	OnLoad func(*Plugin)
+	Unload func(*Plugin)
+}
+
+func (p Plugin) Server() *Server {
+	return p.srv
 }
 
 func (srv *Server) loadPlugins() {
@@ -40,10 +46,11 @@ func (srv *Server) loadPlugin(name string) {
 		log.Errorf("Couldn't find plugin export for %s: %v\n", name, err)
 		return
 	}
-	plugin, ok := sym.(Plugin)
+	plugin, ok := sym.(*Plugin)
 	if !ok {
 		log.Errorf("Invalid plugin export for %s\n", name)
 		return
 	}
-	plugin.OnLoad(srv)
+	plugin.srv = srv
+	plugin.OnLoad(plugin)
 }

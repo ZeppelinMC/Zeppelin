@@ -47,8 +47,8 @@ type DimensionGenerationSettings struct {
 			Preset string `nbt:"preset,omitempty"`
 			Type   string `nbt:"type"`
 		} `nbt:"biome_source"`
-		Settings string `nbt:"settings"`
-		Type     string `nbt:"type"`
+		//Settings string `nbt:"settings"` // Can be both string and compound, skip for now
+		Type string `nbt:"type"`
 	} `nbt:"generator"`
 	Type string `nbt:"type"`
 }

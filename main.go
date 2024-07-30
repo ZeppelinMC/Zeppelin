@@ -15,6 +15,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/server"
 	"github.com/zeppelinmc/zeppelin/server/command"
+	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/util"
 	"golang.org/x/term"
 )
@@ -32,11 +33,17 @@ func main() {
 
 	cfg := loadConfig()
 
+	w, err := world.NewWorld("world")
+	if err != nil {
+		log.Errorln("Error loading world: %v", err)
+		return
+	}
+
 	log.Infof("Binding server to %s:%d\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
 
 	rawTerminal := !util.HasArgument("--no-raw-terminal")
 
-	srv, err := server.New(cfg)
+	srv, err := server.New(cfg, w)
 	if err != nil {
 		log.Errorln("Error binding server:", err)
 		return

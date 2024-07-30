@@ -27,6 +27,16 @@ func (cache *PlayerManager) add(p *Player) {
 	cache.m[p.UUID()] = p
 }
 
+// saves all the players in the manager to the path specified in their data file
+func (cache *PlayerManager) SaveAll() {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+	for _, player := range cache.m {
+		player.sync()
+		player.data.Save()
+	}
+}
+
 func NewPlayerManager() *PlayerManager {
 	return &PlayerManager{m: make(map[uuid.UUID]*Player)}
 }
