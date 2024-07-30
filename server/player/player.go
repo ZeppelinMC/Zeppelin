@@ -35,6 +35,8 @@ type Player struct {
 
 	gameMode atomic.AtomicValue[world.GameType]
 
+	selectedItemSlot atomic.AtomicValue[int32]
+
 	recipeBook atomic.AtomicValue[world.RecipeBook]
 
 	md_mu    sync.RWMutex
@@ -93,6 +95,8 @@ func (mgr *PlayerManager) New(data world.PlayerData) *Player {
 		gameMode: atomic.Value(data.PlayerGameType),
 
 		recipeBook: atomic.Value(data.RecipeBook),
+
+		selectedItemSlot: atomic.Value(data.SelectedItemSlot),
 
 		health:         atomic.Value(data.Health),
 		food:           atomic.Value(data.FoodLevel),
@@ -279,6 +283,29 @@ func (p *Player) Inventory() *container.Container {
 	return p.inventory
 }
 
+// if negative, returns 0 and if over 8, returns 8
+func (p *Player) SelectedItemSlot() int32 {
+	slot := p.selectedItemSlot.Get()
+	if slot < 0 {
+		slot = 0
+	}
+	if slot > 8 {
+		slot = 8
+	}
+	return slot
+}
+
+// if negative, set to 0 and if over 8, set to 8
+func (p *Player) SetSelectedItemSlot(slot int32) {
+	if slot < 0 {
+		slot = 0
+	}
+	if slot > 8 {
+		slot = 8
+	}
+	p.selectedItemSlot.Set(slot)
+}
+
 func (p *Player) sync() {
 	x, y, z := p.Position()
 	yaw, pitch := p.Rotation()
@@ -300,6 +327,7 @@ func (p *Player) sync() {
 	p.data.FoodExhaustionLevel = p.foodExhaustion.Get()
 	p.data.FoodSaturationLevel = p.foodSaturation.Get()
 	p.data.PlayerGameType = p.gameMode.Get()
+	p.data.SelectedItemSlot = p.selectedItemSlot.Get()
 
-	//TODO motion(velocity), xp, onground, selected item slot, etc
+	//TODO motion(velocity), xp, etc
 }

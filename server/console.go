@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"errors"
 	"net"
 
 	"github.com/google/uuid"
@@ -14,9 +14,12 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 	"github.com/zeppelinmc/zeppelin/text"
 )
+
+var errConsoleUnsupportedFunc = errors.New("unsupported function for console session")
 
 var _ session.Session = (*Console)(nil)
 
@@ -38,7 +41,7 @@ func (c *Console) Config() config.ServerConfig {
 }
 
 func (c *Console) DespawnEntities(...int32) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) Dimension() *region.Dimension {
@@ -46,15 +49,15 @@ func (c *Console) Dimension() *region.Dimension {
 }
 
 func (c *Console) Disconnect(text.TextComponent) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) EntityAnimation(int32, byte) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) EntityMetadata(int32, metadata.Metadata) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) IsSpawned(int32) bool {
@@ -88,7 +91,7 @@ func (c *Console) PlayerInfoRemove(uuids ...uuid.UUID) error {
 }
 
 func (c *Console) PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) Properties() []login.Property {
@@ -100,11 +103,11 @@ func (c *Console) SessionData() (play.PlayerSession, bool) {
 }
 
 func (c *Console) SpawnEntity(entity.Entity) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) SpawnPlayer(session.Session) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) ClientInformation() configuration.ClientInformation {
@@ -112,7 +115,7 @@ func (c *Console) ClientInformation() configuration.ClientInformation {
 }
 
 func (c *Console) SynchronizePosition(float64, float64, float64, float32, float32) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) SystemMessage(msg text.TextComponent) error {
@@ -125,23 +128,27 @@ func (c *Console) UUID() uuid.UUID {
 }
 
 func (c *Console) UpdateEntityPosition(entity.Entity, *play.UpdateEntityPosition) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) UpdateEntityPositionRotation(entity.Entity, *play.UpdateEntityPositionAndRotation) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) UpdateEntityRotation(entity.Entity, *play.UpdateEntityRotation) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) UpdateTime(int64, int64) error {
-	return fmt.Errorf("unsupported function for console session")
+	return errConsoleUnsupportedFunc
+}
+
+func (c *Console) SetGameMode(world.GameType) error {
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) Textures() (login.Textures, error) {
-	return login.Textures{}, fmt.Errorf("unsupported function for console session")
+	return login.Textures{}, errConsoleUnsupportedFunc
 }
 
 func (c *Console) Username() string {

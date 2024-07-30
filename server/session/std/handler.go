@@ -31,9 +31,8 @@ func (session *StandardSession) handlePackets() {
 		case <-keepAlive.C:
 			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: time.Now().UnixMilli()})
 		default:
-			if lastKeepAlive := session.lastKeepalive.Get(); lastKeepAlive != 0 && time.Now().Unix()-lastKeepAlive > 20 {
+			if lastKeepAlive := session.lastKeepalive.Get(); lastKeepAlive != 0 && time.Now().Unix()-lastKeepAlive > 21 {
 				session.Disconnect(text.TextComponent{Text: "Timed out"})
-				return
 			}
 			p, err := session.conn.ReadPacket()
 			if err != nil {
@@ -50,6 +49,11 @@ func (session *StandardSession) handlePackets() {
 					session.AwaitingTeleportAcknowledgement.Set(false)
 				case *play.ServerboundKeepAlive:
 					session.lastKeepalive.Set(time.Now().Unix())
+				case *play.SetHeldItemServerbound:
+					if pk.Slot < 0 || pk.Slot > 8 {
+						session.Disconnect(text.TextComponent{Text: "Invalid slot"})
+					}
+					session.player.SetSelectedItemSlot(int32(pk.Slot))
 				case *play.PlayerSession:
 					session.hasSessionData.Set(true)
 					session.sessionData.Set(*pk)

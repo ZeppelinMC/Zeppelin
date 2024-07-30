@@ -190,10 +190,11 @@ func (session *StandardSession) PlayerInfoRemove(uuids ...uuid.UUID) error {
 
 func (session *StandardSession) Disconnect(reason text.TextComponent) error {
 	if session.inConfiguration() {
-		return session.conn.WritePacket(&configuration.Disconnect{Reason: reason})
+		session.conn.WritePacket(&configuration.Disconnect{Reason: reason})
 	} else {
-		return session.conn.WritePacket(&play.Disconnect{Reason: reason})
+		session.conn.WritePacket(&play.Disconnect{Reason: reason})
 	}
+	return session.conn.Close()
 }
 
 // finishes configuration
@@ -306,7 +307,12 @@ func (session *StandardSession) login() error {
 
 	session.broadcast.AddPlayer(session)
 
-	session.SendInventory()
+	if err := session.SendInventory(); err != nil {
+		return err
+	}
+	if err := session.conn.WritePacket(&play.SetHeldItemClientbound{Slot: int8(session.player.SelectedItemSlot())}); err != nil {
+		return err
+	}
 
 	if err := session.WritePacket(&play.SetDefaultSpawnPosition{
 		X:     session.world.Data.SpawnX,
@@ -435,6 +441,14 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 
 func (session *StandardSession) SpawnPlayer(ses session.Session) error {
 	return session.SpawnEntity(ses.Player())
+}
+
+func (session *StandardSession) SetGameMode(gm world.GameType) error {
+	session.player.SetGameMode(gm)
+	return session.WritePacket(&play.GameEvent{
+		Event: play.GameEventChangeGamemode,
+		Value: float32(gm),
+	})
 }
 
 func (session *StandardSession) sendSpawnChunks() error {

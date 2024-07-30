@@ -11,6 +11,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
+	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 	"github.com/zeppelinmc/zeppelin/text"
 )
@@ -78,6 +79,9 @@ type Session interface {
 
 	// updates the time for the client
 	UpdateTime(worldAge, dayTime int64) error
+
+	// sets the gamemode for the client
+	SetGameMode(gm world.GameType) error
 
 	// the textures of this client
 	Textures() (login.Textures, error)
