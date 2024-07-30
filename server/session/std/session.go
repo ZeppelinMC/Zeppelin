@@ -62,7 +62,9 @@ type StandardSession struct {
 
 	inBundle atomic.AtomicValue[bool]
 
-	AwaitingTeleportAcknowledgement atomic.AtomicValue[bool]
+	AwaitingTeleportAcknowledgement   atomic.AtomicValue[bool]
+	awaitingChunkBatchAcknowledgement atomic.AtomicValue[bool]
+	lastKeepalive                     atomic.AtomicValue[int64]
 }
 
 func NewStandardSession(
@@ -304,7 +306,7 @@ func (session *StandardSession) login() error {
 
 	session.broadcast.AddPlayer(session)
 
-	session.initializeInventory()
+	session.SendInventory()
 
 	if err := session.WritePacket(&play.SetDefaultSpawnPosition{
 		X:     session.world.Data.SpawnX,
@@ -417,12 +419,12 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 	defer session.spawned_ents_mu.Unlock()
 	session.spawnedEntities = append(session.spawnedEntities, id)
 
-	/*if err := session.conn.WritePacket(&play.SetEntityMetadata{
+	if err := session.conn.WritePacket(&play.SetEntityMetadata{
 		EntityId: id,
 		Metadata: e.Metadata(),
 	}); err != nil {
 		return err
-	}*/
+	}
 
 	if err := session.bundleStop(); err != nil {
 		return err
@@ -471,6 +473,8 @@ func (session *StandardSession) sendSpawnChunks() error {
 		return err
 	}
 
+	session.awaitingChunkBatchAcknowledgement.Set(true)
+
 	return nil
 }
 
@@ -478,7 +482,7 @@ func (session *StandardSession) UpdateTime(worldAge, dayTime int64) error {
 	return session.conn.WritePacket(&play.UpdateTime{WorldAge: worldAge, TimeOfDay: dayTime})
 }
 
-func (session *StandardSession) initializeInventory() error {
+func (session *StandardSession) SendInventory() error {
 	return session.conn.WritePacket(&play.SetContainerContent{
 		StateId: 1,
 		Slots:   session.player.Inventory().Network(46),

@@ -14,6 +14,7 @@ func init() {
 	std.RegisterHandler(net.PlayState, play.PacketIdSetPlayerPosition, handleMovement)
 	std.RegisterHandler(net.PlayState, play.PacketIdSetPlayerPositionAndRotation, handleMovement)
 	std.RegisterHandler(net.PlayState, play.PacketIdSetPlayerRotation, handleMovement)
+	std.RegisterHandler(net.PlayState, play.PacketIdSetPlayerOnGround, handleMovement)
 }
 
 func chunkPos(x, z float64) (cx, cz int32) {
@@ -47,6 +48,7 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 		s.Broadcast().BroadcastPlayerMovement(s, pk.X, pk.Y, pk.Z, yaw, pitch)
 
 		s.Player().SetPosition(pk.X, pk.Y, pk.Z)
+		s.Player().SetOnGround(pk.OnGround)
 	case *play.SetPlayerPositionAndRotation:
 		oldX, oldY, oldZ := s.Player().Position()
 		oldChunkPosX, oldChunkPosZ := chunkPos(oldX, oldZ)
@@ -68,6 +70,7 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 
 		s.Player().SetPosition(pk.X, pk.Y, pk.Z)
 		s.Player().SetRotation(pk.Yaw, pk.Pitch)
+		s.Player().SetOnGround(pk.OnGround)
 	case *play.SetPlayerRotation:
 		// you can never rotate too much :)
 		x, y, z := s.Player().Position()
@@ -75,5 +78,8 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 		s.Broadcast().BroadcastPlayerMovement(s, x, y, z, pk.Yaw, pk.Pitch)
 
 		s.Player().SetRotation(pk.Yaw, pk.Pitch)
+		s.Player().SetOnGround(pk.OnGround)
+	case *play.SetPlayerOnGround:
+		s.Player().SetOnGround(pk.OnGround)
 	}
 }

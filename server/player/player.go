@@ -22,6 +22,7 @@ type Player struct {
 	data       world.PlayerData
 	x, y, z    atomic.AtomicValue[float64]
 	yaw, pitch atomic.AtomicValue[float32]
+	onGround   atomic.AtomicValue[bool]
 
 	health         atomic.AtomicValue[float32]
 	food           atomic.AtomicValue[int32]
@@ -85,6 +86,8 @@ func (mgr *PlayerManager) New(data world.PlayerData) *Player {
 		yaw:   atomic.Value(data.Rotation[0]),
 		pitch: atomic.Value(data.Rotation[1]),
 
+		onGround: atomic.Value(data.OnGround),
+
 		dimension: atomic.Value(data.Dimension),
 
 		gameMode: atomic.Value(data.PlayerGameType),
@@ -125,6 +128,10 @@ func (p *Player) Rotation() (yaw, pitch float32) {
 	return p.yaw.Get(), p.pitch.Get()
 }
 
+func (p *Player) OnGround() bool {
+	return p.onGround.Get()
+}
+
 func (p *Player) SetPosition(x, y, z float64) {
 	p.x.Set(x)
 	p.y.Set(y)
@@ -134,6 +141,10 @@ func (p *Player) SetPosition(x, y, z float64) {
 func (p *Player) SetRotation(yaw, pitch float32) {
 	p.yaw.Set(yaw)
 	p.pitch.Set(pitch)
+}
+
+func (p *Player) SetOnGround(val bool) {
+	p.onGround.Set(val)
 }
 
 func (p *Player) EntityId() int32 {
@@ -275,6 +286,7 @@ func (p *Player) sync() {
 	p.data.Abilities = p.abilities.Get()
 	p.data.Pos = [3]float64{x, y, z}
 	p.data.Rotation = [2]float32{yaw, pitch}
+	p.data.OnGround = p.onGround.Get()
 	p.data.Dimension = p.dimension.Get()
 	p.data.Inventory = *p.inventory
 	p.data.RecipeBook = p.recipeBook.Get()
