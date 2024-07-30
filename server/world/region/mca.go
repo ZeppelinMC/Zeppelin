@@ -10,6 +10,7 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
+	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/region/section"
 )
 
@@ -102,7 +103,17 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 
 	r.chunks[hash].Sections = make([]*section.Section, len(chunk.Sections))
 	for i, sec := range chunk.Sections {
-		r.chunks[hash].Sections[i] = section.New(sec.Y, sec.BlockStates.Palette, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, sec.SkyLight, sec.BlockLight)
+		var blocks = make([]block.Block, len(sec.BlockStates.Palette))
+
+		for i, entry := range sec.BlockStates.Palette {
+			b := block.Get(entry.Name)
+			if entry.Properties != nil {
+				b = b.New(entry.Properties)
+			}
+			blocks[i] = b
+		}
+
+		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, sec.SkyLight, sec.BlockLight)
 	}
 
 	return r.chunks[hash], err

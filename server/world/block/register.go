@@ -8,32 +8,18 @@ import (
 	"github.com/zeppelinmc/zeppelin/util"
 )
 
-type Block struct {
-	Name       string
-	Properties map[string]string
-}
-
 type blockState struct {
-	Id         int32             `json:"id"`
-	Properties map[string]string `json:"properties"`
+	Id         int32           `json:"id"`
+	Properties BlockProperties `json:"properties"`
 }
 
-type block struct {
+type blockInfo struct {
 	States []blockState `json:"states"`
 }
 
-func (b block) FindState(properties map[string]string) (id int32, ok bool) {
-	for _, state := range b.States {
-		if util.MapEqual(state.Properties, properties) {
-			return state.Id, true
-		}
-	}
-	return 0, false
-}
+var blocks = make(map[string]blockInfo)
 
-var Blocks map[string]block
-
-//go:embed blocks.nbt
+//go:embed data/blocks.nbt
 var blockData []byte
 var blockBuf = bytes.NewReader(blockData)
 
@@ -44,8 +30,6 @@ func init() {
 	_, _, _ = rd.ReadRoot(true)
 	// reuse the compound reader struct
 	var compoundReader nbt.CompoundReader
-	// initialize the map
-	Blocks = make(map[string]block)
 
 	for {
 		// read a type id (Compound), name from the reader. The name is a block name in this example
@@ -66,7 +50,7 @@ func init() {
 				rd.Read([]any{&states[i].Id, states[i].Properties})
 
 			}
-			Blocks[name] = block{
+			blocks[name] = blockInfo{
 				States: states,
 			}
 		}); err != nil {
@@ -74,4 +58,41 @@ func init() {
 		}
 	}
 
+}
+
+var registeredBlocks = make(map[string]Block)
+
+// Registers a block struct that will be used for creating blocks with the name returned by the block's Encode function
+func Register(b Block) {
+	name, _ := b.Encode()
+	registeredBlocks[name] = b
+}
+
+// Returns the block struct found for the block name
+func Get(name string) Block {
+	if b, ok := registeredBlocks[name]; ok {
+		return b
+	}
+	return UnknownBlock{name: name}
+}
+
+// returns the block state id for this block
+func StateId(b Block) (id int32, ok bool) {
+	name, props := b.Encode()
+	block := blocks[name]
+
+	for _, state := range block.States {
+		if util.MapEqual(props, state.Properties) {
+			return state.Id, true
+		}
+	}
+	return 0, false
+}
+
+func init() {
+	Register(Air{})
+	Register(Bedrock{})
+	Register(Dirt{})
+	Register(GrassBlock{})
+	Register(OakLog{})
 }

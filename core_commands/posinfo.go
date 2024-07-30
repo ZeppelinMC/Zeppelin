@@ -33,6 +33,8 @@ var posinfo = command.Command{
 		}
 		onBlock, _ := c.Block(xb&0x0f, yb-1, zb&0x0f)
 
+		name, props := onBlock.Encode()
+
 		ccc.Executor.SystemMessage(text.Unmarshalf(
 			ccc.Executor.Config().Chat.Formatter.Rune(),
 			"XYZ: %.03f / %.05f / %.03f\nBlock: %d %d %d [%d %d %d]\nChunk: %d %d %d [r.%d.%d.mca]\nStanding on: %s [%v]",
@@ -41,7 +43,7 @@ var posinfo = command.Command{
 			xb&0xf, yb&0xf, zb&0xf,
 			chunkX, chunkY, chunkZ,
 			rx, rz,
-			onBlock.Name, onBlock.Properties,
+			name, props,
 		))
 	},
 }

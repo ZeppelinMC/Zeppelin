@@ -1,9 +1,14 @@
 package region
 
-import "github.com/zeppelinmc/zeppelin/server/world/region/block"
+import "github.com/zeppelinmc/zeppelin/server/world/block"
 
 type Heightmaps struct {
 	MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE [37]int64
+}
+
+type anvilBlock struct {
+	Properties block.BlockProperties
+	Name       string
 }
 
 type anvilChunk struct {
@@ -27,8 +32,8 @@ type anvilChunk struct {
 			Palette []string `nbt:"palette"`
 		} `nbt:"biomes"`
 		BlockStates struct {
-			Data    []int64       `nbt:"data"`
-			Palette []block.Block `nbt:"palette"`
+			Data    []int64      `nbt:"data"`
+			Palette []anvilBlock `nbt:"palette"`
 		} `nbt:"block_states"`
 	} `nbt:"sections"`
 

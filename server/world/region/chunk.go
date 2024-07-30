@@ -3,7 +3,7 @@ package region
 import (
 	"fmt"
 
-	"github.com/zeppelinmc/zeppelin/server/world/region/block"
+	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/region/section"
 )
 
@@ -38,7 +38,7 @@ func NewChunk(x, z int32) Chunk {
 	for i := range c.Sections {
 		c.Sections[i] = section.New(
 			int8(i-MinChunkY),
-			[]block.Block{{Name: "minecraft:air"}},
+			[]block.Block{block.Air{}},
 			nil,
 			[]string{"minecraft:plains"},
 			nil,
@@ -54,7 +54,7 @@ func NewChunk(x, z int32) Chunk {
 func (c *Chunk) Block(x, y, z int32) (block.Block, error) {
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
-		return block.Block{}, fmt.Errorf("null section")
+		return nil, fmt.Errorf("null section")
 	}
 	sec := c.Sections[secIndex]
 

@@ -4,8 +4,8 @@ import (
 	"math/rand"
 
 	"github.com/aquilax/go-perlin"
+	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
-	"github.com/zeppelinmc/zeppelin/server/world/region/block"
 )
 
 type TerrainGenerator struct {
@@ -92,12 +92,8 @@ func isCorner(x, z, minX, minZ, maxX, maxZ int32) bool {
 	return (x == minX && z == minZ) || (x == maxX && z == maxZ) || (x == maxX && z == minZ) || (x == minZ && z == maxZ)
 }
 
-var grassBlock = block.Block{Name: "minecraft:grass_block", Properties: map[string]string{"snowy": "false"}}
-var dirt = block.Block{Name: "minecraft:dirt"}
-var bedrock = block.Block{Name: "minecraft:bedrock"}
-var oakLog = block.Block{Name: "minecraft:oak_log", Properties: map[string]string{"axis": "y"}}
-var oakLeaves = block.Block{Name: "minecraft:oak_leaves", Properties: map[string]string{
-	"distance":    "1",
-	"persistent":  "false",
-	"waterlogged": "false",
-}}
+var grassBlock = block.GrassBlock{}
+var dirt = block.Dirt{}
+var bedrock = block.Bedrock{}
+var oakLog = block.OakLog{Axis: block.AxisY}
+var oakLeaves = block.OakLeaves{Distance: 1}

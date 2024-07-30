@@ -5,8 +5,7 @@ import (
 	"math"
 	"math/bits"
 
-	"github.com/zeppelinmc/zeppelin/server/world/region/block"
-	"github.com/zeppelinmc/zeppelin/util"
+	"github.com/zeppelinmc/zeppelin/server/world/block"
 )
 
 func New(y int8, blockPalette []block.Block, blockStates []int64, biomePalette []string, biomesData []int64, skylight, blocklight []byte) *Section {
@@ -136,10 +135,7 @@ func (sec *Section) SetBlock(x, y, z byte, b block.Block) (state int64) {
 
 func (sec *Section) index(b block.Block) (i int64, ok bool) {
 	for i, entry := range sec.blockPalette {
-		if entry.Name != b.Name {
-			continue
-		}
-		if util.MapEqual(b.Properties, entry.Properties) {
+		if entry == b {
 			return int64(i), true
 		}
 	}

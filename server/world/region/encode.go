@@ -8,7 +8,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/world/region/block"
+	"github.com/zeppelinmc/zeppelin/server/world/block"
 )
 
 var emptyLightBuffer = make([]byte, 2048)
@@ -50,7 +50,8 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 		biomeBitsPerEntry, biomePalette, biomeStates := section.Biomes()
 
 		for i, state := range blockPalette {
-			if state.Name == "minecraft:air" {
+			name, _ := state.Encode()
+			if name == "minecraft:air" {
 				airId = i
 				break
 			}
@@ -92,13 +93,12 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 
 		switch {
 		case blockBitsPerEntry == 0:
-			pale := blockPalette[0]
-			stateId, _ := block.Blocks[pale.Name].FindState(pale.Properties)
+			stateId, _ := block.StateId(blockPalette[0])
 			w.VarInt(stateId)
 		case blockBitsPerEntry >= 4 && blockBitsPerEntry <= 8:
 			w.VarInt(int32(len(blockPalette)))
 			for _, e := range blockPalette {
-				stateId, _ := block.Blocks[e.Name].FindState(e.Properties)
+				stateId, _ := block.StateId(e)
 				w.VarInt(stateId)
 			}
 		case blockBitsPerEntry == 15: // no palette
