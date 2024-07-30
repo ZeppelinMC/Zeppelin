@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-func NewDimension(regionPath string, typ int, generator Generator) *Dimension {
+func NewDimension(regionPath string, typ string, generator Generator) *Dimension {
 	return &Dimension{
 		regions: make(map[uint64]*RegionFile),
 
@@ -23,12 +23,12 @@ type Dimension struct {
 
 	generator Generator
 
-	typ int
+	typ string
 
 	regionPath string
 }
 
-func (s *Dimension) Type() int {
+func (s *Dimension) Type() string {
 	return s.typ
 }
 

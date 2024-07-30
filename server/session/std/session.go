@@ -236,7 +236,7 @@ func (session *StandardSession) login() error {
 		HashedSeed: session.world.Data.WorldGenSettings.Seed.HashedSeed(),
 
 		EnableRespawnScreen: true,
-		DimensionType:       int32(session.Dimension().Type()),
+		DimensionType:       int32(slices.Index(session.registryIndexes["minecraft:dimension_type"], session.Dimension().Type())),
 		DimensionName:       session.player.Dimension(),
 		GameMode:            byte(session.player.GameMode()),
 
