@@ -1,12 +1,7 @@
 package block
 
 import (
-	"fmt"
 	"strconv"
-
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/session"
-	"github.com/zeppelinmc/zeppelin/text"
 )
 
 type OakLeaves struct {
@@ -29,10 +24,6 @@ func (g OakLeaves) New(props BlockProperties) Block {
 		Persistent:  props["persistent"] == "true",
 		Waterlogged: props["waterlogged"] == "true",
 	}
-}
-
-func (g OakLeaves) Use(clicker session.Session, pk play.UseItemOn) {
-	clicker.SystemMessage(text.TextComponent{Text: fmt.Sprintf("kill yourself (at %d %d %d)", pk.BlockX, pk.BlockY, pk.BlockZ)})
 }
 
 var _ Block = (*OakLeaves)(nil)
