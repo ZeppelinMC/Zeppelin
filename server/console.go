@@ -156,7 +156,11 @@ func (c *Console) BlockAction(*play.BlockAction) error {
 	return errConsoleUnsupportedFunc
 }
 
-func (c *Console) OpenWindow(window.Window) error {
+func (c *Console) OpenWindow(*window.Window) error {
+	return errConsoleUnsupportedFunc
+}
+
+func (c *Console) PlaySound(*play.SoundEffect) error {
 	return errConsoleUnsupportedFunc
 }
 

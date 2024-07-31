@@ -8,6 +8,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 )
@@ -306,4 +308,43 @@ func (b *Broadcast) BlockAction(x, y, z int32, dimension string, actionId, actio
 		}
 		ses.BlockAction(pk)
 	}
+}
+
+func (b *Broadcast) PlaySound(pk *play.SoundEffect, dimension string) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	for _, ses := range b.sessions {
+		if ses.Player().Dimension() != dimension {
+			continue
+		}
+		ses.PlaySound(pk)
+	}
+}
+
+// creates a sound effect with the provided data. If custom is true, or name wasn't found in the sound registry, the packet will use a custom sound name. This function generates a random seed for this event using level.NewSeed()
+func SoundEffect(name string, custom bool, fixedRange *float32, category int32, x, y, z int32, volume, pitch float32) *play.SoundEffect {
+	pk := &play.SoundEffect{
+		SoundCategory: category,
+		X:             x, Y: y, Z: z,
+		Volume: volume,
+		Pitch:  pitch,
+		Seed:   int64(level.NewSeed()),
+	}
+	if !custom {
+		soundId, ok := registry.SoundEvent.Lookup(name)
+		if ok {
+			pk.SoundId = soundId
+			return pk
+		}
+	}
+
+	pk.SoundId = -1
+	pk.SoundName = name
+	pk.FixedRange = fixedRange != nil
+	if fixedRange != nil {
+		pk.Range = *fixedRange
+	}
+
+	return pk
 }

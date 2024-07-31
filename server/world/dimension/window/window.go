@@ -57,8 +57,9 @@ func (mgr *WindowManager) Get(id int32) ([3]int32, *Window, bool) {
 }
 
 // window types are found at https://wiki.vg/Inventory
-func New(typ string, items container.Container, title text.TextComponent) *Window {
+func (mgr *WindowManager) New(typ string, items container.Container, title text.TextComponent) *Window {
 	return &Window{
+		mgr:   mgr,
 		Items: items,
 		Id:    windowId.Add(1),
 		Title: title,
@@ -67,10 +68,18 @@ func New(typ string, items container.Container, title text.TextComponent) *Windo
 }
 
 type Window struct {
+	mgr *WindowManager
+
 	Items container.Container
 	Id    int32
 	Type  string
 	Title text.TextComponent
 
 	Viewers byte
+}
+
+func (w *Window) Position() (x, y, z int32, ok bool) {
+	pos, _, ok := w.mgr.Get(w.Id)
+
+	return pos[0], pos[1], pos[2], ok
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 )
 
@@ -22,10 +23,25 @@ func handleCloseContainer(s *std.StandardSession, p packet.Packet) {
 		if !ok {
 			return
 		}
+		oldViewers := w.Viewers
 		w.Viewers--
-		if w.Viewers < 0 {
-			w.Viewers = 0
+
+		x, y, z := pos[0], pos[1], pos[2]
+
+		block, err := s.Dimension().Block(x, y, z)
+		if err != nil {
+			return
 		}
-		s.Broadcast().BlockAction(pos[0], pos[1], pos[2], s.Player().Dimension(), 1, w.Viewers)
+		blockType, _ := block.Encode()
+
+		if blockType == "minecraft:chest" {
+			s.Broadcast().BlockAction(x, y, z, s.Player().Dimension(), 1, w.Viewers)
+			if oldViewers > 0 && w.Viewers == 0 {
+				// chest was closed by all players
+				s.Broadcast().PlaySound(session.SoundEffect(
+					"minecraft:block.chest.close", false, nil, play.SoundCategoryBlock, x, y, z, 1, 1,
+				), s.Dimension().Name())
+			}
+		}
 	}
 }

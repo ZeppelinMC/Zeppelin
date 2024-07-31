@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"io"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -145,4 +146,8 @@ func (s Seed) HashedSeed() int64 {
 	hash := sha256.Sum256(binary.BigEndian.AppendUint64(nil, uint64(s)))
 
 	return int64(binary.BigEndian.Uint64(hash[:8]))
+}
+
+func NewSeed() Seed {
+	return Seed(rand.Int63())
 }

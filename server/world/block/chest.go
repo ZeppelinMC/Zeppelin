@@ -6,7 +6,6 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
-	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
@@ -42,12 +41,20 @@ func (g Chest) Use(clicker session.Session, pk play.UseItemOn, dimension *dimens
 		if entity.Id != "minecraft:chest" {
 			return
 		}
-		w = window.New("minecraft:generic_9x3", entity.Items, text.Sprint("Chest"))
+		w = dimension.WindowManager.New("minecraft:generic_9x3", entity.Items, text.Sprint("Chest"))
 		dimension.WindowManager.AddWindow([3]int32{pk.BlockX, pk.BlockY, pk.BlockZ}, w)
 	}
-	clicker.OpenWindow(*w)
-	w.Viewers++
+
+	oldViewers := w.Viewers
+
+	clicker.OpenWindow(w)
 	clicker.Broadcast().BlockAction(pk.BlockX, pk.BlockY, pk.BlockZ, dimension.Name(), 1, w.Viewers)
+
+	if oldViewers == 0 && w.Viewers > 0 { // chest was opened
+		clicker.Broadcast().PlaySound(session.SoundEffect(
+			"minecraft:block.chest.open", false, nil, play.SoundCategoryBlock, pk.BlockX, pk.BlockY, pk.BlockZ, 1, 1,
+		), dimension.Name())
+	}
 }
 
 var _ Block = (*Chest)(nil)

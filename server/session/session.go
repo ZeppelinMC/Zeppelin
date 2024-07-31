@@ -86,8 +86,11 @@ type Session interface {
 	// sends a block action to the session
 	BlockAction(*play.BlockAction) error
 
-	// opens the window for the client
-	OpenWindow(w window.Window) error
+	// opens the window for the client and bumps up the window viewer number
+	OpenWindow(w *window.Window) error
+
+	// plays the sound for the client
+	PlaySound(*play.SoundEffect) error
 
 	// the textures of this client
 	Textures() (login.Textures, error)

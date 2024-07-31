@@ -517,7 +517,10 @@ func (session *StandardSession) setContainerContent(container window.Window) err
 	})
 }
 
-func (session *StandardSession) OpenWindow(w window.Window) error {
+func (session *StandardSession) OpenWindow(w *window.Window) error {
+	if curw := session.WindowView.Get(); curw != 0 {
+		return fmt.Errorf("window %d already open for client", curw)
+	}
 	session.WindowView.Set(w.Id)
 
 	err := session.conn.WritePacket(&play.OpenScreen{
@@ -529,7 +532,9 @@ func (session *StandardSession) OpenWindow(w window.Window) error {
 		return err
 	}
 
-	return session.setContainerContent(w)
+	w.Viewers++
+
+	return session.setContainerContent(*w)
 }
 
 func (session *StandardSession) Textures() (login.Textures, error) {
@@ -548,5 +553,9 @@ func (session *StandardSession) Textures() (login.Textures, error) {
 }
 
 func (session *StandardSession) BlockAction(pk *play.BlockAction) error {
+	return session.conn.WritePacket(pk)
+}
+
+func (session *StandardSession) PlaySound(pk *play.SoundEffect) error {
 	return session.conn.WritePacket(pk)
 }
