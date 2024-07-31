@@ -10,7 +10,7 @@ import (
 type Container []item.Item
 
 // NetworkConvert encodes the container with the specified size and changes the slot from data slots to network slots. This should be used for inventories
-func (c Container) NetworkConvert(size int) []slot.Slot {
+func (c Container) EncodeResize(size int) []slot.Slot {
 	s := make([]slot.Slot, size)
 	for _, item := range c {
 		id, ok := registry.Item.Lookup(item.Id)

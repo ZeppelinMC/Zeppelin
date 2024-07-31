@@ -505,7 +505,7 @@ func (session *StandardSession) UpdateTime(worldAge, dayTime int64) error {
 func (session *StandardSession) SendInventory() error {
 	return session.conn.WritePacket(&play.SetContainerContent{
 		StateId: 1,
-		Slots:   session.player.Inventory().NetworkConvert(46),
+		Slots:   session.player.Inventory().EncodeResize(46),
 	})
 }
 
