@@ -1,4 +1,4 @@
-package block
+package section
 
 import (
 	"bytes"
@@ -9,8 +9,8 @@ import (
 )
 
 type blockState struct {
-	Id         int32           `json:"id"`
-	Properties BlockProperties `json:"properties"`
+	Id         int32             `json:"id"`
+	Properties map[string]string `json:"properties"`
 }
 
 type blockInfo struct {
@@ -63,13 +63,13 @@ func init() {
 var registeredBlocks = make(map[string]Block)
 
 // Registers a block struct that will be used for creating blocks with the name returned by the block's Encode function
-func Register(b Block) {
+func RegisterBlock(b Block) {
 	name, _ := b.Encode()
 	registeredBlocks[name] = b
 }
 
 // Returns the block struct found for the block name
-func Get(name string) Block {
+func GetBlock(name string) Block {
 	if b, ok := registeredBlocks[name]; ok {
 		return b
 	}
@@ -77,7 +77,7 @@ func Get(name string) Block {
 }
 
 // returns the block state id for this block
-func StateId(b Block) (id int32, ok bool) {
+func BlockStateId(b Block) (id int32, ok bool) {
 	name, props := b.Encode()
 	block := blocks[name]
 
@@ -87,12 +87,4 @@ func StateId(b Block) (id int32, ok bool) {
 		}
 	}
 	return 0, false
-}
-
-func init() {
-	Register(Air{})
-	Register(Bedrock{})
-	Register(Dirt{})
-	Register(GrassBlock{})
-	Register(OakLog{})
 }

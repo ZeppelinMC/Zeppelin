@@ -9,7 +9,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/world/block"
+	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
 
 var emptyLightBuffer = make([]byte, 2048)
@@ -33,6 +34,8 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 
 		Heightmaps: *(*play.Heightmaps)(unsafe.Pointer(&chunk.Heightmaps)),
 
+		BlockEntities: make([]play.BlockEntity, len(chunk.BlockEntities)),
+
 		SkyLightMask:      make(io.BitSet, 1),
 		EmptySkyLightMask: make(io.BitSet, 1),
 		SkyLightArrays:    make([][]byte, 1, len(chunk.Sections)+1),
@@ -49,12 +52,22 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	pk.BlockLightMask.Set(0)
 	pk.EmptyBlockLightMask.Set(0)
 
-	for secI, section := range chunk.Sections {
+	for i, entity := range chunk.BlockEntities {
+		pk.BlockEntities[i] = play.BlockEntity{
+			X:    entity.X,
+			Y:    entity.Y,
+			Z:    entity.Z,
+			Type: registry.BlockEntityType.Get(entity.Id),
+			Data: entity,
+		}
+	}
+
+	for secI, sec := range chunk.Sections {
 		var blockCount int16
 		var airId = -1
-		skyLight, blockLight := section.Light()
-		blockBitsPerEntry, blockPalette, blockStates := section.BlockStates()
-		biomeBitsPerEntry, biomePalette, biomeStates := section.Biomes()
+		skyLight, blockLight := sec.Light()
+		blockBitsPerEntry, blockPalette, blockStates := sec.BlockStates()
+		biomeBitsPerEntry, biomePalette, biomeStates := sec.Biomes()
 
 		for i, state := range blockPalette {
 			name, _ := state.Encode()
@@ -100,12 +113,12 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 
 		switch {
 		case blockBitsPerEntry == 0:
-			stateId, _ := block.StateId(blockPalette[0])
+			stateId, _ := section.BlockStateId(blockPalette[0])
 			w.VarInt(stateId)
 		case blockBitsPerEntry >= 4 && blockBitsPerEntry <= 8:
 			w.VarInt(int32(len(blockPalette)))
 			for _, e := range blockPalette {
-				stateId, _ := block.StateId(e)
+				stateId, _ := section.BlockStateId(e)
 				w.VarInt(stateId)
 			}
 		case blockBitsPerEntry == 15: // no palette
@@ -139,7 +152,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 			}
 		case biomeBitsPerEntry == 6: // no palette
 		default:
-			fmt.Println("invalid biome bits per entry", pk.CX, pk.CZ, section.Y(), biomeBitsPerEntry)
+			fmt.Println("invalid biome bits per entry", pk.CX, pk.CZ, sec.Y(), biomeBitsPerEntry)
 		}
 
 		w.VarInt(int32(len(biomeStates)))

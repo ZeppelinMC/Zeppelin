@@ -1,6 +1,8 @@
 package block
 
-import "strconv"
+import (
+	"strconv"
+)
 
 type GrassBlock struct {
 	Snowy bool

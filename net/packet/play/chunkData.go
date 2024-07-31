@@ -48,7 +48,7 @@ func (c *ChunkDataUpdateLight) Encode(w io.Writer) error {
 		return err
 	}
 	for _, blockEntity := range c.BlockEntities {
-		if err := w.Ubyte(((byte(blockEntity.X) & 15) << 4) | (byte(blockEntity.Z) & 15)); err != nil {
+		if err := w.Ubyte(((byte(blockEntity.X) & 0x0f) << 4) | (byte(blockEntity.Z) & 0x0f)); err != nil {
 			return err
 		}
 		if err := w.Short(int16(blockEntity.Y)); err != nil {

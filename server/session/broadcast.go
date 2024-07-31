@@ -177,8 +177,13 @@ func (b *Broadcast) SpawnPlayer(session Session) {
 
 	log.Infolnf("[%s] Player %s (%s) joined with entity id %d (%f %f %f)", session.Addr(), session.Username(), session.UUID(), session.Player().EntityId(), x, y, z)
 
+	dim := session.Player().Dimension()
+
 	for _, ses := range b.sessions {
 		if ses.UUID() == session.UUID() {
+			continue
+		}
+		if ses.Player().Dimension() != dim {
 			continue
 		}
 
@@ -198,6 +203,8 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 	)
 
 	player := session.Player()
+
+	dim := session.Player().Dimension()
 
 	//fmt.Printf("%s new: %f %f %f, old: %f %f %f\n", session.Username(), x, y, z, oldX, oldY, oldZ)
 
@@ -234,6 +241,9 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 
 	for _, ses := range b.sessions {
 		if ses.UUID() == session.UUID() {
+			continue
+		}
+		if ses.Player().Dimension() != dim {
 			continue
 		}
 		switch p := pk.(type) {
@@ -277,5 +287,23 @@ func (b *Broadcast) UpdateTimeForAll(worldAge, dayTime int64) {
 
 	for _, ses := range b.sessions {
 		ses.UpdateTime(worldAge, dayTime)
+	}
+}
+
+func (b *Broadcast) BlockAction(x, y, z int32, dimension string, actionId, actionParameter byte) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	pk := &play.BlockAction{
+		X: x, Y: y, Z: z,
+		ActionId:        actionId,
+		ActionParameter: actionParameter,
+	}
+
+	for _, ses := range b.sessions {
+		if ses.Player().Dimension() != dimension {
+			continue
+		}
+		ses.BlockAction(pk)
 	}
 }

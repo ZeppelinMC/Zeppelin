@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"math"
 	"math/bits"
-
-	"github.com/zeppelinmc/zeppelin/server/world/block"
 )
 
 /* credit to https://github.com/aimjel for these calculations */
 
-func New(y int8, blockPalette []block.Block, blockStates []int64, biomePalette []string, biomesData []int64, skylight, blocklight []byte) *Section {
+func New(y int8, blockPalette []Block, blockStates []int64, biomePalette []string, biomesData []int64, skylight, blocklight []byte) *Section {
 	s := &Section{
 		y:                 y,
 		blockPalette:      blockPalette,
@@ -30,7 +28,7 @@ type Section struct {
 	blockLight, skyLight []byte
 	y                    int8
 
-	blockPalette []block.Block
+	blockPalette []Block
 	blockStates  []int64
 
 	biomes struct {
@@ -48,7 +46,7 @@ func (sec *Section) Light() (skyLight, blockLight []byte) {
 }
 
 // Returns the block states data for this section
-func (sec *Section) BlockStates() (bpe int, palette []block.Block, states []int64) {
+func (sec *Section) BlockStates() (bpe int, palette []Block, states []int64) {
 	return sec.blockBitsPerEntry, sec.blockPalette, sec.blockStates
 }
 
@@ -70,7 +68,7 @@ func (s *Section) offset(x, y, z int) (long int, offset int) {
 }
 
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
-func (sec *Section) Block(x, y, z byte) block.Block {
+func (sec *Section) Block(x, y, z byte) Block {
 	if len(sec.blockStates) == 0 {
 		return sec.blockPalette[0]
 	}
@@ -98,7 +96,7 @@ func (sec *Section) SetBlockState(x, y, z byte, state int64) error {
 
 // Sets the block at the position and returns its new state (index in the block palette). Resizes the palette if needed
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
-func (sec *Section) SetBlock(x, y, z byte, b block.Block) (state int64) {
+func (sec *Section) SetBlock(x, y, z byte, b Block) (state int64) {
 	state, ok := sec.index(b)
 	if !ok {
 		oldBPE := sec.blockBitsPerEntry
@@ -135,7 +133,7 @@ func (sec *Section) SetBlock(x, y, z byte, b block.Block) (state int64) {
 	return state
 }
 
-func (sec *Section) index(b block.Block) (i int64, ok bool) {
+func (sec *Section) index(b Block) (i int64, ok bool) {
 	for i, entry := range sec.blockPalette {
 		if entry == b {
 			return int64(i), true
@@ -144,7 +142,7 @@ func (sec *Section) index(b block.Block) (i int64, ok bool) {
 	return 0, false
 }
 
-func (sec *Section) add(b block.Block) {
+func (sec *Section) add(b Block) {
 	sec.blockPalette = append(sec.blockPalette, b)
 	sec.blockBitsPerEntry = blockBitsPerEntry(len(sec.blockPalette))
 }

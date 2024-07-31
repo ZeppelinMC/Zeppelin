@@ -9,8 +9,8 @@ import (
 // A container that holds items
 type Container []item.Item
 
-// encodes the container to network slots
-func (c Container) Network(size int) []slot.Slot {
+// NetworkConvert encodes the container with the specified size and changes the slot from data slots to network slots. This should be used for inventories
+func (c Container) NetworkConvert(size int) []slot.Slot {
 	s := make([]slot.Slot, size)
 	for _, item := range c {
 		id, ok := registry.Item.Lookup(item.Id)
@@ -18,6 +18,22 @@ func (c Container) Network(size int) []slot.Slot {
 			continue
 		}
 		s[item.Slot.Network()] = slot.Slot{
+			ItemCount: item.Count,
+			ItemId:    id,
+		}
+	}
+
+	return s
+}
+
+func (c Container) Encode() []slot.Slot {
+	s := make([]slot.Slot, len(c))
+	for _, item := range c {
+		id, ok := registry.Item.Lookup(item.Id)
+		if !ok {
+			continue
+		}
+		s[item.Slot] = slot.Slot{
 			ItemCount: item.Count,
 			ItemId:    id,
 		}

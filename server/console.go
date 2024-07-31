@@ -15,6 +15,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
+	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 )
@@ -151,6 +152,18 @@ func (c *Console) Textures() (login.Textures, error) {
 	return login.Textures{}, errConsoleUnsupportedFunc
 }
 
+func (c *Console) BlockAction(*play.BlockAction) error {
+	return errConsoleUnsupportedFunc
+}
+
+func (c *Console) OpenWindow(window.Window) error {
+	return errConsoleUnsupportedFunc
+}
+
 func (c *Console) Username() string {
 	return "Console"
+}
+
+func (c *Console) Broadcast() *session.Broadcast {
+	return c.Server.Broadcast
 }

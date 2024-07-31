@@ -27,7 +27,12 @@ func NewWorld(path string) (*World, error) {
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
 	w.dimensions = map[string]*dimension.Dimension{
-		"minecraft:overworld": dimension.NewDimension(path+"/region", "minecraft:overworld", terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed))),
+		"minecraft:overworld": dimension.NewDimension(
+			path+"/region",
+			"minecraft:overworld",
+			"minecraft:overworld",
+			terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed)),
+		),
 	}
 
 	return w, err

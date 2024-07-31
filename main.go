@@ -35,7 +35,7 @@ func main() {
 
 	w, err := world.NewWorld("world")
 	if err != nil {
-		log.Errorln("Error loading world: %v", err)
+		log.Errorlnf("Error loading world: %v", err)
 		return
 	}
 

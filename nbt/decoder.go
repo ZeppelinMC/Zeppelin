@@ -6,6 +6,7 @@ import (
 	"io"
 	"math"
 	"reflect"
+	"strings"
 	"sync"
 	"unsafe"
 )
@@ -28,6 +29,9 @@ func generateMap(v reflect.Value) map[string]reflect.Value {
 		found := ft.Name
 		if n, ok := ft.Tag.Lookup("nbt"); ok {
 			found = n
+		}
+		if i := strings.Index(found, ",omitempty"); i != -1 {
+			found = found[:i]
 		}
 
 		m[found] = v.Field(i)

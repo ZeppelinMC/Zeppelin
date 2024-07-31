@@ -21,9 +21,11 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
+	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
+	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
@@ -67,8 +69,8 @@ type StandardSession struct {
 	awaitingChunkBatchAcknowledgement atomic.AtomicValue[bool]
 	lastKeepalive                     atomic.AtomicValue[int64]
 
-	// the window id the client is viewing currently, 0 if none
-	windowView atomic.AtomicValue[int32]
+	// the window id the client is viewing currently, 0 if none (inventory)
+	WindowView atomic.AtomicValue[int32]
 }
 
 func NewStandardSession(
@@ -503,8 +505,31 @@ func (session *StandardSession) UpdateTime(worldAge, dayTime int64) error {
 func (session *StandardSession) SendInventory() error {
 	return session.conn.WritePacket(&play.SetContainerContent{
 		StateId: 1,
-		Slots:   session.player.Inventory().Network(46),
+		Slots:   session.player.Inventory().NetworkConvert(46),
 	})
+}
+
+func (session *StandardSession) setContainerContent(container window.Window) error {
+	return session.conn.WritePacket(&play.SetContainerContent{
+		StateId:  1,
+		WindowID: byte(container.Id),
+		Slots:    container.Items.Encode(),
+	})
+}
+
+func (session *StandardSession) OpenWindow(w window.Window) error {
+	session.WindowView.Set(w.Id)
+
+	err := session.conn.WritePacket(&play.OpenScreen{
+		WindowId:    w.Id,
+		WindowType:  registry.Menu.Get(w.Type),
+		WindowTitle: w.Title,
+	})
+	if err != nil {
+		return err
+	}
+
+	return session.setContainerContent(w)
 }
 
 func (session *StandardSession) Textures() (login.Textures, error) {
@@ -520,4 +545,8 @@ func (session *StandardSession) Textures() (login.Textures, error) {
 	}
 	err = json.Unmarshal(data, &textures)
 	return textures, err
+}
+
+func (session *StandardSession) BlockAction(pk *play.BlockAction) error {
+	return session.conn.WritePacket(pk)
 }

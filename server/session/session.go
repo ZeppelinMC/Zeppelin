@@ -11,6 +11,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
+	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 )
@@ -31,6 +32,9 @@ type Session interface {
 	ClientInformation() configuration.ClientInformation
 	// The address of this connection
 	Addr() net.Addr
+
+	// the broadcaster of the session
+	Broadcast() *Broadcast
 
 	// the server config used by this session
 	Config() config.ServerConfig
@@ -78,6 +82,12 @@ type Session interface {
 
 	// sets the gamemode for the client
 	SetGameMode(gm level.GameMode) error
+
+	// sends a block action to the session
+	BlockAction(*play.BlockAction) error
+
+	// opens the window for the client
+	OpenWindow(w window.Window) error
 
 	// the textures of this client
 	Textures() (login.Textures, error)

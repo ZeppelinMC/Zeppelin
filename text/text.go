@@ -68,6 +68,14 @@ type TextComponent struct {
 	Text string `json:"text" nbt:"text"`
 }
 
+func Sprint(a ...any) TextComponent {
+	return TextComponent{Text: fmt.Sprint(a...)}
+}
+
+func Sprintf(format string, a ...any) TextComponent {
+	return TextComponent{Text: fmt.Sprintf(format, a...)}
+}
+
 func Unmarshalf(codeChar rune, format string, v ...any) TextComponent {
 	return Unmarshal(fmt.Sprintf(format, v...), codeChar)
 }

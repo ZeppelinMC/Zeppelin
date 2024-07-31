@@ -10,7 +10,6 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
-	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
@@ -19,7 +18,7 @@ type Generator interface {
 	NewChunk(x, z int32) chunk.Chunk
 }
 
-type RegionFile struct {
+type File struct {
 	reader io.ReaderAt
 
 	locations []byte
@@ -35,7 +34,13 @@ func chunkLocation(l int32) (offset, size int32) {
 	return offset * 4096, size * 4096
 }
 
-func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
+func (r *File) generateChunkAt(x, z int32, tgt *chunk.Chunk, generator Generator) {
+	c := generator.NewChunk(x, z)
+
+	*tgt = c
+}
+
+func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 	hash := chunkHash(x, z)
 
 	r.chu_mu.Lock()
@@ -44,16 +49,26 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, er
 		return c, nil
 	}
 
-	c := generator.NewChunk(x, z)
+	locationIndex := ((uint32(x) % 32) + (uint32(z)%32)*32) * 4
+	if int(locationIndex) >= len(r.locations) {
+		if generator != nil {
+			r.chunks[hash] = new(chunk.Chunk)
+			r.generateChunkAt(x, z, r.chunks[hash], generator)
+			return r.chunks[hash], nil
+		}
+		return nil, fmt.Errorf("chunk %d %d not found", x, z)
+	}
 
-	r.chunks[hash] = &c
-
-	return &c, nil
-	l := r.locations[((uint32(x)%32)+(uint32(z)%32)*32)*4:][:4]
+	l := r.locations[locationIndex : locationIndex+4]
 	loc := int32(l[0])<<24 | int32(l[1])<<16 | int32(l[2])<<8 | int32(l[3])
 
 	offset, size := chunkLocation(loc)
 	if offset|size == 0 {
+		if generator != nil {
+			r.chunks[hash] = new(chunk.Chunk)
+			r.generateChunkAt(x, z, r.chunks[hash], generator)
+			return r.chunks[hash], nil
+		}
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}
 
@@ -104,18 +119,19 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, er
 	}
 
 	r.chunks[hash] = &chunk.Chunk{
-		X:          anvil.XPos,
-		Y:          anvil.YPos,
-		Z:          anvil.ZPos,
-		Heightmaps: anvil.Heightmaps,
+		X:             anvil.XPos,
+		Y:             anvil.YPos,
+		Z:             anvil.ZPos,
+		Heightmaps:    anvil.Heightmaps,
+		BlockEntities: anvil.BlockEntities,
 	}
 
 	r.chunks[hash].Sections = make([]*section.Section, len(anvil.Sections))
 	for i, sec := range anvil.Sections {
-		var blocks = make([]block.Block, len(sec.BlockStates.Palette))
+		var blocks = make([]section.Block, len(sec.BlockStates.Palette))
 
 		for i, entry := range sec.BlockStates.Palette {
-			b := block.Get(entry.Name)
+			b := section.GetBlock(entry.Name)
 			if entry.Properties != nil {
 				b = b.New(entry.Properties)
 			}
@@ -134,13 +150,13 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, er
 	return chunk, nil*/
 }
 
-func EmptyRegion(f *RegionFile) {
-	*f = RegionFile{
+func Empty(f *File) {
+	*f = File{
 		chunks: make(map[uint64]*chunk.Chunk),
 	}
 }
 
-func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
+func Decode(r io.ReaderAt, f *File) error {
 	var locationTable = make([]byte, 4096)
 
 	_, err := r.ReadAt(locationTable, 0)
@@ -148,7 +164,7 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 		return err
 	}
 
-	*f = RegionFile{
+	*f = File{
 		reader: r,
 
 		locations: locationTable,

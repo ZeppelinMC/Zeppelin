@@ -1,12 +1,12 @@
 package region
 
 import (
-	"github.com/zeppelinmc/zeppelin/server/world/block"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/heightmaps"
 )
 
 type anvilBlock struct {
-	Properties block.BlockProperties
+	Properties map[string]string
 	Name       string
 }
 
@@ -16,12 +16,7 @@ type anvilChunk struct {
 	InhabitedTime int64
 	LastUpdate    int64
 	Status        string
-	BlockEntities []struct {
-		Id string
-		X  int32 `nbt:"x"`
-		Y  int32 `nbt:"y"`
-		Z  int32 `nbt:"z"`
-	} `nbt:"block_entities"`
+	BlockEntities []chunk.BlockEntity `nbt:"block_entities"`
 
 	Sections []struct {
 		BlockLight, SkyLight []byte
