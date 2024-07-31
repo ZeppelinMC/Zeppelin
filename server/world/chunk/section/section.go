@@ -8,6 +8,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/block"
 )
 
+/* credit to https://github.com/aimjel for these calculations */
+
 func New(y int8, blockPalette []block.Block, blockStates []int64, biomePalette []string, biomesData []int64, skylight, blocklight []byte) *Section {
 	s := &Section{
 		y:                 y,

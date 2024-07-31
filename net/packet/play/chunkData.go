@@ -13,11 +13,13 @@ type BlockEntity struct {
 // clientbound
 const PacketIdChunkDataUpdateLight = 0x27
 
+type Heightmaps struct {
+	MOTION_BLOCKING, WORLD_SURFACE [37]int64
+}
+
 type ChunkDataUpdateLight struct {
-	CX, CZ     int32
-	Heightmaps struct {
-		MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE [37]int64
-	}
+	CX, CZ                                                               int32
+	Heightmaps                                                           Heightmaps
 	Data                                                                 []byte
 	BlockEntities                                                        []BlockEntity
 	SkyLightMask, BlockLightMask, EmptySkyLightMask, EmptyBlockLightMask io.BitSet

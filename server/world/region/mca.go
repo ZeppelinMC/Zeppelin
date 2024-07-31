@@ -11,15 +11,20 @@ import (
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
-	"github.com/zeppelinmc/zeppelin/server/world/region/section"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
+
+type Generator interface {
+	NewChunk(x, z int32) chunk.Chunk
+}
 
 type RegionFile struct {
 	reader io.ReaderAt
 
 	locations []byte
 
-	chunks map[uint64]*Chunk
+	chunks map[uint64]*chunk.Chunk
 	chu_mu sync.Mutex
 }
 
@@ -30,7 +35,7 @@ func chunkLocation(l int32) (offset, size int32) {
 	return offset * 4096, size * 4096
 }
 
-func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
+func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 	hash := chunkHash(x, z)
 
 	r.chu_mu.Lock()
@@ -90,19 +95,23 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 	buf.ReadFrom(rd)
 	defer buffers.Buffers.Put(buf)
 
-	var chunk anvilChunk
+	var anvil anvilChunk
 
-	_, err = nbt.NewDecoder(buf).Decode(&chunk)
+	_, err = nbt.NewDecoder(buf).Decode(&anvil)
 
-	r.chunks[hash] = &Chunk{
-		X:          chunk.XPos,
-		Y:          chunk.YPos,
-		Z:          chunk.ZPos,
-		Heightmaps: chunk.Heightmaps,
+	if err != nil {
+		return nil, err
 	}
 
-	r.chunks[hash].Sections = make([]*section.Section, len(chunk.Sections))
-	for i, sec := range chunk.Sections {
+	r.chunks[hash] = &chunk.Chunk{
+		X:          anvil.XPos,
+		Y:          anvil.YPos,
+		Z:          anvil.ZPos,
+		Heightmaps: anvil.Heightmaps,
+	}
+
+	r.chunks[hash].Sections = make([]*section.Section, len(anvil.Sections))
+	for i, sec := range anvil.Sections {
 		var blocks = make([]block.Block, len(sec.BlockStates.Palette))
 
 		for i, entry := range sec.BlockStates.Palette {
@@ -127,7 +136,7 @@ func (r *RegionFile) GetChunk(x, z int32, generator Generator) (*Chunk, error) {
 
 func EmptyRegion(f *RegionFile) {
 	*f = RegionFile{
-		chunks: make(map[uint64]*Chunk),
+		chunks: make(map[uint64]*chunk.Chunk),
 	}
 }
 
@@ -143,7 +152,7 @@ func DecodeRegion(r io.ReaderAt, f *RegionFile) error {
 		reader: r,
 
 		locations: locationTable,
-		chunks:    make(map[uint64]*Chunk),
+		chunks:    make(map[uint64]*chunk.Chunk),
 	}
 
 	/*var chunkBuffer = new(bytes.Buffer)

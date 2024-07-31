@@ -8,7 +8,7 @@ func (g Bedrock) Encode() (string, BlockProperties) {
 }
 
 func (g Bedrock) New(props BlockProperties) Block {
-	return Dirt{}
+	return Bedrock{}
 }
 
 var _ Block = (*Bedrock)(nil)

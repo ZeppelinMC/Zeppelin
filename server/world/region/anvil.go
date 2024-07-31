@@ -1,10 +1,9 @@
 package region
 
-import "github.com/zeppelinmc/zeppelin/server/world/block"
-
-type Heightmaps struct {
-	MOTION_BLOCKING, MOTION_BLOCKING_NO_LEAVES, OCEAN_FLOOR, WORLD_SURFACE [37]int64
-}
+import (
+	"github.com/zeppelinmc/zeppelin/server/world/block"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/heightmaps"
+)
 
 type anvilBlock struct {
 	Properties block.BlockProperties
@@ -13,7 +12,7 @@ type anvilBlock struct {
 
 type anvilChunk struct {
 	DataVersion   int32
-	Heightmaps    Heightmaps
+	Heightmaps    heightmaps.Heightmaps
 	InhabitedTime int64
 	LastUpdate    int64
 	Status        string

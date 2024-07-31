@@ -23,7 +23,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
-	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 )
@@ -351,7 +351,7 @@ func (session *StandardSession) IsSpawned(entityId int32) bool {
 	return false
 }
 
-func (session *StandardSession) Dimension() *region.Dimension {
+func (session *StandardSession) Dimension() *dimension.Dimension {
 	return session.world.Dimension(session.player.Dimension())
 }
 

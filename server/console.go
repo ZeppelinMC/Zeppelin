@@ -15,7 +15,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
-	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
@@ -44,7 +44,7 @@ func (c *Console) DespawnEntities(...int32) error {
 	return errConsoleUnsupportedFunc
 }
 
-func (c *Console) Dimension() *region.Dimension {
+func (c *Console) Dimension() *dimension.Dimension {
 	return c.Server.World.Dimension("minecraft:overworld")
 }
 

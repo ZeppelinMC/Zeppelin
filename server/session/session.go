@@ -12,7 +12,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/world"
-	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
@@ -37,7 +37,7 @@ type Session interface {
 	Config() config.ServerConfig
 
 	// The dimension this session is in, as a dimension struct
-	Dimension() *region.Dimension
+	Dimension() *dimension.Dimension
 
 	// Disconnects the session from the server
 	Disconnect(reason text.TextComponent) error

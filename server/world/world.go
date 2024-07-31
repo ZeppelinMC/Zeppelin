@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	"github.com/zeppelinmc/zeppelin/atomic"
-	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
 )
 
 type World struct {
 	Level
-	dimensions map[string]*region.Dimension
+	dimensions map[string]*dimension.Dimension
 
 	path              string
 	worldAge, dayTime atomic.AtomicValue[int64]
@@ -25,15 +25,15 @@ func NewWorld(path string) (*World, error) {
 	w.Level, err = loadWorldLevel(path + "/level.dat")
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
-	w.dimensions = map[string]*region.Dimension{
-		"minecraft:overworld": region.NewDimension(path+"/region", "minecraft:overworld", terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed))),
+	w.dimensions = map[string]*dimension.Dimension{
+		"minecraft:overworld": dimension.NewDimension(path+"/region", "minecraft:overworld", terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed))),
 	}
 
 	return w, err
 }
 
 // returns the dimension struct for the dimension name
-func (w *World) Dimension(name string) *region.Dimension {
+func (w *World) Dimension(name string) *dimension.Dimension {
 	if !strings.Contains(name, ":") {
 		name = "minecraft:" + name
 	}
@@ -41,7 +41,7 @@ func (w *World) Dimension(name string) *region.Dimension {
 	return w.dimensions[name]
 }
 
-func (w *World) RegisterDimension(name string, dim *region.Dimension) {
+func (w *World) RegisterDimension(name string, dim *dimension.Dimension) {
 	w.dimensions[name] = dim
 }
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/aquilax/go-perlin"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
-	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 )
 
 type TerrainGenerator struct {
@@ -13,8 +13,8 @@ type TerrainGenerator struct {
 	seed  int64
 }
 
-func (g TerrainGenerator) NewChunk(cx, cz int32) region.Chunk {
-	c := region.NewChunk(cx, cz)
+func (g TerrainGenerator) NewChunk(cx, cz int32) chunk.Chunk {
+	c := chunk.NewChunk(cx, cz)
 
 	var (
 		treeY int32
@@ -32,8 +32,10 @@ func (g TerrainGenerator) NewChunk(cx, cz int32) region.Chunk {
 				y = 320
 			}
 
+			c.Heightmaps.WorldSurface.Set(x, z, y)
+			c.Heightmaps.MotionBlocking.Set(x, z, y)
 			c.SetBlock(x, y, z, grassBlock)
-			for s := int32(region.MinChunkY * 16); s < y; s++ {
+			for s := int32(chunk.MinChunkY * 16); s < y; s++ {
 				c.SetBlock(x, int32(s), z, dirt)
 			}
 
@@ -51,7 +53,7 @@ func (g TerrainGenerator) NewChunk(cx, cz int32) region.Chunk {
 }
 
 // tree, woody plant that regularly renews its growth (perennial). Most plants classified as trees have a single self-supporting trunk containing woody tissues, and in most species the trunk produces secondary limbs, called branches
-func (g TerrainGenerator) generateTree(c region.Chunk, x, z, surface int32) {
+func (g TerrainGenerator) generateTree(c chunk.Chunk, x, z, surface int32) {
 	// set the block under the tree to be dirt
 	c.SetBlock(x, surface, z, dirt)
 	// set 4 layers of oak logs

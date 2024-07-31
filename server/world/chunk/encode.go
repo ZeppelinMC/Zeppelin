@@ -1,9 +1,10 @@
-package region
+package chunk
 
 import (
 	"bytes"
 	"fmt"
 	"slices"
+	"unsafe"
 
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/net/io"
@@ -13,6 +14,12 @@ import (
 
 var emptyLightBuffer = make([]byte, 2048)
 var fullLightBuffer = make([]byte, 2048)
+
+func init() {
+	for i := range fullLightBuffer {
+		fullLightBuffer[i] = 0xFF
+	}
+}
 
 func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	buf := buffers.Buffers.Get().(*bytes.Buffer)
@@ -24,7 +31,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 		CX: chunk.X,
 		CZ: chunk.Z,
 
-		Heightmaps: chunk.Heightmaps,
+		Heightmaps: *(*play.Heightmaps)(unsafe.Pointer(&chunk.Heightmaps)),
 
 		SkyLightMask:      make(io.BitSet, 1),
 		EmptySkyLightMask: make(io.BitSet, 1),

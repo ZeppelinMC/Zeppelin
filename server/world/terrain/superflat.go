@@ -1,13 +1,13 @@
 package terrain
 
-import "github.com/zeppelinmc/zeppelin/server/world/region"
+import "github.com/zeppelinmc/zeppelin/server/world/chunk"
 
 // A superflat chunk generator. A superflat world is just 4 layers. One bedrock, two dirt, and one grass block, so it is very easy to implement
 type SuperflatTerrain struct {
 }
 
-func (SuperflatTerrain) NewChunk(cx, cz int32) region.Chunk {
-	c := region.NewChunk(cx, cz)
+func (SuperflatTerrain) NewChunk(cx, cz int32) chunk.Chunk {
+	c := chunk.NewChunk(cx, cz)
 
 	for x := int32(0); x < 16; x++ {
 		for z := int32(0); z < 16; z++ {

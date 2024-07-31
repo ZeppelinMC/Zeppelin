@@ -1,27 +1,18 @@
-package region
+package chunk
 
 import (
 	"fmt"
 
 	"github.com/zeppelinmc/zeppelin/server/world/block"
-	"github.com/zeppelinmc/zeppelin/server/world/region/section"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/heightmaps"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
-
-type Generator interface {
-	NewChunk(x, z int32) Chunk
-}
 
 const MinChunkY = -4
 
-func init() {
-	for i := range fullLightBuffer {
-		fullLightBuffer[i] = 0xFF
-	}
-}
-
 type Chunk struct {
 	X, Y, Z    int32
-	Heightmaps Heightmaps
+	Heightmaps heightmaps.Heightmaps
 
 	Sections []*section.Section
 }
