@@ -1,6 +1,11 @@
 package block
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/session"
+)
 
 type BlockProperties = map[string]string
 
@@ -23,6 +28,12 @@ type Block interface {
 	Encode() (name string, properties BlockProperties)
 	// creates a new instance of the block with the specifiedproperties
 	New(properties BlockProperties) Block
+}
+
+// a block that does a specific action when used
+type UsableBlock interface {
+	Block
+	Use(session.Session, play.UseItemOn)
 }
 
 type UnknownBlock struct {

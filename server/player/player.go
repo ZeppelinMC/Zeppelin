@@ -11,7 +11,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/registry"
-	"github.com/zeppelinmc/zeppelin/server/world"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 )
 
 var _ entity.LivingEntity = (*Player)(nil)
@@ -19,7 +19,7 @@ var _ entity.LivingEntity = (*Player)(nil)
 type Player struct {
 	entityId int32
 
-	data       world.PlayerData
+	data       level.PlayerData
 	x, y, z    atomic.AtomicValue[float64]
 	yaw, pitch atomic.AtomicValue[float32]
 	onGround   atomic.AtomicValue[bool]
@@ -29,15 +29,15 @@ type Player struct {
 	foodExhaustion atomic.AtomicValue[float32]
 	foodSaturation atomic.AtomicValue[float32]
 
-	abilities atomic.AtomicValue[world.PlayerAbilities]
+	abilities atomic.AtomicValue[level.PlayerAbilities]
 
 	dimension atomic.AtomicValue[string]
 
-	gameMode atomic.AtomicValue[world.GameType]
+	gameMode atomic.AtomicValue[level.GameMode]
 
 	selectedItemSlot atomic.AtomicValue[int32]
 
-	recipeBook atomic.AtomicValue[world.RecipeBook]
+	recipeBook atomic.AtomicValue[level.RecipeBook]
 
 	md_mu    sync.RWMutex
 	metadata metadata.Metadata
@@ -49,7 +49,7 @@ type Player struct {
 }
 
 // looks up a player in the cache or creates one if not found
-func (mgr *PlayerManager) New(data world.PlayerData) *Player {
+func (mgr *PlayerManager) New(data level.PlayerData) *Player {
 	if p, ok := mgr.lookup(data.UUID.UUID()); ok {
 		return p
 	}
@@ -228,19 +228,19 @@ func (p *Player) SetFoodExhaustion(fh float32) {
 	p.foodExhaustion.Set(fh)
 }
 
-func (p *Player) Abilities() world.PlayerAbilities {
+func (p *Player) Abilities() level.PlayerAbilities {
 	return p.abilities.Get()
 }
 
-func (p *Player) SetAbilities(abs world.PlayerAbilities) {
+func (p *Player) SetAbilities(abs level.PlayerAbilities) {
 	p.abilities.Set(abs)
 }
 
-func (p *Player) GameMode() world.GameType {
+func (p *Player) GameMode() level.GameMode {
 	return p.gameMode.Get()
 }
 
-func (p *Player) SetGameMode(mode world.GameType) {
+func (p *Player) SetGameMode(mode level.GameMode) {
 	p.gameMode.Set(mode)
 }
 
@@ -271,11 +271,11 @@ func (p *Player) SetAttribute(id string, base float64) {
 	p.attributes[i].Base = base
 }
 
-func (p *Player) RecipeBook() world.RecipeBook {
+func (p *Player) RecipeBook() level.RecipeBook {
 	return p.recipeBook.Get()
 }
 
-func (p *Player) SetRecipeBook(book world.RecipeBook) {
+func (p *Player) SetRecipeBook(book level.RecipeBook) {
 	p.recipeBook.Set(book)
 }
 

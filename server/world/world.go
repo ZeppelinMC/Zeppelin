@@ -6,11 +6,12 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/atomic"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
 )
 
 type World struct {
-	Level
+	level.Level
 	dimensions map[string]*dimension.Dimension
 
 	path              string
@@ -22,7 +23,7 @@ func NewWorld(path string) (*World, error) {
 	w := &World{
 		path: path,
 	}
-	w.Level, err = loadWorldLevel(path + "/level.dat")
+	w.Level, err = level.LoadWorldLevel(path)
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
 	w.dimensions = map[string]*dimension.Dimension{

@@ -1,4 +1,4 @@
-package world
+package level
 
 import (
 	"bytes"
@@ -30,16 +30,6 @@ type UnixMilliTimestamp int64
 func (stamp UnixMilliTimestamp) Time() time.Time {
 	return time.UnixMilli(int64(stamp))
 }
-
-// Game Mode
-type GameType int32
-
-const (
-	GameTypeSurvival GameType = iota
-	GameTypeCreative
-	GameTypeAdventure
-	GameTypeSpectator
-)
 
 type DimensionGenerationSettings struct {
 	Generator struct {
@@ -81,7 +71,7 @@ type Level struct {
 		}
 
 		GameRules    map[string]GameRule
-		GameType     GameType
+		GameType     GameMode
 		LastPlayed   UnixMilliTimestamp
 		LevelName    string
 		ServerBrands []string
@@ -120,11 +110,15 @@ type Level struct {
 		Thundering  bool  `nbt:"thundering"`
 		VersionInt  int32 `nbt:"version"`
 	}
+
+	// the base path of the world
+	basePath string `nbt:"-"`
 }
 
-func loadWorldLevel(path string) (Level, error) {
+// worldPath is the base path of the world
+func LoadWorldLevel(worldPath string) (Level, error) {
 	var level Level
-	file, err := os.Open(path)
+	file, err := os.Open(worldPath + "/level.dat")
 	if err != nil {
 		return level, err
 	}
@@ -139,6 +133,7 @@ func loadWorldLevel(path string) (Level, error) {
 	file.Close()
 
 	_, err = nbt.NewDecoder(bytes.NewReader(buf)).Decode(&level)
+	level.basePath = worldPath
 
 	return level, err
 }

@@ -3,6 +3,7 @@ package core_commands
 import (
 	"math"
 
+	"github.com/zeppelinmc/zeppelin/server"
 	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/text"
 )
@@ -23,7 +24,9 @@ var posinfo = command.Command{
 		xb, yb, zb := int32(math.Floor(x)), int32(math.Floor(y)), int32(math.Floor(z))
 		rx, rz := chunkX%32, chunkZ%32
 
-		c, err := ccc.Executor.Dimension().GetChunk(chunkX, chunkZ)
+		dimension := ccc.Server.(*server.Server).World.Dimension(player.Dimension())
+
+		c, err := dimension.GetChunk(chunkX, chunkZ)
 		if err != nil {
 			ccc.Executor.SystemMessage(text.TextComponent{
 				Text:  "Unrendered chunk",

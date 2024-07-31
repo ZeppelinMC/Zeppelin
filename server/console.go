@@ -14,8 +14,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
-	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
@@ -143,7 +143,7 @@ func (c *Console) UpdateTime(int64, int64) error {
 	return errConsoleUnsupportedFunc
 }
 
-func (c *Console) SetGameMode(world.GameType) error {
+func (c *Console) SetGameMode(level.GameMode) error {
 	return errConsoleUnsupportedFunc
 }
 

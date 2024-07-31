@@ -1,4 +1,4 @@
-package world
+package level
 
 import (
 	"bytes"
@@ -107,7 +107,7 @@ type PlayerData struct {
 	FoodTickTimer       int32   `nbt:"foodTickTimer"`
 
 	IgnoreFallDamageFromCurrentExplosion bool     `nbt:"ignore_fall_damage_from_current_explosion"`
-	PlayerGameType                       GameType `nbt:"playerGameType"`
+	PlayerGameType                       GameMode `nbt:"playerGameType"`
 
 	RecipeBook RecipeBook `nbt:"recipeBook"`
 
@@ -118,20 +118,6 @@ type PlayerData struct {
 		TicksSinceLastWarning int32 `nbt:"ticks_since_last_warning"`
 		WarningLevel          int32 `nbt:"warning_level"`
 	} `nbt:"warden_spawn_tracker"`
-}
-
-type RecipeBook struct {
-	IsBlastingFurnaceFilteringCraftable bool `nbt:"isBlastingFurnaceFilteringCraftable"`
-	IsBlastingFurnaceGuiOpen            bool `nbt:"isBlastingFurnaceGuiOpen"`
-	IsFilteringCraftable                bool `nbt:"isFilteringCraftable"`
-	IsFurnaceFilteringCraftable         bool `nbt:"isFurnaceFilteringCraftable"`
-	IsFurnaceGuiOpen                    bool `nbt:"isFurnaceGuiOpen"`
-	IsGuiOpen                           bool `nbt:"isGuiOpen"`
-	IsSmokerFilteringCraftable          bool `nbt:"isSmokerFilteringCraftable"`
-	IsSmokerGuiOpen                     bool `nbt:"isSmokerGuiOpen"`
-
-	Recipes       []string `nbt:"recipes"`
-	ToBeDisplayed []string `nbt:"toBeDisplayed"`
 }
 
 func (data *PlayerData) Save() error {
@@ -150,9 +136,9 @@ func (data *PlayerData) Save() error {
 	return file.Close()
 }
 
-func (w *World) PlayerData(uuid string) (PlayerData, error) {
+func (w *Level) PlayerData(uuid string) (PlayerData, error) {
 	var playerData PlayerData
-	path := fmt.Sprintf("%s/playerdata/%s.dat", w.path, uuid)
+	path := fmt.Sprintf("%s/playerdata/%s.dat", w.basePath, uuid)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -174,9 +160,9 @@ func (w *World) PlayerData(uuid string) (PlayerData, error) {
 	return playerData, err
 }
 
-func (w *World) NewPlayerData(uuid uuid.UUID) PlayerData {
+func (w *Level) NewPlayerData(uuid uuid.UUID) PlayerData {
 	return PlayerData{
-		path: fmt.Sprintf("%s/playerdata/%s.dat", w.path, uuid),
+		path: fmt.Sprintf("%s/playerdata/%s.dat", w.basePath, uuid),
 		Pos:  [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},
 
 		Health:              20,
@@ -190,10 +176,10 @@ func (w *World) NewPlayerData(uuid uuid.UUID) PlayerData {
 		PlayerGameType: w.Data.GameType,
 		Abilities: PlayerAbilities{
 			FlySpeed:     0.05,
-			Instabuild:   w.Data.GameType == GameTypeCreative,
-			Invulnerable: w.Data.GameType == GameTypeCreative,
-			MayFly:       w.Data.GameType == GameTypeCreative,
-			MayBuild:     w.Data.GameType != GameTypeAdventure,
+			Instabuild:   w.Data.GameType == GameModeCreative,
+			Invulnerable: w.Data.GameType == GameModeCreative,
+			MayFly:       w.Data.GameType == GameModeCreative,
+			MayBuild:     w.Data.GameType != GameModeAdventure,
 			WalkSpeed:    0.1,
 		},
 		Attributes: []entity.Attribute{
@@ -212,6 +198,30 @@ func (w *World) NewPlayerData(uuid uuid.UUID) PlayerData {
 		},
 	}
 }
+
+type RecipeBook struct {
+	IsBlastingFurnaceFilteringCraftable bool `nbt:"isBlastingFurnaceFilteringCraftable"`
+	IsBlastingFurnaceGuiOpen            bool `nbt:"isBlastingFurnaceGuiOpen"`
+	IsFilteringCraftable                bool `nbt:"isFilteringCraftable"`
+	IsFurnaceFilteringCraftable         bool `nbt:"isFurnaceFilteringCraftable"`
+	IsFurnaceGuiOpen                    bool `nbt:"isFurnaceGuiOpen"`
+	IsGuiOpen                           bool `nbt:"isGuiOpen"`
+	IsSmokerFilteringCraftable          bool `nbt:"isSmokerFilteringCraftable"`
+	IsSmokerGuiOpen                     bool `nbt:"isSmokerGuiOpen"`
+
+	Recipes       []string `nbt:"recipes"`
+	ToBeDisplayed []string `nbt:"toBeDisplayed"`
+}
+
+// Game Mode
+type GameMode int32
+
+const (
+	GameModeSurvival GameMode = iota
+	GameModeCreative
+	GameModeAdventure
+	GameModeSpectator
+)
 
 type PlayerAbilities struct {
 	FlySpeed     float32 `nbt:"flySpeed"`

@@ -24,6 +24,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 )
@@ -65,6 +66,9 @@ type StandardSession struct {
 	AwaitingTeleportAcknowledgement   atomic.AtomicValue[bool]
 	awaitingChunkBatchAcknowledgement atomic.AtomicValue[bool]
 	lastKeepalive                     atomic.AtomicValue[int64]
+
+	// the window id the client is viewing currently, 0 if none
+	windowView atomic.AtomicValue[int32]
 }
 
 func NewStandardSession(
@@ -443,7 +447,7 @@ func (session *StandardSession) SpawnPlayer(ses session.Session) error {
 	return session.SpawnEntity(ses.Player())
 }
 
-func (session *StandardSession) SetGameMode(gm world.GameType) error {
+func (session *StandardSession) SetGameMode(gm level.GameMode) error {
 	session.player.SetGameMode(gm)
 	return session.WritePacket(&play.GameEvent{
 		Event: play.GameEventChangeGamemode,

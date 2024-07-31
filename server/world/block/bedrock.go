@@ -3,11 +3,11 @@ package block
 type Bedrock struct {
 }
 
-func (g Bedrock) Encode() (string, BlockProperties) {
+func (Bedrock) Encode() (string, BlockProperties) {
 	return "minecraft:bedrock", nil
 }
 
-func (g Bedrock) New(props BlockProperties) Block {
+func (Bedrock) New(props BlockProperties) Block {
 	return Bedrock{}
 }
 

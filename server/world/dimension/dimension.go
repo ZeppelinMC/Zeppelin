@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 )
@@ -33,6 +34,15 @@ type Dimension struct {
 
 func (s *Dimension) Type() string {
 	return s.typ
+}
+
+func (s *Dimension) Block(x, y, z int32) (block.Block, error) {
+	chunkX, chunkZ := x>>4, z>>4
+	chunk, err := s.GetChunk(chunkX, chunkZ)
+	if err != nil {
+		return nil, err
+	}
+	return chunk.Block(x&0x0f, y, z&0x0f)
 }
 
 func (s *Dimension) GetChunk(x, z int32) (*chunk.Chunk, error) {

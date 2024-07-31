@@ -11,8 +11,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
-	"github.com/zeppelinmc/zeppelin/server/world"
-	"github.com/zeppelinmc/zeppelin/server/world/dimension"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
@@ -35,9 +34,6 @@ type Session interface {
 
 	// the server config used by this session
 	Config() config.ServerConfig
-
-	// The dimension this session is in, as a dimension struct
-	Dimension() *dimension.Dimension
 
 	// Disconnects the session from the server
 	Disconnect(reason text.TextComponent) error
@@ -81,7 +77,7 @@ type Session interface {
 	UpdateTime(worldAge, dayTime int64) error
 
 	// sets the gamemode for the client
-	SetGameMode(gm world.GameType) error
+	SetGameMode(gm level.GameMode) error
 
 	// the textures of this client
 	Textures() (login.Textures, error)

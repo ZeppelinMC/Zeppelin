@@ -51,6 +51,7 @@ var serverboundPool = map[int32]map[int32]func() packet.Packet{
 		0x2F: func() packet.Packet { return &play.SetHeldItemServerbound{} },
 		0x32: func() packet.Packet { return &play.SetCreativeModeSlot{} },
 		0x36: func() packet.Packet { return &play.SwingArm{} },
+		0x38: func() packet.Packet { return &play.UseItemOn{} },
 	},
 }
 

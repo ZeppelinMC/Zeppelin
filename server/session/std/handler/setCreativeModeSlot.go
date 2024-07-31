@@ -6,7 +6,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/item"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
-	"github.com/zeppelinmc/zeppelin/server/world"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
@@ -25,7 +25,7 @@ func handleSetCreativeSlot(s *std.StandardSession, pk packet.Packet) {
 		return
 	}
 	gameMode := s.Player().GameMode()
-	if gameMode != world.GameTypeCreative {
+	if gameMode != level.GameModeCreative {
 		s.Disconnect(text.TextComponent{Text: "Use of creative mode slot on a game mode other than creative is not allowed"})
 		return
 	}
