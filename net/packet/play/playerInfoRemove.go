@@ -1,6 +1,8 @@
 package play
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/net/io"
 )
@@ -31,6 +33,9 @@ func (p *PlayerInfoRemove) Decode(r io.Reader) error {
 	var length int32
 	if _, err := r.VarInt(&length); err != nil {
 		return err
+	}
+	if length < 0 {
+		return fmt.Errorf("negative length for make (player info remove decode)")
 	}
 	p.UUIDs = make([]uuid.UUID, length)
 	for _, uuid := range p.UUIDs {

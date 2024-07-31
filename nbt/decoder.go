@@ -1043,6 +1043,10 @@ func (d *Decoder) readString() (string, error) {
 		return "", err
 	}
 
+	if l < 0 {
+		return "", fmt.Errorf("negative length for make (read string)")
+	}
+
 	var data = make([]byte, l)
 	_, err = d.rd.Read(data)
 	return string(data), err
@@ -1053,6 +1057,11 @@ func (d *Decoder) readByteArray() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if l < 0 {
+		return nil, fmt.Errorf("negative length for make (read byte array)")
+	}
+
 	var data = make([]byte, l)
 	_, err = d.rd.Read(data)
 
@@ -1063,6 +1072,9 @@ func (d *Decoder) readIntArray() ([]int32, error) {
 	l, err := d.readInt()
 	if err != nil {
 		return nil, err
+	}
+	if l < 0 {
+		return nil, fmt.Errorf("negative length for make (read int array)")
 	}
 	var data = make([]byte, l*4)
 	_, err = d.rd.Read(data)
@@ -1082,6 +1094,9 @@ func (d *Decoder) readLongArray() ([]int64, error) {
 	l, err := d.readInt()
 	if err != nil {
 		return nil, err
+	}
+	if l < 0 {
+		return nil, fmt.Errorf("negative length for make (read long array)")
 	}
 	var data = make([]byte, l*8)
 	_, err = d.rd.Read(data)

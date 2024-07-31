@@ -62,6 +62,9 @@ func (r StaticReader) readString() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if length < 0 {
+		return "", fmt.Errorf("negative length for make (read string)")
+	}
 	var data = make([]byte, length)
 
 	if _, err := r.r.Read(data); err != nil {

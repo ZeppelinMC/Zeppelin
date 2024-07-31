@@ -1,8 +1,12 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/net/io"
+import (
+	"fmt"
 
-//clientbound
+	"github.com/zeppelinmc/zeppelin/net/io"
+)
+
+// clientbound
 const PacketIdLogin = 0x2B
 
 type Login struct {
@@ -122,6 +126,9 @@ func (l *Login) Decode(r io.Reader) error {
 	var dimlen int32
 	if _, err := r.VarInt(&dimlen); err != nil {
 		return err
+	}
+	if dimlen < 0 {
+		return fmt.Errorf("negative length for make (login decode)")
 	}
 	l.Dimensions = make([]string, dimlen)
 	for _, dim := range l.Dimensions {

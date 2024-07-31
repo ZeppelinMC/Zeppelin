@@ -1,6 +1,8 @@
 package login
 
 import (
+	"fmt"
+
 	"github.com/zeppelinmc/zeppelin/net/io"
 
 	"github.com/google/uuid"
@@ -83,6 +85,9 @@ func (l *LoginSuccess) Decode(r io.Reader) error {
 	var length int32
 	if _, err := r.VarInt(&length); err != nil {
 		return err
+	}
+	if length < 0 {
+		return fmt.Errorf("negative length for make (login success decode)")
 	}
 	l.Properties = make([]Property, length)
 	for _, property := range l.Properties {

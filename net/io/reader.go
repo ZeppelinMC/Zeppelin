@@ -27,6 +27,9 @@ func (r *Reader) SetLength(length int) {
 }
 
 func (r Reader) readBytes(l int) ([]byte, error) {
+	if l < 0 {
+		return nil, fmt.Errorf("negative length for make (read bytes)")
+	}
 	arr := make([]byte, l)
 	_, err := r.r.Read(arr)
 	return arr, err
@@ -186,6 +189,9 @@ func (r Reader) BitSet(data *BitSet) error {
 	var l int32
 	if _, err := r.VarInt(&l); err != nil {
 		return err
+	}
+	if l < 0 {
+		return fmt.Errorf("negative length for make (bitset)")
 	}
 	*data = make([]int64, l)
 
