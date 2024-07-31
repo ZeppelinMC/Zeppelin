@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	_ "embed"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,10 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pelletier/go-toml"
 	"github.com/zeppelinmc/zeppelin/core_commands"
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/server"
 	"github.com/zeppelinmc/zeppelin/server/command"
+	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/util"
 	"golang.org/x/term"
@@ -23,6 +26,11 @@ import (
 var timeStart = time.Now()
 
 func main() {
+	flag.BoolFunc("default-config",
+		"print default config to stdout and exit", printDefaultConfig)
+
+	flag.Parse()
+
 	log.Infolnf("Zeppelin 1.21 Minecraft server with %s on platform %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 
 	if util.HasArgument("--cpuprof") {
@@ -151,3 +159,16 @@ charl:
 
 //8 erase
 //3
+
+func printDefaultConfig(string) error {
+	data, err := toml.Marshal(config.DefaultConfig)
+	if err != nil {
+		return fmt.Errorf("toml: %w", err)
+	}
+
+	fmt.Printf("%s\n", data)
+
+	os.Exit(0)
+
+	return nil
+}
