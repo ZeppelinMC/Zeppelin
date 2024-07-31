@@ -6,13 +6,14 @@ import (
 	"os"
 	"sync"
 
+	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 )
 
-func NewDimension(regionPath string, typ string, name string, generator region.Generator) *Dimension {
+func NewDimension(regionPath string, typ string, name string, broadcast *session.Broadcast, generator region.Generator) *Dimension {
 	return &Dimension{
 		regions: make(map[uint64]*region.File),
 
@@ -20,6 +21,7 @@ func NewDimension(regionPath string, typ string, name string, generator region.G
 		typ:           typ,
 		name:          name,
 		generator:     generator,
+		broadcast:     broadcast,
 		WindowManager: window.NewManager(),
 	}
 }
@@ -27,6 +29,8 @@ func NewDimension(regionPath string, typ string, name string, generator region.G
 type Dimension struct {
 	reg_mu  sync.Mutex
 	regions map[uint64]*region.File
+
+	broadcast *session.Broadcast
 
 	generator     region.Generator
 	WindowManager *window.WindowManager
@@ -54,6 +58,19 @@ func (s *Dimension) Block(x, y, z int32) (section.Block, error) {
 	return chunk.Block(x&0x0f, y, z&0x0f)
 }
 
+func (s *Dimension) SetBlock(x, y, z int32, b section.Block) (state int64, err error) {
+	chunkX, chunkZ := x>>4, z>>4
+	chunk, err := s.GetChunk(chunkX, chunkZ)
+	if err != nil {
+		return 0, err
+	}
+	i, err := chunk.SetBlock(x&0x0f, y, z&0x0f, b)
+	if err != nil {
+		return i, err
+	}
+	s.broadcast.UpdateBlock(x, y, z, b, s.name)
+	return i, err
+}
 func (s *Dimension) BlockEntity(x, y, z int32) (*chunk.BlockEntity, bool) {
 	chunkX, chunkZ := x>>4, z>>4
 	chunk, err := s.GetChunk(chunkX, chunkZ)

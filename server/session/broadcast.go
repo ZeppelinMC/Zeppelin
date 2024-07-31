@@ -9,6 +9,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
@@ -319,6 +320,19 @@ func (b *Broadcast) PlaySound(pk *play.SoundEffect, dimension string) {
 			continue
 		}
 		ses.PlaySound(pk)
+	}
+}
+
+// this updates the block for everyone. It doesn't set the block in the world
+func (b *Broadcast) UpdateBlock(x, y, z int32, block section.Block, dimension string) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	for _, ses := range b.sessions {
+		if ses.Player().Dimension() != dimension {
+			continue
+		}
+		ses.UpdateBlock(x, y, z, block)
 	}
 }
 

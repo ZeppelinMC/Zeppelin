@@ -10,6 +10,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/player"
+	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	_ "github.com/zeppelinmc/zeppelin/server/session/std/handler"
 	"github.com/zeppelinmc/zeppelin/text"
@@ -20,7 +21,6 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/server/session"
 )
 
 // Creates a new server instance using the specified config, returns an error if unable to bind listener
@@ -70,7 +70,7 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 		stopLoop: make(chan int),
 	}
 	server.Console = &Console{Server: server}
-	server.Broadcast = session.NewBroadcast(server.Console)
+	server.World.Broadcast = session.NewBroadcast(server.Console)
 
 	compstr := "compress everything"
 	if cfg.Net.CompressionThreshold > 0 {
@@ -92,8 +92,6 @@ type Server struct {
 	World *world.World
 
 	Console *Console
-
-	Broadcast *session.Broadcast
 
 	CommandManager *command.Manager
 
@@ -136,7 +134,7 @@ func (srv *Server) Start(ts time.Time) {
 
 func (srv *Server) handleNewConnection(conn *net.Conn) {
 	log.Infolnf("[%s] Player attempting to connect: %s (%s)", conn.RemoteAddr(), conn.Username(), conn.UUID())
-	if _, ok := srv.Broadcast.SessionByUsername(conn.Username()); ok {
+	if _, ok := srv.World.Broadcast.SessionByUsername(conn.Username()); ok {
 		conn.WritePacket(&configuration.Disconnect{
 			Reason: text.TextComponent{Text: "You are already connected to the server from another session. Please disconnect then try again"},
 		})
@@ -148,7 +146,7 @@ func (srv *Server) handleNewConnection(conn *net.Conn) {
 	}
 
 	player := srv.Players.New(playerData)
-	std.NewStandardSession(conn, player, srv.World, srv.Broadcast, srv.cfg, func() net.StatusProvider {
+	std.NewStandardSession(conn, player, srv.World, srv.World.Broadcast, srv.cfg, func() net.StatusProvider {
 		return srv.listener.StatusProvider()
 	}, srv.CommandManager).Configure()
 }
@@ -157,7 +155,7 @@ func (srv *Server) Stop() {
 	log.InfolnClean("Stopping server")
 	srv.closed = true
 	srv.listener.Close()
-	srv.Broadcast.DisconnectAll(text.TextComponent{Text: "Server closed"})
+	srv.World.Broadcast.DisconnectAll(text.TextComponent{Text: "Server closed"})
 
 	log.InfolnClean("Saving player data")
 	srv.Players.SaveAll()

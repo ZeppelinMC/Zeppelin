@@ -11,6 +11,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
+
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
@@ -91,6 +93,9 @@ type Session interface {
 
 	// plays the sound for the client
 	PlaySound(*play.SoundEffect) error
+
+	// updates the block for the player
+	UpdateBlock(x, y, z int32, b section.Block) error
 
 	// the textures of this client
 	Textures() (login.Textures, error)

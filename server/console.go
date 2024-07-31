@@ -14,6 +14,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
@@ -87,7 +88,7 @@ func (c *Console) PlayerChatMessage(pk play.ChatMessage, session session.Session
 
 // will simply remove the players
 func (c *Console) PlayerInfoRemove(uuids ...uuid.UUID) error {
-	c.Server.Broadcast.RemoveUUIDs(text.TextComponent{Text: "Kicked from the server"}, uuids...)
+	c.Server.World.Broadcast.RemoveUUIDs(text.TextComponent{Text: "Kicked from the server"}, uuids...)
 	return nil
 }
 
@@ -168,6 +169,12 @@ func (c *Console) Username() string {
 	return "Console"
 }
 
+// actually sets the block
+func (c *Console) UpdateBlock(x, y, z int32, b section.Block) error {
+	_, err := c.Dimension().SetBlock(x, y, z, b)
+	return err
+}
+
 func (c *Console) Broadcast() *session.Broadcast {
-	return c.Server.Broadcast
+	return c.Server.World.Broadcast
 }

@@ -65,7 +65,7 @@ func (c *Chunk) Block(x, y, z int32) (section.Block, error) {
 	return sec.Block(byte(x), byte(y)&0x0f, byte(z)), nil
 }
 
-// X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
+// This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetBlock(x, y, z int32, b section.Block) (state int64, err error) {
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
@@ -75,7 +75,7 @@ func (c *Chunk) SetBlock(x, y, z int32, b section.Block) (state int64, err error
 	return sec.SetBlock(byte(x), byte(y)&0x0f, byte(z), b), nil
 }
 
-// X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
+// This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetBlockState(x, y, z int32, state int64) error {
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
@@ -85,7 +85,7 @@ func (c *Chunk) SetBlockState(x, y, z int32, state int64) error {
 	return sec.SetBlockState(byte(x), byte(y)&0x0f, byte(z), state)
 }
 
-// X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
+// This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetSkylightLevel(x, y, z int32, value byte) error {
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
@@ -95,7 +95,7 @@ func (c *Chunk) SetSkylightLevel(x, y, z int32, value byte) error {
 	return sec.SetSkylightLevel(int(x), int(y)&0x0f, int(z), value)
 }
 
-// X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
+// This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetBlockLightLevel(x, y, z int32, value byte) error {
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {

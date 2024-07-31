@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zeppelinmc/zeppelin/atomic"
+	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
@@ -13,15 +14,17 @@ import (
 type World struct {
 	level.Level
 	dimensions map[string]*dimension.Dimension
+	Broadcast  *session.Broadcast
 
 	path              string
 	worldAge, dayTime atomic.AtomicValue[int64]
 }
 
-func NewWorld(path string) (*World, error) {
+func NewWorld(path string, broadcast *session.Broadcast) (*World, error) {
 	var err error
 	w := &World{
-		path: path,
+		path:      path,
+		Broadcast: broadcast,
 	}
 	w.Level, err = level.LoadWorldLevel(path)
 	w.worldAge = atomic.Value(w.Level.Data.Time)
@@ -31,6 +34,7 @@ func NewWorld(path string) (*World, error) {
 			path+"/region",
 			"minecraft:overworld",
 			"minecraft:overworld",
+			broadcast,
 			terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed)),
 		),
 	}

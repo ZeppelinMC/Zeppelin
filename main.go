@@ -33,7 +33,7 @@ func main() {
 
 	cfg := loadConfig()
 
-	w, err := world.NewWorld("world")
+	w, err := world.NewWorld("world", nil)
 	if err != nil {
 		log.Errorlnf("Error loading world: %v", err)
 		return

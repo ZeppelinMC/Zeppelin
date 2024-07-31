@@ -27,7 +27,7 @@ func (t Ticker) Start() {
 			t.tick++
 			// this doesnt work for some reason
 			age, time := t.srv.World.IncrementTime()
-			t.srv.Broadcast.UpdateTimeForAll(age, time)
+			t.srv.World.Broadcast.UpdateTimeForAll(age, time)
 		}
 	}()
 }

@@ -24,6 +24,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
+	"github.com/zeppelinmc/zeppelin/server/world/block"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
@@ -406,9 +408,9 @@ func (session *StandardSession) bundleStop() error {
 }
 
 func (session *StandardSession) SpawnEntity(e entity.Entity) error {
-	if err := session.bundleStart(); err != nil {
-		return err
-	}
+	//	if err := session.bundleStart(); err != nil {
+	//	return err
+	//}
 	x, y, z := e.Position()
 	yaw, pitch := e.Rotation()
 	id := e.EntityId()
@@ -438,11 +440,22 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 		return err
 	}
 
-	if err := session.bundleStop(); err != nil {
-		return err
-	}
+	//if err := session.bundleStop(); err != nil {
+	//	return err
+	//}
 
 	return nil
+}
+
+func (session *StandardSession) UpdateBlock(x, y, z int32, b block.Block) error {
+	state, ok := section.BlockStateId(b)
+	if !ok {
+		return fmt.Errorf("invalid block")
+	}
+	return session.WritePacket(&play.BlockUpdate{
+		X: x, Y: y, Z: z,
+		BlockId: state,
+	})
 }
 
 func (session *StandardSession) SpawnPlayer(ses session.Session) error {
