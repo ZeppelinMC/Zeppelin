@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	_ "embed"
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -26,10 +25,10 @@ import (
 var timeStart = time.Now()
 
 func main() {
-	flag.BoolFunc("default-config",
-		"print default config to stdout and exit", printDefaultConfig)
-
-	flag.Parse()
+	if util.HasArgument("--default-config") {
+		printDefaultConfig()
+		return
+	}
 
 	log.Infolnf("Zeppelin 1.21 Minecraft server with %s on platform %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 
@@ -160,15 +159,11 @@ charl:
 //8 erase
 //3
 
-func printDefaultConfig(string) error {
+func printDefaultConfig() {
 	data, err := toml.Marshal(config.DefaultConfig)
 	if err != nil {
-		return fmt.Errorf("toml: %w", err)
+		panic("marshaling default config: " + err.Error())
 	}
 
 	fmt.Printf("%s\n", data)
-
-	os.Exit(0)
-
-	return nil
 }

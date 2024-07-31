@@ -25,3 +25,5 @@ Why not?
 `--cpuprof`: run the server with the cpu profiler
 
 `--memprof`: run the server with the memory profiler
+
+`--default-config`: print default config to stdout and exit
