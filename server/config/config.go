@@ -24,6 +24,7 @@ var DefaultConfig = ServerConfig{
 		TPS:                  20,
 		EncryptionMode:       EncryptionOnline,
 	},
+	MaxPlayers: -1,
 	Chat: ServerConfigChat{
 		ChatMode:   "secure",
 		ChatFormat: "<%player%> %message%",
@@ -50,6 +51,7 @@ type ServerConfig struct {
 	RenderDistance     int32            `comment:"The radius of chunks to render at a time"`
 	SimulationDistance int32            `comment:"The radius of chunks to process at a time"`
 	Brand              string           `toml:",commented" comment:"Custom brand name for this server, shown in the debug screen"`
+	MaxPlayers         int              `comment:"If -1, the server will have no limit"`
 }
 
 type ServerConfigChat struct {

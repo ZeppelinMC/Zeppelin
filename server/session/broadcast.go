@@ -8,6 +8,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/net/packet/status"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
@@ -341,6 +342,26 @@ func (b *Broadcast) NumSession() int {
 	b.sessions_mu.RLock()
 	defer b.sessions_mu.RUnlock()
 	return len(b.sessions)
+}
+
+// returns the players to display in status sample
+func (b *Broadcast) Sample() []status.StatusSample {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+	samples := make([]status.StatusSample, len(b.sessions))
+
+	var i int
+	for _, s := range b.sessions {
+		samples[i] = status.StatusSample{
+			Name: s.Username(),
+			ID:   s.UUID().String(),
+		}
+		i++
+	}
+
+	samples = samples[:i+1]
+
+	return samples
 }
 
 // creates a sound effect with the provided data. If custom is true, or name wasn't found in the sound registry, the packet will use a custom sound name. This function generates a random seed for this event using level.NewSeed()

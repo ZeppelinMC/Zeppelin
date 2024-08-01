@@ -25,20 +25,7 @@ import (
 
 // Creates a new server instance using the specified config, returns an error if unable to bind listener
 func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
-	var statusProvider = net.Status(status.StatusResponseData{
-		Version: status.StatusVersion{
-			Name:     "1.21",
-			Protocol: net.ProtocolVersion,
-		},
-		Description: text.Unmarshal(cfg.MOTD, cfg.Chat.Formatter.Rune()),
-		Players: status.StatusPlayers{
-			Max: 20,
-		},
-		EnforcesSecureChat: true,
-	})
 	lcfg := net.Config{
-		Status: statusProvider,
-
 		IP:                   cfg.Net.ServerIP,
 		Port:                 cfg.Net.ServerPort,
 		CompressionThreshold: cfg.Net.CompressionThreshold,
@@ -71,6 +58,7 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 	}
 	server.Console = &Console{Server: server}
 	server.World.Broadcast = session.NewBroadcast(server.Console)
+	server.listener.SetStatusProvider(server.provideStatus)
 
 	compstr := "compress everything"
 	if cfg.Net.CompressionThreshold > 0 {
@@ -99,6 +87,27 @@ type Server struct {
 	stopLoop chan int
 
 	Players *player.PlayerManager
+}
+
+func (srv *Server) provideStatus() status.StatusResponseData {
+	count := srv.World.Broadcast.NumSession()
+	max := srv.cfg.MaxPlayers
+	if max == -1 {
+		max = count + 1
+	}
+	return status.StatusResponseData{
+		Version: status.StatusVersion{
+			Name:     "Zeppelin 1.21",
+			Protocol: net.ProtocolVersion,
+		},
+		Description: text.Unmarshal(srv.cfg.MOTD, srv.cfg.Chat.Formatter.Rune()),
+		Players: status.StatusPlayers{
+			Max:    max,
+			Online: count,
+			Sample: srv.World.Broadcast.Sample(),
+		},
+		EnforcesSecureChat: srv.cfg.Chat.ChatMode == "secure" || srv.cfg.Chat.DisableWarning,
+	}
 }
 
 func (srv *Server) SetStatusProvider(sp net.StatusProvider) {
