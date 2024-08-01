@@ -58,12 +58,22 @@ func (w *World) RegisterDimension(name string, dim *dimension.Dimension) {
 // increments the day time and world age by one tick and returns the updated time
 func (w *World) IncrementTime() (worldAge, dayTime int64) {
 	worldAge = w.worldAge.Get() + 1
-	dayTime = (w.dayTime.Get() + 1) % 24000
+	dayTime = w.dayTime.Get() + 1
 
 	w.worldAge.Set(worldAge)
 	w.dayTime.Set(dayTime)
 
 	return
+}
+
+func (w *World) LoadedChunks() int32 {
+	var count int32
+
+	for _, dim := range w.dimensions {
+		count += dim.LoadedChunks()
+	}
+
+	return count
 }
 
 // HashCode is an implementation of Java's hashCode function. It used to turn any string seed into a long seed

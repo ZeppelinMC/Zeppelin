@@ -29,6 +29,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
+	"github.com/zeppelinmc/zeppelin/server/world/region"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 )
@@ -71,6 +72,9 @@ type StandardSession struct {
 	awaitingChunkBatchAcknowledgement atomic.AtomicValue[bool]
 	lastKeepalive                     atomic.AtomicValue[int64]
 
+	load_ch_mu   sync.RWMutex
+	loadedChunks map[uint64]bool
+
 	// the window id the client is viewing currently, 0 if none (inventory)
 	WindowView atomic.AtomicValue[int32]
 }
@@ -92,6 +96,7 @@ func NewStandardSession(
 		config:                 config,
 		statusProviderProvider: statusProviderProvider,
 		commandManager:         commandManager,
+		loadedChunks:           make(map[uint64]bool),
 
 		registryIndexes: make(map[string][]string),
 	}
@@ -408,9 +413,9 @@ func (session *StandardSession) bundleStop() error {
 }
 
 func (session *StandardSession) SpawnEntity(e entity.Entity) error {
-	//	if err := session.bundleStart(); err != nil {
-	//	return err
-	//}
+	if err := session.bundleStart(); err != nil {
+		return err
+	}
 	x, y, z := e.Position()
 	yaw, pitch := e.Rotation()
 	id := e.EntityId()
@@ -440,9 +445,9 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 		return err
 	}
 
-	//if err := session.bundleStop(); err != nil {
-	//	return err
-	//}
+	if err := session.bundleStop(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -507,6 +512,32 @@ func (session *StandardSession) sendSpawnChunks() error {
 	}
 
 	session.awaitingChunkBatchAcknowledgement.Set(true)
+
+	return nil
+}
+
+func (session *StandardSession) SendChunkRadius(chunkX, chunkZ int32) error {
+	viewDistance := session.ViewDistance()
+
+	session.load_ch_mu.Lock()
+	defer session.load_ch_mu.Unlock()
+
+	for x := chunkX - viewDistance; x < chunkX+viewDistance; x++ {
+		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
+			if session.loadedChunks[region.ChunkHash(x, z)] {
+				continue
+			}
+			session.loadedChunks[region.ChunkHash(x, z)] = true
+			c, err := session.Dimension().GetChunk(x, z)
+			if err != nil {
+				continue
+			}
+
+			if err := session.conn.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }

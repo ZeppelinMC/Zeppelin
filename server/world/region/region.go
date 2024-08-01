@@ -40,8 +40,14 @@ func (r *File) generateChunkAt(x, z int32, tgt *chunk.Chunk, generator Generator
 	*tgt = c
 }
 
+func (r *File) LoadedChunks() int32 {
+	r.chu_mu.Lock()
+	defer r.chu_mu.Unlock()
+	return int32(len(r.chunks))
+}
+
 func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
-	hash := chunkHash(x, z)
+	hash := ChunkHash(x, z)
 
 	r.chu_mu.Lock()
 	defer r.chu_mu.Unlock()
@@ -226,6 +232,6 @@ func Decode(r io.ReaderAt, f *File) error {
 	return nil
 }
 
-func chunkHash(x, z int32) uint64 {
+func ChunkHash(x, z int32) uint64 {
 	return uint64(uint32(z))<<32 | uint64(uint32(x))
 }

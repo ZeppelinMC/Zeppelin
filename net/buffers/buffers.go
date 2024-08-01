@@ -10,3 +10,10 @@ var Buffers = sync.Pool{
 		return bytes.NewBuffer(nil)
 	},
 }
+
+func Size() int {
+	buf := Buffers.Get().(*bytes.Buffer)
+	defer Buffers.Put(buf)
+
+	return buf.Len()
+}

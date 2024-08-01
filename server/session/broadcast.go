@@ -336,6 +336,13 @@ func (b *Broadcast) UpdateBlock(x, y, z int32, block section.Block, dimension st
 	}
 }
 
+// returns the number of players in the broadcast
+func (b *Broadcast) NumSession() int {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+	return len(b.sessions)
+}
+
 // creates a sound effect with the provided data. If custom is true, or name wasn't found in the sound registry, the packet will use a custom sound name. This function generates a random seed for this event using level.NewSeed()
 func SoundEffect(name string, custom bool, fixedRange *float32, category int32, x, y, z int32, volume, pitch float32) *play.SoundEffect {
 	pk := &play.SoundEffect{

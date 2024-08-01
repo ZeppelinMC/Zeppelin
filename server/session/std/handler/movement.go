@@ -33,6 +33,7 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 
 		if oldChunkPosX != newChunkPosX || oldChunkPosZ != newChunkPosZ {
 			s.Conn().WritePacket(&play.SetCenterChunk{ChunkX: newChunkPosX, ChunkZ: newChunkPosZ})
+			s.SendChunkRadius(newChunkPosX, newChunkPosZ)
 		}
 
 		yaw, pitch := s.Player().Rotation()
@@ -56,6 +57,7 @@ func handleMovement(s *std.StandardSession, p packet.Packet) {
 
 		if oldChunkPosX != newChunkPosX || oldChunkPosZ != newChunkPosZ {
 			s.Conn().WritePacket(&play.SetCenterChunk{ChunkX: newChunkPosX, ChunkZ: newChunkPosZ})
+			s.SendChunkRadius(newChunkPosX, newChunkPosZ)
 		}
 
 		distance := math.Sqrt((pk.X-oldX)*(pk.X-oldX) + (pk.Y-oldY)*(pk.Y-oldY) + (pk.Z-oldZ)*(pk.Z-oldZ))

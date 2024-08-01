@@ -49,6 +49,18 @@ func (s *Dimension) Name() string {
 	return s.name
 }
 
+func (s *Dimension) LoadedChunks() int32 {
+	s.reg_mu.Lock()
+	defer s.reg_mu.Unlock()
+	var count int32
+
+	for _, reg := range s.regions {
+		count += reg.LoadedChunks()
+	}
+
+	return count
+}
+
 func (s *Dimension) Block(x, y, z int32) (section.Block, error) {
 	chunkX, chunkZ := x>>4, z>>4
 	chunk, err := s.GetChunk(chunkX, chunkZ)

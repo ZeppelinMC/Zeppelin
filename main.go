@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	_ "embed"
 	"fmt"
 	"os"
 	"os/signal"
