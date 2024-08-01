@@ -41,6 +41,10 @@ type Dimension struct {
 	regionPath string
 }
 
+func (s *Dimension) SetBroadcast(b *session.Broadcast) {
+	s.broadcast = b
+}
+
 func (s *Dimension) Type() string {
 	return s.typ
 }
@@ -82,6 +86,18 @@ func (s *Dimension) SetBlock(x, y, z int32, b section.Block) (state int64, err e
 	}
 	s.broadcast.UpdateBlock(x, y, z, b, s.name)
 	return i, err
+}
+
+func (s *Dimension) SetBlockEntity(x, y, z int32, be chunk.BlockEntity) error {
+	chunkX, chunkZ := x>>4, z>>4
+	chunk, err := s.GetChunk(chunkX, chunkZ)
+	if err != nil {
+		return err
+	}
+	chunk.SetBlockEntity(x, y, z, be)
+	s.broadcast.UpdateBlockEntity(x, y, z, be, s.name)
+
+	return nil
 }
 func (s *Dimension) BlockEntity(x, y, z int32) (*chunk.BlockEntity, bool) {
 	chunkX, chunkZ := x>>4, z>>4

@@ -121,6 +121,7 @@ type PlayerData struct {
 }
 
 func (data *PlayerData) Save() error {
+	os.Rename(data.path, data.path+"_old")
 	file, err := os.Create(data.path)
 	if err != nil {
 		return err

@@ -34,8 +34,6 @@ type Conn struct {
 
 	listener *Listener
 
-	writer io.Writer
-
 	username   string
 	uuid       uuid.UUID
 	properties []login.Property

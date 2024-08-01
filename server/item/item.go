@@ -5,6 +5,7 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/net/slot"
 	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
 
 type DataSlot int8
@@ -30,7 +31,7 @@ func (slot DataSlot) Network() int32 {
 	}
 }
 
-func dataSlot(network int32) DataSlot {
+func DataSlotFrom(network int32) DataSlot {
 	switch {
 	case network == 8:
 		return 100
@@ -64,10 +65,18 @@ type Item struct {
 	} `nbt:"components"`
 }
 
+// returns the block of the item, if found
+func (i Item) Block() (block section.Block, ok bool) {
+	b := section.GetBlock(i.Id)
+	_, ok = registry.Block.Lookup(i.Id)
+
+	return b, ok
+}
+
 // New creates an item from the slot provided
 func New(slot int32, item slot.Slot) (Item, error) {
 	i := Item{
-		Slot:  dataSlot(slot),
+		Slot:  DataSlotFrom(slot),
 		Count: item.ItemCount,
 	}
 	id, ok := registry.Item.NameOf(item.ItemId)

@@ -15,6 +15,11 @@ Why not?
 
 - Secure chat
 
+## Privacy
+- The server allows for chat signing
+
+- The server respects the client's settings not to show in server listing
+
 [Discord Server](https://discord.gg/T8qEtDWPak)
 
 ## Boot Arguments

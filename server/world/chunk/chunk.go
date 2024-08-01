@@ -114,3 +114,20 @@ func (c *Chunk) BlockEntity(x, y, z int32) (*BlockEntity, bool) {
 	}
 	return nil, false
 }
+
+// This function does not update the block for the players, so it should not be used. All of the position values should be absolute (aka (chunkPos<<4)+pos
+func (c *Chunk) SetBlockEntity(x, y, z int32, be BlockEntity) {
+	var index int = -1
+	be.X, be.Y, be.Z = x, y, z
+	for i, entity := range c.BlockEntities {
+		if entity.X == x && entity.Y == y && entity.Z == z {
+			index = i
+			break
+		}
+	}
+	if index == -1 {
+		c.BlockEntities = append(c.BlockEntities, be)
+		return
+	}
+	c.BlockEntities[index] = be
+}

@@ -1,10 +1,13 @@
 package block
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/text"
 )
@@ -24,10 +27,20 @@ func (g Chest) Encode() (string, BlockProperties) {
 }
 
 func (g Chest) New(props BlockProperties) Block {
+	if props["type"] == "" {
+		props["type"] = "single"
+	}
 	return Chest{
 		Facing:      props["facing"],
 		Type:        props["type"],
 		Waterlogged: props["waterlogged"] == "true",
+	}
+}
+
+func (g Chest) BlockEntity() chunk.BlockEntity {
+	return chunk.BlockEntity{
+		Id:    "minecraft:chest",
+		Items: make(container.Container, 0),
 	}
 }
 
@@ -36,6 +49,7 @@ func (g Chest) Use(clicker session.Session, pk play.UseItemOn, dimension *dimens
 	if !ok {
 		entity, ok := dimension.BlockEntity(pk.BlockX, pk.BlockY, pk.BlockZ)
 		if !ok {
+			fmt.Println("not found entity id", pk.BlockX, pk.BlockY, pk.BlockZ)
 			return
 		}
 		if entity.Id != "minecraft:chest" {

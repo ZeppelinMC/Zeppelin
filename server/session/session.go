@@ -12,6 +12,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
@@ -94,8 +95,17 @@ type Session interface {
 	// plays the sound for the client
 	PlaySound(*play.SoundEffect) error
 
+	// plays the sound for the client
+	PlayEntitySound(*play.EntitySoundEffect) error
+
 	// updates the block for the player
 	UpdateBlock(x, y, z int32, b section.Block) error
+
+	// updates the block entity for the player
+	UpdateBlockEntity(x, y, z int32, be chunk.BlockEntity) error
+
+	// sent damage event to the client
+	DamageEvent(attacker, attacked Session, damageType string) error
 
 	// the textures of this client
 	Textures() (login.Textures, error)

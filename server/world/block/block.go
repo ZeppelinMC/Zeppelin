@@ -5,6 +5,7 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 )
@@ -20,6 +21,15 @@ const (
 	AxisZ Axis = "z"
 )
 
+type Direction = string
+
+const (
+	DirectionNorth Direction = "north"
+	DirectionSouth Direction = "south"
+	DirectionWest  Direction = "west"
+	DirectionEast  Direction = "east"
+)
+
 func atoi(str string) int {
 	v, _ := strconv.Atoi(str)
 
@@ -30,6 +40,12 @@ func atoi(str string) int {
 type Usable interface {
 	Block
 	Use(clicker session.Session, pk play.UseItemOn, dimension *dimension.Dimension)
+}
+
+// A block entity haver is one that also has a block entity
+type BlockEntityHaver interface {
+	Block
+	BlockEntity() chunk.BlockEntity
 }
 
 func init() {

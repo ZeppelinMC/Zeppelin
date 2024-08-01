@@ -14,6 +14,15 @@ type UseItemOn struct {
 	Sequence                           int32
 }
 
+const (
+	FaceBottom = iota
+	FaceTop
+	FaceNorth
+	FaceSouth
+	FaceWest
+	FaceEast
+)
+
 func (UseItemOn) ID() int32 {
 	return PacketIdUseItemOn
 }

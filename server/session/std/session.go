@@ -25,6 +25,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
@@ -38,7 +39,7 @@ var _ session.Session = (*StandardSession)(nil)
 
 // StandardSession is a session that uses *net.Conn
 type StandardSession struct {
-	world     *world.World
+	World     *world.World
 	player    *player.Player
 	broadcast *session.Broadcast
 	config    config.ServerConfig
@@ -90,7 +91,7 @@ func NewStandardSession(
 ) *StandardSession {
 	return &StandardSession{
 		conn:                   conn,
-		world:                  world,
+		World:                  world,
 		player:                 player,
 		broadcast:              broadcast,
 		config:                 config,
@@ -241,12 +242,12 @@ func (session *StandardSession) login() error {
 		EntityID:   session.player.EntityId(),
 		Dimensions: []string{session.player.Dimension()},
 
-		Hardcore: session.world.Data.Hardcore,
+		Hardcore: session.World.Data.Hardcore,
 
 		ViewDistance:       session.config.RenderDistance,
 		SimulationDistance: session.config.SimulationDistance,
 
-		HashedSeed: session.world.Data.WorldGenSettings.Seed.HashedSeed(),
+		HashedSeed: session.World.Data.WorldGenSettings.Seed.HashedSeed(),
 
 		EnableRespawnScreen: true,
 		DimensionType:       int32(slices.Index(session.registryIndexes["minecraft:dimension_type"], session.Dimension().Type())),
@@ -259,8 +260,8 @@ func (session *StandardSession) login() error {
 	}
 
 	if err := session.conn.WritePacket(&play.ChangeDifficulty{
-		Difficulty: session.world.Data.Difficulty,
-		Locked:     session.world.Data.DifficultyLocked,
+		Difficulty: session.World.Data.Difficulty,
+		Locked:     session.World.Data.DifficultyLocked,
 	}); err != nil {
 		return err
 	}
@@ -328,10 +329,10 @@ func (session *StandardSession) login() error {
 	}
 
 	if err := session.WritePacket(&play.SetDefaultSpawnPosition{
-		X:     session.world.Data.SpawnX,
-		Y:     session.world.Data.SpawnY,
-		Z:     session.world.Data.SpawnZ,
-		Angle: session.world.Data.SpawnAngle,
+		X:     session.World.Data.SpawnX,
+		Y:     session.World.Data.SpawnY,
+		Z:     session.World.Data.SpawnZ,
+		Angle: session.World.Data.SpawnAngle,
 	}); err != nil {
 		return err
 	}
@@ -365,7 +366,7 @@ func (session *StandardSession) IsSpawned(entityId int32) bool {
 }
 
 func (session *StandardSession) Dimension() *dimension.Dimension {
-	return session.world.Dimension(session.player.Dimension())
+	return session.World.Dimension(session.player.Dimension())
 }
 
 /*
@@ -463,6 +464,18 @@ func (session *StandardSession) UpdateBlock(x, y, z int32, b block.Block) error 
 	})
 }
 
+func (session *StandardSession) UpdateBlockEntity(x, y, z int32, be chunk.BlockEntity) error {
+	id, ok := registry.BlockEntityType.Lookup(be.Id)
+	if !ok {
+		return fmt.Errorf("invalid block entity")
+	}
+	return session.WritePacket(&play.BlockEntityData{
+		X: x, Y: y, Z: z,
+		Type: id,
+		Data: be,
+	})
+}
+
 func (session *StandardSession) SpawnPlayer(ses session.Session) error {
 	return session.SpawnEntity(ses.Player())
 }
@@ -514,6 +527,27 @@ func (session *StandardSession) sendSpawnChunks() error {
 	session.awaitingChunkBatchAcknowledgement.Set(true)
 
 	return nil
+}
+
+func (session *StandardSession) DamageEvent(attacker, attacked session.Session, damageType string) error {
+	causeType := slices.Index(session.registryIndexes["minecraft:damage_type"], damageType)
+	if causeType == -1 {
+		return fmt.Errorf("unknown damage type")
+	}
+	de := &play.DamageEvent{
+		SourceTypeId: int32(causeType),
+	}
+	if attacker != nil {
+		id := attacker.Player().EntityId()
+		de.SourceCauseId = id
+		de.SourceDirectId = id
+	}
+	if err := session.conn.WritePacket(de); err != nil {
+		return err
+	}
+	return session.conn.WritePacket(&play.HurtAnimation{
+		EntityId: attacked.Player().EntityId(),
+	})
 }
 
 func (session *StandardSession) SendChunkRadius(chunkX, chunkZ int32) error {
@@ -601,5 +635,9 @@ func (session *StandardSession) BlockAction(pk *play.BlockAction) error {
 }
 
 func (session *StandardSession) PlaySound(pk *play.SoundEffect) error {
+	return session.conn.WritePacket(pk)
+}
+
+func (session *StandardSession) PlayEntitySound(pk *play.EntitySoundEffect) error {
 	return session.conn.WritePacket(pk)
 }

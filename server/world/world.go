@@ -51,6 +51,13 @@ func (w *World) Dimension(name string) *dimension.Dimension {
 	return w.dimensions[name]
 }
 
+func (w *World) SetBroadcast(b *session.Broadcast) {
+	w.Broadcast = b
+	for _, dim := range w.dimensions {
+		dim.SetBroadcast(b)
+	}
+}
+
 func (w *World) RegisterDimension(name string, dim *dimension.Dimension) {
 	w.dimensions[name] = dim
 }

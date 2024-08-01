@@ -14,6 +14,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
@@ -165,6 +166,10 @@ func (c *Console) PlaySound(*play.SoundEffect) error {
 	return errConsoleUnsupportedFunc
 }
 
+func (c *Console) PlayEntitySound(*play.EntitySoundEffect) error {
+	return errConsoleUnsupportedFunc
+}
+
 func (c *Console) Username() string {
 	return "Console"
 }
@@ -173,6 +178,15 @@ func (c *Console) Username() string {
 func (c *Console) UpdateBlock(x, y, z int32, b section.Block) error {
 	_, err := c.Dimension().SetBlock(x, y, z, b)
 	return err
+}
+
+// actually sets the block entity
+func (c *Console) UpdateBlockEntity(x, y, z int32, be chunk.BlockEntity) error {
+	return c.Dimension().SetBlockEntity(x, y, z, be)
+}
+
+func (c *Console) DamageEvent(attacker, attacked session.Session, damageType string) error {
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) Broadcast() *session.Broadcast {

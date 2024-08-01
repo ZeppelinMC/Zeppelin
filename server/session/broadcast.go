@@ -1,15 +1,18 @@
 package session
 
 import (
+	"math"
 	"sync"
 
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/net"
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/net/packet/status"
 	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/text"
@@ -337,11 +340,76 @@ func (b *Broadcast) UpdateBlock(x, y, z int32, block section.Block, dimension st
 	}
 }
 
+// this updates the block entity for everyone. It doesn't set the block entity in the world
+func (b *Broadcast) UpdateBlockEntity(x, y, z int32, blockEntity chunk.BlockEntity, dimension string) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	for _, ses := range b.sessions {
+		if ses.Player().Dimension() != dimension {
+			continue
+		}
+		ses.UpdateBlockEntity(x, y, z, blockEntity)
+	}
+}
+
 // returns the number of players in the broadcast
 func (b *Broadcast) NumSession() int {
 	b.sessions_mu.RLock()
 	defer b.sessions_mu.RUnlock()
 	return len(b.sessions)
+}
+
+func (b *Broadcast) DamageEvent(attacker, attacked Session, dimension string, damageType string) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	id := attacked.Player().EntityId()
+	sound := EntitySoundEffect(
+		"minecraft:entity.player.hurt", false, nil, play.SoundCategoryPlayer, id, 1, 1,
+	)
+
+	yawd, _ := attacker.Player().Rotation()
+	x, z := YawToXZDelta(yawd)
+
+	vx, vy, vz := attacked.Player().Motion()
+	velDeltaX, velDeltaZ := (x+sign(x)*5)/20, (z+sign(z)*5)/20
+
+	vx, vz = vx+velDeltaX, vz+velDeltaZ
+	attacked.Player().SetMotion(vx, vy, vz)
+
+	for _, s := range b.sessions {
+		if dimension != s.Player().Dimension() {
+			continue
+		}
+		s.DamageEvent(attacker, attacked, damageType)
+		s.PlayEntitySound(sound)
+		s.(interface {
+			Conn() *net.Conn
+		}).Conn().WritePacket(&play.SetEntityVelocity{
+			EntityId: id,
+			X:        int16(vx * 8000),
+			Y:        int16(vy * 8000),
+			Z:        int16(vz * 8000),
+		})
+	}
+}
+
+func YawToXZDelta(yaw float32) (float64, float64) {
+	yawd := float64(yaw)
+	radians := yawd * math.Pi / 180.0
+
+	x := -math.Sin(radians)
+	z := -math.Cos(radians)
+
+	return x, z
+}
+
+func sign(f float64) float64 {
+	if f < 0 {
+		return -1
+	}
+	return 1
 }
 
 // returns the players to display in status sample
@@ -352,6 +420,9 @@ func (b *Broadcast) Sample() []status.StatusSample {
 
 	var i int
 	for _, s := range b.sessions {
+		if !s.ClientInformation().AllowServerListing {
+			continue
+		}
 		samples[i] = status.StatusSample{
 			Name: s.Username(),
 			ID:   s.UUID().String(),
@@ -359,7 +430,7 @@ func (b *Broadcast) Sample() []status.StatusSample {
 		i++
 	}
 
-	samples = samples[:i+1]
+	samples = samples[:i]
 
 	return samples
 }
@@ -372,6 +443,32 @@ func SoundEffect(name string, custom bool, fixedRange *float32, category int32, 
 		Volume: volume,
 		Pitch:  pitch,
 		Seed:   int64(level.NewSeed()),
+	}
+	if !custom {
+		soundId, ok := registry.SoundEvent.Lookup(name)
+		if ok {
+			pk.SoundId = soundId
+			return pk
+		}
+	}
+
+	pk.SoundId = -1
+	pk.SoundName = name
+	pk.FixedRange = fixedRange != nil
+	if fixedRange != nil {
+		pk.Range = *fixedRange
+	}
+
+	return pk
+}
+
+func EntitySoundEffect(name string, custom bool, fixedRange *float32, category int32, entityId int32, volume, pitch float32) *play.EntitySoundEffect {
+	pk := &play.EntitySoundEffect{
+		SoundCategory: category,
+		EntityId:      entityId,
+		Volume:        volume,
+		Pitch:         pitch,
+		Seed:          int64(level.NewSeed()),
 	}
 	if !custom {
 		soundId, ok := registry.SoundEvent.Lookup(name)

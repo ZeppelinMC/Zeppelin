@@ -21,6 +21,7 @@ type Player struct {
 
 	data       level.PlayerData
 	x, y, z    atomic.AtomicValue[float64]
+	vx, vy, vz atomic.AtomicValue[float64]
 	yaw, pitch atomic.AtomicValue[float32]
 	onGround   atomic.AtomicValue[bool]
 
@@ -84,6 +85,10 @@ func (mgr *PlayerManager) New(data level.PlayerData) *Player {
 		x: atomic.Value(data.Pos[0]),
 		y: atomic.Value(data.Pos[1]),
 		z: atomic.Value(data.Pos[2]),
+
+		vx: atomic.Value(data.Motion[0]),
+		vy: atomic.Value(data.Motion[1]),
+		vz: atomic.Value(data.Motion[2]),
 
 		yaw:   atomic.Value(data.Rotation[0]),
 		pitch: atomic.Value(data.Rotation[1]),
@@ -149,6 +154,16 @@ func (p *Player) SetRotation(yaw, pitch float32) {
 
 func (p *Player) SetOnGround(val bool) {
 	p.onGround.Set(val)
+}
+
+func (p *Player) Motion() (x, y, z float64) {
+	return p.vx.Get(), p.vy.Get(), p.vz.Get()
+}
+
+func (p *Player) SetMotion(x, y, z float64) {
+	p.vx.Set(x)
+	p.vy.Set(y)
+	p.vz.Set(z)
 }
 
 func (p *Player) EntityId() int32 {

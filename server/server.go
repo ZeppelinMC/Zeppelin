@@ -57,7 +57,7 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 		stopLoop: make(chan int),
 	}
 	server.Console = &Console{Server: server}
-	server.World.Broadcast = session.NewBroadcast(server.Console)
+	server.World.SetBroadcast(session.NewBroadcast(server.Console))
 	server.listener.SetStatusProvider(server.provideStatus)
 
 	compstr := "compress everything"
