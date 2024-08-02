@@ -17,3 +17,9 @@ func Size() int {
 
 	return buf.Len()
 }
+
+func Reset() {
+	buf := Buffers.Get().(*bytes.Buffer)
+	buf.Reset()
+	Buffers.Put(buf)
+}

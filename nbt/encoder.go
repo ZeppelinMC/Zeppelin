@@ -89,13 +89,6 @@ func (e *Encoder) writeDouble(d float64) error {
 	return e.writeLong(int64(math.Float64bits(d)))
 }
 
-func (e *Encoder) writeByteArray(ba []int8) error {
-	if err := e.writeInt(int32(len(ba))); err != nil {
-		return err
-	}
-	return e.writeBytes(*(*[]byte)(unsafe.Pointer(&ba))...)
-}
-
 func (e *Encoder) writeIntArray(il []int32) error {
 	if err := e.writeInt(int32(len(il))); err != nil {
 		return err
@@ -261,8 +254,22 @@ func (e *Encoder) encodeCompoundStruct(val reflect.Value) error {
 				if err := e.writeString(name); err != nil {
 					return err
 				}
-				if err := e.writeByteArray(*(*[]int8)(f.UnsafePointer())); err != nil {
+
+				if err := e.writeInt(int32(f.Len())); err != nil {
 					return err
+				}
+				for i := 0; i < f.Len(); i++ {
+					val := f.Index(i)
+					switch val.Kind() {
+					case reflect.Int8:
+						if err := e.writeByte(int8(val.Int())); err != nil {
+							return err
+						}
+					case reflect.Uint8:
+						if err := e.writeByte(int8(val.Uint())); err != nil {
+							return err
+						}
+					}
 				}
 			case reflect.Uint32, reflect.Int32:
 				if err := e.writeByte(IntArray); err != nil {
@@ -466,8 +473,21 @@ func (e *Encoder) encodeCompoundMap(val reflect.Value) error {
 				if err := e.writeString(name); err != nil {
 					return err
 				}
-				if err := e.writeByteArray(*(*[]int8)(f.UnsafePointer())); err != nil {
+				if err := e.writeInt(int32(f.Len())); err != nil {
 					return err
+				}
+				for i := 0; i < f.Len(); i++ {
+					val := f.Index(i)
+					switch val.Kind() {
+					case reflect.Int8:
+						if err := e.writeByte(int8(val.Int())); err != nil {
+							return err
+						}
+					case reflect.Uint8:
+						if err := e.writeByte(int8(val.Uint())); err != nil {
+							return err
+						}
+					}
 				}
 			case reflect.Uint32, reflect.Int32:
 				if err := e.writeByte(IntArray); err != nil {
@@ -583,8 +603,21 @@ func (e *Encoder) encodeList(val reflect.Value) error {
 		case reflect.Slice, reflect.Array:
 			switch f.Type().Elem().Kind() {
 			case reflect.Uint8, reflect.Int8:
-				if err := e.writeByteArray(*(*[]int8)(f.UnsafePointer())); err != nil {
+				if err := e.writeInt(int32(f.Len())); err != nil {
 					return err
+				}
+				for i := 0; i < f.Len(); i++ {
+					val := f.Index(i)
+					switch val.Kind() {
+					case reflect.Int8:
+						if err := e.writeByte(int8(val.Int())); err != nil {
+							return err
+						}
+					case reflect.Uint8:
+						if err := e.writeByte(int8(val.Uint())); err != nil {
+							return err
+						}
+					}
 				}
 			case reflect.Uint32, reflect.Int32:
 				if err := e.writeIntArray(*(*[]int32)(f.UnsafePointer())); err != nil {

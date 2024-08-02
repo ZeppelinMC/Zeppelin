@@ -46,7 +46,7 @@ func (r *File) LoadedChunks() int32 {
 	return int32(len(r.chunks))
 }
 
-func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
+func (r *File) GetChunk(x, z int32, generateEmpty bool, generator Generator) (*chunk.Chunk, error) {
 	hash := ChunkHash(x, z)
 
 	r.chu_mu.Lock()
@@ -54,6 +54,10 @@ func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 	if c, ok := r.chunks[hash]; ok {
 		return c, nil
 	}
+
+	//r.chunks[hash] = new(chunk.Chunk)
+	//r.generateChunkAt(x, z, r.chunks[hash], generator)
+	//return r.chunks[hash], nil
 
 	locationIndex := ((uint32(x) % 32) + (uint32(z)%32)*32) * 4
 	if int(locationIndex) >= len(r.locations) {
@@ -69,7 +73,7 @@ func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 	loc := int32(l[0])<<24 | int32(l[1])<<16 | int32(l[2])<<8 | int32(l[3])
 
 	offset, size := chunkLocation(loc)
-	if offset|size == 0 {
+	if offset == 0 && size == 0 {
 		if generator != nil {
 			r.chunks[hash] = new(chunk.Chunk)
 			r.generateChunkAt(x, z, r.chunks[hash], generator)
@@ -87,6 +91,10 @@ func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 
 	length := int32(chunkHeader[0])<<24 | int32(chunkHeader[1])<<16 | int32(chunkHeader[2])<<8 | int32(chunkHeader[3])
 	compression := chunkHeader[4]
+
+	if length == 0 {
+		return nil, fmt.Errorf("chunk %d %d not found", x, z)
+	}
 
 	var chunkData = make([]byte, length-1)
 	_, err = r.reader.ReadAt(chunkData, int64(offset)+5)
@@ -121,6 +129,7 @@ func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 	_, err = nbt.NewDecoder(buf).Decode(&anvil)
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
@@ -133,9 +142,13 @@ func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 	}
 
 	r.chunks[hash].Sections = make([]*section.Section, len(anvil.Sections))
+	var emptySections int
 	for i, sec := range anvil.Sections {
 		var blocks = make([]section.Block, len(sec.BlockStates.Palette))
 
+		if l := len(sec.BlockStates.Palette); l == 0 || (l == 1 && sec.BlockStates.Palette[0].Name == "minecraft:air") {
+			emptySections++
+		}
 		for i, entry := range sec.BlockStates.Palette {
 			b := section.GetBlock(entry.Name)
 			if entry.Properties != nil {
@@ -147,13 +160,21 @@ func (r *File) GetChunk(x, z int32, generator Generator) (*chunk.Chunk, error) {
 		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, sec.SkyLight, sec.BlockLight)
 	}
 
+	if emptySections == len(r.chunks[hash].Sections) && generateEmpty && generator != nil {
+		r.chunks[hash] = new(chunk.Chunk)
+		r.generateChunkAt(x, z, r.chunks[hash], generator)
+		return r.chunks[hash], nil
+	}
+
 	return r.chunks[hash], err
 
 	/*chunk, ok := r.chunks[loc]
-	if !ok {
-		return chunk, fmt.Errorf("not found chunk")
+		if !ok {
+			return chunk, fmt.Errorf("not found chunk")
+		}
+		return chunk, nil
 	}
-	return chunk, nil*/
+	*/
 }
 
 func Empty(f *File) {
@@ -221,7 +242,7 @@ func Decode(r io.ReaderAt, f *File) error {
 		chunkBuffer.Reset()
 		chunkBuffer.ReadFrom(rd)
 
-		f.chunks[loc] = &Chunk{}
+		f.chunks[loc] = &chunk.Chunk{}
 
 		_, err = nbt.NewDecoder(chunkBuffer).Decode(f.chunks[loc])
 		if err != nil {
@@ -234,4 +255,10 @@ func Decode(r io.ReaderAt, f *File) error {
 
 func ChunkHash(x, z int32) uint64 {
 	return uint64(uint32(z))<<32 | uint64(uint32(x))
+}
+
+func locationEntryToPos(index int) (x, z int32) {
+	index = (index / 4) / 32
+
+	return 0, 0
 }

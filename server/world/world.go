@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zeppelinmc/zeppelin/atomic"
+	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
@@ -36,6 +37,7 @@ func NewWorld(path string, broadcast *session.Broadcast) (*World, error) {
 			"minecraft:overworld",
 			broadcast,
 			terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed)),
+			true,
 		),
 	}
 
@@ -49,6 +51,13 @@ func (w *World) Dimension(name string) *dimension.Dimension {
 	}
 
 	return w.dimensions[name]
+}
+
+func (w *World) Save() {
+	for _, dim := range w.dimensions {
+		dim.SaveAllRegions()
+		log.Infoln("Saved dimension", dim.Name())
+	}
 }
 
 func (w *World) SetBroadcast(b *session.Broadcast) {

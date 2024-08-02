@@ -83,8 +83,11 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	defer conn.write_mu.Unlock()
 
 	var packetBuf = pkpool.Get().(*bytes.Buffer)
-	packetBuf.Reset()
-	defer pkpool.Put(packetBuf)
+	defer func() {
+		packetBuf.Reset()
+		pkpool.Put(packetBuf)
+	}()
+
 	w := io.NewWriter(packetBuf)
 
 	if err := w.VarInt(pk.ID()); err != nil {

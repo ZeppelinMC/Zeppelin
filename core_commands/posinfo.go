@@ -22,7 +22,7 @@ var posinfo = command.Command{
 		x, y, z := player.Position()
 		chunkX, chunkY, chunkZ := int32(x)>>4, int32(y)>>4, int32(z)>>4
 		xb, yb, zb := int32(math.Floor(x)), int32(math.Floor(y)), int32(math.Floor(z))
-		rx, rz := chunkX%32, chunkZ%32
+		rx, rz := chunkX>>5, chunkZ>>5
 
 		dimension := ccc.Server.(*server.Server).World.Dimension(player.Dimension())
 
@@ -40,11 +40,12 @@ var posinfo = command.Command{
 
 		ccc.Executor.SystemMessage(text.Unmarshalf(
 			ccc.Executor.Config().Chat.Formatter.Rune(),
-			"XYZ: %.03f / %.05f / %.03f\nBlock: %d %d %d [%d %d %d]\nChunk: %d %d %d [r.%d.%d.mca]\nStanding on: %s [%v]",
+			"XYZ: %.03f / %.05f / %.03f\nBlock: %d %d %d [%d %d %d]\nChunk: %d %d %d [%d %d in r.%d.%d.mca]\nStanding on: %s [%v]",
 			x, y, z,
 			xb, yb, zb,
 			xb&0xf, yb&0xf, zb&0xf,
 			chunkX, chunkY, chunkZ,
+			chunkX&31, chunkZ&31,
 			rx, rz,
 			name, props,
 		))

@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/heightmaps"
@@ -22,8 +23,9 @@ type BlockEntity struct {
 }
 
 type Chunk struct {
-	X, Y, Z    int32
-	Heightmaps heightmaps.Heightmaps
+	LastModified int64
+	X, Y, Z      int32
+	Heightmaps   heightmaps.Heightmaps
 
 	Sections      []*section.Section
 	BlockEntities []BlockEntity
@@ -32,9 +34,10 @@ type Chunk struct {
 func NewChunk(x, z int32) Chunk {
 	var airBlock = section.GetBlock("minecraft:air")
 	c := Chunk{
-		Y: MinChunkY,
-		X: x,
-		Z: z,
+		Y:            MinChunkY,
+		X:            x,
+		Z:            z,
+		LastModified: time.Now().UnixMilli(),
 
 		Sections: make([]*section.Section, 24),
 	}
@@ -67,6 +70,7 @@ func (c *Chunk) Block(x, y, z int32) (section.Block, error) {
 
 // This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetBlock(x, y, z int32, b section.Block) (state int64, err error) {
+	c.LastModified = time.Now().UnixMilli()
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
 		return 0, fmt.Errorf("null section")
@@ -77,6 +81,7 @@ func (c *Chunk) SetBlock(x, y, z int32, b section.Block) (state int64, err error
 
 // This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetBlockState(x, y, z int32, state int64) error {
+	c.LastModified = time.Now().UnixMilli()
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
 		return fmt.Errorf("null section")
@@ -87,6 +92,7 @@ func (c *Chunk) SetBlockState(x, y, z int32, state int64) error {
 
 // This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetSkylightLevel(x, y, z int32, value byte) error {
+	c.LastModified = time.Now().UnixMilli()
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
 		return fmt.Errorf("null section")
@@ -97,6 +103,7 @@ func (c *Chunk) SetSkylightLevel(x, y, z int32, value byte) error {
 
 // This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetBlockLightLevel(x, y, z int32, value byte) error {
+	c.LastModified = time.Now().UnixMilli()
 	secIndex := (y >> 4) - c.Y
 	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
 		return fmt.Errorf("null section")
@@ -117,6 +124,7 @@ func (c *Chunk) BlockEntity(x, y, z int32) (*BlockEntity, bool) {
 
 // This function does not update the block for the players, so it should not be used. All of the position values should be absolute (aka (chunkPos<<4)+pos
 func (c *Chunk) SetBlockEntity(x, y, z int32, be BlockEntity) {
+	c.LastModified = time.Now().UnixMilli()
 	var index int = -1
 	be.X, be.Y, be.Z = x, y, z
 	for i, entity := range c.BlockEntities {

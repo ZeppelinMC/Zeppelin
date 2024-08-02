@@ -2,7 +2,6 @@ package dimension
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"sync"
 
@@ -13,16 +12,18 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/region"
 )
 
-func NewDimension(regionPath string, typ string, name string, broadcast *session.Broadcast, generator region.Generator) *Dimension {
+// if generateEmptyChunks is true, the server will override empty chunks with generated ones
+func NewDimension(regionPath string, typ string, name string, broadcast *session.Broadcast, generator region.Generator, generateEmptyChunks bool) *Dimension {
 	return &Dimension{
 		regions: make(map[uint64]*region.File),
 
-		regionPath:    regionPath,
-		typ:           typ,
-		name:          name,
-		generator:     generator,
-		broadcast:     broadcast,
-		WindowManager: window.NewManager(),
+		regionPath:          regionPath,
+		typ:                 typ,
+		name:                name,
+		generator:           generator,
+		broadcast:           broadcast,
+		WindowManager:       window.NewManager(),
+		generateEmptyChunks: generateEmptyChunks && generator != nil,
 	}
 }
 
@@ -32,8 +33,9 @@ type Dimension struct {
 
 	broadcast *session.Broadcast
 
-	generator     region.Generator
-	WindowManager *window.WindowManager
+	generator           region.Generator
+	generateEmptyChunks bool
+	WindowManager       *window.WindowManager
 
 	typ  string
 	name string
@@ -51,6 +53,25 @@ func (s *Dimension) Type() string {
 
 func (s *Dimension) Name() string {
 	return s.name
+}
+
+func (s *Dimension) SaveAllRegions() {
+	s.reg_mu.Lock()
+	defer s.reg_mu.Unlock()
+	for hash, reg := range s.regions {
+		rx, rz := s.regionUnhash(hash)
+		path := fmt.Sprintf("%s/r.%d.%d.mca", s.regionPath, rx, rz)
+		file, err := os.Create(path)
+		if err != nil {
+			continue
+		}
+		if reg.Encode(file) != nil {
+			continue
+		}
+		if file.Close() != nil {
+			continue
+		}
+	}
 }
 
 func (s *Dimension) LoadedChunks() int32 {
@@ -119,7 +140,7 @@ func (s *Dimension) GetChunk(x, z int32) (*chunk.Chunk, error) {
 		}
 	}
 
-	return region.GetChunk(x, z, s.generator)
+	return region.GetChunk(x, z, s.generateEmptyChunks, s.generator)
 }
 
 func (s *Dimension) newRegion(rx, rz int32) *region.File {
@@ -151,8 +172,15 @@ func (s *Dimension) regionHash(rx, rz int32) uint64 {
 	return uint64(uint32(rx)) | uint64(uint32(rz))<<32
 }
 
+func (s *Dimension) regionUnhash(hash uint64) (rx, rz int32) {
+	urx := uint32(hash)
+	urz := uint32(hash >> 32)
+
+	return int32(urx), int32(urz)
+}
+
 func (s *Dimension) chunkPosToRegionPos(x, z int32) (rx, rz int32) {
-	return int32(math.Floor(float64(x) / 32)), int32(math.Floor(float64(z) / 32))
+	return x >> 5, z >> 5
 }
 
 func (s *Dimension) openRegion(rx, rz int32) (*region.File, error) {

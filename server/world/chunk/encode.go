@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"slices"
+	"sync"
 	"unsafe"
 
 	"github.com/zeppelinmc/zeppelin/net/buffers"
@@ -22,13 +23,22 @@ func init() {
 	}
 }
 
+var chunkDataPackets = sync.Pool{
+	New: func() any {
+		return &play.ChunkDataUpdateLight{}
+	},
+}
+
 func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	buf := buffers.Buffers.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer buffers.Buffers.Put(buf)
 
+	pk := chunkDataPackets.Get().(*play.ChunkDataUpdateLight)
+	defer chunkDataPackets.Put(pk)
+
 	w := io.NewWriter(buf)
-	pk := &play.ChunkDataUpdateLight{
+	*pk = play.ChunkDataUpdateLight{
 		CX: chunk.X,
 		CZ: chunk.Z,
 
@@ -44,13 +54,14 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 		EmptyBlockLightMask: make(io.BitSet, 1),
 		BlockLightArrays:    make([][]byte, 1, len(chunk.Sections)+1),
 	}
-	pk.SkyLightArrays[0] = emptyLightBuffer
-	pk.SkyLightMask.Set(0)
-	pk.EmptySkyLightMask.Set(0)
 
+	pk.SkyLightMask.Set(1)
+	pk.EmptySkyLightMask.Set(1)
+	pk.SkyLightArrays[0] = emptyLightBuffer
+
+	pk.BlockLightMask.Set(1)
+	pk.EmptyBlockLightMask.Set(1)
 	pk.BlockLightArrays[0] = emptyLightBuffer
-	pk.BlockLightMask.Set(0)
-	pk.EmptyBlockLightMask.Set(0)
 
 	for i, entity := range chunk.BlockEntities {
 		pk.BlockEntities[i] = play.BlockEntity{
@@ -187,6 +198,10 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	pk.BlockLightArrays = append(pk.BlockLightArrays, emptyLightBuffer)
 	pk.BlockLightMask.Set(len(chunk.sections))
 	pk.EmptyBlockLightMask.Set(len(chunk.sections))*/
+
+	//for i := 0; i < 24; i++ {
+	//	fmt.Println(pk.SkyLightMask.Get(i), len(pk.SkyLightArrays[i+1]))
+	//}
 
 	pk.Data = buf.Bytes()
 
