@@ -5,7 +5,7 @@ Blazingly fast, highly optimized server implementation written in [Go](https://g
 Why not?
 
 ## Progress
-- Chunk reading & manipulation (get/set block, resize palettes)
+- Chunk reading and writing (Region/Anvil)
 
 - Terrain generation (WIP)
 
