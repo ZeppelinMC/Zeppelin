@@ -3,12 +3,10 @@ package block
 type Dirt struct {
 }
 
-func (Dirt) Encode() (string, BlockProperties) {
-	return "minecraft:dirt", nil
+func (b Dirt) Encode() (string, BlockProperties) {
+	return "minecraft:dirt", BlockProperties{}
 }
 
-func (Dirt) New(props BlockProperties) Block {
+func (b Dirt) New(props BlockProperties) Block {
 	return Dirt{}
 }
-
-var _ Block = (*Dirt)(nil)

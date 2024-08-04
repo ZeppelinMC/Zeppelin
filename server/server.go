@@ -10,7 +10,6 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/player"
-	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	_ "github.com/zeppelinmc/zeppelin/server/session/std/handler"
 	"github.com/zeppelinmc/zeppelin/text"
@@ -57,7 +56,7 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 		stopLoop: make(chan int),
 	}
 	server.Console = &Console{Server: server}
-	server.World.SetBroadcast(session.NewBroadcast(server.Console))
+	server.World.Broadcast.AddDummy(server.Console)
 	server.listener.SetStatusProvider(server.provideStatus)
 
 	compstr := "compress everything"
@@ -125,8 +124,8 @@ func (srv *Server) Start(ts time.Time) {
 			srv.loadPlugins()
 		}
 	}
-	srv.ticker.Start()
-	log.Infolnf("Started server ticker (%d TPS)", srv.cfg.Net.TPS)
+	//srv.ticker.Start()
+	//log.Infolnf("Started server ticker (%d TPS)", srv.cfg.Net.TPS)
 	log.Infolnf("Done! (%s)", time.Since(ts))
 	for {
 		conn, err := srv.listener.Accept()

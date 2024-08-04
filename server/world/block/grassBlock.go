@@ -2,6 +2,10 @@ package block
 
 import (
 	"strconv"
+
+	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 )
 
 type GrassBlock struct {
@@ -18,4 +22,6 @@ func (g GrassBlock) New(props BlockProperties) Block {
 	return GrassBlock{Snowy: props["snowy"] == "true"}
 }
 
-var _ Block = (*GrassBlock)(nil)
+func (g GrassBlock) PlaceSound(pos pos.BlockPosition) *play.SoundEffect {
+	return session.SoundEffect("minecraft:block.grass.place", false, nil, play.SoundCategoryBlock, pos.X(), pos.Y(), pos.Z(), 1, 1)
+}

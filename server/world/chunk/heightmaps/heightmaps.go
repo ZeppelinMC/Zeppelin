@@ -34,6 +34,9 @@ func (hm *Heightmap) Set(x, z, y int32) {
 
 	i, off := hm.offset(x, z)
 	mask := int64(^((1<<HeightMapBitsPerEntry - 1) << off))
-	hm[i] &= mask
-	hm[i] |= int64(y) << off
+	//if len(*hm) <= int(i) {
+	//	*hm = append(*hm, make(Heightmap, 37-len(*hm))...)
+	//}
+	(*hm)[i] &= mask
+	(*hm)[i] |= int64(y) << off
 }

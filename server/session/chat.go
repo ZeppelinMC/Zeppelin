@@ -6,7 +6,6 @@ import (
 )
 
 func (b *Broadcast) SecureChatMessage(session Session, pk play.ChatMessage, index int32, prevMsgs []play.PreviousMessage) {
-	b.console.PlayerChatMessage(pk, session, "minecraft:chat", 0, nil)
 	b.sessions_mu.Lock()
 	defer b.sessions_mu.Unlock()
 
@@ -16,7 +15,6 @@ func (b *Broadcast) SecureChatMessage(session Session, pk play.ChatMessage, inde
 }
 
 func (b *Broadcast) DisguisedChatMessage(session Session, content text.TextComponent) {
-	b.console.DisguisedChatMessage(content, session, "minecraft:chat")
 	b.sessions_mu.Lock()
 	defer b.sessions_mu.Unlock()
 

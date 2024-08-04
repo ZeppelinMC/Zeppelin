@@ -101,6 +101,16 @@ func (c *Chunk) SetSkylightLevel(x, y, z int32, value byte) error {
 	return sec.SetSkylightLevel(int(x), int(y)&0x0f, int(z), value)
 }
 
+// X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
+func (c *Chunk) SkyLightLevel(x, y, z int32) (byte, error) {
+	secIndex := (y >> 4) - c.Y
+	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
+		return 0, fmt.Errorf("null section")
+	}
+	sec := c.Sections[secIndex]
+	return sec.SkyLightLevel(int(x), int(y)&0x0f, int(z))
+}
+
 // This function does not update the block for the players, so it should not be used. X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
 func (c *Chunk) SetBlockLightLevel(x, y, z int32, value byte) error {
 	c.LastModified = time.Now().UnixMilli()
@@ -110,6 +120,16 @@ func (c *Chunk) SetBlockLightLevel(x, y, z int32, value byte) error {
 	}
 	sec := c.Sections[secIndex]
 	return sec.SetBlocklightLevel(int(x), int(y)&0x0f, int(z), value)
+}
+
+// X and Z should be relative to the chunk (aka x&0x0f, z&0x0f), but Y should be absolute.
+func (c *Chunk) BlockLightLevel(x, y, z int32) (byte, error) {
+	secIndex := (y >> 4) - c.Y
+	if secIndex < 0 || secIndex >= int32(len(c.Sections)) {
+		return 0, fmt.Errorf("null section")
+	}
+	sec := c.Sections[secIndex]
+	return sec.BlockLightLevel(int(x), int(y)&0x0f, int(z))
 }
 
 // Returns the block entity at the position. All of the position values should be absolute (aka (chunkPos<<4)+pos)

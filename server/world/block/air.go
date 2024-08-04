@@ -3,12 +3,10 @@ package block
 type Air struct {
 }
 
-func (Air) Encode() (string, BlockProperties) {
-	return "minecraft:air", nil
+func (b Air) Encode() (string, BlockProperties) {
+	return "minecraft:air", BlockProperties{}
 }
 
-func (Air) New(BlockProperties) Block {
+func (b Air) New(props BlockProperties) Block {
 	return Air{}
 }
-
-var _ Block = (*Air)(nil)

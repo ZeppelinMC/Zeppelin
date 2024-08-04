@@ -7,6 +7,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/text"
@@ -37,11 +38,16 @@ func (g Chest) New(props BlockProperties) Block {
 	}
 }
 
-func (g Chest) BlockEntity() chunk.BlockEntity {
+func (g Chest) BlockEntity(pos pos.BlockPosition) chunk.BlockEntity {
 	return chunk.BlockEntity{
 		Id:    "minecraft:chest",
 		Items: make(container.Container, 0),
+		X:     pos.X(), Y: pos.Y(), Z: pos.Z(),
 	}
+}
+
+func (g Chest) PlaceSound(pos pos.BlockPosition) *play.SoundEffect {
+	return session.SoundEffect("minecraft:block.wood.place", false, nil, play.SoundCategoryBlock, pos.X(), pos.Y(), pos.Z(), 1, 1)
 }
 
 func (g Chest) Use(clicker session.Session, pk play.UseItemOn, dimension *dimension.Dimension) {

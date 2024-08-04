@@ -176,6 +176,9 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		if length < 0 {
 			return nil, fmt.Errorf("malformed packet, you are being fooled")
 		}
+		if length > 4096 {
+			return nil, fmt.Errorf("packet too big")
+		}
 
 		if length == 0 {
 			goto proc

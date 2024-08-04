@@ -64,6 +64,11 @@ func (session *StandardSession) handlePackets() {
 						_, data, _ := io.ReadVarInt(pk.Data)
 						session.clientName = string(data)
 					}
+				case *play.ServerboundPluginMessage:
+					if pk.Channel == "minecraft:brand" {
+						_, data, _ := io.ReadVarInt(pk.Data)
+						session.clientName = string(data)
+					}
 				case *configuration.AcknowledgeFinishConfiguration:
 					session.conn.SetState(net.PlayState)
 					session.login()

@@ -52,6 +52,8 @@ func (u DataUUID) UUID() uuid.UUID {
 type PlayerData struct {
 	// the path of this playerdata file, not a field in the nbt
 	path string `nbt:"-"`
+	// the base path of the world
+	basePath string `nbt:"-"`
 
 	AbsorptionAmount float32
 	Air              int16
@@ -121,6 +123,7 @@ type PlayerData struct {
 }
 
 func (data *PlayerData) Save() error {
+	os.MkdirAll(data.basePath+"/playerdata", 0755)
 	os.Rename(data.path, data.path+"_old")
 	file, err := os.Create(data.path)
 	if err != nil {

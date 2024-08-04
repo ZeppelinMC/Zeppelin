@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
@@ -95,28 +96,28 @@ func (s *Dimension) Block(x, y, z int32) (section.Block, error) {
 	return chunk.Block(x&0x0f, y, z&0x0f)
 }
 
-func (s *Dimension) SetBlock(x, y, z int32, b section.Block) (state int64, err error) {
-	chunkX, chunkZ := x>>4, z>>4
+func (s *Dimension) SetBlock(pos pos.BlockPosition, b section.Block, placeSound bool) (state int64, err error) {
+	chunkX, chunkZ := pos.ChunkX(), pos.ChunkZ()
 	chunk, err := s.GetChunk(chunkX, chunkZ)
 	if err != nil {
 		return 0, err
 	}
-	i, err := chunk.SetBlock(x&0x0f, y, z&0x0f, b)
+	i, err := chunk.SetBlock(pos.SectionX(), pos.Y(), pos.SectionZ(), b)
 	if err != nil {
 		return i, err
 	}
-	s.broadcast.UpdateBlock(x, y, z, b, s.name)
+	s.broadcast.UpdateBlock(pos, b, s.name, placeSound)
 	return i, err
 }
 
-func (s *Dimension) SetBlockEntity(x, y, z int32, be chunk.BlockEntity) error {
-	chunkX, chunkZ := x>>4, z>>4
+func (s *Dimension) SetBlockEntity(pos pos.BlockPosition, be chunk.BlockEntity) error {
+	chunkX, chunkZ := pos.ChunkX(), pos.ChunkZ()
 	chunk, err := s.GetChunk(chunkX, chunkZ)
 	if err != nil {
 		return err
 	}
-	chunk.SetBlockEntity(x, y, z, be)
-	s.broadcast.UpdateBlockEntity(x, y, z, be, s.name)
+	chunk.SetBlockEntity(pos.X(), pos.Y(), pos.Z(), be)
+	s.broadcast.UpdateBlockEntity(pos, be, s.name)
 
 	return nil
 }

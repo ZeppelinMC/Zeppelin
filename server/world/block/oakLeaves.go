@@ -5,25 +5,23 @@ import (
 )
 
 type OakLeaves struct {
-	Distance    int
-	Persistent  bool
+	Persistent bool
 	Waterlogged bool
+	Distance int
 }
 
-func (g OakLeaves) Encode() (string, BlockProperties) {
+func (b OakLeaves) Encode() (string, BlockProperties) {
 	return "minecraft:oak_leaves", BlockProperties{
-		"distance":    strconv.Itoa(g.Distance),
-		"persistent":  strconv.FormatBool(g.Persistent),
-		"waterlogged": strconv.FormatBool(g.Waterlogged),
+		"waterlogged": strconv.FormatBool(b.Waterlogged),
+		"distance": strconv.Itoa(b.Distance),
+		"persistent": strconv.FormatBool(b.Persistent),
 	}
 }
 
-func (g OakLeaves) New(props BlockProperties) Block {
+func (b OakLeaves) New(props BlockProperties) Block {
 	return OakLeaves{
-		Distance:    atoi(props["distance"]),
-		Persistent:  props["persistent"] == "true",
-		Waterlogged: props["waterlogged"] == "true",
+		Distance: atoi(props["distance"]),
+		Persistent: props["persistent"] != "false",
+		Waterlogged: props["waterlogged"] != "false",
 	}
 }
-
-var _ Block = (*OakLeaves)(nil)

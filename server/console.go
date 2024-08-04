@@ -14,6 +14,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
@@ -87,10 +88,8 @@ func (c *Console) PlayerChatMessage(pk play.ChatMessage, session session.Session
 	return nil
 }
 
-// will simply remove the players
 func (c *Console) PlayerInfoRemove(uuids ...uuid.UUID) error {
-	c.Server.World.Broadcast.RemoveUUIDs(text.TextComponent{Text: "Kicked from the server"}, uuids...)
-	return nil
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error {
@@ -174,15 +173,16 @@ func (c *Console) Username() string {
 	return "Console"
 }
 
-// actually sets the block
-func (c *Console) UpdateBlock(x, y, z int32, b section.Block) error {
-	_, err := c.Dimension().SetBlock(x, y, z, b)
-	return err
+func (c *Console) UpdateBlock(pos pos.BlockPosition, b section.Block) error {
+	return errConsoleUnsupportedFunc
 }
 
-// actually sets the block entity
-func (c *Console) UpdateBlockEntity(x, y, z int32, be chunk.BlockEntity) error {
-	return c.Dimension().SetBlockEntity(x, y, z, be)
+func (c *Console) UpdateBlockEntity(pos pos.BlockPosition, be chunk.BlockEntity) error {
+	return errConsoleUnsupportedFunc
+}
+
+func (c *Console) DeleteMessage(id int32, sig [256]byte) error {
+	return errConsoleUnsupportedFunc
 }
 
 func (c *Console) DamageEvent(attacker, attacked session.Session, damageType string) error {

@@ -1,17 +1,17 @@
 package block
 
 type OakLog struct {
-	Axis Axis
+	Axis string
 }
 
-func (g OakLog) Encode() (string, BlockProperties) {
+func (b OakLog) Encode() (string, BlockProperties) {
 	return "minecraft:oak_log", BlockProperties{
-		"axis": g.Axis,
+		"axis": b.Axis,
 	}
 }
 
-func (g OakLog) New(props BlockProperties) Block {
-	return OakLog{Axis: props["axis"]}
+func (b OakLog) New(props BlockProperties) Block {
+	return OakLog{
+		Axis: props["axis"],
+	}
 }
-
-var _ Block = (*OakLog)(nil)

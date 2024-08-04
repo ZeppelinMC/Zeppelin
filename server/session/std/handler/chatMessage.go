@@ -20,8 +20,8 @@ func handleChatMessage(s *std.StandardSession, pk packet.Packet) {
 		}
 		switch s.Config().Chat.ChatMode {
 		case "secure":
-			i, p := s.SecureChatData()
-			s.Broadcast().SecureChatMessage(s, *cm, i, p)
+			i, prev := s.SecureChatData()
+			s.Broadcast().SecureChatMessage(s, *cm, i, prev)
 			s.AppendMessage(cm.Signature)
 		case "disguised":
 			comp := text.TextComponent{Text: cm.Message}

@@ -25,6 +25,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
+	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
@@ -78,6 +79,10 @@ type StandardSession struct {
 
 	// the window id the client is viewing currently, 0 if none (inventory)
 	WindowView atomic.AtomicValue[int32]
+}
+
+func (s *StandardSession) Unsend() {
+	s.broadcast.DeleteMessage(s.previousMessages[0].MessageID, *s.previousMessages[0].Signature)
 }
 
 func NewStandardSession(
@@ -453,22 +458,24 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 	return nil
 }
 
-func (session *StandardSession) UpdateBlock(x, y, z int32, b block.Block) error {
+func (session *StandardSession) UpdateBlock(pos pos.BlockPosition, b block.Block) error {
 	state, ok := section.BlockStateId(b)
 	if !ok {
 		return fmt.Errorf("invalid block")
 	}
+	x, y, z := pos.X(), pos.Y(), pos.Z()
 	return session.WritePacket(&play.BlockUpdate{
 		X: x, Y: y, Z: z,
 		BlockId: state,
 	})
 }
 
-func (session *StandardSession) UpdateBlockEntity(x, y, z int32, be chunk.BlockEntity) error {
+func (session *StandardSession) UpdateBlockEntity(pos pos.BlockPosition, be chunk.BlockEntity) error {
 	id, ok := registry.BlockEntityType.Lookup(be.Id)
 	if !ok {
 		return fmt.Errorf("invalid block entity")
 	}
+	x, y, z := pos.X(), pos.Y(), pos.Z()
 	return session.WritePacket(&play.BlockEntityData{
 		X: x, Y: y, Z: z,
 		Type: id,
@@ -578,6 +585,10 @@ func (session *StandardSession) SendChunkRadius(chunkX, chunkZ int32) error {
 
 func (session *StandardSession) UpdateTime(worldAge, dayTime int64) error {
 	return session.conn.WritePacket(&play.UpdateTime{WorldAge: worldAge, TimeOfDay: dayTime})
+}
+
+func (session *StandardSession) DeleteMessage(id int32, sig [256]byte) error {
+	return session.conn.WritePacket(&play.DeleteMessage{MessageId: id, Signature: sig})
 }
 
 func (session *StandardSession) SendInventory() error {

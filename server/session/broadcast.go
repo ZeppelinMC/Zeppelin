@@ -1,7 +1,9 @@
 package session
 
 import (
+	"fmt"
 	"math"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
@@ -12,6 +14,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/net/packet/status"
 	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
@@ -20,17 +23,24 @@ import (
 )
 
 type Broadcast struct {
-	sessions    map[uuid.UUID]Session
+	sessions map[uuid.UUID]Session
+	// a dummy session is not included in the player list
+	dummies     []Session
 	sessions_mu sync.RWMutex
-
-	console Session
 }
 
-func NewBroadcast(console Session) *Broadcast {
+func NewBroadcast(dummies ...Session) *Broadcast {
 	return &Broadcast{
 		sessions: make(map[uuid.UUID]Session),
-		console:  console,
+		dummies:  dummies,
 	}
+}
+
+// adds a dummy session to the broadcast. A dummy session is not listed in the player list
+func (b *Broadcast) AddDummy(session Session) {
+	b.sessions_mu.Lock()
+	defer b.sessions_mu.Unlock()
+	b.dummies = append(b.dummies, session)
 }
 
 // Disconnects all the players on the broadcast
@@ -104,6 +114,17 @@ func (b *Broadcast) UpdateSession(session Session) {
 			},
 		})
 	}
+	for _, ses := range b.dummies {
+		ses.PlayerInfoUpdate(&play.PlayerInfoUpdate{
+			Actions: play.ActionInitializeChat,
+			Players: map[uuid.UUID]play.PlayerAction{
+				session.UUID(): {
+					HasSignatureData: ok,
+					Session:          sesData,
+				},
+			},
+		})
+	}
 }
 
 func (b *Broadcast) RemoveUUIDs(disconnectionReason text.TextComponent, uuids ...uuid.UUID) {
@@ -129,6 +150,10 @@ func (b *Broadcast) RemovePlayer(session Session) {
 	id := session.Player().EntityId()
 
 	for _, ses := range b.sessions {
+		ses.PlayerInfoRemove(session.UUID())
+		ses.DespawnEntities(id)
+	}
+	for _, ses := range b.dummies {
 		ses.PlayerInfoRemove(session.UUID())
 		ses.DespawnEntities(id)
 	}
@@ -171,6 +196,18 @@ func (b *Broadcast) AddPlayer(session Session) {
 			Session:          sesData,
 		}
 	}
+	for _, ses := range b.dummies {
+		ses.PlayerInfoUpdate(&play.PlayerInfoUpdate{
+			Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat,
+			Players: map[uuid.UUID]play.PlayerAction{
+				session.UUID(): {
+					Name:       session.Username(),
+					Properties: session.Properties(),
+					Listed:     true,
+				},
+			},
+		})
+	}
 
 	session.PlayerInfoUpdate(toPlayerPk)
 	b.sessions[session.UUID()] = session
@@ -196,6 +233,9 @@ func (b *Broadcast) SpawnPlayer(session Session) {
 
 		ses.SpawnPlayer(session)
 		session.SpawnPlayer(ses)
+	}
+	for _, ses := range b.dummies {
+		ses.SpawnPlayer(session)
 	}
 }
 
@@ -262,6 +302,16 @@ func (b *Broadcast) BroadcastPlayerMovement(session Session, x, y, z float64, ya
 			ses.UpdateEntityRotation(player, p)
 		}
 	}
+	for _, ses := range b.dummies {
+		switch p := pk.(type) {
+		case *play.UpdateEntityPosition:
+			ses.UpdateEntityPosition(player, p)
+		case *play.UpdateEntityPositionAndRotation:
+			ses.UpdateEntityPositionRotation(player, p)
+		case *play.UpdateEntityRotation:
+			ses.UpdateEntityRotation(player, p)
+		}
+	}
 }
 
 func (b *Broadcast) Animation(session Session, animation byte) {
@@ -272,6 +322,9 @@ func (b *Broadcast) Animation(session Session, animation byte) {
 		if ses.UUID() == session.UUID() {
 			continue
 		}
+		ses.EntityAnimation(id, animation)
+	}
+	for _, ses := range b.dummies {
 		ses.EntityAnimation(id, animation)
 	}
 }
@@ -286,6 +339,9 @@ func (b *Broadcast) EntityMetadata(session Session, md metadata.Metadata) {
 		}
 		ses.EntityMetadata(id, md)
 	}
+	for _, ses := range b.dummies {
+		ses.EntityMetadata(id, md)
+	}
 }
 
 func (b *Broadcast) UpdateTimeForAll(worldAge, dayTime int64) {
@@ -293,6 +349,9 @@ func (b *Broadcast) UpdateTimeForAll(worldAge, dayTime int64) {
 	defer b.sessions_mu.RUnlock()
 
 	for _, ses := range b.sessions {
+		ses.UpdateTime(worldAge, dayTime)
+	}
+	for _, ses := range b.dummies {
 		ses.UpdateTime(worldAge, dayTime)
 	}
 }
@@ -313,6 +372,9 @@ func (b *Broadcast) BlockAction(x, y, z int32, dimension string, actionId, actio
 		}
 		ses.BlockAction(pk)
 	}
+	for _, ses := range b.dummies {
+		ses.BlockAction(pk)
+	}
 }
 
 func (b *Broadcast) PlaySound(pk *play.SoundEffect, dimension string) {
@@ -325,23 +387,55 @@ func (b *Broadcast) PlaySound(pk *play.SoundEffect, dimension string) {
 		}
 		ses.PlaySound(pk)
 	}
+	for _, ses := range b.dummies {
+		ses.PlaySound(pk)
+	}
 }
 
 // this updates the block for everyone. It doesn't set the block in the world
-func (b *Broadcast) UpdateBlock(x, y, z int32, block section.Block, dimension string) {
+func (b *Broadcast) UpdateBlock(blockPos pos.BlockPosition, block section.Block, dimension string, blockPlaceSound bool) {
 	b.sessions_mu.RLock()
 	defer b.sessions_mu.RUnlock()
+
+	var sound *play.SoundEffect
+	if b, ok := block.(interface {
+		PlaceSound(pos pos.BlockPosition) *play.SoundEffect
+	} /*avoid import cycle*/); ok {
+		sound = b.PlaceSound(blockPos)
+	} else {
+		name, _ := block.Encode()
+		name = strings.TrimPrefix(name, "minecraft:")
+		id, ok := registry.SoundEvent.Lookup(fmt.Sprintf("minecraft:block.%s.place", name))
+		if ok {
+			sound = &play.SoundEffect{
+				SoundId:       id,
+				SoundCategory: play.SoundCategoryBlock,
+				X:             blockPos.X(), Y: blockPos.Y(), Z: blockPos.Z(),
+				Volume: 1, Pitch: 1,
+				Seed: int64(level.NewSeed()),
+			}
+		}
+	}
 
 	for _, ses := range b.sessions {
 		if ses.Player().Dimension() != dimension {
 			continue
 		}
-		ses.UpdateBlock(x, y, z, block)
+		ses.UpdateBlock(blockPos, block)
+		if sound != nil {
+			ses.PlaySound(sound)
+		}
+	}
+	for _, ses := range b.dummies {
+		ses.UpdateBlock(blockPos, block)
+		if sound != nil {
+			ses.PlaySound(sound)
+		}
 	}
 }
 
 // this updates the block entity for everyone. It doesn't set the block entity in the world
-func (b *Broadcast) UpdateBlockEntity(x, y, z int32, blockEntity chunk.BlockEntity, dimension string) {
+func (b *Broadcast) UpdateBlockEntity(pos pos.BlockPosition, blockEntity chunk.BlockEntity, dimension string) {
 	b.sessions_mu.RLock()
 	defer b.sessions_mu.RUnlock()
 
@@ -349,7 +443,21 @@ func (b *Broadcast) UpdateBlockEntity(x, y, z int32, blockEntity chunk.BlockEnti
 		if ses.Player().Dimension() != dimension {
 			continue
 		}
-		ses.UpdateBlockEntity(x, y, z, blockEntity)
+		ses.UpdateBlockEntity(pos, blockEntity)
+	}
+	for _, ses := range b.dummies {
+		ses.UpdateBlockEntity(pos, blockEntity)
+	}
+}
+
+func (b *Broadcast) DeleteMessage(id int32, sig [256]byte) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+	for _, ses := range b.sessions {
+		ses.DeleteMessage(id, sig)
+	}
+	for _, ses := range b.dummies {
+		ses.DeleteMessage(id, sig)
 	}
 }
 

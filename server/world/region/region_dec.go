@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
+	//"github.com/aimjel/minecraft/nbt"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
@@ -255,10 +256,4 @@ func Decode(r io.ReaderAt, f *File) error {
 
 func ChunkHash(x, z int32) uint64 {
 	return uint64(uint32(z))<<32 | uint64(uint32(x))
-}
-
-func locationEntryToPos(index int) (x, z int32) {
-	index = (index / 4) / 32
-
-	return 0, 0
 }

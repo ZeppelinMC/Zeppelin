@@ -21,11 +21,11 @@ type World struct {
 	worldAge, dayTime atomic.AtomicValue[int64]
 }
 
-func NewWorld(path string, broadcast *session.Broadcast) (*World, error) {
+func NewWorld(path string) (*World, error) {
 	var err error
 	w := &World{
 		path:      path,
-		Broadcast: broadcast,
+		Broadcast: session.NewBroadcast(),
 	}
 	w.Level, err = level.LoadWorldLevel(path)
 	w.worldAge = atomic.Value(w.Level.Data.Time)
@@ -35,7 +35,7 @@ func NewWorld(path string, broadcast *session.Broadcast) (*World, error) {
 			path+"/region",
 			"minecraft:overworld",
 			"minecraft:overworld",
-			broadcast,
+			w.Broadcast,
 			terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed)),
 			true,
 		),
@@ -57,13 +57,6 @@ func (w *World) Save() {
 	for _, dim := range w.dimensions {
 		dim.SaveAllRegions()
 		log.Infoln("Saved dimension", dim.Name())
-	}
-}
-
-func (w *World) SetBroadcast(b *session.Broadcast) {
-	w.Broadcast = b
-	for _, dim := range w.dimensions {
-		dim.SetBroadcast(b)
 	}
 }
 

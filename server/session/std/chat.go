@@ -23,7 +23,7 @@ func (session *StandardSession) PlayerChatMessage(
 		Timestamp:           pk.Timestamp,
 		Salt:                pk.Salt,
 
-		PreviousMessages: session.previousMessages,
+		PreviousMessages: prevMsgs,
 
 		ChatType:   int32(chatTypeIndex + 1),
 		SenderName: text.Unmarshal(sender.Username(), session.config.Chat.Formatter.Rune()),
@@ -45,6 +45,7 @@ func (session *StandardSession) AppendMessage(sig [256]byte) {
 	session.prev_msgs_mu.Lock()
 	defer session.prev_msgs_mu.Unlock()
 	session.bumpChatIndex()
+
 	session.previousMessages = append(session.previousMessages, play.PreviousMessage{MessageID: -1, Signature: &sig})
 
 	if len(session.previousMessages) > 20 {
