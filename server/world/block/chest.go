@@ -1,7 +1,6 @@
 package block
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
@@ -55,7 +54,6 @@ func (g Chest) Use(clicker session.Session, pk play.UseItemOn, dimension *dimens
 	if !ok {
 		entity, ok := dimension.BlockEntity(pk.BlockX, pk.BlockY, pk.BlockZ)
 		if !ok {
-			fmt.Println("not found entity id", pk.BlockX, pk.BlockY, pk.BlockZ)
 			return
 		}
 		if entity.Id != "minecraft:chest" {

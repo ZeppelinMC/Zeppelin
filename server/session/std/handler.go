@@ -29,9 +29,11 @@ func (session *StandardSession) handlePackets() {
 	for {
 		select {
 		case <-keepAlive.C:
-			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: time.Now().UnixMilli()})
+			l := time.Now().UnixMilli()
+			session.cbLastKeepAlive.Set(l)
+			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: l})
 		default:
-			if lastKeepAlive := session.lastKeepalive.Get(); lastKeepAlive != 0 && time.Now().Unix()-lastKeepAlive > 21 {
+			if lastKeepAlive := session.sbLastKeepalive.Get(); lastKeepAlive != 0 && time.Now().UnixMilli()-lastKeepAlive > (21*1000) {
 				session.Disconnect(text.TextComponent{Text: "Timed out"})
 			}
 			p, err := session.conn.ReadPacket()
@@ -45,20 +47,14 @@ func (session *StandardSession) handlePackets() {
 				switch pk := p.(type) {
 				case *play.ChunkBatchReceived:
 					session.awaitingChunkBatchAcknowledgement.Set(false)
-				case *play.ConfirmTeleportation:
-					session.AwaitingTeleportAcknowledgement.Set(false)
 				case *play.ServerboundKeepAlive:
-					session.lastKeepalive.Set(time.Now().Unix())
-				case *play.SetHeldItemServerbound:
-					if pk.Slot < 0 || pk.Slot > 8 {
-						session.Disconnect(text.TextComponent{Text: "Invalid slot"})
-					}
-					session.player.SetSelectedItemSlot(int32(pk.Slot))
+					session.sbLastKeepalive.Set(time.Now().UnixMilli())
+					session.broadcast.PlayerInfoUpdateLatency(session)
 				case *play.PlayerSession:
 					session.hasSessionData.Set(true)
 					session.sessionData.Set(*pk)
 
-					session.broadcast.UpdateSession(session)
+					session.broadcast.PlayerInfoUpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
 						_, data, _ := io.ReadVarInt(pk.Data)

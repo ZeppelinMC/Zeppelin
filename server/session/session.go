@@ -68,6 +68,12 @@ type Session interface {
 	// spawns a player
 	SpawnPlayer(Session) error
 
+	// whether this session should be listed in the playerlist
+	Listed() bool
+
+	// returns the latency of the client in milliseconds
+	Latency() int64
+
 	// sends entity animation
 	EntityAnimation(entityId int32, animation byte) error
 	// sends entity metadata

@@ -72,17 +72,23 @@ type StandardSession struct {
 
 	AwaitingTeleportAcknowledgement   atomic.AtomicValue[bool]
 	awaitingChunkBatchAcknowledgement atomic.AtomicValue[bool]
-	lastKeepalive                     atomic.AtomicValue[int64]
+
+	// the time in milliseconds that the keep alive packet was sent to the server from the client
+	sbLastKeepalive atomic.AtomicValue[int64]
+	// the time in milliseconds that the keep alive packet was sent to the client from the server
+	cbLastKeepAlive atomic.AtomicValue[int64]
 
 	load_ch_mu   sync.RWMutex
 	loadedChunks map[uint64]bool
+
+	listed atomic.AtomicValue[bool]
 
 	// the window id the client is viewing currently, 0 if none (inventory)
 	WindowView atomic.AtomicValue[int32]
 }
 
-func (s *StandardSession) Unsend() {
-	s.broadcast.DeleteMessage(s.previousMessages[0].MessageID, *s.previousMessages[0].Signature)
+func (s *StandardSession) Latency() int64 {
+	return s.sbLastKeepalive.Get() - s.cbLastKeepAlive.Get()
 }
 
 func NewStandardSession(
@@ -104,6 +110,8 @@ func NewStandardSession(
 		commandManager:         commandManager,
 		loadedChunks:           make(map[uint64]bool),
 
+		listed: atomic.Value(true),
+
 		registryIndexes: make(map[string][]string),
 	}
 }
@@ -118,6 +126,14 @@ func (session *StandardSession) WritePacket(pk packet.Packet) error {
 
 func (session *StandardSession) ReadPacket() (packet.Packet, error) {
 	return session.conn.ReadPacket()
+}
+
+func (session *StandardSession) Listed() bool {
+	return session.listed.Get()
+}
+
+func (session *StandardSession) SetListed(v bool) {
+	session.listed.Set(v)
 }
 
 func (session *StandardSession) SynchronizePosition(x, y, z float64, yaw, pitch float32) error {

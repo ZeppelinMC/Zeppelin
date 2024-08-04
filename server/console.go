@@ -189,6 +189,14 @@ func (c *Console) DamageEvent(attacker, attacked session.Session, damageType str
 	return errConsoleUnsupportedFunc
 }
 
+func (c *Console) Listed() bool {
+	return false
+}
+
+func (c *Console) Latency() int64 {
+	return 0
+}
+
 func (c *Console) Broadcast() *session.Broadcast {
 	return c.Server.World.Broadcast
 }

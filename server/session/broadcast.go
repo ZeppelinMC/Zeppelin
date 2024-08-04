@@ -97,7 +97,7 @@ func (b *Broadcast) SessionByEntityId(entityId int32) (ses Session, ok bool) {
 }
 
 // when a player's session data updates
-func (b *Broadcast) UpdateSession(session Session) {
+func (b *Broadcast) PlayerInfoUpdateSession(session Session) {
 	b.sessions_mu.RLock()
 	defer b.sessions_mu.RUnlock()
 
@@ -124,6 +124,52 @@ func (b *Broadcast) UpdateSession(session Session) {
 				},
 			},
 		})
+	}
+}
+
+// when a player's game mode updates
+func (b *Broadcast) PlayerInfoUpdateGameMode(session Session) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	gm := session.Player().GameMode()
+
+	pk := &play.PlayerInfoUpdate{
+		Actions: play.ActionUpdateGameMode,
+		Players: map[uuid.UUID]play.PlayerAction{
+			session.UUID(): {
+				GameMode: int32(gm),
+			},
+		},
+	}
+	for _, ses := range b.sessions {
+		ses.PlayerInfoUpdate(pk)
+	}
+	for _, ses := range b.dummies {
+		ses.PlayerInfoUpdate(pk)
+	}
+}
+
+// when a player's latency updates
+func (b *Broadcast) PlayerInfoUpdateLatency(session Session) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	l := session.Latency()
+
+	pk := &play.PlayerInfoUpdate{
+		Actions: play.ActionUpdateLatency,
+		Players: map[uuid.UUID]play.PlayerAction{
+			session.UUID(): {
+				Ping: int32(l),
+			},
+		},
+	}
+	for _, ses := range b.sessions {
+		ses.PlayerInfoUpdate(pk)
+	}
+	for _, ses := range b.dummies {
+		ses.PlayerInfoUpdate(pk)
 	}
 }
 
@@ -164,26 +210,31 @@ func (b *Broadcast) AddPlayer(session Session) {
 	b.sessions_mu.Lock()
 	defer b.sessions_mu.Unlock()
 
+	newListed, newGameMode, newLatency := session.Listed(), int32(session.Player().GameMode()), int32(session.Latency())
+
 	var toPlayerPk = &play.PlayerInfoUpdate{
-		Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat,
+		Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat | play.ActionUpdateGameMode | play.ActionUpdateLatency,
 		Players: map[uuid.UUID]play.PlayerAction{
 			session.UUID(): {
 				Name:       session.Username(),
 				Properties: session.Properties(),
-
-				Listed: true,
+				GameMode:   newGameMode,
+				Listed:     newListed,
+				Ping:       newLatency,
 			},
 		},
 	}
 
 	for _, ses := range b.sessions {
 		ses.PlayerInfoUpdate(&play.PlayerInfoUpdate{
-			Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat,
+			Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat | play.ActionUpdateGameMode | play.ActionUpdateLatency,
 			Players: map[uuid.UUID]play.PlayerAction{
 				session.UUID(): {
 					Name:       session.Username(),
 					Properties: session.Properties(),
-					Listed:     true,
+					Listed:     newListed,
+					GameMode:   newGameMode,
+					Ping:       newLatency,
 				},
 			},
 		})
@@ -191,19 +242,23 @@ func (b *Broadcast) AddPlayer(session Session) {
 		toPlayerPk.Players[ses.UUID()] = play.PlayerAction{
 			Name:             ses.Username(),
 			Properties:       ses.Properties(),
-			Listed:           true,
+			Listed:           ses.Listed(),
+			GameMode:         int32(ses.Player().GameMode()),
 			HasSignatureData: ok,
 			Session:          sesData,
+			Ping:             int32(ses.Latency()),
 		}
 	}
 	for _, ses := range b.dummies {
 		ses.PlayerInfoUpdate(&play.PlayerInfoUpdate{
-			Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat,
+			Actions: play.ActionAddPlayer | play.ActionUpdateListed | play.ActionInitializeChat | play.ActionUpdateGameMode | play.ActionUpdateLatency,
 			Players: map[uuid.UUID]play.PlayerAction{
 				session.UUID(): {
 					Name:       session.Username(),
 					Properties: session.Properties(),
-					Listed:     true,
+					Listed:     newListed,
+					GameMode:   newGameMode,
+					Ping:       newLatency,
 				},
 			},
 		})
