@@ -30,3 +30,6 @@ Why not?
 `--cpuprof`: run the server with the cpu profiler
 
 `--memprof`: run the server with the memory profiler
+
+## Acknowledgements
+[Angel](https://github.com/aimjel) - help with chunk related calculations (0x8D989E86)
