@@ -56,7 +56,24 @@ func (s *Dimension) Name() string {
 	return s.name
 }
 
-func (s *Dimension) SaveAllRegions() {
+func (s *Dimension) Save() {
+	s.syncWindows()
+	s.saveAllRegions()
+}
+
+func (s *Dimension) syncWindows() {
+	s.WindowManager.Range(func(i pos.BlockPosition, w *window.Window) {
+		if w.ChunkEntityType != "" {
+			s.SetBlockEntity(i, chunk.BlockEntity{
+				X: i.X(), Y: i.Y(), Z: i.Z(),
+				Id:    w.ChunkEntityType,
+				Items: w.Items,
+			})
+		}
+	})
+}
+
+func (s *Dimension) saveAllRegions() {
 	s.reg_mu.Lock()
 	defer s.reg_mu.Unlock()
 	for hash, reg := range s.regions {

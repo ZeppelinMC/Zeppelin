@@ -55,7 +55,7 @@ func (w *World) Dimension(name string) *dimension.Dimension {
 
 func (w *World) Save() {
 	for _, dim := range w.dimensions {
-		dim.SaveAllRegions()
+		dim.Save()
 		log.Infoln("Saved dimension", dim.Name())
 	}
 }

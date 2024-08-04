@@ -59,7 +59,7 @@ func (g Chest) Use(clicker session.Session, pk play.UseItemOn, dimension *dimens
 		if entity.Id != "minecraft:chest" {
 			return
 		}
-		w = dimension.WindowManager.New("minecraft:generic_9x3", entity.Items, text.Sprint("Chest"))
+		w = dimension.WindowManager.New("minecraft:generic_9x3", entity.Id, entity.Items, text.Sprint("Chest"))
 		dimension.WindowManager.AddWindow([3]int32{pk.BlockX, pk.BlockY, pk.BlockZ}, w)
 	}
 
