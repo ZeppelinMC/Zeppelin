@@ -46,11 +46,17 @@ type Conn struct {
 	decrypter, encrypter cipher.Stream
 	compressionSet       bool
 
+	usesForge bool
+
 	rd  *bufio.Reader
 	buf [4096]byte
 
 	write_mu sync.Mutex
 	read_mu  sync.Mutex
+}
+
+func (conn *Conn) UsesForge() bool {
+	return conn.usesForge
 }
 
 func (conn *Conn) Username() string {
@@ -253,6 +259,8 @@ func (conn *Conn) writeClassicDisconnect(reason string) {
 	conn.Write(data)
 }
 
+var fml2hs = [...]byte{0, 70, 79, 82, 71, 69}
+
 // Handles the handshake, and status/login state for the connection
 // Returns true if the client is logging in
 func (conn *Conn) handleHandshake() bool {
@@ -270,6 +278,9 @@ func (conn *Conn) handleHandshake() bool {
 			conn.writeLegacyDisconnect(clientTooOldMsg)
 		}
 		return false
+	}
+	if addr := []byte(handshaking.ServerAddress); len(addr) > len(fml2hs) && [6]byte(addr[len(addr)-len(fml2hs):]) == fml2hs {
+		conn.usesForge = true
 	}
 
 	switch handshaking.NextState {
