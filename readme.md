@@ -1,6 +1,8 @@
 # Zeppelin
 Blazingly fast, highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21
 
+[Discord Server](https://discord.gg/T8qEtDWPak)
+
 ## Why
 Why not?
 
@@ -21,8 +23,6 @@ Why not?
 - The server allows for chat signing
 
 - The server respects the client's settings not to show in server listing
-
-[Discord Server](https://discord.gg/T8qEtDWPak)
 
 ## Boot Arguments
 `--no-raw-terminal`: disables the raw terminal option which might be useful for systems that don't work well with it
