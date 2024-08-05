@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
-	"io"
+	"os"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 )
 
-func (f *File) Encode(w io.WriteCloser) error {
+// Encode writes the region file to w. It uses a very high amount of memory so it should only be used when saving the world (stopping the server)
+func (f *File) Encode(w *os.File) error {
 	var locationTable [4096]byte
 	var timestampTable [4096]byte
 	var chunksOffset = len(locationTable) + len(timestampTable)
@@ -25,7 +26,6 @@ func (f *File) Encode(w io.WriteCloser) error {
 
 		binary.BigEndian.PutUint32(timestampTable[locationIndex:locationIndex+4], uint32(chunk.LastModified))
 
-		//offset := int32(math.Floor(float64(chunksOffset+buf.Len()) / 4096))
 		offset := (buf.Len() + chunksOffset) / 4096
 
 		locationTable[locationIndex+0],
