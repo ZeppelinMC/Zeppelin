@@ -15,6 +15,8 @@ Why not?
 
 - Secure chat
 
+- Command API
+
 ## Privacy
 - The server allows for chat signing
 

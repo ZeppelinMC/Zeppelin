@@ -13,7 +13,7 @@ import (
 var memStats runtime.MemStats
 
 var mem = command.Command{
-	Name: "mem",
+	Node: command.NewCommand("mem"),
 	Callback: func(ccc command.CommandCallContext) {
 		runtime.ReadMemStats(&memStats)
 		loaded := ccc.Server.(*server.Server).World.LoadedChunks()

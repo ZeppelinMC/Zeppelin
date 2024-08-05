@@ -5,9 +5,8 @@ import (
 )
 
 type Command struct {
-	Name      string
-	Aliases   []string
-	Arguments []Argument
+	Node    Node
+	Aliases []string
 
 	Callback           func(CommandCallContext)
 	SuggestionCallback func()
@@ -19,8 +18,4 @@ type CommandCallContext struct {
 	Server   any
 
 	Arguments []any
-}
-
-type Argument struct {
-	Name string
 }

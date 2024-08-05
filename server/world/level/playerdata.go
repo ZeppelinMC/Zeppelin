@@ -166,8 +166,9 @@ func (w *Level) PlayerData(uuid string) (PlayerData, error) {
 
 func (w *Level) NewPlayerData(uuid uuid.UUID) PlayerData {
 	return PlayerData{
-		path: fmt.Sprintf("%s/playerdata/%s.dat", w.basePath, uuid),
-		Pos:  [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},
+		path:     fmt.Sprintf("%s/playerdata/%s.dat", w.basePath, uuid),
+		basePath: w.basePath,
+		Pos:      [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},
 
 		Health:              20,
 		FoodSaturationLevel: 5,

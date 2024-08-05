@@ -70,7 +70,7 @@ func (mgr *Manager) findCommand(name string) *Command {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 	for _, cmd := range mgr.commands {
-		if cmd.Name == name {
+		if cmd.Node.Name == name {
 			return &cmd
 		}
 		for _, alias := range cmd.Aliases {

@@ -90,7 +90,7 @@ type registries struct {
 		TheEnd         Dimension  `nbt:"minecraft:the_end"`
 		TheNether      Dimension1 `nbt:"minecraft:the_nether"`
 	} `nbt:"minecraft:dimension_type"`
-	/*Enchantment map[string]struct {
+	Enchantment map[string]struct {
 		AnvilCost   int32 `nbt:"anvil_cost"`
 		Description struct {
 			Translate string `nbt:"translate"`
@@ -342,7 +342,7 @@ type registries struct {
 		Weight         int32    `nbt:"weight"`
 		ExclusiveSet   string   `nbt:"exclusive_set"`
 		PrimaryItems   string   `nbt:"primary_items"`
-	} `nbt:"minecraft:enchantment"`*/
+	} `nbt:"minecraft:enchantment"`
 	JukeboxSong map[string]struct {
 		ComparatorOutput int32 `nbt:"comparator_output"`
 		Description      struct {

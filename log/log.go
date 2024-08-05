@@ -154,6 +154,13 @@ func InfolnClean(v ...any) {
 	fmt.Println("\r")
 }
 
+// prints the contents formatted prefixed by a carriage return + blue info text and suffixed with a new line
+func InfolnfClean(format string, v ...any) {
+	fmt.Printf("\r%s %s: ", timeColor(timeString()), infoColor("INFO"))
+	fmt.Printf(format, v...)
+	fmt.Println("\r")
+}
+
 // prints the contents prefixed by a carriage return + blue info text
 func Info(v ...any) {
 	fmt.Printf("\r%s %s: ", timeColor(timeString()), infoColor("INFO"))

@@ -76,6 +76,8 @@ type Server struct {
 	listener *net.Listener
 	ticker   Ticker
 
+	timeStart time.Time
+
 	World *world.World
 
 	Console *Console
@@ -124,6 +126,7 @@ func (srv *Server) Start(ts time.Time) {
 			srv.loadPlugins()
 		}
 	}
+	srv.timeStart = ts
 	//srv.ticker.Start()
 	//log.Infolnf("Started server ticker (%d TPS)", srv.cfg.Net.TPS)
 	log.Infolnf("Done! (%s)", time.Since(ts))
@@ -169,5 +172,11 @@ func (srv *Server) Stop() {
 	srv.Players.SaveAll()
 
 	srv.World.Save()
+	log.InfolnfClean("Server lasted for %s", srv.formatTimestart())
 	srv.stopLoop <- 0
+}
+
+func (srv *Server) formatTimestart() string {
+	sub := time.Since(srv.timeStart)
+	return fmt.Sprintf("%02dhrs %02dmins, %02dsecs", int(sub.Hours())%60, int(sub.Minutes())%60, int(sub.Seconds())%60)
 }

@@ -2,7 +2,6 @@ package command
 
 import "github.com/zeppelinmc/zeppelin/net/packet/play"
 
-// TODO add arguments
 func (mgr *Manager) Encode() *play.Commands {
 	if mgr.graph != nil {
 		return mgr.graph
@@ -15,26 +14,33 @@ func (mgr *Manager) Encode() *play.Commands {
 	}
 
 	for _, cmd := range mgr.commands {
-		node := play.Node{
-			Flags: play.NodeLiteral,
-			Name:  cmd.Name,
-		}
-
-		i := len(pk.Nodes)
-		pk.Nodes = append(pk.Nodes, node)
-		pk.Nodes[0].Children = append(pk.Nodes[0].Children, int32(i))
+		commandNodeIndex := int32(len(pk.Nodes))
+		pk.Nodes[0].Children = append(pk.Nodes[0].Children, commandNodeIndex)
+		pk.Nodes = append(pk.Nodes, cmd.Node.Node)
 
 		for _, alias := range cmd.Aliases {
-			ai := len(pk.Nodes)
-			n := play.Node{
-				Name:         alias,
+			pk.Nodes[0].Children = append(pk.Nodes[0].Children, int32(len(pk.Nodes)))
+			pk.Nodes = append(pk.Nodes, play.Node{
 				Flags:        play.NodeLiteral | play.NodeRedirect,
-				RedirectNode: int32(i),
-			}
-			pk.Nodes = append(pk.Nodes, n)
-			pk.Nodes[0].Children = append(pk.Nodes[0].Children, int32(ai))
+				Name:         alias,
+				RedirectNode: commandNodeIndex,
+			})
+		}
+
+		for _, child := range cmd.Node.children {
+			appendNode(commandNodeIndex, child, &pk.Nodes)
 		}
 	}
 
 	return &pk
+}
+
+func appendNode(parentIndex int32, n Node, tgt *[]play.Node) {
+	index := int32(len(*tgt))
+	(*tgt)[parentIndex].Children = append((*tgt)[parentIndex].Children, index)
+	(*tgt) = append((*tgt), n.Node)
+
+	for _, child := range n.children {
+		appendNode(index, child, tgt)
+	}
 }

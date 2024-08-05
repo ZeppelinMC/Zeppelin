@@ -10,7 +10,7 @@ import (
 )
 
 var debug = command.Command{
-	Name: "debug",
+	Node: command.NewCommand("debug"),
 	Callback: func(ccc command.CommandCallContext) {
 		player := ccc.Executor.Player()
 		if player == nil {
