@@ -1,4 +1,4 @@
-# Zeppelin
+![image](https://github.com/user-attachments/assets/e6dc0d87-48f7-49b6-a425-c4090f17f009)![image](https://github.com/user-attachments/assets/f02bd4b0-7680-4bc8-bab4-4451eb43fe13)# Zeppelin
 Blazingly fast, highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21
 
 [Discord Server](https://discord.gg/T8qEtDWPak)
@@ -21,6 +21,12 @@ Why not?
 
 ## Performance
 Zeppelin is heavily focused on performance and using as little memory as possible. Below are screenshots of the memory usage (Alloc=current memory usage, Total Alloc=lifetime memory usage)
+
+![Uploading image.png…](Generated)
+
+![Uploading image.png…](Region loaded)
+
+
 
 ## Supported Platforms
 Zeppelin supports *unix with plugins.
