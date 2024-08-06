@@ -1,4 +1,4 @@
-package bufutil
+package util
 
 import "io"
 

@@ -6,8 +6,8 @@ import (
 	"unsafe"
 
 	"github.com/zeppelinmc/zeppelin/log"
-	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/io/buffers"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"

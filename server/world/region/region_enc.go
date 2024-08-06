@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
-	"github.com/zeppelinmc/zeppelin/net/buffers"
+	"github.com/zeppelinmc/zeppelin/net/io/buffers"
 )
 
 // Encode writes the region file to w.

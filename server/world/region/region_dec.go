@@ -11,10 +11,10 @@ import (
 	"github.com/4kills/go-zlib"
 	"github.com/aimjel/minecraft/nbt"
 
-	"github.com/zeppelinmc/zeppelin/net/buffers"
+	"github.com/zeppelinmc/zeppelin/net/io/buffers"
+	"github.com/zeppelinmc/zeppelin/net/io/util"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
-	"github.com/zeppelinmc/zeppelin/util/bufutil"
 )
 
 type Generator interface {
@@ -105,7 +105,7 @@ func (r *File) GetChunk(x, z int32, generateEmpty bool, generator Generator) (*c
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}
 
-	var rawReader = bufutil.NewReaderAtMaxxer(r.reader, int(length)-1, int64(offset)+5)
+	var rawReader = util.NewReaderAtMaxxer(r.reader, int(length)-1, int64(offset)+5)
 
 	buf := buffers.Buffers.Get().(*bytes.Buffer)
 	buf.Reset()

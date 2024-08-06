@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/zeppelinmc/zeppelin/net/buffers"
+	"github.com/zeppelinmc/zeppelin/net/io/buffers"
 	"github.com/zeppelinmc/zeppelin/server"
 	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/text"
