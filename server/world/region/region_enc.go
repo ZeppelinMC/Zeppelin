@@ -2,12 +2,14 @@ package region
 
 import (
 	"bytes"
-	"compress/zlib"
+	//"compress/zlib"
 	"encoding/binary"
 	"os"
 
+	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/io/buffers"
+	"github.com/zeppelinmc/zeppelin/net/io/util"
 )
 
 // Encode writes the region file to w.
@@ -36,9 +38,13 @@ func (f *File) Encode(w *os.File) error {
 
 		chunkBuffer.Reset()
 
-		zlib := zlib.NewWriter(chunkBuffer)
+		zlib := easyZlib{zlib.NewWriter(chunkBuffer)}
 
-		if err := nbt.NewEncoder(zlib).Encode("", chunkToAnvil(chunk)); err != nil {
+		f := util.NewFlusher(zlib)
+		if err := nbt.NewEncoder(f).Encode("", chunkToAnvil(chunk)); err != nil {
+			return err
+		}
+		if _, err := f.Flush(); err != nil {
 			return err
 		}
 
@@ -76,4 +82,17 @@ func (f *File) Encode(w *os.File) error {
 	_, err := buf.WriteTo(w)
 
 	return err
+}
+
+// easyzlib doesnt return an error if len(p) is 0
+type easyZlib struct {
+	*zlib.Writer
+}
+
+func (w easyZlib) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+
+	return w.Writer.Write(p)
 }
