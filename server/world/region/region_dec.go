@@ -9,7 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/4kills/go-zlib"
-	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/aimjel/minecraft/nbt"
 
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
@@ -46,6 +46,12 @@ func (r *File) LoadedChunks() int32 {
 	r.chu_mu.Lock()
 	defer r.chu_mu.Unlock()
 	return int32(len(r.chunks))
+}
+
+var anvilChunks = sync.Pool{
+	New: func() any {
+		return &anvilChunk{}
+	},
 }
 
 func (r *File) GetChunk(x, z int32, generateEmpty bool, generator Generator) (*chunk.Chunk, error) {
@@ -98,40 +104,39 @@ func (r *File) GetChunk(x, z int32, generateEmpty bool, generator Generator) (*c
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}
 
-	var chunkData = make([]byte, length-1)
-	_, err = r.reader.ReadAt(chunkData, int64(offset)+5)
-	if err != nil {
-		return nil, err
-	}
-
-	var rd io.ReadCloser
-
-	switch compression {
-	case 1:
-		rd, err = gzip.NewReader(bytes.NewReader(chunkData))
-		if err != nil {
-			return nil, err
-		}
-		defer rd.Close()
-	case 2:
-		rd, err = zlib.NewReader(bytes.NewReader(chunkData))
-		if err != nil {
-			return nil, err
-		}
-		defer rd.Close()
+	var rawReader = &readerAtMaxxer{
+		r:      r.reader,
+		offset: int64(offset) + 5,
+		max:    int(length) - 1,
 	}
 
 	buf := buffers.Buffers.Get().(*bytes.Buffer)
 	buf.Reset()
-	buf.ReadFrom(rd)
 	defer buffers.Buffers.Put(buf)
 
-	var anvil anvilChunk
+	switch compression {
+	case 1:
+		rd, err := gzip.NewReader(rawReader)
+		if err != nil {
+			return nil, err
+		}
+		defer rd.Close()
+		buf.ReadFrom(rd)
+	case 2:
+		rd, err := zlib.NewReader(rawReader)
+		if err != nil {
+			return nil, err
+		}
+		defer rd.Close()
+		buf.ReadFrom(rd)
+	}
 
-	_, err = nbt.NewDecoder(buf).Decode(&anvil)
+	var anvil = anvilChunks.Get().(*anvilChunk)
+	defer anvilChunks.Put(anvil)
+
+	err = nbt.NewDecoder(buf).Decode(anvil)
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -183,6 +188,36 @@ func Empty(f *File) {
 	*f = File{
 		chunks: make(map[uint64]*chunk.Chunk),
 	}
+}
+
+// readerAtMaxxer takes a reader at and only allows max bytes to be read from it
+type readerAtMaxxer struct {
+	r io.ReaderAt
+
+	max  int
+	read int
+
+	offset int64
+}
+
+func (r *readerAtMaxxer) Read(data []byte) (i int, err error) {
+	if r.read >= r.max {
+		return 0, io.EOF
+	}
+
+	remaining := r.max - r.read
+	if len(data) > remaining {
+		data = data[:remaining]
+	}
+
+	n, err := r.r.ReadAt(data, r.offset+int64(r.read))
+	r.read += n
+
+	if r.read >= r.max {
+		err = io.EOF
+	}
+
+	return n, err
 }
 
 func Decode(r io.ReaderAt, f *File) error {

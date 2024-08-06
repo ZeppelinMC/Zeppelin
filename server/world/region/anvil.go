@@ -54,8 +54,8 @@ type anvilBlock struct {
 }
 
 type anvilSection struct {
-	BlockLight  []int8 `nbt:"BlockLight,omitempty"`
-	SkyLight    []int8 `nbt:"SkyLight,omitempty"`
+	BlockLight  []int8 `nbt:"BlockLight"`
+	SkyLight    []int8 `nbt:"SkyLight"`
 	Y           int8
 	Biomes      anvilBiomes      `nbt:"biomes"`
 	BlockStates anvilBlockStates `nbt:"block_states"`

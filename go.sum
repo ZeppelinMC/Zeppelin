@@ -1,5 +1,7 @@
 github.com/4kills/go-zlib v1.2.0 h1:h/OjHfOi0ZGAhotXzFVJK7V97cKNsEqRJVmJo4e8H6A=
 github.com/4kills/go-zlib v1.2.0/go.mod h1:ngBUonyN1YJBHSknfLPNtWokAjYhHsaZDio8yS+BqSo=
+github.com/aimjel/minecraft v0.0.0-20240728121823-2eaf2f3edce2 h1:wQVlckK5FEyMBwzkaeBTjMEjfludDzNnTabslYFfcVQ=
+github.com/aimjel/minecraft v0.0.0-20240728121823-2eaf2f3edce2/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/aquilax/go-perlin v1.1.0 h1:Gg+3jQ24wT4Y5GI7TCRLmYarzUG0k+n/JATFqOimb7s=
 github.com/aquilax/go-perlin v1.1.0/go.mod h1:z9Rl7EM4BZY0Ikp2fEN1I5mKSOJ26HQpk0O2TBdN2HE=
 github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=

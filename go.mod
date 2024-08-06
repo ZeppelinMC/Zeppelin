@@ -10,6 +10,8 @@ require (
 	golang.org/x/term v0.22.0
 )
 
+require github.com/aimjel/minecraft v0.0.0-20240728121823-2eaf2f3edce2
+
 require (
 	github.com/aquilax/go-perlin v1.1.0
 	github.com/mattn/go-colorable v0.1.13 // indirect

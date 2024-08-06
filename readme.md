@@ -19,6 +19,9 @@ Why not?
 
 - Command API
 
+## Performance
+Zeppelin is heavily focused on performance and using as little memory as possible. Below are screenshots of the memory usage (Alloc=current memory usage, Total Alloc=lifetime memory usage)
+
 ## Supported Platforms
 Zeppelin supports *unix with plugins.
 

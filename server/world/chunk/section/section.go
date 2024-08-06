@@ -235,6 +235,8 @@ func blockBitsPerEntry(paletteSize int) int {
 		ln = 4
 	}
 
+	//log.Println(paletteSize, ln)
+
 	return ln
 }
 

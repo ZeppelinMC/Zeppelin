@@ -2,7 +2,7 @@ package chunk
 
 import (
 	"bytes"
-	"fmt"
+	"log"
 	"slices"
 	"unsafe"
 
@@ -117,6 +117,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 		case blockBitsPerEntry == 0:
 			stateId, _ := section.BlockStateId(blockPalette[0])
 			w.VarInt(stateId)
+
 		case blockBitsPerEntry >= 4 && blockBitsPerEntry <= 8:
 			w.VarInt(int32(len(blockPalette)))
 			for _, e := range blockPalette {
@@ -125,7 +126,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 			}
 		case blockBitsPerEntry == 15: // no palette
 		default:
-			fmt.Println("invalid block bits per entry", blockBitsPerEntry, (len(blockStates)*64)/4096)
+			log.Println("invalid block bits per entry", blockBitsPerEntry, (len(blockStates)*64)/4096)
 		}
 
 		w.VarInt(int32(len(blockStates)))
@@ -154,7 +155,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 			}
 		case biomeBitsPerEntry == 6: // no palette
 		default:
-			fmt.Println("invalid biome bits per entry", pk.CX, pk.CZ, sec.Y(), biomeBitsPerEntry)
+			log.Println("invalid biome bits per entry", pk.CX, pk.CZ, sec.Y(), biomeBitsPerEntry)
 		}
 
 		w.VarInt(int32(len(biomeStates)))

@@ -18,6 +18,7 @@ var valueMap = sync.Pool{
 
 func generateMap(v reflect.Value) map[string]reflect.Value {
 	m := valueMap.Get().(map[string]reflect.Value)
+	clear(m)
 	ty := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		ft := ty.Field(i)
@@ -387,6 +388,8 @@ func (d *Decoder) decodeCompoundMap(_map reflect.Value) error {
 			default:
 				return fmt.Errorf("cannot assign compound to type %s on field %s", _map.Type().Elem(), name)
 			}
+		default:
+			return fmt.Errorf("unknown tag %d", typeId[0])
 		}
 	}
 }
@@ -415,7 +418,6 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 			if err != nil {
 				return err
 			}
-
 			if valid {
 				switch z.Kind() {
 				case reflect.Uint8:
@@ -567,7 +569,7 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 			}
 
 			if valid {
-				switch z.Type().Elem().Kind() {
+				switch z.Type().Kind() {
 				case reflect.Slice:
 					switch z.Type().Elem().Kind() {
 					case reflect.Int8:
@@ -656,15 +658,11 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 				d._decodeList()
 			}
 		case Compound:
-
 			if valid {
 				switch z.Type().Kind() {
 				case reflect.Struct:
 					m := generateMap(_struct[name])
-					defer func() {
-						clear(m)
-						valueMap.Put(m)
-					}()
+					defer valueMap.Put(m)
 
 					if err := d.decodeCompoundStruct(m); err != nil {
 						return err
@@ -692,6 +690,8 @@ func (d *Decoder) decodeCompoundStruct(_struct map[string]reflect.Value) error {
 			} else {
 				d.decodeCompound()
 			}
+		default:
+			return fmt.Errorf("unknown tag %d", typeId[0])
 		}
 	}
 }
@@ -818,10 +818,7 @@ func (d *Decoder) decodeList(list reflect.Value) error {
 			switch list.Type().Elem().Kind() {
 			case reflect.Struct:
 				m := generateMap(list.Index(i))
-				defer func() {
-					clear(m)
-					valueMap.Put(m)
-				}()
+				defer valueMap.Put(m)
 
 				if err := d.decodeCompoundStruct(m); err != nil {
 					return err
@@ -846,6 +843,8 @@ func (d *Decoder) decodeList(list reflect.Value) error {
 			default:
 				return fmt.Errorf("cannot assign list to type %s on index %d", list.Type().Elem(), i)
 			}
+		default:
+			return fmt.Errorf("unknown tag %d", typeId)
 		}
 	}
 
