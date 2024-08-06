@@ -1,6 +1,8 @@
 package region
 
 import (
+	"unsafe"
+
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/heightmaps"
 )
@@ -24,7 +26,7 @@ func chunkToAnvil(c *chunk.Chunk) anvilChunk {
 
 		anvil.Sections[i] = anvilSection{
 			Y:        sec.Y(),
-			SkyLight: sky, BlockLight: block,
+			SkyLight: *(*[]int8)(unsafe.Pointer(&sky)), BlockLight: *(*[]int8)(unsafe.Pointer(&block)),
 			Biomes: anvilBiomes{
 				Data:    biomeStates,
 				Palette: biomePalette,
@@ -52,8 +54,8 @@ type anvilBlock struct {
 }
 
 type anvilSection struct {
-	BlockLight  []byte `nbt:"BlockLight,omitempty"`
-	SkyLight    []byte `nbt:"SkyLight,omitempty"`
+	BlockLight  []int8 `nbt:"BlockLight,omitempty"`
+	SkyLight    []int8 `nbt:"SkyLight,omitempty"`
 	Y           int8
 	Biomes      anvilBiomes      `nbt:"biomes"`
 	BlockStates anvilBlockStates `nbt:"block_states"`

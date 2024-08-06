@@ -6,7 +6,7 @@ const MinY = -64
 
 const HeightMapBitsPerEntry = 9
 
-type Heightmap [37]int64
+type Heightmap []int64
 
 type Heightmaps struct {
 	MotionBlocking Heightmap `nbt:"MOTION_BLOCKING"`
@@ -34,9 +34,9 @@ func (hm *Heightmap) Set(x, z, y int32) {
 
 	i, off := hm.offset(x, z)
 	mask := int64(^((1<<HeightMapBitsPerEntry - 1) << off))
-	//if len(*hm) <= int(i) {
-	//	*hm = append(*hm, make(Heightmap, 37-len(*hm))...)
-	//}
+	if len(*hm) <= int(i) {
+		*hm = append(*hm, make(Heightmap, 37-len(*hm))...)
+	}
 	(*hm)[i] &= mask
 	(*hm)[i] |= int64(y) << off
 }

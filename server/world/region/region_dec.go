@@ -3,13 +3,14 @@ package region
 import (
 	"bytes"
 	"compress/gzip"
-	"compress/zlib"
 	"fmt"
 	"io"
 	"sync"
+	"unsafe"
 
+	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/nbt"
-	//"github.com/aimjel/minecraft/nbt"
+
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
@@ -158,7 +159,7 @@ func (r *File) GetChunk(x, z int32, generateEmpty bool, generator Generator) (*c
 			blocks[i] = b
 		}
 
-		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, sec.SkyLight, sec.BlockLight)
+		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, *(*[]byte)(unsafe.Pointer(&sec.SkyLight)), *(*[]byte)(unsafe.Pointer(&sec.BlockLight)))
 	}
 
 	if emptySections == len(r.chunks[hash].Sections) && generateEmpty && generator != nil {

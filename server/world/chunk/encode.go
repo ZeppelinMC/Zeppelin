@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"slices"
-	"sync"
 	"unsafe"
 
 	"github.com/zeppelinmc/zeppelin/net/buffers"
@@ -23,22 +22,14 @@ func init() {
 	}
 }
 
-var chunkDataPackets = sync.Pool{
-	New: func() any {
-		return &play.ChunkDataUpdateLight{}
-	},
-}
-
 func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	buf := buffers.Buffers.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer buffers.Buffers.Put(buf)
 
-	pk := chunkDataPackets.Get().(*play.ChunkDataUpdateLight)
-	defer chunkDataPackets.Put(pk)
-
 	w := io.NewWriter(buf)
-	*pk = play.ChunkDataUpdateLight{
+
+	pk := &play.ChunkDataUpdateLight{
 		CX: chunk.X,
 		CZ: chunk.Z,
 

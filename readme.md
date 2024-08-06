@@ -19,6 +19,14 @@ Why not?
 
 - Command API
 
+## Supported Platforms
+Zeppelin supports *unix with plugins.
+
+*Windows is unsupported. You can run it on WSL or MSYS2 as long as you can have Zlib installed. (WSL is recommended because it has plugin support)*
+
+## Installation
+To run Zeppelin, you need to install the [Go compiler](https://go.dev), a C compiler and ZLib.
+
 ## Privacy
 - The server allows for chat signing
 

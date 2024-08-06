@@ -2,15 +2,15 @@ package region
 
 import (
 	"bytes"
-	"compress/zlib"
 	"encoding/binary"
 	"os"
 
+	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 )
 
-// Encode writes the region file to w. It uses a very high amount of memory so it should only be used when saving the world (stopping the server)
+// Encode writes the region file to w.
 func (f *File) Encode(w *os.File) error {
 	var locationTable [4096]byte
 	var timestampTable [4096]byte

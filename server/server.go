@@ -12,6 +12,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	_ "github.com/zeppelinmc/zeppelin/server/session/std/handler"
+	"github.com/zeppelinmc/zeppelin/server/tick"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 
@@ -72,9 +73,9 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 }
 
 type Server struct {
-	cfg      config.ServerConfig
-	listener *net.Listener
-	ticker   Ticker
+	cfg         config.ServerConfig
+	listener    *net.Listener
+	tickManager *tick.TickManager
 
 	timeStart time.Time
 
@@ -179,4 +180,8 @@ func (srv *Server) Stop() {
 func (srv *Server) formatTimestart() string {
 	sub := time.Since(srv.timeStart)
 	return fmt.Sprintf("%02dhrs %02dmins, %02dsecs", int(sub.Hours())%60, int(sub.Minutes())%60, int(sub.Seconds())%60)
+}
+
+func (srv *Server) createTicker() {
+	srv.tickManager = tick.New(srv.cfg.Net.TPS)
 }
