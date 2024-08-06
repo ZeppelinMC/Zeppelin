@@ -90,7 +90,7 @@ func (w Writer) String(s string) error {
 	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
 	}
-	_, err := w.Write(*(*[]byte)(unsafe.Pointer(&s)))
+	_, err := w.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //(*(*[]byte)(unsafe.Pointer(&s)))
 	return err
 }
 
@@ -101,7 +101,7 @@ func (w Writer) Identifier(s string) error {
 	if err := w.VarInt(int32(len(s))); err != nil {
 		return err
 	}
-	_, err := w.Write(*(*[]byte)(unsafe.Pointer(&s)))
+	_, err := w.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //(*(*[]byte)(unsafe.Pointer(&s)))
 	return err
 }
 

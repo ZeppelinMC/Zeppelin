@@ -2,10 +2,10 @@ package region
 
 import (
 	"bytes"
+	"compress/zlib"
 	"encoding/binary"
 	"os"
 
-	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 )

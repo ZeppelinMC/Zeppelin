@@ -98,7 +98,7 @@ func (r Reader) String(s *string) error {
 		return err
 	}
 	d, err := r.readBytes(int(l))
-	*s = *(*string)(unsafe.Pointer(&d))
+	*s = unsafe.String(unsafe.SliceData(d), len(d))
 
 	return err
 }

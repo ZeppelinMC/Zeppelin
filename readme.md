@@ -20,11 +20,11 @@ Why not?
 - Command API
 
 ## Performance
-Zeppelin is heavily focused on performance and using as little memory as possible. Below are screenshots of the memory usage (Alloc=current memory usage, Total Alloc=lifetime memory usage)
+Zeppelin is heavily focused on performance and using as little memory as possible. Below are screenshots of the memory usage (Alloc=current memory usage, Total Alloc=lifetime memory usage) (Top=region loaded, bottom=Generated)
 
-![Generated](https://github.com/user-attachments/assets/e6dc0d87-48f7-49b6-a425-c4090f17f009)
+![Region loaded](https://github.com/user-attachments/assets/e6dc0d87-48f7-49b6-a425-c4090f17f009)
 
-![Region loaded](https://github.com/user-attachments/assets/f02bd4b0-7680-4bc8-bab4-4451eb43fe13)
+![Generated](https://github.com/user-attachments/assets/f02bd4b0-7680-4bc8-bab4-4451eb43fe13)
 
 
 

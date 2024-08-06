@@ -66,7 +66,7 @@ func (r StaticReader) readString() (string, error) {
 		return "", err
 	}
 
-	return *(*string)(unsafe.Pointer(&data)), nil
+	return unsafe.String(unsafe.SliceData(data), len(data)), nil //*(*string)(unsafe.Pointer(&data)), nil
 }
 
 func (r StaticReader) ReadRoot(withName bool) (typeId byte, name string, err error) {

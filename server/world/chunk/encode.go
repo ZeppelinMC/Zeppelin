@@ -2,10 +2,10 @@ package chunk
 
 import (
 	"bytes"
-	"log"
 	"slices"
 	"unsafe"
 
+	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/buffers"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
