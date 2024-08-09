@@ -6,7 +6,8 @@ import (
 	"github.com/4kills/go-libdeflate/v2"
 )
 
-// Decompress zlib. The data returned is only safe to use until the next operation
+// Decompress zlib. If decompressedLength is provided, the data returned will only be safe to use until the next operation
+// It is recommmended to provide the decompressed length to avoid allocation. If you don't know it, provide a number likely bigger than the decompressed length.
 func DecompressZlib(data io.Reader, compressedLength int, decompressedLength *int) ([]byte, error) {
 	var compressed = compressedBuffers.Get().([]byte)
 	if len(compressed) < int(compressedLength) {
@@ -39,6 +40,8 @@ func DecompressZlib(data io.Reader, compressedLength int, decompressedLength *in
 	}
 }
 
+// Compresses zlib. If compressedLength is provided, data returned will only be safe to use until the next operation.
+// It is recommmended to provide the compressed length to avoid allocation. If you don't know it, provide a number likely bigger than the compressed length.
 func CompressZlib(decompressedData io.Reader, decompressedLength int, compressedLength *int) (compressed []byte, err error) {
 	c, err := libdeflate.NewCompressor()
 	if err != nil {

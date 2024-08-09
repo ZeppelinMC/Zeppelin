@@ -17,8 +17,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/properties"
 	"github.com/zeppelinmc/zeppelin/server/command"
-	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/registry"
@@ -44,7 +44,7 @@ type StandardSession struct {
 	World     *world.World
 	player    *player.Player
 	broadcast *session.Broadcast
-	config    config.ServerConfig
+	config    properties.ServerProperties
 
 	conn *net.Conn
 
@@ -99,7 +99,7 @@ func New(
 	player *player.Player,
 	world *world.World,
 	broadcast *session.Broadcast,
-	config config.ServerConfig,
+	config properties.ServerProperties,
 	statusProviderProvider func() net.StatusProvider,
 	commandManager *command.Manager,
 	tickManager *tick.TickManager,
@@ -181,7 +181,7 @@ func (session *StandardSession) Conn() *net.Conn {
 	return session.conn
 }
 
-func (session *StandardSession) Config() config.ServerConfig {
+func (session *StandardSession) Config() properties.ServerProperties {
 	return session.config
 }
 
@@ -243,7 +243,7 @@ func (session *StandardSession) Configure() error {
 	go session.handlePackets()
 	if err := session.conn.WritePacket(&configuration.ClientboundPluginMessage{
 		Channel: "minecraft:brand",
-		Data:    io.AppendString(nil, session.config.Brand),
+		Data:    io.AppendString(nil, session.config.ServerBrandName),
 	}); err != nil {
 		return err
 	}
@@ -271,8 +271,8 @@ func (session *StandardSession) login() error {
 
 		Hardcore: session.World.Data.Hardcore,
 
-		ViewDistance:       session.config.RenderDistance,
-		SimulationDistance: session.config.SimulationDistance,
+		ViewDistance:       int32(session.config.ViewDistance),
+		SimulationDistance: int32(session.config.SimulationDistance),
 
 		HashedSeed: session.World.Data.WorldGenSettings.Seed.Hash(),
 
@@ -281,7 +281,7 @@ func (session *StandardSession) login() error {
 		DimensionName:       session.player.Dimension(),
 		GameMode:            byte(session.player.GameMode()),
 
-		EnforcesSecureChat: session.config.Chat.ChatMode == "secure" || session.config.Chat.DisableWarning,
+		EnforcesSecureChat: session.config.EnforceSecureProfile,
 	}); err != nil {
 		return err
 	}
@@ -407,8 +407,8 @@ Returns the server's render distance if the client's view distance is bigger or 
 */
 func (session *StandardSession) ViewDistance() int32 {
 	plVd := int32(session.ClientInformation().ViewDistance)
-	if plVd == 0 || plVd > session.config.RenderDistance {
-		return session.config.RenderDistance
+	if plVd == 0 || plVd > int32(session.config.ViewDistance) {
+		return int32(session.config.ViewDistance)
 	}
 
 	return plVd

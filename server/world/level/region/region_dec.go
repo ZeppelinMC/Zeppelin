@@ -2,14 +2,12 @@ package region
 
 import (
 	"bytes"
-	"compress/gzip"
 	"fmt"
 	"io"
 	"slices"
 	"sync"
 	"unsafe"
 
-	"github.com/4kills/go-zlib"
 	"github.com/aimjel/minecraft/nbt"
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/io/buffers"
@@ -123,13 +121,13 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 
 	switch compression {
 	case CompressionGzip:
-		data, err := compress.DecompressGzip(rawReader, int(length)-1, nil)
+		data, err := compress.DecompressGzip(rawReader, int(length)-1, &MaxCompressedPacketSize)
 		if err != nil {
 			return nil, err
 		}
 		buf.Write(data)
 	case CompressionZlib:
-		data, err := compress.DecompressZlib(rawReader, int(length)-1, nil)
+		data, err := compress.DecompressZlib(rawReader, int(length)-1, &MaxCompressedPacketSize)
 		if err != nil {
 			return nil, err
 		}
@@ -247,27 +245,23 @@ func (f *File) decodeAll(locationTable []byte, r io.ReaderAt) error {
 
 		switch compression {
 		case CompressionGzip:
-			rd, err := gzip.NewReader(rawReader)
+			data, err := compress.DecompressGzip(rawReader, int(length)-1, &MaxCompressedPacketSize)
 			if err != nil {
-				continue
+				return err
 			}
-			defer rd.Close()
-
-			buf.ReadFrom(rd)
+			buf.Write(data)
 		case CompressionZlib:
-			rd, err := zlib.NewReader(rawReader)
+			data, err := compress.DecompressZlib(rawReader, int(length)-1, &MaxCompressedPacketSize)
 			if err != nil {
-				continue
+				return err
 			}
-			defer rd.Close()
-
-			buf.ReadFrom(rd)
+			buf.Write(data)
 		case CompressionNone:
 			buf.ReadFrom(rawReader)
 		case CompressionLZ4:
 			data, err := compress.DecompressLZ4(rawReader)
 			if err != nil {
-				continue
+				return err
 			}
 			buf.Write(data)
 		default:

@@ -31,10 +31,14 @@ Zeppelin is heavily focused on performance and using as little memory as possibl
 ## Supported Platforms
 Zeppelin supports *unix with plugins.
 
-*Windows is unsupported. You can run it on WSL or MSYS2 as long as you can have libdeflate and zlib installed. (WSL is recommended because it has support for go plugins aswell)*
+*Windows is unsupported. You can run it on WSL or MSYS2 as long as you can have libdeflate installed. (WSL is recommended because it has support for go plugins aswell)*
 
 ## Installation
-To run Zeppelin, you need to install the [Go compiler](https://go.dev), a C compiler, and deflate and zlib.
+To run Zeppelin, you need to install the [Go compiler](https://go.dev), a C compiler, and libdeflate.
+
+### Configuration
+Configuration is in the standard server.properties. Zeppelin includes a couple of custom properties, and removes some too.
+NOTE: all the properties are added to the structure, but they aren't being used yet! (the properties that are in the structure are either used or will be used)
 
 ## Privacy
 - The server allows for chat signing

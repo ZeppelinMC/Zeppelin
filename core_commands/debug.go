@@ -44,7 +44,7 @@ var debug = command.Command{
 		name, props := onBlock.Encode()
 
 		ccc.Executor.SystemMessage(text.Unmarshalf(
-			ccc.Executor.Config().Chat.Formatter.Rune(),
+			ccc.Executor.Config().ChatFormatter.Rune(),
 			"XYZ: %.03f / %.05f / %.03f\nBlock: %d %d %d [%d %d %d]\nChunk: %d %d %d [%d %d in r.%d.%d.mca]\nStanding on: %s [%v]\nFacing: (%.01f / %.01f)\nClient Light: %d (%d sky, %d block)\n\nYou are using: %s",
 			x, y, z,
 			xb, yb, zb,

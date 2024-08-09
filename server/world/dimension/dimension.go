@@ -76,6 +76,7 @@ func (s *Dimension) syncWindows() {
 func (s *Dimension) saveAllRegions() {
 	s.reg_mu.Lock()
 	defer s.reg_mu.Unlock()
+	os.MkdirAll(s.regionPath, 0755)
 	for hash, reg := range s.regions {
 		rx, rz := s.regionUnhash(hash)
 		path := fmt.Sprintf("%s/r.%d.%d.mca", s.regionPath, rx, rz)

@@ -28,13 +28,9 @@ func main() {
 
 	cfg := loadConfig()
 
-	w, err := world.NewWorld("world")
-	if err != nil {
-		log.Errorlnf("Error loading world: %v", err)
-		return
-	}
+	w := world.NewWorld(cfg.LevelName)
 
-	log.Infof("Binding server to %s:%d\n", cfg.Net.ServerIP, cfg.Net.ServerPort)
+	log.Infof("Binding server to %s:%d\n", cfg.ServerIp, cfg.ServerPort)
 
 	rawTerminal := !util.HasArgument("--no-raw-terminal")
 

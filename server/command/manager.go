@@ -33,9 +33,9 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 	if len(arguments) == 0 {
 		caller.SystemMessage(
 			text.Unmarshalf(
-				caller.Config().Chat.Formatter.Rune(),
+				caller.Config().ChatFormatter.Rune(),
 				"%scInvalid command",
-				caller.Config().Chat.Formatter,
+				caller.Config().ChatFormatter,
 			),
 		)
 		return
@@ -44,9 +44,9 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 	if cmd == nil {
 		caller.SystemMessage(
 			text.Unmarshalf(
-				caller.Config().Chat.Formatter.Rune(),
+				caller.Config().ChatFormatter.Rune(),
 				"%scUnknown command %s",
-				caller.Config().Chat.Formatter,
+				caller.Config().ChatFormatter,
 				command,
 			),
 		)

@@ -2,18 +2,14 @@ package region
 
 import (
 	"bytes"
-	"compress/gzip"
 	"fmt"
-	"io"
 
-	//"compress/zlib"
 	"encoding/binary"
 	"os"
 
-	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/nbt"
 	"github.com/zeppelinmc/zeppelin/net/io/buffers"
-	"github.com/zeppelinmc/zeppelin/net/io/util"
+	"github.com/zeppelinmc/zeppelin/net/io/compress"
 )
 
 type bufferCloser struct {
@@ -30,6 +26,9 @@ const (
 	CompressionNone
 	CompressionLZ4
 )
+
+// 4096B
+var MaxCompressedPacketSize = 4096
 
 // Encode writes itself to w.
 func (f *File) Encode(w *os.File, compressionScheme byte) error {
@@ -57,25 +56,28 @@ func (f *File) Encode(w *os.File, compressionScheme byte) error {
 
 		chunkBuffer.Reset()
 
-		var w io.WriteCloser
+		if err := nbt.NewEncoder(chunkBuffer).Encode("", chunkToAnvil(chunk)); err != nil {
+			return err
+		}
+
+		var data []byte
+		var err error
 
 		switch compressionScheme {
 		case CompressionGzip:
-			w = gzip.NewWriter(chunkBuffer)
+			data, err = compress.CompressGzip(chunkBuffer, chunkBuffer.Len(), &MaxCompressedPacketSize)
+			if err != nil {
+				return err
+			}
 		case CompressionZlib:
-			w = zlib.NewWriter(chunkBuffer)
+			data, err = compress.CompressZlib(chunkBuffer, chunkBuffer.Len(), &MaxCompressedPacketSize)
+			if err != nil {
+				return err
+			}
 		case CompressionNone:
-			w = bufferCloser{chunkBuffer}
+			data = chunkBuffer.Bytes()
 		default:
 			return fmt.Errorf("unknown compression scheme %d", compressionScheme)
-		}
-
-		f := util.NewFlusher(w, nil)
-		if err := nbt.NewEncoder(f).Encode("", chunkToAnvil(chunk)); err != nil {
-			return err
-		}
-		if _, err := f.Flush(); err != nil {
-			return err
 		}
 
 		chunkLength := chunkBuffer.Len() + 1
@@ -90,7 +92,7 @@ func (f *File) Encode(w *os.File, compressionScheme byte) error {
 			return err
 		}
 
-		if _, err := chunkBuffer.WriteTo(buf); err != nil {
+		if _, err := buf.Write(data); err != nil {
 			return err
 		}
 

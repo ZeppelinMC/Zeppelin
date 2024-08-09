@@ -31,3 +31,38 @@ func DecompressGzip(data io.Reader, compressedLength int, decompressedLength *in
 
 	return decompressedResult, err
 }
+
+// Compresses gunzip. If compressedLength is provided, data returned will only be safe to use until the next operation.
+// It is recommmended to provide the compressed length to avoid allocation. If you don't know it, provide a number likely bigger than the compressed length.
+func CompressGzip(decompressedData io.Reader, decompressedLength int, compressedLength *int) (compressed []byte, err error) {
+	c, err := libdeflate.NewCompressor()
+	if err != nil {
+		return nil, err
+	}
+
+	var decompressed = decompressedBuffers.Get().([]byte)
+	if len(decompressed) < int(decompressedLength) {
+		decompressed = make([]byte, decompressedLength)
+	}
+	defer decompressedBuffers.Put(decompressed)
+
+	if _, err := decompressedData.Read(decompressed[:decompressedLength]); err != nil {
+		return nil, err
+	}
+
+	if compressedLength != nil {
+		dst := compressedBuffers.Get().([]byte)
+		if len(dst) < int(*compressedLength) {
+			dst = make([]byte, *compressedLength)
+		}
+		defer compressedBuffers.Put(dst)
+
+		_, compressedResult, err := c.Compress(decompressed[:decompressedLength], dst[:*compressedLength], libdeflate.ModeGzip)
+
+		return compressedResult, err
+	} else {
+		_, compressedResult, err := c.Compress(decompressed[:decompressedLength], nil, libdeflate.ModeGzip)
+
+		return compressedResult, err
+	}
+}

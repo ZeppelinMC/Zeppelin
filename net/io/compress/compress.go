@@ -7,5 +7,5 @@ var decompressedBuffers = sync.Pool{
 }
 
 var compressedBuffers = sync.Pool{
-	New: func() any { return make([]byte, 0) },
+	New: func() any { return make([]byte, 1024*1024) },
 }

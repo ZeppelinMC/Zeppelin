@@ -16,6 +16,7 @@ type Config struct {
 	CompressionThreshold int32
 	Encrypt              bool
 	Authenticate         bool
+	AcceptTransfers      bool
 }
 
 type StatusProvider func() status.StatusResponseData

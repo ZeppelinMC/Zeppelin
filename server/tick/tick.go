@@ -66,6 +66,15 @@ func (mgr *TickManager) Add(ticker *time.Ticker) {
 	mgr.tickers = append(mgr.tickers, ticker)
 }
 
+func (mgr *TickManager) New() *time.Ticker {
+	ticker := time.NewTicker(mgr.Frequency())
+	mgr.mu.Lock()
+	defer mgr.mu.Unlock()
+	mgr.tickers = append(mgr.tickers, ticker)
+
+	return ticker
+}
+
 func (mgr *TickManager) Count() int {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()

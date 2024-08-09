@@ -1,6 +1,7 @@
 package world
 
 import (
+	"os"
 	"strings"
 
 	"github.com/zeppelinmc/zeppelin/atomic"
@@ -16,17 +17,22 @@ type World struct {
 	dimensions map[string]*dimension.Dimension
 	Broadcast  *session.Broadcast
 
+	levelPrepared bool
+
 	path              string
 	worldAge, dayTime atomic.AtomicValue[int64]
 }
 
-func NewWorld(path string) (*World, error) {
+func NewWorld(path string) *World {
 	var err error
 	w := &World{
 		path:      path,
 		Broadcast: session.NewBroadcast(),
 	}
 	w.Level, err = level.LoadWorldLevel(path)
+	if err != nil {
+		w.prepareLevel()
+	}
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
 	w.dimensions = map[string]*dimension.Dimension{
@@ -40,7 +46,18 @@ func NewWorld(path string) (*World, error) {
 		),
 	}
 
-	return w, err
+	return w
+}
+
+func (w *World) prepareLevel() {
+	os.MkdirAll(w.path+"/playerdata", 0755)
+
+	os.Mkdir(w.path+"/region", 0755)
+	os.Mkdir(w.path+"/poi", 0755)
+	os.Mkdir(w.path+"/entities", 0755)
+
+	os.MkdirAll(w.path+"/DIM-1/region", 0755)
+	os.MkdirAll(w.path+"/DIM1/region", 0755)
 }
 
 // returns the dimension struct for the dimension name

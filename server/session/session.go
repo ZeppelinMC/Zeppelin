@@ -8,7 +8,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/config"
+	"github.com/zeppelinmc/zeppelin/properties"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 
@@ -40,8 +40,8 @@ type Session interface {
 	// the broadcaster of the session
 	Broadcast() *Broadcast
 
-	// the server config used by this session
-	Config() config.ServerConfig
+	// the server properties used by this session
+	Config() properties.ServerProperties
 
 	// Disconnects the session from the server
 	Disconnect(reason text.TextComponent) error

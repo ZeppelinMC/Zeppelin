@@ -40,8 +40,7 @@ func (session *StandardSession) intercept(pk packet.Packet) (stop bool) {
 
 func (session *StandardSession) handlePackets() {
 	keepAlive := time.NewTicker(time.Second * 20)
-	ticker := time.NewTicker(time.Second / time.Duration(session.config.Net.TPS))
-	session.tick.Add(ticker)
+	ticker := session.tick.New()
 	for range ticker.C {
 		select {
 		case <-keepAlive.C:

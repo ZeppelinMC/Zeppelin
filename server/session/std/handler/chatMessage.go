@@ -18,19 +18,23 @@ func handleChatMessage(s *std.StandardSession, pk packet.Packet) {
 			s.Disconnect(text.TextComponent{Text: "Chat message over 256 characters is not allowed"})
 			return
 		}
-		switch s.Config().Chat.ChatMode {
-		case "secure":
+		cfg := s.Config()
+
+		if !cfg.EnableChat {
+			return
+		}
+		if cfg.EnforceSecureProfile {
 			i, prev := s.SecureChatData()
 			s.Broadcast().SecureChatMessage(s, *cm, i, prev)
 			s.AppendMessage(cm.Signature)
-		case "disguised":
-			comp := text.TextComponent{Text: cm.Message}
-			if s.Config().Chat.Colors {
-				comp = text.Unmarshal(cm.Message, s.Config().Chat.Formatter.Rune())
-			}
-			s.Broadcast().DisguisedChatMessage(s, comp)
-		default: // off
 			return
+		}
+		if cfg.SystemChatFormat == "" {
+			comp := text.TextComponent{Text: cm.Message}
+			//if s.Config().Chat.Colors {
+			//	comp = text.Unmarshal(cm.Message, s.Config().Chat.Formatter.Rune())
+			//}
+			s.Broadcast().DisguisedChatMessage(s, comp)
 		}
 
 	}

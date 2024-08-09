@@ -5,10 +5,12 @@ import (
 	"runtime"
 	"time"
 
+	nnet "net"
+
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/properties"
 	"github.com/zeppelinmc/zeppelin/server/command"
-	"github.com/zeppelinmc/zeppelin/server/config"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	_ "github.com/zeppelinmc/zeppelin/server/session/std/handler"
@@ -24,28 +26,22 @@ import (
 )
 
 // Creates a new server instance using the specified config, returns an error if unable to bind listener
-func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
-	lcfg := net.Config{
-		IP:                   cfg.Net.ServerIP,
-		Port:                 cfg.Net.ServerPort,
-		CompressionThreshold: cfg.Net.CompressionThreshold,
-		Encrypt:              cfg.Net.EncryptionMode == config.EncryptionYes || cfg.Net.EncryptionMode == config.EncryptionOnline,
-		Authenticate:         cfg.Net.EncryptionMode == config.EncryptionOnline,
-	}
-	if cfg.Net.EncryptionMode != config.EncryptionOnline {
-		log.Warnln("Server is running in offline mode. The server will let anyone log as any username and potentially harm the server. Proceed with caution")
+func New(cfg properties.ServerProperties, world *world.World) (*Server, error) {
+	var ip = nnet.ParseIP(cfg.ServerIp)
+	if ip == nil {
+		ip = nnet.IPv4(0, 0, 0, 0)
 	}
 
-	if cfg.Chat.ChatMode == "secure" && cfg.Net.EncryptionMode != config.EncryptionOnline {
-		log.Warnln("You can't use secure chat without encryption mode set to online! Using disguised chat mode instead.")
-		cfg.Chat.ChatMode = "disguised"
+	log.Println(ip, cfg.ServerPort)
+	lcfg := net.Config{
+		IP:                   ip,
+		Port:                 int(cfg.ServerPort),
+		CompressionThreshold: int32(cfg.NetworkCompressionThreshold),
+		Encrypt:              cfg.EnableEncryption || cfg.OnlineMode,
+		Authenticate:         cfg.OnlineMode,
 	}
-	if cfg.Chat.ChatMode == "secure" && cfg.Chat.DisableWarning {
-		log.Warnln("Enabling Chat.DisableWarning is redundant when using secure chat mode.")
-		cfg.Chat.DisableWarning = false
-	}
-	if cfg.Chat.DisableWarning {
-		log.Warnln("Using Chat.DisableWarning violates the MUG (Minecraft Usage Guidelines) and could get your server banned. Proceed with caution")
+	if !cfg.OnlineMode {
+		log.Warnln("Server is running in offline mode. The server will let anyone log as any username and potentially harm the server. Proceed with caution")
 	}
 
 	listener, err := lcfg.New()
@@ -60,20 +56,24 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 	server.World.Broadcast.AddDummy(server.Console)
 	server.listener.SetStatusProvider(server.provideStatus)
 
+	if server.cfg.EnforceSecureProfile && !server.cfg.OnlineMode {
+		server.cfg.EnforceSecureProfile = false
+	}
+
 	compstr := "compress everything"
-	if cfg.Net.CompressionThreshold > 0 {
-		compstr = fmt.Sprintf("compress everything starting from %d bytes", cfg.Net.CompressionThreshold)
-	} else if cfg.Net.CompressionThreshold < 0 {
+	if cfg.NetworkCompressionThreshold > 0 {
+		compstr = fmt.Sprintf("compress everything starting from %d bytes", cfg.NetworkCompressionThreshold)
+	} else if cfg.NetworkCompressionThreshold < 0 {
 		compstr = "no compression"
 	}
 
-	log.Infof("Compression threshold is %d (%s)\n", cfg.Net.CompressionThreshold, compstr)
+	log.Infof("Compression threshold is %d (%s)\n", cfg.NetworkCompressionThreshold, compstr)
 	server.createTicker()
 	return server, err
 }
 
 type Server struct {
-	cfg         config.ServerConfig
+	cfg         properties.ServerProperties
 	listener    *net.Listener
 	TickManager *tick.TickManager
 
@@ -102,13 +102,13 @@ func (srv *Server) provideStatus() status.StatusResponseData {
 			Name:     "Zeppelin 1.21",
 			Protocol: net.ProtocolVersion,
 		},
-		Description: text.Unmarshal(srv.cfg.MOTD, srv.cfg.Chat.Formatter.Rune()),
+		Description: text.Unmarshal(srv.cfg.MOTD, srv.cfg.ChatFormatter.Rune()),
 		Players: status.StatusPlayers{
 			Max:    max,
 			Online: count,
 			Sample: srv.World.Broadcast.Sample(),
 		},
-		EnforcesSecureChat: srv.cfg.Chat.ChatMode == "secure" || srv.cfg.Chat.DisableWarning,
+		EnforcesSecureChat: srv.cfg.EnforceSecureProfile,
 	}
 }
 
@@ -116,7 +116,7 @@ func (srv *Server) SetStatusProvider(sp net.StatusProvider) {
 	srv.listener.SetStatusProvider(sp)
 }
 
-func (srv *Server) Config() config.ServerConfig {
+func (srv *Server) Properties() properties.ServerProperties {
 	return srv.cfg
 }
 
@@ -181,5 +181,5 @@ func (srv *Server) formatTimestart() string {
 }
 
 func (srv *Server) createTicker() {
-	srv.TickManager = tick.New(srv.cfg.Net.TPS, srv.World.Broadcast)
+	srv.TickManager = tick.New(20, srv.World.Broadcast)
 }

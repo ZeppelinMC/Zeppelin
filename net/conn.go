@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"unicode/utf16"
 
-	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/io/compress"
@@ -125,29 +124,26 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 		} else { // packet is compressed
 			dataLength := io.AppendVarInt(nil, int32(packetBuf.Len()))
 
-			var compressedPacket = cpkpool.Get().(*bytes.Buffer)
-			compressedPacket.Reset()
-			defer cpkpool.Put(compressedPacket)
+			compressedPacket, err := compress.CompressZlib(packetBuf, packetBuf.Len(), &MaxCompressedPacketSize)
+			if err != nil {
+				return err
+			}
 
-			z := zlib.NewWriter(compressedPacket)
-			if _, err := packetBuf.WriteTo(z); err != nil {
-				return err
-			}
-			if err := z.Flush(); err != nil {
-				return err
-			}
-			if err := io.WriteVarInt(conn, int32(compressedPacket.Len()+len(dataLength))); err != nil {
+			if err := io.WriteVarInt(conn, int32(len(compressedPacket)+len(dataLength))); err != nil {
 				return err
 			}
 			if _, err := conn.Write(dataLength); err != nil {
 				return err
 			}
-			_, err := compressedPacket.WriteTo(conn)
+			_, err = conn.Write(compressedPacket)
 
 			return err
 		}
 	}
 }
+
+// 1MiB
+var MaxCompressedPacketSize = 1024 * 1024
 
 func (conn *Conn) Read(dst []byte) (i int, err error) {
 	i, err = conn.Conn.Read(dst)
@@ -372,6 +368,13 @@ func (conn *Conn) handleHandshake() bool {
 		case *status.Ping:
 			conn.WritePacket(pk)
 		}
+	case handshake.Transfer:
+		if !conn.listener.cfg.AcceptTransfers {
+			conn.WritePacket(&login.Disconnect{Reason: text.Sprint("Transfers are not allowed.")})
+			conn.Close()
+			return false
+		}
+		fallthrough
 	case handshake.Login:
 		conn.state.Store(LoginState)
 		if handshaking.ProtocolVersion > ProtocolVersion {

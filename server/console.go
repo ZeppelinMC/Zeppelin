@@ -10,7 +10,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/config"
+	"github.com/zeppelinmc/zeppelin/properties"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session"
@@ -40,7 +40,7 @@ func (c *Console) ClientName() string {
 	return "zeppelin-console"
 }
 
-func (c *Console) Config() config.ServerConfig {
+func (c *Console) Config() properties.ServerProperties {
 	return c.Server.cfg
 }
 
