@@ -12,42 +12,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
+	datauuid "github.com/zeppelinmc/zeppelin/server/world/level/uuid"
 )
-
-func NewDataUUID(u uuid.UUID) DataUUID {
-	return DataUUID{
-		int32(u[0])<<24 | int32(u[1])<<16 | int32(u[2])<<8 | int32(u[3]),
-		int32(u[4])<<24 | int32(u[5])<<16 | int32(u[6])<<8 | int32(u[7]),
-		int32(u[8])<<24 | int32(u[9])<<16 | int32(u[10])<<8 | int32(u[11]),
-		int32(u[12])<<24 | int32(u[13])<<16 | int32(u[14])<<8 | int32(u[15]),
-	}
-}
-
-type DataUUID [4]int32
-
-func (u DataUUID) UUID() uuid.UUID {
-	return uuid.UUID{
-		byte(u[0] >> 24),
-		byte(u[0] >> 16),
-		byte(u[0] >> 8),
-		byte(u[0]),
-
-		byte(u[1] >> 24),
-		byte(u[1] >> 16),
-		byte(u[1] >> 8),
-		byte(u[1]),
-
-		byte(u[2] >> 24),
-		byte(u[2] >> 16),
-		byte(u[2] >> 8),
-		byte(u[2]),
-
-		byte(u[3] >> 24),
-		byte(u[3] >> 16),
-		byte(u[3] >> 8),
-		byte(u[3]),
-	}
-}
 
 type PlayerData struct {
 	// the path of this playerdata file, not a field in the nbt
@@ -83,7 +49,7 @@ type PlayerData struct {
 	Score            int32
 	SelectedItemSlot int32
 	SleepTimer       int16
-	UUID             DataUUID
+	UUID             datauuid.UUID
 
 	XpLevel int32
 	XpP     float32
@@ -175,7 +141,7 @@ func (w *Level) NewPlayerData(uuid uuid.UUID) PlayerData {
 		FoodLevel:           20,
 		Fire:                -20,
 
-		UUID:           NewDataUUID(uuid),
+		UUID:           datauuid.New(uuid),
 		Dimension:      "minecraft:overworld",
 		OnGround:       true,
 		PlayerGameType: w.Data.GameType,

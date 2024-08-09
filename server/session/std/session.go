@@ -23,6 +23,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/tick"
 	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
@@ -31,7 +32,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
-	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 )
@@ -79,9 +80,11 @@ type StandardSession struct {
 	cbLastKeepAlive atomic.AtomicValue[int64]
 
 	load_ch_mu   sync.RWMutex
-	loadedChunks map[uint64]bool
+	loadedChunks map[uint64]struct{}
 
 	listed atomic.AtomicValue[bool]
+
+	tick *tick.TickManager
 
 	// the window id the client is viewing currently, 0 if none (inventory)
 	WindowView atomic.AtomicValue[int32]
@@ -91,7 +94,7 @@ func (s *StandardSession) Latency() int64 {
 	return s.sbLastKeepalive.Get() - s.cbLastKeepAlive.Get()
 }
 
-func NewStandardSession(
+func New(
 	conn *net.Conn,
 	player *player.Player,
 	world *world.World,
@@ -99,6 +102,7 @@ func NewStandardSession(
 	config config.ServerConfig,
 	statusProviderProvider func() net.StatusProvider,
 	commandManager *command.Manager,
+	tickManager *tick.TickManager,
 ) *StandardSession {
 	return &StandardSession{
 		conn:                   conn,
@@ -108,7 +112,9 @@ func NewStandardSession(
 		config:                 config,
 		statusProviderProvider: statusProviderProvider,
 		commandManager:         commandManager,
-		loadedChunks:           make(map[uint64]bool),
+		loadedChunks:           make(map[uint64]struct{}),
+
+		tick: tickManager,
 
 		listed: atomic.Value(true),
 
@@ -268,7 +274,7 @@ func (session *StandardSession) login() error {
 		ViewDistance:       session.config.RenderDistance,
 		SimulationDistance: session.config.SimulationDistance,
 
-		HashedSeed: session.World.Data.WorldGenSettings.Seed.HashedSeed(),
+		HashedSeed: session.World.Data.WorldGenSettings.Seed.Hash(),
 
 		EnableRespawnScreen: true,
 		DimensionType:       int32(slices.Index(session.registryIndexes["minecraft:dimension_type"], session.Dimension().Type())),
@@ -373,6 +379,10 @@ func (session *StandardSession) login() error {
 	session.broadcast.SpawnPlayer(session)
 
 	return nil
+}
+
+func (session *StandardSession) SetTickState(tps float32, frozen bool) error {
+	return session.WritePacket(&play.SetTickingState{TickRate: tps, IsFrozen: frozen})
 }
 
 func (session *StandardSession) IsSpawned(entityId int32) bool {
@@ -534,7 +544,7 @@ func (session *StandardSession) sendSpawnChunks() error {
 				continue
 			}
 
-			if err := session.conn.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
+			if err := session.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
 				return err
 			}
 			chunks++
@@ -581,16 +591,16 @@ func (session *StandardSession) SendChunkRadius(chunkX, chunkZ int32) error {
 
 	for x := chunkX - viewDistance; x < chunkX+viewDistance; x++ {
 		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
-			if session.loadedChunks[region.ChunkHash(x, z)] {
+			if _, ok := session.loadedChunks[region.ChunkHash(x, z)]; ok {
 				continue
 			}
-			session.loadedChunks[region.ChunkHash(x, z)] = true
+			session.loadedChunks[region.ChunkHash(x, z)] = struct{}{}
 			c, err := session.Dimension().GetChunk(x, z)
 			if err != nil {
 				continue
 			}
 
-			if err := session.conn.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
+			if err := session.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
 				return err
 			}
 		}

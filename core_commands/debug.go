@@ -45,7 +45,7 @@ var debug = command.Command{
 
 		ccc.Executor.SystemMessage(text.Unmarshalf(
 			ccc.Executor.Config().Chat.Formatter.Rune(),
-			"XYZ: %.03f / %.05f / %.03f\nBlock: %d %d %d [%d %d %d]\nChunk: %d %d %d [%d %d in r.%d.%d.mca]\nStanding on: %s [%v]\nFacing: (%.01f / %.01f)\nClient Light: %d (%d sky, %d block)",
+			"XYZ: %.03f / %.05f / %.03f\nBlock: %d %d %d [%d %d %d]\nChunk: %d %d %d [%d %d in r.%d.%d.mca]\nStanding on: %s [%v]\nFacing: (%.01f / %.01f)\nClient Light: %d (%d sky, %d block)\n\nYou are using: %s",
 			x, y, z,
 			xb, yb, zb,
 			xb&0xf, yb&0xf, zb&0xf,
@@ -55,6 +55,7 @@ var debug = command.Command{
 			name, props,
 			util.NormalizeYaw(yaw), pitch,
 			sky+block, sky, block,
+			ccc.Executor.ClientName(),
 		))
 	},
 }

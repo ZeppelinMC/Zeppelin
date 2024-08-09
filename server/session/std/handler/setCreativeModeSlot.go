@@ -4,9 +4,9 @@ import (
 	"github.com/zeppelinmc/zeppelin/net"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/item"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
+	"github.com/zeppelinmc/zeppelin/server/world/level/item"
 	"github.com/zeppelinmc/zeppelin/text"
 )
 

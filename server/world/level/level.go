@@ -1,26 +1,30 @@
+// Package level provides documentation and loading of .dat files found in the world folder (according to https://minecraft.wiki)
+// .dat files are NBT (Named Binary Tag) files compressed with Gunzip.
+// when writing a .dat file, the previous .dat file is renamed to .dat_old
+
 package level
 
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/sha256"
-	"encoding/binary"
 	"io"
-	"math/rand"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/zeppelinmc/zeppelin/server/world/level/seed"
 )
 
 // A game rule is a string containing an integer or a boolean
 type GameRule string
 
+// Returns the boolean inside of the game rule string
 func (rule GameRule) Boolean() (bool, error) {
 	return strconv.ParseBool(string(rule))
 }
 
+// Returns the int inside of the game rule string
 func (rule GameRule) Integer() (int, error) {
 	return strconv.Atoi(string(rule))
 }
@@ -97,7 +101,7 @@ type Level struct {
 			BonusChest       bool                                   `nbt:"bonus_chest"`
 			Dimensions       map[string]DimensionGenerationSettings `nbt:"dimensions"`
 			GenerateFeatures bool                                   `nbt:"generate_features"`
-			Seed             Seed                                   `nbt:"seed"`
+			Seed             seed.Seed                              `nbt:"seed"`
 		}
 
 		AllowCommands    bool  `nbt:"allowCommands"`
@@ -137,17 +141,4 @@ func LoadWorldLevel(worldPath string) (Level, error) {
 	level.basePath = worldPath
 
 	return level, err
-}
-
-type Seed int64
-
-// First 8 bytes of the SHA-256 hash of the world's seed. Used client side for biome noise
-func (s Seed) HashedSeed() int64 {
-	hash := sha256.Sum256(binary.BigEndian.AppendUint64(nil, uint64(s)))
-
-	return int64(binary.BigEndian.Uint64(hash[:8]))
-}
-
-func NewSeed() Seed {
-	return Seed(rand.Int63())
 }

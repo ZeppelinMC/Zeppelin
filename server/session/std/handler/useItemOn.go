@@ -7,10 +7,10 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/item"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
+	"github.com/zeppelinmc/zeppelin/server/world/level/item"
 	"github.com/zeppelinmc/zeppelin/util"
 )
 

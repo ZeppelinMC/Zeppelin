@@ -54,7 +54,7 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 		cfg:      cfg,
 		World:    world,
 		Players:  player.NewPlayerManager(),
-		stopLoop: make(chan int),
+		stopLoop: make(chan struct{}),
 	}
 	server.Console = &Console{Server: server}
 	server.World.Broadcast.AddDummy(server.Console)
@@ -62,7 +62,7 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 
 	compstr := "compress everything"
 	if cfg.Net.CompressionThreshold > 0 {
-		compstr = fmt.Sprintf("compress everything over %d bytes", cfg.Net.CompressionThreshold)
+		compstr = fmt.Sprintf("compress everything starting from %d bytes", cfg.Net.CompressionThreshold)
 	} else if cfg.Net.CompressionThreshold < 0 {
 		compstr = "no compression"
 	}
@@ -75,7 +75,7 @@ func New(cfg config.ServerConfig, world *world.World) (*Server, error) {
 type Server struct {
 	cfg         config.ServerConfig
 	listener    *net.Listener
-	tickManager *tick.TickManager
+	TickManager *tick.TickManager
 
 	timeStart time.Time
 
@@ -86,7 +86,7 @@ type Server struct {
 	CommandManager *command.Manager
 
 	closed   bool
-	stopLoop chan int
+	stopLoop chan struct{}
 
 	Players *player.PlayerManager
 }
@@ -128,8 +128,6 @@ func (srv *Server) Start(ts time.Time) {
 		}
 	}
 	srv.timeStart = ts
-	//srv.ticker.Start()
-	//log.Infolnf("Started server ticker (%d TPS)", srv.cfg.Net.TPS)
 	log.Infolnf("Done! (%s)", time.Since(ts))
 	for {
 		conn, err := srv.listener.Accept()
@@ -158,9 +156,9 @@ func (srv *Server) handleNewConnection(conn *net.Conn) {
 	}
 
 	player := srv.Players.New(playerData)
-	std.NewStandardSession(conn, player, srv.World, srv.World.Broadcast, srv.cfg, func() net.StatusProvider {
+	std.New(conn, player, srv.World, srv.World.Broadcast, srv.cfg, func() net.StatusProvider {
 		return srv.listener.StatusProvider()
-	}, srv.CommandManager).Configure()
+	}, srv.CommandManager, srv.TickManager).Configure()
 }
 
 func (srv *Server) Stop() {
@@ -172,9 +170,9 @@ func (srv *Server) Stop() {
 	log.InfolnClean("Saving player data")
 	srv.Players.SaveAll()
 
-	srv.World.Save()
+	//srv.World.Save()
 	log.InfolnfClean("Server lasted for %s", srv.formatTimestart())
-	srv.stopLoop <- 0
+	srv.stopLoop <- struct{}{}
 }
 
 func (srv *Server) formatTimestart() string {
@@ -183,5 +181,5 @@ func (srv *Server) formatTimestart() string {
 }
 
 func (srv *Server) createTicker() {
-	srv.tickManager = tick.New(srv.cfg.Net.TPS)
+	srv.TickManager = tick.New(srv.cfg.Net.TPS, srv.World.Broadcast)
 }

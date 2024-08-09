@@ -1,7 +1,6 @@
 package world
 
 import (
-	"math"
 	"strings"
 
 	"github.com/zeppelinmc/zeppelin/atomic"
@@ -31,7 +30,7 @@ func NewWorld(path string) (*World, error) {
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
 	w.dimensions = map[string]*dimension.Dimension{
-		"minecraft:overworld": dimension.NewDimension(
+		"minecraft:overworld": dimension.New(
 			path+"/region",
 			"minecraft:overworld",
 			"minecraft:overworld",
@@ -83,16 +82,4 @@ func (w *World) LoadedChunks() int32 {
 	}
 
 	return count
-}
-
-// HashCode is an implementation of Java's hashCode function. It used to turn any string seed into a long seed
-func HashCode(s string) int64 {
-	var result int64
-	n := len(s)
-
-	for i := 0; i < len(s)-1; i++ {
-		result += int64(s[i]) * int64(math.Pow(31, float64(n-(i+1))))
-	}
-
-	return result + int64(s[int(n)-1])
 }

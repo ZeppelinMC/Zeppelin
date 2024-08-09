@@ -1,3 +1,4 @@
+// Package chunk provides a way of encoding and modifying chunks
 package chunk
 
 import (

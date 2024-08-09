@@ -2,6 +2,10 @@ package region
 
 import (
 	"bytes"
+	"compress/gzip"
+	"fmt"
+	"io"
+
 	//"compress/zlib"
 	"encoding/binary"
 	"os"
@@ -12,8 +16,23 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/io/util"
 )
 
-// Encode writes the region file to w.
-func (f *File) Encode(w *os.File) error {
+type bufferCloser struct {
+	*bytes.Buffer
+}
+
+func (bufferCloser) Close() error {
+	return nil
+}
+
+const (
+	CompressionGzip = iota + 1
+	CompressionZlib
+	CompressionNone
+	CompressionLZ4
+)
+
+// Encode writes itself to w.
+func (f *File) Encode(w *os.File, compressionScheme byte) error {
 	var locationTable [4096]byte
 	var timestampTable [4096]byte
 	var chunksOffset = len(locationTable) + len(timestampTable)
@@ -38,17 +57,24 @@ func (f *File) Encode(w *os.File) error {
 
 		chunkBuffer.Reset()
 
-		zlib := easyZlib{zlib.NewWriter(chunkBuffer)}
+		var w io.WriteCloser
 
-		f := util.NewFlusher(zlib)
+		switch compressionScheme {
+		case CompressionGzip:
+			w = gzip.NewWriter(chunkBuffer)
+		case CompressionZlib:
+			w = zlib.NewWriter(chunkBuffer)
+		case CompressionNone:
+			w = bufferCloser{chunkBuffer}
+		default:
+			return fmt.Errorf("unknown compression scheme %d", compressionScheme)
+		}
+
+		f := util.NewFlusher(w, nil)
 		if err := nbt.NewEncoder(f).Encode("", chunkToAnvil(chunk)); err != nil {
 			return err
 		}
 		if _, err := f.Flush(); err != nil {
-			return err
-		}
-
-		if err := zlib.Close(); err != nil {
 			return err
 		}
 
@@ -59,7 +85,7 @@ func (f *File) Encode(w *os.File) error {
 			byte(chunkLength >> 16),
 			byte(chunkLength >> 8),
 			byte(chunkLength),
-			2,
+			compressionScheme,
 		}); err != nil {
 			return err
 		}
@@ -82,17 +108,4 @@ func (f *File) Encode(w *os.File) error {
 	_, err := buf.WriteTo(w)
 
 	return err
-}
-
-// easyzlib doesnt return an error if len(p) is 0
-type easyZlib struct {
-	*zlib.Writer
-}
-
-func (w easyZlib) Write(p []byte) (n int, err error) {
-	if len(p) == 0 {
-		return 0, nil
-	}
-
-	return w.Writer.Write(p)
 }

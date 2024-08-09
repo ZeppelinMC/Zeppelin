@@ -117,6 +117,8 @@ type Session interface {
 	// deletes a signed message for the client
 	DeleteMessage(id int32, sig [256]byte) error
 
+	SetTickState(tps float32, frozen bool) error
+
 	// the textures of this client
 	Textures() (login.Textures, error)
 }

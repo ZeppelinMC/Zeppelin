@@ -17,7 +17,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
-	"github.com/zeppelinmc/zeppelin/server/world/level"
+	"github.com/zeppelinmc/zeppelin/server/world/level/seed"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 )
@@ -59,6 +59,18 @@ func (b *Broadcast) Session(uuid uuid.UUID) (ses Session, ok bool) {
 	ses, ok = b.sessions[uuid]
 
 	return
+}
+
+// safely ranges over the broadcast's sessions
+func (b *Broadcast) Range(iter func(uuid.UUID, Session) bool) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+	for u, ses := range b.sessions {
+		res := iter(u, ses)
+		if !res {
+			break
+		}
+	}
 }
 
 // Returns a session by uuid without locking the mutex
@@ -467,7 +479,7 @@ func (b *Broadcast) UpdateBlock(blockPos pos.BlockPosition, block section.Block,
 				SoundCategory: play.SoundCategoryBlock,
 				X:             blockPos.X(), Y: blockPos.Y(), Z: blockPos.Z(),
 				Volume: 1, Pitch: 1,
-				Seed: int64(level.NewSeed()),
+				Seed: int64(seed.Random()),
 			}
 		}
 	}
@@ -605,7 +617,7 @@ func SoundEffect(name string, custom bool, fixedRange *float32, category int32, 
 		X:             x, Y: y, Z: z,
 		Volume: volume,
 		Pitch:  pitch,
-		Seed:   int64(level.NewSeed()),
+		Seed:   int64(seed.Random()),
 	}
 	if !custom {
 		soundId, ok := registry.SoundEvent.Lookup(name)
@@ -631,7 +643,7 @@ func EntitySoundEffect(name string, custom bool, fixedRange *float32, category i
 		EntityId:      entityId,
 		Volume:        volume,
 		Pitch:         pitch,
-		Seed:          int64(level.NewSeed()),
+		Seed:          int64(seed.Random()),
 	}
 	if !custom {
 		soundId, ok := registry.SoundEvent.Lookup(name)

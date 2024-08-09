@@ -60,10 +60,10 @@ type Item struct {
 	// The string id of this item
 	Id string `nbt:"id"`
 	// Components of this item (https://minecraft.wiki/w/Data_component_format#List_of_components)
-	Components struct {
+	Components struct{} `nbt:"components"` /*struct {
 		AttributeModifiers       AttributeModifiers       `nbt:"minecraft:attribute_modifiers"`
 		BannerPatterns           []BannerPattern          `nbt:"minecraft:banner_patterns"`
-		BaseColor                BaseColor                `nbt:"minecraft:base_color"`
+		BaseColor                string                   `nbt:"minecraft:base_color"`
 		Bees                     []Bee                    `nbt:"minecraft:bees"`
 		BlockEntityData          BlockEntityData          `nbt:"minecraft:block_entity_data"`
 		BlockState               BlockState               `nbt:"minecraft:block_state"`
@@ -89,7 +89,7 @@ type Item struct {
 		HideAdditionalTooltip    HideAdditionalTooltip    `nbt:"minecraft:hide_additional_tooltip"`
 		HideTooltip              HideTooltip              `nbt:"minecraft:hide_tooltip"`
 		Instrument               Instrument               `nbt:"minecraft:instrument"`
-		IntangibleProjectile     IntangibleProjectile     `nbt:"minecraft:intangible_projectile`
+		IntangibleProjectile     IntangibleProjectile     `nbt:"minecraft:intangible_projectile"`
 		ItemName                 ItemName                 `nbt:"minecraft:item_name"`
 		JukeboxPlayable          JukeboxPlayable          `nbt:"minecraft:jukebox_playable"`
 		Lock                     Lock                     `nbt:"minecraft:lock"`
@@ -106,7 +106,7 @@ type Item struct {
 		PotionContents           PotionContents           `nbt:"minecraft:potion_contents"`
 		Profile                  Profile                  `nbt:"minecraft:profile"`
 		Rarity                   Rarity                   `nbt:"minecraft:rarity"`
-		Recipes                  []Recipe                 `nbt:"minecraft:recipes`
+		Recipes                  []Recipe                 `nbt:"minecraft:recipes"`
 		RepairCost               RepairCost               `nbt:"minecraft:repair_cost"`
 		StoredEnchantments       StoredEnchantments       `nbt:"minecraft:stored_enchantments"`
 		SuspiciousStewEffects    []SuspiciousStewEffect   `nbt:"minecraft:suspicious_stew_effects"`
@@ -117,7 +117,7 @@ type Item struct {
 		WrittenBookContent       WrittenBookContent       `nbt:"minecraft:written_book_content"`
 		CreativeSlotLock         CreativeSlotLock         `nbt:"minecraft:creative_slot_lock"`
 		MapPostProcessing        MapPostProcessing        `nbt:"minecraft:map_post_processing"`
-	} `nbt:"components"`
+	} `nbt:"components"`*/
 }
 
 // returns the block of the item, if found

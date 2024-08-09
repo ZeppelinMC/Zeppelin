@@ -1,3 +1,7 @@
+// Package region provides decoding and encoding of Region (.mca) files
+// It can decode and encode chunks with all 3 compression schemes (Gzip, Zlib, LZ4) or without any compression
+// It uses the net/buffers package to allocate less.
+
 package region
 
 import (
@@ -7,6 +11,9 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/heightmaps"
 )
 
+const DataVersion = 3953
+
+// chunkToAnvil turns the chunk into an anvilChunk
 func chunkToAnvil(c *chunk.Chunk) anvilChunk {
 	anvil := anvilChunk{
 		LastUpdate:    c.LastModified,
@@ -16,7 +23,7 @@ func chunkToAnvil(c *chunk.Chunk) anvilChunk {
 		Sections:      make([]anvilSection, len(c.Sections)),
 
 		XPos: c.X, YPos: c.Y, ZPos: c.Z,
-		DataVersion: 3953,
+		DataVersion: DataVersion,
 	}
 
 	for i, sec := range c.Sections {
@@ -54,20 +61,20 @@ type anvilBlock struct {
 }
 
 type anvilSection struct {
-	BlockLight  []int8 `nbt:"BlockLight"`
-	SkyLight    []int8 `nbt:"SkyLight"`
+	BlockLight  []int8 `nbt:"BlockLight,omitempty"`
+	SkyLight    []int8 `nbt:"SkyLight,omitempty"`
 	Y           int8
 	Biomes      anvilBiomes      `nbt:"biomes"`
 	BlockStates anvilBlockStates `nbt:"block_states"`
 }
 
 type anvilBiomes struct {
-	Data    []int64  `nbt:"data"`
+	Data    []int64  `nbt:"data,omitempty"`
 	Palette []string `nbt:"palette"`
 }
 
 type anvilBlockStates struct {
-	Data    []int64      `nbt:"data"`
+	Data    []int64      `nbt:"data,omitempty"`
 	Palette []anvilBlock `nbt:"palette"`
 }
 

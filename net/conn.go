@@ -1,9 +1,7 @@
 package net
 
 import (
-	"bufio"
 	"bytes"
-	"compress/zlib"
 	"crypto/cipher"
 	"crypto/md5"
 	"encoding/binary"
@@ -13,7 +11,10 @@ import (
 	"sync/atomic"
 	"unicode/utf16"
 
+	"github.com/4kills/go-zlib"
+	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/io"
+	"github.com/zeppelinmc/zeppelin/net/io/compress"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/handshake"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
@@ -47,12 +48,8 @@ type Conn struct {
 	compressionSet       bool
 
 	usesForge bool
-
-	rd  *bufio.Reader
-	buf [4096]byte
-
-	write_mu sync.Mutex
-	read_mu  sync.Mutex
+	write_mu  sync.Mutex
+	read_mu   sync.Mutex
 }
 
 func (conn *Conn) UsesForge() bool {
@@ -84,15 +81,19 @@ var pkpool = sync.Pool{
 	},
 }
 
+var cpkpool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(nil)
+	},
+}
+
 func (conn *Conn) WritePacket(pk packet.Packet) error {
 	conn.write_mu.Lock()
 	defer conn.write_mu.Unlock()
 
 	var packetBuf = pkpool.Get().(*bytes.Buffer)
-	defer func() {
-		packetBuf.Reset()
-		pkpool.Put(packetBuf)
-	}()
+	packetBuf.Reset()
+	defer pkpool.Put(packetBuf)
 
 	w := io.NewWriter(packetBuf)
 
@@ -111,36 +112,45 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 		_, err := packetBuf.WriteTo(conn)
 		return err
 	} else { // yes compression
-		data := packetBuf.Bytes()
-		if len(data) < int(conn.listener.cfg.CompressionThreshold) {
-			data = append([]byte{0}, data...)
-			packetLength := io.AppendVarInt(nil, int32(len(data)))
-			_, err := conn.Write(append(packetLength, data...))
+		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len()) { // packet is too small to be compressed
+			if err := io.WriteVarInt(conn, int32(packetBuf.Len()+1)); err != nil {
+				return err
+			}
+			if err := io.WriteVarInt(conn, 0); err != nil {
+				return err
+			}
+
+			_, err := packetBuf.WriteTo(conn)
+			return err
+		} else { // packet is compressed
+			dataLength := io.AppendVarInt(nil, int32(packetBuf.Len()))
+
+			var compressedPacket = cpkpool.Get().(*bytes.Buffer)
+			compressedPacket.Reset()
+			defer cpkpool.Put(compressedPacket)
+
+			z := zlib.NewWriter(compressedPacket)
+			if _, err := packetBuf.WriteTo(z); err != nil {
+				return err
+			}
+			if err := z.Flush(); err != nil {
+				return err
+			}
+			if err := io.WriteVarInt(conn, int32(compressedPacket.Len()+len(dataLength))); err != nil {
+				return err
+			}
+			if _, err := conn.Write(dataLength); err != nil {
+				return err
+			}
+			_, err := compressedPacket.WriteTo(conn)
+
 			return err
 		}
-
-		dataLength := io.AppendVarInt(nil, int32(len(data)))
-
-		var packetBuf = new(bytes.Buffer)
-		comp := zlib.NewWriter(packetBuf)
-		if _, err := comp.Write(data); err != nil {
-			return err
-		}
-		if err := comp.Close(); err != nil {
-			return err
-		}
-
-		compData := append(dataLength, packetBuf.Bytes()...)
-
-		packetLength := io.AppendVarInt(nil, int32(len(compData)))
-
-		_, err := conn.Write(append(packetLength, compData...))
-		return err
 	}
 }
 
 func (conn *Conn) Read(dst []byte) (i int, err error) {
-	i, err = conn.rd.Read(dst)
+	i, err = conn.Conn.Read(dst)
 	if err != nil {
 		return i, err
 	}
@@ -172,34 +182,86 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 		if _, err := rd.VarInt(&length); err != nil {
 			return nil, err
 		}
-		vii, err := rd.VarInt(&packetId)
-		if err != nil {
-			return nil, err
-		}
-		length -= int32(vii)
-
-		rd.SetLength(int(length))
-		if length < 0 {
-			return nil, fmt.Errorf("malformed packet, you are being fooled")
+		if length <= 0 {
+			return nil, fmt.Errorf("malformed packet: empty")
 		}
 		if length > 4096 {
 			return nil, fmt.Errorf("packet too big")
 		}
 
-		if length == 0 {
-			goto proc
-		}
-
-		if _, err := conn.Read(conn.buf[:length]); err != nil {
+		var packet = make([]byte, length)
+		if _, err := conn.Read(packet); err != nil {
 			return nil, err
 		}
+		id, data, err := io.ReadVarInt(packet)
+		if err != nil {
+			return nil, err
+		}
+		packetId = id
+		packet = data
+		length = int32(len(data))
 
-		rd = io.NewReader(bytes.NewReader(conn.buf[:length]), int(length))
+		rd = io.NewReader(bytes.NewReader(packet), int(length))
 	} else {
-		panic("decompression not available yet")
-	} //TODO DECOMPRESSION
+		var packetLength int32
+		if _, err := rd.VarInt(&packetLength); err != nil {
+			return nil, err
+		}
+		if packetLength <= 0 {
+			return nil, fmt.Errorf("malformed packet: empty")
+		}
+		var dataLength int32
+		dataLengthSize, err := rd.VarInt(&dataLength)
+		if err != nil {
+			return nil, err
+		}
+		if dataLength < 0 {
+			return nil, fmt.Errorf("malformed packet: negative length")
+		}
+		if dataLength == 0 { //packet is uncompressed
+			length = packetLength - int32(dataLengthSize)
+			if length < 0 {
+				return nil, fmt.Errorf("malformed packet: negative length")
+			}
+			if length != 0 {
+				var packet = make([]byte, length)
+				if _, err := conn.Read(packet); err != nil {
+					return nil, err
+				}
 
-proc:
+				id, data, err := io.ReadVarInt(packet)
+				if err != nil {
+					return nil, err
+				}
+				packetId = id
+				packet = data
+				length = int32(len(data))
+
+				rd = io.NewReader(bytes.NewReader(packet), int(length))
+			}
+		} else { //packet is compressed
+			length = dataLength
+			compressedLength := packetLength - int32(dataLengthSize)
+
+			var ilength = int(length)
+			uncompressedPacket, err := compress.DecompressZlib(conn, int(compressedLength), &ilength)
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			id, data, err := io.ReadVarInt(uncompressedPacket)
+			if err != nil {
+				return nil, err
+			}
+			packetId = id
+			uncompressedPacket = data
+			length = int32(len(data))
+
+			rd = io.NewReader(bytes.NewReader(uncompressedPacket), int(length))
+		}
+	}
+
 	var pk packet.Packet
 	pc, ok := serverboundPool[conn.state.Load()][packetId]
 	if !ok {

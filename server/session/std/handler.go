@@ -12,6 +12,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
+var packetInterceptor func(s *StandardSession, pk packet.Packet, stop *bool)
+
 type handler func(*StandardSession, packet.Packet)
 
 var handlers = make(map[[2]int32]handler)
@@ -20,13 +22,27 @@ func RegisterHandler(state, id int32, handler handler) {
 	handlers[[2]int32{state, id}] = handler
 }
 
+func SetPacketInterceptor(i func(s *StandardSession, pk packet.Packet, stop *bool)) {
+	packetInterceptor = i
+}
+
 func (session *StandardSession) inConfiguration() bool {
 	return session.conn.State() == net.ConfigurationState
 }
 
+func (session *StandardSession) intercept(pk packet.Packet) (stop bool) {
+	if packetInterceptor != nil {
+		packetInterceptor(session, pk, &stop)
+	}
+
+	return
+}
+
 func (session *StandardSession) handlePackets() {
 	keepAlive := time.NewTicker(time.Second * 20)
-	for {
+	ticker := time.NewTicker(time.Second / time.Duration(session.config.Net.TPS))
+	session.tick.Add(ticker)
+	for range ticker.C {
 		select {
 		case <-keepAlive.C:
 			l := time.Now().UnixMilli()
@@ -40,6 +56,10 @@ func (session *StandardSession) handlePackets() {
 			if err != nil {
 				session.broadcast.RemovePlayer(session)
 				return
+			}
+
+			if session.intercept(p) {
+				continue
 			}
 
 			handler, ok := handlers[[2]int32{session.conn.State(), p.ID()}]

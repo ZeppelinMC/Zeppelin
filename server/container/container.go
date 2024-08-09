@@ -2,8 +2,8 @@ package container
 
 import (
 	"github.com/zeppelinmc/zeppelin/net/slot"
-	"github.com/zeppelinmc/zeppelin/server/item"
 	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/server/world/level/item"
 )
 
 // A container that holds items

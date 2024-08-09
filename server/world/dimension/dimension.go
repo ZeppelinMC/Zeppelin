@@ -10,11 +10,11 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
-	"github.com/zeppelinmc/zeppelin/server/world/region"
+	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 )
 
 // if generateEmptyChunks is true, the server will override empty chunks with generated ones
-func NewDimension(regionPath string, typ string, name string, broadcast *session.Broadcast, generator region.Generator, generateEmptyChunks bool) *Dimension {
+func New(regionPath string, typ string, name string, broadcast *session.Broadcast, generator region.Generator, generateEmptyChunks bool) *Dimension {
 	return &Dimension{
 		regions: make(map[uint64]*region.File),
 
@@ -83,7 +83,7 @@ func (s *Dimension) saveAllRegions() {
 		if err != nil {
 			continue
 		}
-		if reg.Encode(file) != nil {
+		if reg.Encode(file, region.CompressionZlib) != nil {
 			continue
 		}
 		if file.Close() != nil {
@@ -158,7 +158,7 @@ func (s *Dimension) GetChunk(x, z int32) (*chunk.Chunk, error) {
 		}
 	}
 
-	return region.GetChunk(x, z, s.generateEmptyChunks, s.generator)
+	return region.GetChunk(x, z)
 }
 
 func (s *Dimension) newRegion(rx, rz int32) *region.File {
@@ -166,7 +166,7 @@ func (s *Dimension) newRegion(rx, rz int32) *region.File {
 	defer s.reg_mu.Unlock()
 	hash := s.regionHash(rx, rz)
 	s.regions[hash] = new(region.File)
-	region.Empty(s.regions[hash])
+	region.Empty(s.regions[hash], rx, rz, s.generateEmptyChunks, s.generator)
 
 	return s.regions[hash]
 }
@@ -212,7 +212,7 @@ func (s *Dimension) openRegion(rx, rz int32) (*region.File, error) {
 
 	s.regions[hash] = new(region.File)
 
-	err = region.Decode(file, s.regions[hash])
+	err = region.Decode(file, s.regions[hash], rx, rz, s.generateEmptyChunks, s.generator)
 
 	return s.regions[hash], err
 }

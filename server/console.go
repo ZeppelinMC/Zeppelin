@@ -193,6 +193,10 @@ func (c *Console) Listed() bool {
 	return false
 }
 
+func (c *Console) SetTickState(float32, bool) error {
+	return errConsoleUnsupportedFunc
+}
+
 func (c *Console) Latency() int64 {
 	return 0
 }

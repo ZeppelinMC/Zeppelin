@@ -1,3 +1,4 @@
+// Package section provides methods of modifying chunk sections
 package section
 
 import (

@@ -1,7 +1,8 @@
 package item
 
 type AttributeModifiers struct {
-	ShowInTooltip bool `nbt:"show_in_tooltip"`
+	Modifiers     []Modifier `nbt:"modifier"`
+	ShowInTooltip bool       `nbt:"show_in_tooltip"`
 }
 
 type ModifierOperation string
