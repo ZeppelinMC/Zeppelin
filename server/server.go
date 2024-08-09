@@ -32,7 +32,6 @@ func New(cfg properties.ServerProperties, world *world.World) (*Server, error) {
 		ip = nnet.IPv4(0, 0, 0, 0)
 	}
 
-	log.Println(ip, cfg.ServerPort)
 	lcfg := net.Config{
 		IP:                   ip,
 		Port:                 int(cfg.ServerPort),
