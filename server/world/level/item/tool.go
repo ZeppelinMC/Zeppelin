@@ -6,12 +6,8 @@ type Tool struct {
 	Rules              []Rule  `nbt:"rules"`
 }
 
-type Rule *struct {
-	Blocks          []Block `nbt:"blocks"`
+type Rule struct {
+	Blocks          any     `nbt:"blocks"`
 	Speed           float32 `nbt:"speed"`
 	CorrectForDrops bool    `nbt:"correct_for_drops"`
-}
-
-type Block *struct {
-	ID string `nbt:"block"` // can be a block ID, block tag (with a #), or a list of block IDs
 }
