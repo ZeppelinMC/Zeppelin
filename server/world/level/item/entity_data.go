@@ -1,5 +1,7 @@
 package item
 
+import "github.com/zeppelinmc/zeppelin/server/entity"
+
 type EntityData struct {
-	Data int32 `nbt:"entity_data"` // NBT
+	EntityData entity.LevelEntity `nbt:"minecraft:entity_data"` // NBT
 }

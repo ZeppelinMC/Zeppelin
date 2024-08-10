@@ -8,7 +8,7 @@ type BucketEntityData struct {
 	Invulnerable     bool    `nbt:"Invulnerable"`
 	Health           float32 `nbt:"Health"`
 	Age              int32   `nbt:"Age"`
-	Variant          string  `nbt:"Variant"`
-	HuntingCooldown  int32   `nbt:"HuntingCooldown"`
+	Variant          int32   `nbt:"Variant"`
+	HuntingCooldown  int64   `nbt:"HuntingCooldown"`
 	BucketVariantTag int32   `nbt:"BucketVariantTag"`
 }

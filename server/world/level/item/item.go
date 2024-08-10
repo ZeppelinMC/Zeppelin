@@ -61,53 +61,54 @@ type Item struct {
 	Id string `nbt:"id"`
 	// Components of this item (https://minecraft.wiki/w/Data_component_format#List_of_components)
 	Components struct{} `nbt:"components"` /*struct {
-		AttributeModifiers       AttributeModifiers       `nbt:"minecraft:attribute_modifiers"`
+		AttributeModifiers       any                      `nbt:"minecraft:attribute_modifiers"`
 		BannerPatterns           []BannerPattern          `nbt:"minecraft:banner_patterns"`
 		BaseColor                string                   `nbt:"minecraft:base_color"`
 		Bees                     []Bee                    `nbt:"minecraft:bees"`
-		BlockEntityData          BlockEntityData          `nbt:"minecraft:block_entity_data"`
-		BlockState               BlockState               `nbt:"minecraft:block_state"`
+		BlockEntityData          any                      `nbt:"minecraft:block_entity_data"`
+		BlockState               any                      `nbt:"minecraft:block_state"`
 		BucketEntityData         BucketEntityData         `nbt:"minecraft:bucket_entity_data"`
-		BundleContents           []BundleContent          `nbt:"minecraft_bundle_contents"`
-		CanBreak                 CanBreak                 `nbt:"minecraft:can_break"`
-		ChargedProjectiles       []ChargedProjectile      `nbt:"minecraft:charged_projectiles"`
-		Container                []Container              `nbt:"minecraft:container"`
+		BundleContents           []Item                   `nbt:"minecraft_bundle_contents"`
+		CanBreak                 CanDo                    `nbt:"minecraft:can_break"`
+		CanPlaceOn               CanDo                    `nbt:"minecraft:can_place_on"`
+		ChargedProjectiles       []Item                   `nbt:"minecraft:charged_projectiles"`
+		Container                []Item                   `nbt:"minecraft:container"`
 		ContainerLoot            ContainerLoot            `nbt:"minecraft_container_loot"`
-		CustomData               CustomData               `nbt:"minecraft:custom_data"`
-		CustomModelData          CustomModelData          `nbt:"minecraft:custom_model_data"`
-		CustomName               CustomName               `nbt:"minecraft:custom_name"`
-		Damage                   Damage                   `nbt:"minecraft:damage"`
-		DebugStickState          DebugStickState          `nbt:"minecraft:debug_stick_state"`
-		DyedColor                DyedColor                `nbt:"minecraft:dyed_color"`
-		EnchantmentGlintOverride EnchantmentGlintOverride `nbt:"minecraft:enchantment_glint_override"`
+		CustomData               any                      `nbt:"minecraft:custom_data"`
+		CustomModelData          int32                    `nbt:"minecraft:custom_model_data"`
+		CustomName               string                   `nbt:"minecraft:custom_name"`
+		Damage                   int32                    `nbt:"minecraft:damage"`
+		DebugStickState          any                      `nbt:"minecraft:debug_stick_state"`
+		DyedColor                any                      `nbt:"minecraft:dyed_color"`
+		EnchantmentGlintOverride bool                     `nbt:"minecraft:enchantment_glint_override"`
 		Enchantments             Enchantments             `nbt:"minecraft:enchantments"`
-		EntityData               EntityData               `nbt:"minecraft:entity_data"`
+		EntityData               entity.LevelEntity       `nbt:"minecraft:entity_data"`
 		FireResistant            FireResistant            `nbt:"minecraft:fire_resistant"`
 		FireworkExplosion        FireworkExplosion        `nbt:"minecraft:firework_explosion"`
 		Fireworks                Fireworks                `nbt:"minecraft:fireworks"`
 		Food                     Food                     `nbt:"minecraft:food"`
 		HideAdditionalTooltip    HideAdditionalTooltip    `nbt:"minecraft:hide_additional_tooltip"`
 		HideTooltip              HideTooltip              `nbt:"minecraft:hide_tooltip"`
-		Instrument               Instrument               `nbt:"minecraft:instrument"`
+		Instrument               any                      `nbt:"minecraft:instrument"`
 		IntangibleProjectile     IntangibleProjectile     `nbt:"minecraft:intangible_projectile"`
-		ItemName                 ItemName                 `nbt:"minecraft:item_name"`
+		ItemName                 string                   `nbt:"minecraft:item_name"`
 		JukeboxPlayable          JukeboxPlayable          `nbt:"minecraft:jukebox_playable"`
-		Lock                     Lock                     `nbt:"minecraft:lock"`
+		Lock                     string                   `nbt:"minecraft:lock"`
 		LodestoneTracker         LodestoneTracker         `nbt:"minecraft:lodestone_tracker"`
-		Lore                     []Lore                   `nbt:"minecraft:lore"`
-		MapColor                 MapColor                 `nbt:"minecraft:map_color"`
-		MapDecorations           MapDecorations           `nbt:"minecraft:map_decorations"`
-		MapID                    MapID                    `nbt:"minecraft:map_id"`
-		MaxDamage                MaxDamage                `nbt:"minecraft:max_damage"`
-		MaxStackSize             MaxStackSize             `nbt:"minecraft:max_stack_size"`
-		NoteBlockSound           NoteBlockSound           `nbt:"minecraft:note_block_sound"`
-		OminousBottleAmplifier   OminousBottleAmplifier   `nbt:"minecraft:ominous_bottle_amplifier"`
-		PotDecorations           []PotDecoration          `nbt:"minecraft:pot_decorations"`
-		PotionContents           PotionContents           `nbt:"minecraft:potion_contents"`
-		Profile                  Profile                  `nbt:"minecraft:profile"`
-		Rarity                   Rarity                   `nbt:"minecraft:rarity"`
-		Recipes                  []Recipe                 `nbt:"minecraft:recipes"`
-		RepairCost               RepairCost               `nbt:"minecraft:repair_cost"`
+		Lore                     []string                 `nbt:"minecraft:lore"`
+		MapColor                 int32                    `nbt:"minecraft:map_color"`
+		MapDecorations           any                      `nbt:"minecraft:map_decorations"`
+		MapID                    int32                    `nbt:"minecraft:map_id"`
+		MaxDamage                int32                    `nbt:"minecraft:max_damage"`
+		MaxStackSize             int32                    `nbt:"minecraft:max_stack_size"`
+		NoteBlockSound           string                   `nbt:"minecraft:note_block_sound"`
+		OminousBottleAmplifier   int32                    `nbt:"minecraft:ominous_bottle_amplifier"`
+		PotDecorations           []string                 `nbt:"minecraft:pot_decorations"`
+		PotionContents           any                      `nbt:"minecraft:potion_contents"`
+		Profile                  any                      `nbt:"minecraft:profile"`
+		Rarity                   string                   `nbt:"minecraft:rarity"`
+		Recipes                  []string                 `nbt:"minecraft:recipes"`
+		RepairCost               int32                    `nbt:"minecraft:repair_cost"`
 		StoredEnchantments       StoredEnchantments       `nbt:"minecraft:stored_enchantments"`
 		SuspiciousStewEffects    []SuspiciousStewEffect   `nbt:"minecraft:suspicious_stew_effects"`
 		Tool                     Tool                     `nbt:"minecraft:tool"`
@@ -116,7 +117,7 @@ type Item struct {
 		WritableBookContent      WritableBookContent      `nbt:"minecraft:writable_book_content"`
 		WrittenBookContent       WrittenBookContent       `nbt:"minecraft:written_book_content"`
 		CreativeSlotLock         CreativeSlotLock         `nbt:"minecraft:creative_slot_lock"`
-		MapPostProcessing        MapPostProcessing        `nbt:"minecraft:map_post_processing"`
+		MapPostProcessing        int32                    `nbt:"minecraft:map_post_processing"`
 	} `nbt:"components"`*/
 }
 
