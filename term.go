@@ -50,7 +50,7 @@ charl:
 		os.Stdin.Read(char[:])
 
 		switch char[0] {
-		case 8: //backspace
+		case '\b', 127: //backspace
 			if len(currentLine) == 0 {
 				continue
 			}

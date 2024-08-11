@@ -47,8 +47,10 @@ func (session *StandardSession) handlePackets() {
 			l := time.Now().UnixMilli()
 			session.cbLastKeepAlive.Set(l)
 			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: l})
+			log.Println("server keep alive")
 		default:
 			if lastKeepAlive := session.sbLastKeepalive.Get(); lastKeepAlive != 0 && time.Now().UnixMilli()-lastKeepAlive > (21*1000) {
+				log.Println("server time out")
 				session.Disconnect(text.TextComponent{Text: "Timed out"})
 			}
 			p, err := session.conn.ReadPacket()

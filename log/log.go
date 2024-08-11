@@ -48,7 +48,7 @@ func SprintText(msg text.TextComponent) string {
 		str.WriteString(c.Sprint(component.Text))
 	}
 
-	return str.String()
+	return strings.ReplaceAll(str.String(), "\n", "\n\r")
 }
 
 var colors = map[string]*color.Color{

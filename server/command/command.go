@@ -1,3 +1,4 @@
+// Package command provides utilities for handling and registering commands
 package command
 
 import (
@@ -12,10 +13,26 @@ type Command struct {
 	SuggestionCallback func()
 }
 
+type Arguments []string
+
+func (a Arguments) At(i int) string {
+	if i < 0 || len(a) <= i {
+		return ""
+	}
+	return a[i]
+}
+
+func (a Arguments) Fallback(i int, fb string) string {
+	if i < 0 || len(a) <= i {
+		return fb
+	}
+	return a[i]
+}
+
 type CommandCallContext struct {
 	Command  Command
 	Executor session.Session
 	Server   any
 
-	Arguments []any
+	Arguments Arguments
 }

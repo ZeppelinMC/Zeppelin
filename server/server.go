@@ -38,6 +38,7 @@ func New(cfg properties.ServerProperties, world *world.World) (*Server, error) {
 		CompressionThreshold: int32(cfg.NetworkCompressionThreshold),
 		Encrypt:              cfg.EnableEncryption || cfg.OnlineMode,
 		Authenticate:         cfg.OnlineMode,
+		AcceptTransfers:      cfg.AcceptTransfers,
 	}
 	if !cfg.OnlineMode {
 		log.Warnln("Server is running in offline mode. The server will let anyone log as any username and potentially harm the server. Proceed with caution")

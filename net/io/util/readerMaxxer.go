@@ -27,9 +27,5 @@ func (r *ReaderMaxxer) Read(data []byte) (i int, err error) {
 	n, err := r.r.Read(data)
 	r.read += n
 
-	if r.read >= r.max {
-		err = io.EOF
-	}
-
 	return n, err
 }

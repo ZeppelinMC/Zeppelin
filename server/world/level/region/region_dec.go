@@ -1,6 +1,7 @@
 package region
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -59,6 +60,9 @@ var anvilChunks = sync.Pool{
 	},
 }
 
+// 1MiB
+var MaxDecompressedChunkSize = 1024 * 1024
+
 func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	hash := ChunkHash(x, z)
 
@@ -108,38 +112,32 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 
 	length := int32(chunkHeader[0])<<24 | int32(chunkHeader[1])<<16 | int32(chunkHeader[2])<<8 | int32(chunkHeader[3])
 	compression := chunkHeader[4]
+	length--
 
 	if length == 0 {
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}
 
-	var rawReader = util.NewReaderAtMaxxer(r.reader, int(length)-1, int64(offset)+5)
+	var rawReader = bufio.NewReader(util.NewReaderAtMaxxer(r.reader, int(length), int64(offset)+5))
 
-	buf := buffers.Buffers.Get().(*bytes.Buffer)
-	buf.Reset()
-	defer buffers.Buffers.Put(buf)
+	var data []byte
 
 	switch compression {
 	case CompressionGzip:
-		data, err := compress.DecompressGzip(rawReader, int(length)-1, &MaxCompressedPacketSize)
+		data, err = compress.DecompressGzip(rawReader, int(length), &MaxDecompressedChunkSize)
 		if err != nil {
 			return nil, err
 		}
-		buf.Write(data)
 	case CompressionZlib:
-		data, err := compress.DecompressZlib(rawReader, int(length)-1, &MaxCompressedPacketSize)
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(data)
+		data, _ = compress.DecompressZlib(rawReader, int(length), &MaxDecompressedChunkSize)
 	case CompressionNone:
-		buf.ReadFrom(rawReader)
+		data = make([]byte, int(length))
+		rawReader.Read(data)
 	case CompressionLZ4:
-		data, err := compress.DecompressLZ4(rawReader)
+		data, err = compress.DecompressLZ4(rawReader)
 		if err != nil {
 			return nil, err
 		}
-		buf.Write(data)
 	default:
 		return nil, fmt.Errorf("invalid compression method %d", compression)
 	}
@@ -147,7 +145,9 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	var anvil = anvilChunks.Get().(*anvilChunk)
 	defer anvilChunks.Put(anvil)
 
-	nbt.NewDecoder(buf).Decode(anvil)
+	if err := nbt.Unmarshal(data, anvil); err != nil {
+		return nil, err
+	}
 
 	r.chunks[hash] = &chunk.Chunk{
 		X:             anvil.XPos,
@@ -175,7 +175,6 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 
 		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, slices.Clone(sec.BlockStates.Data), sec.Biomes.Palette, slices.Clone(sec.Biomes.Data), *(*[]byte)(unsafe.Pointer(&sec.SkyLight)), *(*[]byte)(unsafe.Pointer(&sec.BlockLight)))
 	}
-
 	if emptySections == len(r.chunks[hash].Sections) && r.generateEmpty && r.generator != nil {
 		r.chunks[hash] = new(chunk.Chunk)
 		r.generateChunkAt(x, z, r.chunks[hash], r.generator)

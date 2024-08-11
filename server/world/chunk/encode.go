@@ -33,6 +33,8 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 		CX: chunk.X,
 		CZ: chunk.Z,
 
+		Data: buf,
+
 		Heightmaps: *(*play.Heightmaps)(unsafe.Pointer(&chunk.Heightmaps)),
 
 		BlockEntities: make([]play.BlockEntity, len(chunk.BlockEntities)),
@@ -195,7 +197,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	//	fmt.Println(pk.SkyLightMask.Get(i), len(pk.SkyLightArrays[i+1]))
 	//}
 
-	pk.Data = buf.Bytes()
+	//pk.Data = buf.Bytes()
 
 	return pk
 }

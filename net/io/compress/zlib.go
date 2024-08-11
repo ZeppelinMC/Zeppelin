@@ -1,41 +1,45 @@
 package compress
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/4kills/go-libdeflate/v2"
+	"github.com/zeppelinmc/zeppelin/net/io/buffers"
+	"github.com/zeppelinmc/zeppelin/net/io/util"
 )
 
 // Decompress zlib. If decompressedLength is provided, the data returned will only be safe to use until the next operation
 // It is recommmended to provide the decompressed length to avoid allocation. If you don't know it, provide a number likely bigger than the decompressed length.
 func DecompressZlib(data io.Reader, compressedLength int, decompressedLength *int) ([]byte, error) {
-	var compressed = compressedBuffers.Get().([]byte)
-	if len(compressed) < int(compressedLength) {
-		compressed = make([]byte, compressedLength)
+	var compressedBuffer = buffers.Buffers.Get().(*bytes.Buffer)
+	defer buffers.Buffers.Put(compressedBuffer)
+	compressedBuffer.Reset()
+	if compressedBuffer.Len() < compressedLength {
+		compressedBuffer.Grow(compressedLength)
 	}
-	defer compressedBuffers.Put(compressed)
 
-	if _, err := data.Read(compressed[:compressedLength]); err != nil {
+	if _, err := compressedBuffer.ReadFrom(util.NewReaderMaxxer(data, compressedLength)); err != nil {
 		return nil, err
 	}
 
-	dc, err := libdeflate.NewDecompressor()
-	if err != nil {
-		return nil, err
-	}
+	compressed := compressedBuffer.Bytes()[:compressedLength]
+
+	dc := decompressors.Get().(libdeflate.Decompressor)
+	defer decompressors.Put(dc)
 
 	if decompressedLength != nil {
-		dst := decompressedBuffers.Get().([]byte)
+		dst := bufs.Get().([]byte)
 		if len(dst) < int(*decompressedLength) {
 			dst = make([]byte, *decompressedLength)
 		}
-		defer decompressedBuffers.Put(dst)
+		defer bufs.Put(dst)
 
-		_, decompressedResult, err := dc.DecompressZlib(compressed[:compressedLength], dst[:*decompressedLength])
+		_, decompressedResult, err := dc.DecompressZlib(compressed, dst[:*decompressedLength])
 
 		return decompressedResult, err
 	} else {
-		_, decompressedResult, err := dc.DecompressZlib(compressed[:compressedLength], nil)
+		_, decompressedResult, err := dc.DecompressZlib(compressed, nil)
 		return decompressedResult, err
 	}
 }
@@ -43,33 +47,34 @@ func DecompressZlib(data io.Reader, compressedLength int, decompressedLength *in
 // Compresses zlib. If compressedLength is provided, data returned will only be safe to use until the next operation.
 // It is recommmended to provide the compressed length to avoid allocation. If you don't know it, provide a number likely bigger than the compressed length.
 func CompressZlib(decompressedData io.Reader, decompressedLength int, compressedLength *int) (compressed []byte, err error) {
-	c, err := libdeflate.NewCompressor()
-	if err != nil {
+	var decompressedBuffer = buffers.Buffers.Get().(*bytes.Buffer)
+	defer buffers.Buffers.Put(decompressedBuffer)
+	decompressedBuffer.Reset()
+	if decompressedBuffer.Len() < decompressedLength {
+		decompressedBuffer.Grow(decompressedLength)
+	}
+
+	if _, err := decompressedBuffer.ReadFrom(util.NewReaderMaxxer(decompressedData, decompressedLength)); err != nil {
 		return nil, err
 	}
 
-	var decompressed = decompressedBuffers.Get().([]byte)
-	if len(decompressed) < int(decompressedLength) {
-		decompressed = make([]byte, decompressedLength)
-	}
-	defer decompressedBuffers.Put(decompressed)
+	decompressed := decompressedBuffer.Bytes()[:decompressedLength]
 
-	if _, err := decompressedData.Read(decompressed[:decompressedLength]); err != nil {
-		return nil, err
-	}
+	c := compressors.Get().(libdeflate.Compressor)
+	defer compressors.Put(c)
 
 	if compressedLength != nil {
-		dst := compressedBuffers.Get().([]byte)
+		dst := bufs.Get().([]byte)
 		if len(dst) < int(*compressedLength) {
 			dst = make([]byte, *compressedLength)
 		}
-		defer compressedBuffers.Put(dst)
+		defer bufs.Put(dst)
 
-		_, compressedResult, err := c.CompressZlib(decompressed[:decompressedLength], dst[:*compressedLength])
+		_, compressedResult, err := c.CompressZlib(decompressed, dst[:*compressedLength])
 
 		return compressedResult, err
 	} else {
-		_, compressedResult, err := c.CompressZlib(decompressed[:decompressedLength], nil)
+		_, compressedResult, err := c.CompressZlib(decompressed, nil)
 
 		return compressedResult, err
 	}

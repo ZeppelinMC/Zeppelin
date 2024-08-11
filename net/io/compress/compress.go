@@ -1,11 +1,25 @@
 package compress
 
-import "sync"
+import (
+	"sync"
 
-var decompressedBuffers = sync.Pool{
-	New: func() any { return make([]byte, 0) },
+	"github.com/4kills/go-libdeflate/v2"
+)
+
+var decompressors = sync.Pool{
+	New: func() any {
+		dc, _ := libdeflate.NewDecompressor()
+		return dc
+	},
 }
 
-var compressedBuffers = sync.Pool{
-	New: func() any { return make([]byte, 1024*1024) },
+var compressors = sync.Pool{
+	New: func() any {
+		dc, _ := libdeflate.NewCompressor()
+		return dc
+	},
+}
+
+var bufs = sync.Pool{
+	New: func() any { return make([]byte, 0) },
 }

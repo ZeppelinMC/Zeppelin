@@ -1,10 +1,9 @@
 package section
 
 import (
-	"bytes"
 	_ "embed"
 
-	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/aimjel/minecraft/nbt"
 	"github.com/zeppelinmc/zeppelin/util"
 )
 
@@ -21,11 +20,11 @@ var blocks = make(map[string]blockInfo)
 
 //go:embed data/blocks.nbt
 var blockData []byte
-var blockBuf = bytes.NewReader(blockData)
 
-// LoadBlockCache uses the NBT static reader but you should not
+//var blockBuf = bytes.NewReader(blockData)
+
 func init() {
-	rd := nbt.NewStaticReader(blockBuf)
+	/*rd := nbt.NewStaticReader(blockBuf)
 	// Read the compound root type id and name
 	_, _, _ = rd.ReadRoot(true)
 	// reuse the compound reader struct
@@ -56,8 +55,8 @@ func init() {
 		}); err != nil {
 			return
 		}
-	}
-
+	}*/
+	nbt.Unmarshal(blockData, &blocks)
 }
 
 var registeredBlocks = make(map[string]Block)

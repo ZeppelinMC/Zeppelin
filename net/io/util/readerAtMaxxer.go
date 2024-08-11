@@ -1,6 +1,8 @@
 package util
 
-import "io"
+import (
+	"io"
+)
 
 func NewReaderAtMaxxer(r io.ReaderAt, max int, baseOffset int64) *ReaderAtMaxxer {
 	return &ReaderAtMaxxer{r: r, max: max, offset: baseOffset}
@@ -17,7 +19,7 @@ type ReaderAtMaxxer struct {
 }
 
 func (r *ReaderAtMaxxer) Read(data []byte) (i int, err error) {
-	if r.read >= r.max {
+	if r.read > r.max {
 		return 0, io.EOF
 	}
 
@@ -28,10 +30,6 @@ func (r *ReaderAtMaxxer) Read(data []byte) (i int, err error) {
 
 	n, err := r.r.ReadAt(data, r.offset+int64(r.read))
 	r.read += n
-
-	if r.read >= r.max {
-		err = io.EOF
-	}
 
 	return n, err
 }

@@ -60,6 +60,18 @@ func (mgr *TickManager) Freeze() {
 	})
 }
 
+func (mgr *TickManager) Unfreeze() {
+	freq := mgr.d.Get()
+	for _, ticker := range mgr.tickers {
+		ticker.Reset(freq)
+	}
+	tps := 1 / (float32(freq) / float32(time.Second))
+	mgr.b.Range(func(u uuid.UUID, s session.Session) bool {
+		s.SetTickState(tps, false)
+		return true
+	})
+}
+
 func (mgr *TickManager) Add(ticker *time.Ticker) {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()

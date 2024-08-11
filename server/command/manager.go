@@ -32,10 +32,8 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 	arguments := strings.Split(command, " ")
 	if len(arguments) == 0 {
 		caller.SystemMessage(
-			text.Unmarshalf(
-				caller.Config().ChatFormatter.Rune(),
-				"%scInvalid command",
-				caller.Config().ChatFormatter,
+			text.Unmarshal(
+				"&cInvalid command", '&',
 			),
 		)
 		return
@@ -44,9 +42,8 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 	if cmd == nil {
 		caller.SystemMessage(
 			text.Unmarshalf(
-				caller.Config().ChatFormatter.Rune(),
-				"%scUnknown command %s",
-				caller.Config().ChatFormatter,
+				'&',
+				"&cUnknown command %s",
 				command,
 			),
 		)
@@ -58,10 +55,7 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 		Server:   mgr.srv,
 	}
 	if len(arguments) > 1 {
-		arguments = arguments[1:]
-		for i := 0; i < len(arguments); i++ {
-			//TODO PARSE
-		}
+		ctx.Arguments = arguments[1:]
 	}
 	cmd.Callback(ctx)
 }

@@ -1,6 +1,8 @@
 package play
 
 import (
+	"bytes"
+
 	"github.com/zeppelinmc/zeppelin/net/io"
 )
 
@@ -20,7 +22,7 @@ type Heightmaps struct {
 type ChunkDataUpdateLight struct {
 	CX, CZ                                                               int32
 	Heightmaps                                                           Heightmaps
-	Data                                                                 []byte
+	Data                                                                 *bytes.Buffer //[]byte
 	BlockEntities                                                        []BlockEntity
 	SkyLightMask, BlockLightMask, EmptySkyLightMask, EmptyBlockLightMask io.BitSet
 	SkyLightArrays                                                       [][]byte
@@ -41,7 +43,13 @@ func (c *ChunkDataUpdateLight) Encode(w io.Writer) error {
 	if err := w.NBT(c.Heightmaps); err != nil {
 		return err
 	}
-	if err := w.ByteArray(c.Data); err != nil {
+	//if err := w.ByteArray(c.Data); err != nil {
+	//	return err
+	//}
+	if err := w.VarInt(int32(c.Data.Len())); err != nil {
+		return err
+	}
+	if _, err := c.Data.WriteTo(w); err != nil {
 		return err
 	}
 	if err := w.VarInt(int32(len(c.BlockEntities))); err != nil {
