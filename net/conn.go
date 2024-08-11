@@ -2,7 +2,6 @@ package net
 
 import (
 	"bytes"
-	"crypto/cipher"
 	"crypto/md5"
 	"encoding/binary"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/net/cfb8"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/io/compress"
 	"github.com/zeppelinmc/zeppelin/net/packet"
@@ -43,11 +43,10 @@ type Conn struct {
 	encrypted                 bool
 	sharedSecret, verifyToken []byte
 
-	decrypter, encrypter cipher.Stream
+	decrypter, encrypter *cfb8.CFB8
 	compressionSet       bool
 
 	usesForge bool
-	write_mu  sync.Mutex
 	read_mu   sync.Mutex
 }
 
@@ -74,25 +73,22 @@ func (conn *Conn) State() int32 {
 	return conn.state.Load()
 }
 
+var pkbufpool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(nil)
+	},
+}
+
 var pkpool = sync.Pool{
 	New: func() any {
 		return bytes.NewBuffer(nil)
 	},
 }
 
-var cpkpool = sync.Pool{
-	New: func() any {
-		return bytes.NewBuffer(nil)
-	},
-}
-
 func (conn *Conn) WritePacket(pk packet.Packet) error {
-	conn.write_mu.Lock()
-	defer conn.write_mu.Unlock()
-
-	var packetBuf = pkpool.Get().(*bytes.Buffer)
+	var packetBuf = pkbufpool.Get().(*bytes.Buffer)
 	packetBuf.Reset()
-	defer pkpool.Put(packetBuf)
+	defer pkbufpool.Put(packetBuf)
 
 	w := io.NewWriter(packetBuf)
 
@@ -104,24 +100,42 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	}
 
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
-		if err := io.WriteVarInt(conn, int32(packetBuf.Len())); err != nil {
+		var buf = pkpool.Get().(*bytes.Buffer)
+		buf.Reset()
+		defer pkpool.Put(buf)
+
+		if err := io.WriteVarInt(buf, int32(packetBuf.Len())); err != nil {
+			return err
+		}
+		if _, err := packetBuf.WriteTo(buf); err != nil {
 			return err
 		}
 
-		_, err := packetBuf.WriteTo(conn)
+		_, err := buf.WriteTo(conn)
 		return err
 	} else { // yes compression
 		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len()) { // packet is too small to be compressed
-			if err := io.WriteVarInt(conn, int32(packetBuf.Len()+1)); err != nil {
+			var buf = pkpool.Get().(*bytes.Buffer)
+			buf.Reset()
+			defer pkpool.Put(buf)
+
+			if err := io.WriteVarInt(buf, int32(packetBuf.Len()+1)); err != nil {
 				return err
 			}
-			if err := io.WriteVarInt(conn, 0); err != nil {
+			if err := io.WriteVarInt(buf, 0); err != nil {
+				return err
+			}
+			if _, err := packetBuf.WriteTo(buf); err != nil {
 				return err
 			}
 
-			_, err := packetBuf.WriteTo(conn)
+			_, err := buf.WriteTo(conn)
 			return err
 		} else { // packet is compressed
+			var buf = pkpool.Get().(*bytes.Buffer)
+			buf.Reset()
+			defer pkpool.Put(buf)
+
 			dataLength := io.AppendVarInt(nil, int32(packetBuf.Len()))
 
 			compressedPacket, err := compress.CompressZlib(packetBuf, packetBuf.Len(), &MaxCompressedPacketSize)
@@ -129,14 +143,17 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 				return err
 			}
 
-			if err := io.WriteVarInt(conn, int32(len(compressedPacket)+len(dataLength))); err != nil {
+			if err := io.WriteVarInt(buf, int32(len(compressedPacket)+len(dataLength))); err != nil {
 				return err
 			}
-			if _, err := conn.Write(dataLength); err != nil {
+			if _, err := buf.Write(dataLength); err != nil {
 				return err
 			}
-			_, err = conn.Write(compressedPacket)
+			if _, err := buf.Write(compressedPacket); err != nil {
+				return err
+			}
 
+			_, err = buf.WriteTo(conn)
 			return err
 		}
 	}

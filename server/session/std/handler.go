@@ -12,7 +12,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/text"
 )
 
-var packetInterceptor func(s *StandardSession, pk packet.Packet, stop *bool)
+var PacketReadInterceptor func(s *StandardSession, pk packet.Packet, stop *bool)
+var PacketWriteInterceptor func(s *StandardSession, pk packet.Packet, stop *bool)
 
 type handler func(*StandardSession, packet.Packet)
 
@@ -21,18 +22,13 @@ var handlers = make(map[[2]int32]handler)
 func RegisterHandler(state, id int32, handler handler) {
 	handlers[[2]int32{state, id}] = handler
 }
-
-func SetPacketInterceptor(i func(s *StandardSession, pk packet.Packet, stop *bool)) {
-	packetInterceptor = i
-}
-
 func (session *StandardSession) inConfiguration() bool {
 	return session.conn.State() == net.ConfigurationState
 }
 
-func (session *StandardSession) intercept(pk packet.Packet) (stop bool) {
-	if packetInterceptor != nil {
-		packetInterceptor(session, pk, &stop)
+func (session *StandardSession) readIntercept(pk packet.Packet) (stop bool) {
+	if PacketReadInterceptor != nil {
+		PacketReadInterceptor(session, pk, &stop)
 	}
 
 	return
@@ -40,17 +36,15 @@ func (session *StandardSession) intercept(pk packet.Packet) (stop bool) {
 
 func (session *StandardSession) handlePackets() {
 	keepAlive := time.NewTicker(time.Second * 20)
-	ticker := session.tick.New()
-	for range ticker.C {
+	//ticker := session.tick.New()
+	for {
 		select {
 		case <-keepAlive.C:
 			l := time.Now().UnixMilli()
 			session.cbLastKeepAlive.Set(l)
 			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: l})
-			log.Println("server keep alive")
 		default:
 			if lastKeepAlive := session.sbLastKeepalive.Get(); lastKeepAlive != 0 && time.Now().UnixMilli()-lastKeepAlive > (21*1000) {
-				log.Println("server time out")
 				session.Disconnect(text.TextComponent{Text: "Timed out"})
 			}
 			p, err := session.conn.ReadPacket()
@@ -59,7 +53,7 @@ func (session *StandardSession) handlePackets() {
 				return
 			}
 
-			if session.intercept(p) {
+			if session.readIntercept(p) {
 				continue
 			}
 

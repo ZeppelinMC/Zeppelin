@@ -13,6 +13,17 @@ type TerrainGenerator struct {
 	seed  int64
 }
 
+func (g TerrainGenerator) GenerateWorldSpawn() (x, y, z int32) {
+	x, z = rand.Int31n(160), rand.Int31n(160)
+	y = g.y(x, z)
+
+	return
+}
+
+func (g TerrainGenerator) y(x, z int32) int32 {
+	return int32(g.noise.Noise2D(float64(x)/30, float64(z)/30)*10) + 80
+}
+
 func (g TerrainGenerator) NewChunk(cx, cz int32) chunk.Chunk {
 	c := chunk.NewChunk(cx, cz)
 
@@ -24,7 +35,7 @@ func (g TerrainGenerator) NewChunk(cx, cz int32) chunk.Chunk {
 		for z := int32(0); z < 16; z++ {
 			absX, absZ := (cx<<4)+x, (cz<<4)+z
 
-			y := int32(g.noise.Noise2D(float64(absX)/30, float64(absZ)/30)*10) + 80
+			y := g.y(absX, absZ)
 
 			if y <= -64 {
 				y = -64

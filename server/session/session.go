@@ -122,3 +122,62 @@ type Session interface {
 	// the textures of this client
 	Textures() (login.Textures, error)
 }
+
+type DummySession interface {
+	// the broadcaster of the session
+	Broadcast() *Broadcast
+
+	// the server properties used by this session
+	Config() properties.ServerProperties
+
+	// sends a player chat message packet to the session
+	PlayerChatMessage(pk play.ChatMessage, sender Session, chatType string, index int32, prevMsgs []play.PreviousMessage) error
+	// sends a player info update packet to the session
+	PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error
+	// sends a player info remove packet to the session
+	PlayerInfoRemove(uuids ...uuid.UUID) error
+
+	// sends a disguised chat message
+	DisguisedChatMessage(content text.TextComponent, sender Session, chatType string) error
+
+	UpdateEntityPosition(entity entity.Entity, pk *play.UpdateEntityPosition) error
+	UpdateEntityPositionRotation(entity entity.Entity, pk *play.UpdateEntityPositionAndRotation) error
+	UpdateEntityRotation(entity entity.Entity, pk *play.UpdateEntityRotation) error
+
+	// spawns the entity for this session
+	SpawnEntity(entity.Entity) error
+	// spawns a player
+	SpawnPlayer(Session) error
+
+	// sends entity animation
+	EntityAnimation(entityId int32, animation byte) error
+	// sends entity metadata
+	EntityMetadata(entityId int32, md metadata.Metadata) error
+
+	// sends a system (unsigned) chat message to the client
+	SystemMessage(msg text.TextComponent) error
+
+	// updates the time for the client
+	UpdateTime(worldAge, dayTime int64) error
+
+	// sends a block action to the session
+	BlockAction(*play.BlockAction) error
+
+	// plays the sound for the client
+	PlaySound(*play.SoundEffect) error
+
+	// plays the sound for the client
+	PlayEntitySound(*play.EntitySoundEffect) error
+
+	// updates the block for the player
+	UpdateBlock(pos pos.BlockPosition, b section.Block) error
+
+	// updates the block entity for the player
+	UpdateBlockEntity(pos pos.BlockPosition, be chunk.BlockEntity) error
+
+	// sent damage event to the client
+	DamageEvent(attacker, attacked Session, damageType string) error
+
+	// deletes a signed message for the client
+	DeleteMessage(id int32, sig [256]byte) error
+}

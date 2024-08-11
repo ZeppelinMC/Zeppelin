@@ -27,7 +27,7 @@ func (x *CFB8) XORKeyStream(dst, src []byte) {
 	}
 }
 
-func NewCFB8(block cipher.Block, iv []byte, decrypt bool) cipher.Stream {
+func NewCFB8(block cipher.Block, iv []byte, decrypt bool) *CFB8 {
 	blockSize := block.BlockSize()
 	if len(iv) != blockSize {
 		// stack trace will indicate whether it was de or encryption

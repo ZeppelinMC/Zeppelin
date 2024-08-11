@@ -3,6 +3,7 @@ package region
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"encoding/binary"
 	"os"
@@ -44,7 +45,8 @@ func (f *File) Encode(w *os.File, compressionScheme byte) error {
 	for _, chunk := range f.chunks {
 		locationIndex := ((uint32(chunk.X) % 32) + (uint32(chunk.Z)%32)*32) * 4
 
-		binary.BigEndian.PutUint32(timestampTable[locationIndex:locationIndex+4], uint32(chunk.LastModified))
+		lastModified := time.Now().UnixMilli() // this has no purpose
+		binary.BigEndian.PutUint32(timestampTable[locationIndex:locationIndex+4], uint32(lastModified))
 
 		offset := (buf.Len() + chunksOffset) / 4096
 

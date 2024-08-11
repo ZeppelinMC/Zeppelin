@@ -50,3 +50,31 @@ type Attribute struct {
 	Base float64 `nbt:"base"`
 	Id   string  `nbt:"id"`
 }
+
+var DefaultAttributes = map[string]float64{
+	"minecraft:generic.armor":                     0,
+	"minecraft:generic.armor_toughness":           0,
+	"minecraft:generic.attack_damage":             2,
+	"minecraft:generic.attack_knockback":          0,
+	"minecraft:generic.attack_speed":              2,
+	"minecraft:generic.block_break_speed":         1,
+	"minecraft:generic.block_interaction_range":   4.5,
+	"minecraft:generic.entity_interaction_range":  3,
+	"minecraft:generic.fall_damage_multiplier":    1,
+	"minecraft:generic.flying_speed":              0.4,
+	"minecraft:generic.follow_range":              32,
+	"minecraft:generic.gravity":                   0.08,
+	"minecraft:generic.jump_strength":             0.42,
+	"minecraft:generic.knockback_resistance":      0,
+	"minecraft:generic.luck":                      0,
+	"minecraft:generic.max_absorption":            0,
+	"minecraft:generic.max_health":                20,
+	"minecraft:generic.movement_speed":            0.7,
+	"minecraft:generic.safe_fall_distance":        3,
+	"minecraft:generic.scale":                     1,
+	"minecraft:zombie.spawn_reinforcements":       0,
+	"minecraft:generic.step_height":               0.6,
+	"minecraft:generic.submerged_mining_speed":    0.2,
+	"minecraft:generic.sweeping_damage_ratio":     0,
+	"minecraft:generic.water_movement_efficiency": 0,
+}

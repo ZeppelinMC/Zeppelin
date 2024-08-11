@@ -16,7 +16,6 @@ const DataVersion = 3953
 // chunkToAnvil turns the chunk into an anvilChunk
 func chunkToAnvil(c *chunk.Chunk) anvilChunk {
 	anvil := anvilChunk{
-		LastUpdate:    c.LastModified,
 		Status:        "minecraft:full",
 		BlockEntities: c.BlockEntities,
 		Heightmaps:    c.Heightmaps,

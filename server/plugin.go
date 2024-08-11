@@ -21,12 +21,9 @@ func (p Plugin) Server() *Server {
 }
 
 func (srv *Server) loadPlugins() {
-	fs.WalkDir(os.DirFS("plugins"), ".", func(path string, _ fs.DirEntry, err error) error {
-		if path == "." {
-			return nil
-		}
-
-		if err != nil {
+	os.Mkdir("plugins", 0755)
+	fs.WalkDir(os.DirFS("plugins"), ".", func(path string, e fs.DirEntry, err error) error {
+		if path == "." || err != nil || e.IsDir() {
 			return nil
 		}
 

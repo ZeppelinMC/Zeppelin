@@ -81,9 +81,21 @@ func (sec *Section) Block(x, y, z byte) Block {
 	return sec.blockPalette[index]
 }
 
+func (sec *Section) blockState(x, y, z byte) int64 {
+	if len(sec.blockStates) == 0 {
+		return 0
+	}
+
+	long, off := sec.offset(int(x), int(y), int(z))
+	l := sec.blockStates[long]
+	index := (l >> off) & (1<<sec.blockBitsPerEntry - 1)
+
+	return index
+}
+
 // Sets the block at the position to the index in the palette. Errors if the state is bigger than the length of the palette or negative
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
-func (sec *Section) SetBlockState(x, y, z byte, state int64) error {
+func (sec *Section) setBlockState(x, y, z byte, state int64) error {
 	if state < 0 || len(sec.blockStates) <= int(state) {
 		return fmt.Errorf("block state not in palette")
 	}
@@ -117,7 +129,7 @@ func (sec *Section) SetBlock(x, y, z byte, b Block) (state int64) {
 			for x := byte(0); x < 16; x++ {
 				for y := byte(0); y < 16; y++ {
 					for z := byte(0); z < 16; z++ {
-						newSec.SetBlock(x, y, z, sec.Block(x, y, z))
+						newSec.setBlockState(x, y, z, sec.blockState(x, y, z))
 					}
 				}
 			}

@@ -24,8 +24,6 @@ type ServerProperties struct {
 
 	SystemChatFormat string `properties:"system-chat-format"`
 
-	ServerBrandName string `properties:"server-brand-name"`
-
 	EnforceSecureProfile           bool   `properties:"enforce-secure-profile"`
 	EnforceWhitelist               bool   `properties:"enforce-whitelist"`
 	EntityBroadcastRangePrecentage int    `properties:"entity-broadcast-range-precentage"`
@@ -76,7 +74,6 @@ type ServerProperties struct {
 }
 
 var Default = ServerProperties{
-	ServerBrandName:                "Zeppelin",
 	AllowNether:                    true,
 	BroadcastConsoleToOps:          true,
 	BroadcastRconToOps:             true,

@@ -535,6 +535,20 @@ func (b *Broadcast) NumSession() int {
 	return len(b.sessions)
 }
 
+func Clamp(f, low, high float32) float32 {
+	if f < low {
+		return low
+	}
+	if f > high {
+		return high
+	}
+	return f
+}
+
+func getAttackStrengthScale(p_36404 float32) float32 {
+	return Clamp((1+p_36404)/1, 0, 1)
+}
+
 func (b *Broadcast) DamageEvent(attacker, attacked Session, dimension string, damageType string) {
 	b.sessions_mu.RLock()
 	defer b.sessions_mu.RUnlock()
@@ -544,14 +558,10 @@ func (b *Broadcast) DamageEvent(attacker, attacked Session, dimension string, da
 		"minecraft:entity.player.hurt", false, nil, play.SoundCategoryPlayer, id, 1, 1,
 	)
 
-	yawd, _ := attacker.Player().Rotation()
-	x, z := YawToXZDelta(yawd)
+	x1, _, z1 := attacked.Player().Position()
+	x2, _, z2 := attacker.Player().Position()
 
-	vx, vy, vz := attacked.Player().Motion()
-	velDeltaX, velDeltaZ := (x+sign(x)*5)/20, (z+sign(z)*5)/20
-
-	vx, vz = vx+velDeltaX, vz+velDeltaZ
-	attacked.Player().SetMotion(vx, vy, vz)
+	vx, vy, vz := x1/2.0-x2, min(0.4, 1), z1/2.0-z2
 
 	for _, s := range b.sessions {
 		if dimension != s.Player().Dimension() {
@@ -567,6 +577,7 @@ func (b *Broadcast) DamageEvent(attacker, attacked Session, dimension string, da
 			Y:        int16(vy * 8000),
 			Z:        int16(vz * 8000),
 		})
+
 	}
 }
 

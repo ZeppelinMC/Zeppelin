@@ -83,12 +83,17 @@ type Server struct {
 
 	Console *Console
 
-	CommandManager *command.Manager
+	CommandManager        *command.Manager
+	onConnectionIntercept func(conn *net.Conn, stop *bool)
 
 	closed   bool
 	stopLoop chan struct{}
 
 	Players *player.PlayerManager
+}
+
+func (srv *Server) setOnConnectionIntercept(i func(conn *net.Conn, stop *bool)) {
+	srv.onConnectionIntercept = i
 }
 
 func (srv *Server) provideStatus() status.StatusResponseData {
@@ -137,6 +142,13 @@ func (srv *Server) Start(ts time.Time) {
 			}
 			<-srv.stopLoop
 			return
+		}
+		if srv.onConnectionIntercept != nil {
+			var stop bool
+			srv.onConnectionIntercept(conn, &stop)
+			if stop {
+				continue
+			}
 		}
 		srv.handleNewConnection(conn)
 	}

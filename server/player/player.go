@@ -260,13 +260,23 @@ func (p *Player) SetGameMode(mode level.GameMode) {
 }
 
 func (p *Player) Attribute(id string) *entity.Attribute {
-	p.att_mu.RLock()
-	defer p.att_mu.RUnlock()
+	p.att_mu.Lock()
+	defer p.att_mu.Unlock()
 	i := slices.IndexFunc(p.attributes, func(att entity.Attribute) bool { return att.Id == id })
 	if i == -1 {
-		return nil
+		attr, ok := entity.DefaultAttributes[id]
+		if !ok {
+			return nil
+		}
+		a := entity.Attribute{
+			Id:   id,
+			Base: attr,
+		}
+		p.attributes = append(p.attributes, a)
+		return &a
 	}
-	return &p.attributes[i]
+	attr := &p.attributes[i]
+	return attr
 }
 
 // returns a clone of the attributes of this player

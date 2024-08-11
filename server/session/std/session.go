@@ -32,7 +32,6 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
-	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
 )
@@ -45,6 +44,8 @@ type StandardSession struct {
 	player    *player.Player
 	broadcast *session.Broadcast
 	config    properties.ServerProperties
+
+	ChunkLoadWorker *ChunkLoadWorker
 
 	conn *net.Conn
 
@@ -104,7 +105,7 @@ func New(
 	commandManager *command.Manager,
 	tickManager *tick.TickManager,
 ) *StandardSession {
-	return &StandardSession{
+	s := &StandardSession{
 		conn:                   conn,
 		World:                  world,
 		player:                 player,
@@ -120,6 +121,9 @@ func New(
 
 		registryIndexes: make(map[string][]string),
 	}
+	s.ChunkLoadWorker = NewChunkLoadWorker(s)
+
+	return s
 }
 
 func (session *StandardSession) CommandManager() *command.Manager {
@@ -127,6 +131,13 @@ func (session *StandardSession) CommandManager() *command.Manager {
 }
 
 func (session *StandardSession) WritePacket(pk packet.Packet) error {
+	if PacketWriteInterceptor != nil {
+		var stop bool
+		PacketWriteInterceptor(session, pk, &stop)
+		if stop {
+			return nil
+		}
+	}
 	return session.conn.WritePacket(pk)
 }
 
@@ -146,35 +157,35 @@ func (session *StandardSession) SynchronizePosition(x, y, z float64, yaw, pitch 
 	session.player.SetPosition(x, y, z)
 	session.player.SetRotation(yaw, pitch)
 	session.AwaitingTeleportAcknowledgement.Set(true)
-	return session.conn.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
+	return session.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
 }
 
 func (session *StandardSession) UpdateEntityPosition(entity entity.Entity, pk *play.UpdateEntityPosition) error {
-	return session.conn.WritePacket(pk)
+	return session.WritePacket(pk)
 }
 
 // additionally sends head rotation
 func (session *StandardSession) UpdateEntityPositionRotation(entity entity.Entity, pk *play.UpdateEntityPositionAndRotation) error {
-	if err := session.conn.WritePacket(pk); err != nil {
+	if err := session.WritePacket(pk); err != nil {
 		return err
 	}
-	return session.conn.WritePacket(&play.SetHeadRotation{EntityId: pk.EntityId, HeadYaw: pk.Yaw})
+	return session.WritePacket(&play.SetHeadRotation{EntityId: pk.EntityId, HeadYaw: pk.Yaw})
 }
 
 // additionally sends head rotation
 func (session *StandardSession) UpdateEntityRotation(entity entity.Entity, pk *play.UpdateEntityRotation) error {
-	if err := session.conn.WritePacket(pk); err != nil {
+	if err := session.WritePacket(pk); err != nil {
 		return err
 	}
-	return session.conn.WritePacket(&play.SetHeadRotation{EntityId: pk.EntityId, HeadYaw: pk.Yaw})
+	return session.WritePacket(&play.SetHeadRotation{EntityId: pk.EntityId, HeadYaw: pk.Yaw})
 }
 
 func (session *StandardSession) EntityAnimation(entityId int32, animation byte) error {
-	return session.conn.WritePacket(&play.EntityAnimation{EntityId: entityId, Animation: animation})
+	return session.WritePacket(&play.EntityAnimation{EntityId: entityId, Animation: animation})
 }
 
 func (session *StandardSession) EntityMetadata(entityId int32, md metadata.Metadata) error {
-	return session.conn.WritePacket(&play.SetEntityMetadata{EntityId: entityId, Metadata: md})
+	return session.WritePacket(&play.SetEntityMetadata{EntityId: entityId, Metadata: md})
 }
 
 func (session *StandardSession) Conn() *net.Conn {
@@ -222,18 +233,18 @@ func (session *StandardSession) SessionData() (play.PlayerSession, bool) {
 }
 
 func (session *StandardSession) PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error {
-	return session.conn.WritePacket(pk)
+	return session.WritePacket(pk)
 }
 
 func (session *StandardSession) PlayerInfoRemove(uuids ...uuid.UUID) error {
-	return session.conn.WritePacket(&play.PlayerInfoRemove{UUIDs: uuids})
+	return session.WritePacket(&play.PlayerInfoRemove{UUIDs: uuids})
 }
 
 func (session *StandardSession) Disconnect(reason text.TextComponent) error {
 	if session.inConfiguration() {
-		session.conn.WritePacket(&configuration.Disconnect{Reason: reason})
+		session.WritePacket(&configuration.Disconnect{Reason: reason})
 	} else {
-		session.conn.WritePacket(&play.Disconnect{Reason: reason})
+		session.WritePacket(&play.Disconnect{Reason: reason})
 	}
 	return session.conn.Close()
 }
@@ -241,31 +252,32 @@ func (session *StandardSession) Disconnect(reason text.TextComponent) error {
 // finishes configuration
 func (session *StandardSession) Configure() error {
 	go session.handlePackets()
-	if err := session.conn.WritePacket(&configuration.ClientboundPluginMessage{
+	if err := session.WritePacket(&configuration.ClientboundPluginMessage{
 		Channel: "minecraft:brand",
-		Data:    io.AppendString(nil, session.config.ServerBrandName),
+		Data:    io.AppendString(nil, "Zeppelin"),
 	}); err != nil {
 		return err
 	}
 	for _, packet := range configuration.RegistryPackets {
-		if err := session.conn.WritePacket(packet); err != nil {
+		if err := session.WritePacket(packet); err != nil {
 			return err
 		}
 		session.registryIndexes[packet.RegistryId] = slices.Clone(packet.Indexes)
 	}
 
-	if err := session.conn.WritePacket(updateTags); err != nil {
+	if err := session.WritePacket(updateTags); err != nil {
 		return err
 	}
 
-	if err := session.conn.WritePacket(configuration.FinishConfiguration{}); err != nil {
+	if err := session.WritePacket(configuration.FinishConfiguration{}); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (session *StandardSession) login() error {
-	if err := session.conn.WritePacket(&play.Login{
+	session.ChunkLoadWorker.start()
+	if err := session.WritePacket(&play.Login{
 		EntityID:   session.player.EntityId(),
 		Dimensions: []string{session.player.Dimension()},
 
@@ -286,7 +298,7 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
-	if err := session.conn.WritePacket(&play.ChangeDifficulty{
+	if err := session.WritePacket(&play.ChangeDifficulty{
 		Difficulty: session.World.Data.Difficulty,
 		Locked:     session.World.Data.DifficultyLocked,
 	}); err != nil {
@@ -302,19 +314,19 @@ func (session *StandardSession) login() error {
 		session.player.SetAttribute("minecraft:generic.movement_speed", 0.1)
 	}
 
-	if err := session.conn.WritePacket(
+	if err := session.WritePacket(
 		session.player.Abilities().Encode(float32(movementSpeed.Base)),
 	); err != nil {
 		return err
 	}
 
-	if err := session.conn.WritePacket(session.commandManager.Encode()); err != nil {
+	if err := session.WritePacket(session.commandManager.Encode()); err != nil {
 		return err
 	}
 
 	recipeBook := session.player.RecipeBook()
 
-	if err := session.conn.WritePacket(&play.UpdateRecipeBook{
+	if err := session.WritePacket(&play.UpdateRecipeBook{
 		Action:                         play.UpdateRecipeBookActionInit,
 		CraftingRecipeBookOpen:         recipeBook.IsGuiOpen,
 		CraftingRecipeBookFilterActive: recipeBook.IsFilteringCraftable,
@@ -339,7 +351,7 @@ func (session *StandardSession) login() error {
 
 	status := session.statusProviderProvider()()
 
-	if err := session.conn.WritePacket(&play.ServerData{
+	if err := session.WritePacket(&play.ServerData{
 		MOTD: status.Description,
 		Icon: status.Favicon,
 	}); err != nil {
@@ -351,7 +363,7 @@ func (session *StandardSession) login() error {
 	if err := session.SendInventory(); err != nil {
 		return err
 	}
-	if err := session.conn.WritePacket(&play.SetHeldItemClientbound{Slot: int8(session.player.SelectedItemSlot())}); err != nil {
+	if err := session.WritePacket(&play.SetHeldItemClientbound{Slot: int8(session.player.SelectedItemSlot())}); err != nil {
 		return err
 	}
 
@@ -372,7 +384,7 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
-	if err := session.conn.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
+	if err := session.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
 		return err
 	}
 
@@ -425,7 +437,7 @@ func (session *StandardSession) DespawnEntities(entityIds ...int32) error {
 		}
 		return false
 	})
-	return session.conn.WritePacket(&play.RemoveEntities{EntityIDs: entityIds})
+	return session.WritePacket(&play.RemoveEntities{EntityIDs: entityIds})
 }
 
 func (session *StandardSession) bundleStart() error {
@@ -433,7 +445,7 @@ func (session *StandardSession) bundleStart() error {
 		return nil
 	}
 	session.inBundle.Set(true)
-	return session.conn.WritePacket(&play.BundleDelimiter{})
+	return session.WritePacket(&play.BundleDelimiter{})
 }
 
 func (session *StandardSession) bundleStop() error {
@@ -441,7 +453,7 @@ func (session *StandardSession) bundleStop() error {
 		return nil
 	}
 	session.inBundle.Set(false)
-	return session.conn.WritePacket(&play.BundleDelimiter{})
+	return session.WritePacket(&play.BundleDelimiter{})
 }
 
 func (session *StandardSession) SpawnEntity(e entity.Entity) error {
@@ -452,7 +464,7 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 	yaw, pitch := e.Rotation()
 	id := e.EntityId()
 
-	if err := session.conn.WritePacket(&play.SpawnEntity{
+	if err := session.WritePacket(&play.SpawnEntity{
 		EntityId:   id,
 		EntityUUID: e.UUID(),
 		Type:       e.Type(),
@@ -470,7 +482,7 @@ func (session *StandardSession) SpawnEntity(e entity.Entity) error {
 	defer session.spawned_ents_mu.Unlock()
 	session.spawnedEntities = append(session.spawnedEntities, id)
 
-	if err := session.conn.WritePacket(&play.SetEntityMetadata{
+	if err := session.WritePacket(&play.SetEntityMetadata{
 		EntityId: id,
 		Metadata: e.Metadata(),
 	}); err != nil {
@@ -527,13 +539,13 @@ func (session *StandardSession) sendSpawnChunks() error {
 	x, _, z := session.player.Position()
 	chunkX, chunkZ := int32(x)>>4, int32(z)>>4
 
-	if err := session.conn.WritePacket(&play.SetCenterChunk{ChunkX: chunkX, ChunkZ: chunkZ}); err != nil {
+	if err := session.WritePacket(&play.SetCenterChunk{ChunkX: chunkX, ChunkZ: chunkZ}); err != nil {
 		return err
 	}
 
 	var chunks int32
 
-	if err := session.conn.WritePacket(&play.ChunkBatchStart{}); err != nil {
+	if err := session.WritePacket(&play.ChunkBatchStart{}); err != nil {
 		return err
 	}
 
@@ -551,7 +563,7 @@ func (session *StandardSession) sendSpawnChunks() error {
 		}
 	}
 
-	if err := session.conn.WritePacket(&play.ChunkBatchFinished{
+	if err := session.WritePacket(&play.ChunkBatchFinished{
 		BatchSize: chunks,
 	}); err != nil {
 		return err
@@ -575,57 +587,31 @@ func (session *StandardSession) DamageEvent(attacker, attacked session.Session, 
 		de.SourceCauseId = id
 		de.SourceDirectId = id
 	}
-	if err := session.conn.WritePacket(de); err != nil {
+	if err := session.WritePacket(de); err != nil {
 		return err
 	}
-	return session.conn.WritePacket(&play.HurtAnimation{
+	return session.WritePacket(&play.HurtAnimation{
 		EntityId: attacked.Player().EntityId(),
 	})
 }
 
-func (session *StandardSession) SendChunkRadius(chunkX, chunkZ int32) error {
-	viewDistance := session.ViewDistance()
-
-	session.load_ch_mu.Lock()
-	defer session.load_ch_mu.Unlock()
-
-	for x := chunkX - viewDistance; x < chunkX+viewDistance; x++ {
-		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
-			if _, ok := session.loadedChunks[region.ChunkHash(x, z)]; ok {
-				continue
-			}
-			session.loadedChunks[region.ChunkHash(x, z)] = struct{}{}
-			c, err := session.Dimension().GetChunk(x, z)
-			if err != nil {
-				continue
-			}
-
-			if err := session.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 func (session *StandardSession) UpdateTime(worldAge, dayTime int64) error {
-	return session.conn.WritePacket(&play.UpdateTime{WorldAge: worldAge, TimeOfDay: dayTime})
+	return session.WritePacket(&play.UpdateTime{WorldAge: worldAge, TimeOfDay: dayTime})
 }
 
 func (session *StandardSession) DeleteMessage(id int32, sig [256]byte) error {
-	return session.conn.WritePacket(&play.DeleteMessage{MessageId: id, Signature: sig})
+	return session.WritePacket(&play.DeleteMessage{MessageId: id, Signature: sig})
 }
 
 func (session *StandardSession) SendInventory() error {
-	return session.conn.WritePacket(&play.SetContainerContent{
+	return session.WritePacket(&play.SetContainerContent{
 		StateId: 1,
 		Slots:   session.player.Inventory().EncodeResize(46),
 	})
 }
 
 func (session *StandardSession) setContainerContent(container window.Window) error {
-	return session.conn.WritePacket(&play.SetContainerContent{
+	return session.WritePacket(&play.SetContainerContent{
 		StateId:  1,
 		WindowID: byte(container.Id),
 		Slots:    container.Items.Encode(),
@@ -638,7 +624,7 @@ func (session *StandardSession) OpenWindow(w *window.Window) error {
 	}
 	session.WindowView.Set(w.Id)
 
-	err := session.conn.WritePacket(&play.OpenScreen{
+	err := session.WritePacket(&play.OpenScreen{
 		WindowId:    w.Id,
 		WindowType:  registry.Menu.Get(w.Type),
 		WindowTitle: w.Title,
@@ -654,7 +640,7 @@ func (session *StandardSession) OpenWindow(w *window.Window) error {
 
 func (session *StandardSession) Textures() (login.Textures, error) {
 	var textures login.Textures
-	properties := session.conn.Properties()
+	properties := session.Properties()
 	if len(properties) == 0 {
 		return textures, fmt.Errorf("client has no textures")
 	}
@@ -668,13 +654,13 @@ func (session *StandardSession) Textures() (login.Textures, error) {
 }
 
 func (session *StandardSession) BlockAction(pk *play.BlockAction) error {
-	return session.conn.WritePacket(pk)
+	return session.WritePacket(pk)
 }
 
 func (session *StandardSession) PlaySound(pk *play.SoundEffect) error {
-	return session.conn.WritePacket(pk)
+	return session.WritePacket(pk)
 }
 
 func (session *StandardSession) PlayEntitySound(pk *play.EntitySoundEffect) error {
-	return session.conn.WritePacket(pk)
+	return session.WritePacket(pk)
 }

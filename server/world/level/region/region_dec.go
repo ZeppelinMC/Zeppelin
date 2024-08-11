@@ -20,6 +20,7 @@ import (
 
 type Generator interface {
 	NewChunk(x, z int32) chunk.Chunk
+	GenerateWorldSpawn() (x, y, z int32)
 }
 
 type File struct {
@@ -268,11 +269,12 @@ func (f *File) decodeAll(locationTable []byte, r io.ReaderAt) error {
 			continue
 		}
 
-		var anvil = anvilChunks.Get().(*anvilChunk)
-		defer anvilChunks.Put(anvil)
+		//var anvil = anvilChunks.Get().(*anvilChunk)
+		//defer anvilChunks.Put(anvil)
+
+		var anvil = new(anvilChunk)
 
 		if err = nbt.NewDecoder(buf).Decode(anvil); err != nil {
-			log.Println(err)
 			continue
 		}
 
