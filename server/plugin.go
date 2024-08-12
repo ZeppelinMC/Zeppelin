@@ -35,17 +35,17 @@ func (srv *Server) loadPlugins() {
 func (srv *Server) loadPlugin(name string) {
 	pl, err := plugin.Open(name)
 	if err != nil {
-		log.Errorf("Error loading plugin %s: %v\n", name, err)
+		log.Errorlnf("Error loading plugin %s: %v", name, err)
 		return
 	}
 	sym, err := pl.Lookup("ZeppelinPluginExport")
 	if err != nil {
-		log.Errorf("Couldn't find plugin export for %s: %v\n", name, err)
+		log.Errorlnf("Couldn't find plugin export for %s: %v", name, err)
 		return
 	}
 	plugin, ok := sym.(*Plugin)
 	if !ok {
-		log.Errorf("Invalid plugin export for %s\n", name)
+		log.Errorlnf("Invalid plugin export for %s", name)
 		return
 	}
 	plugin.srv = srv

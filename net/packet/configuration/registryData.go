@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"reflect"
+	"sync"
 
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/registry"
@@ -17,6 +18,8 @@ func init() {
 		})
 	}
 }
+
+var RegistryPacketsMutex sync.Mutex
 
 // clientbound
 const PacketIdRegistryData = 0x07

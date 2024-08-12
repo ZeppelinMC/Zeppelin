@@ -258,13 +258,14 @@ func (session *StandardSession) Configure() error {
 	}); err != nil {
 		return err
 	}
+	configuration.RegistryPacketsMutex.Lock()
 	for _, packet := range configuration.RegistryPackets {
 		if err := session.WritePacket(packet); err != nil {
 			return err
 		}
 		session.registryIndexes[packet.RegistryId] = slices.Clone(packet.Indexes)
 	}
-
+	configuration.RegistryPacketsMutex.Unlock()
 	if err := session.WritePacket(updateTags); err != nil {
 		return err
 	}
