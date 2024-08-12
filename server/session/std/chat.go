@@ -49,7 +49,7 @@ func (session *StandardSession) AppendMessage(sig [256]byte) {
 	session.previousMessages = append([]play.PreviousMessage{{MessageID: int32(len(session.previousMessages))}}, session.previousMessages...)
 
 	if len(session.previousMessages) > 20 {
-		session.previousMessages = session.previousMessages[1:21]
+		session.previousMessages = session.previousMessages[:20]
 	}
 }
 
