@@ -100,18 +100,10 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	}
 
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
-		var buf = pkpool.Get().(*bytes.Buffer)
-		buf.Reset()
-		defer pkpool.Put(buf)
-
-		if err := io.WriteVarInt(buf, int32(packetBuf.Len())); err != nil {
+		if err := io.WriteVarInt(conn, int32(packetBuf.Len())); err != nil {
 			return err
 		}
-		if _, err := packetBuf.WriteTo(buf); err != nil {
-			return err
-		}
-
-		_, err := buf.WriteTo(conn)
+		_, err := packetBuf.WriteTo(conn)
 		return err
 	} else { // yes compression
 		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len()) { // packet is too small to be compressed
