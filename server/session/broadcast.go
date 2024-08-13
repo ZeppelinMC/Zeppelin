@@ -27,6 +27,9 @@ type Broadcast struct {
 	// a dummy session is not included in the player list
 	dummies     []Session
 	sessions_mu sync.RWMutex
+
+	prev_msgs_mu     sync.Mutex
+	previousMessages []play.PreviousMessage
 }
 
 func NewBroadcast(dummies ...Session) *Broadcast {

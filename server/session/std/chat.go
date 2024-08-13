@@ -41,27 +41,6 @@ func (session *StandardSession) DisguisedChatMessage(content text.TextComponent,
 	})
 }
 
-func (session *StandardSession) AppendMessage(sig [256]byte) {
-	session.prev_msgs_mu.Lock()
-	defer session.prev_msgs_mu.Unlock()
-	session.bumpChatIndex()
-
-	if len(session.previousMessages) != 20 {
-		session.previousMessages = append([]play.PreviousMessage{{MessageID: int32(len(session.previousMessages))}}, session.previousMessages...)
-	}
-}
-
-func (session *StandardSession) bumpChatIndex() {
-	session.ChatIndex.Set(session.ChatIndex.Get() + 1)
-}
-
-func (session *StandardSession) SecureChatData() (index int32, prevMsgs []play.PreviousMessage) {
-	session.prev_msgs_mu.Lock()
-	defer session.prev_msgs_mu.Unlock()
-
-	return session.ChatIndex.Get(), session.previousMessages
-}
-
 func (session *StandardSession) SystemMessage(msg text.TextComponent) error {
 	return session.conn.WritePacket(&play.SystemChatMessage{Content: msg})
 }

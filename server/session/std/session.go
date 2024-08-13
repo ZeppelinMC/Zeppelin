@@ -66,9 +66,6 @@ type StandardSession struct {
 
 	// the index that should be sent in player chat messages
 	ChatIndex atomic.AtomicValue[int32]
-	// the previous messages of this player
-	prev_msgs_mu     sync.Mutex
-	previousMessages []play.PreviousMessage
 
 	inBundle atomic.AtomicValue[bool]
 
