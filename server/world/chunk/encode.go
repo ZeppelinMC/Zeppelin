@@ -119,7 +119,6 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 		case blockBitsPerEntry == 0:
 			stateId, _ := section.BlockStateId(blockPalette[0])
 			w.VarInt(stateId)
-
 		case blockBitsPerEntry >= 4 && blockBitsPerEntry <= 8:
 			w.VarInt(int32(len(blockPalette)))
 			for _, e := range blockPalette {

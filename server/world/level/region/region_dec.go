@@ -1,7 +1,6 @@
 package region
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -119,7 +118,7 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}
 
-	var rawReader = bufio.NewReader(util.NewReaderAtMaxxer(r.reader, int(length), int64(offset)+5))
+	var rawReader = util.NewReaderAtMaxxer(r.reader, int(length), int64(offset)+5)
 
 	var data []byte
 
@@ -143,10 +142,11 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 		return nil, fmt.Errorf("invalid compression method %d", compression)
 	}
 
-	var anvil = anvilChunks.Get().(*anvilChunk)
-	defer anvilChunks.Put(anvil)
+	//var anvil = anvilChunks.Get().(*anvilChunk)
+	//defer anvilChunks.Put(anvil)
+	var anvil anvilChunk
 
-	if err := nbt.Unmarshal(data, anvil); err != nil {
+	if err := nbt.Unmarshal(data, &anvil); err != nil {
 		return nil, err
 	}
 
@@ -174,7 +174,7 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 			blocks[i] = b
 		}
 
-		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, slices.Clone(sec.BlockStates.Data), sec.Biomes.Palette, slices.Clone(sec.Biomes.Data), *(*[]byte)(unsafe.Pointer(&sec.SkyLight)), *(*[]byte)(unsafe.Pointer(&sec.BlockLight)))
+		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, *(*[]byte)(unsafe.Pointer(&sec.SkyLight)), *(*[]byte)(unsafe.Pointer(&sec.BlockLight)))
 	}
 	if emptySections == len(r.chunks[hash].Sections) && r.generateEmpty && r.generator != nil {
 		r.chunks[hash] = new(chunk.Chunk)

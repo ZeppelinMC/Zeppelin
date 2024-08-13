@@ -2,11 +2,13 @@ package handler
 
 import (
 	"math"
+	"slices"
 
 	"github.com/zeppelinmc/zeppelin/net"
 	"github.com/zeppelinmc/zeppelin/net/metadata"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
@@ -53,6 +55,8 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Packet) {
 		return
 	}
 
+	currentBlockName, _ := b.Encode()
+
 	var blockX, blockY, blockZ = use.BlockX, use.BlockY, use.BlockZ
 	yaw, _ := s.Player().Rotation()
 
@@ -78,6 +82,12 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Packet) {
 	case play.FaceEast:
 		blockX++
 		axis, facing = "x", "east"
+	}
+
+	replaceable := slices.Index(std.Tags.Tags["minecraft:block"]["minecraft:replaceable"], registry.Block.Get(currentBlockName)) != -1
+
+	if replaceable {
+		blockX, blockY, blockZ = use.BlockX, use.BlockY, use.BlockZ
 	}
 
 	currentBlock, err := dimension.Block(blockX, blockY, blockZ)

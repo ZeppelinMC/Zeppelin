@@ -6,7 +6,6 @@ import (
 
 	"github.com/4kills/go-libdeflate/v2"
 	"github.com/zeppelinmc/zeppelin/net/io/buffers"
-	"github.com/zeppelinmc/zeppelin/net/io/util"
 )
 
 // Decompress gunzip. The data returned is only safe to use until the next operation
@@ -18,7 +17,7 @@ func DecompressGzip(data io.Reader, compressedLength int, decompressedLength *in
 		compressedBuffer.Grow(compressedLength)
 	}
 
-	if _, err := compressedBuffer.ReadFrom(util.NewReaderMaxxer(data, compressedLength)); err != nil {
+	if _, err := data.Read(compressedBuffer.Bytes()[:compressedLength]); err != nil {
 		return nil, err
 	}
 
@@ -53,7 +52,7 @@ func CompressGzip(decompressedData io.Reader, decompressedLength int, compressed
 		decompressedBuffer.Grow(decompressedLength)
 	}
 
-	if _, err := decompressedBuffer.ReadFrom(util.NewReaderMaxxer(decompressedData, decompressedLength)); err != nil {
+	if _, err := decompressedData.Read(decompressedBuffer.Bytes()[:decompressedLength]); err != nil {
 		return nil, err
 	}
 

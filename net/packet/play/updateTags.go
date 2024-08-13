@@ -43,5 +43,39 @@ func (u *UpdateTags) Encode(w io.Writer) error {
 }
 
 func (u *UpdateTags) Decode(r io.Reader) error {
-	return nil //TODO
+	var length int32
+	if _, err := r.VarInt(&length); err != nil {
+		return err
+	}
+	u.Tags = make(map[string]map[string][]int32, length)
+
+	for i := int32(0); i < length; i++ {
+		var registry string
+		if err := r.String(&registry); err != nil {
+			return err
+		}
+		var length int32
+		if _, err := r.VarInt(&length); err != nil {
+			return err
+		}
+
+		u.Tags[registry] = make(map[string][]int32, length)
+		for i := int32(0); i < length; i++ {
+			var tagName string
+			if err := r.String(&tagName); err != nil {
+				return err
+			}
+			var count int32
+			if _, err := r.VarInt(&count); err != nil {
+				return err
+			}
+			u.Tags[registry][tagName] = make([]int32, count)
+			for i := int32(0); i < count; i++ {
+				if _, err := r.VarInt(&u.Tags[registry][tagName][i]); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
