@@ -46,10 +46,8 @@ func (session *StandardSession) AppendMessage(sig [256]byte) {
 	defer session.prev_msgs_mu.Unlock()
 	session.bumpChatIndex()
 
-	session.previousMessages = append([]play.PreviousMessage{{MessageID: int32(len(session.previousMessages))}}, session.previousMessages...)
-
-	if len(session.previousMessages) > 20 {
-		session.previousMessages = session.previousMessages[:20]
+	if len(session.previousMessages) != 20 {
+		session.previousMessages = append([]play.PreviousMessage{{MessageID: int32(len(session.previousMessages))}}, session.previousMessages...)
 	}
 }
 
