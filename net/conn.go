@@ -86,9 +86,9 @@ var pkpool = sync.Pool{
 }
 
 func (conn *Conn) WritePacket(pk packet.Packet) error {
-	var packetBuf = pkbufpool.Get().(*bytes.Buffer)
+	var packetBuf = pkpool.Get().(*bytes.Buffer)
 	packetBuf.Reset()
-	defer pkbufpool.Put(packetBuf)
+	defer pkpool.Put(packetBuf)
 
 	w := io.NewWriter(packetBuf)
 
@@ -400,6 +400,15 @@ func (conn *Conn) handleHandshake() bool {
 		}
 		loginStart, ok := pk.(*login.LoginStart)
 		if !ok {
+			return false
+		}
+		if ok, r := conn.listener.ApprovePlayer(conn); !ok {
+			var reason = text.Sprint("Disconnected")
+			if r != nil {
+				reason = *r
+			}
+			conn.WritePacket(&login.Disconnect{Reason: reason})
+			conn.Close()
 			return false
 		}
 		conn.username = loginStart.Name

@@ -28,7 +28,11 @@ func main() {
 
 	cfg := loadConfig()
 
-	w := world.NewWorld(cfg.LevelName)
+	w, err := world.NewWorld(cfg.LevelName)
+	if err != nil {
+		log.Errorlnf("Error preparing level: %v", w)
+		return
+	}
 
 	log.Infof("Binding server to %s:%d\n", cfg.ServerIp, cfg.ServerPort)
 

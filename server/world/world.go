@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -19,11 +20,13 @@ type World struct {
 
 	levelPrepared bool
 
+	lock *os.File
+
 	path              string
 	worldAge, dayTime atomic.AtomicValue[int64]
 }
 
-func NewWorld(path string) *World {
+func NewWorld(path string) (*World, error) {
 	var err error
 	w := &World{
 		path:      path,
@@ -33,6 +36,11 @@ func NewWorld(path string) *World {
 	if err != nil {
 		w.prepareLevel()
 	}
+
+	if w.obtainLock() != nil {
+		return nil, fmt.Errorf("failed to obtain session.lock")
+	}
+
 	w.worldAge = atomic.Value(w.Level.Data.Time)
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
 	w.dimensions = map[string]*dimension.Dimension{
@@ -46,7 +54,7 @@ func NewWorld(path string) *World {
 		),
 	}
 
-	return w
+	return w, nil
 }
 
 func (w *World) prepareLevel() {
@@ -58,6 +66,16 @@ func (w *World) prepareLevel() {
 
 	os.MkdirAll(w.path+"/DIM-1/region", 0755)
 	os.MkdirAll(w.path+"/DIM1/region", 0755)
+}
+
+func (w *World) obtainLock() error {
+	f, err := os.OpenFile(w.path+"/session.lock", os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+	f.Write(level.SessionLock)
+	w.lock = f
+	return nil
 }
 
 // returns the dimension struct for the dimension name
@@ -74,6 +92,7 @@ func (w *World) Save() {
 		dim.Save()
 		log.Infoln("Saved dimension", dim.Name())
 	}
+	w.lock.Close()
 }
 
 func (w *World) RegisterDimension(name string, dim *dimension.Dimension) {

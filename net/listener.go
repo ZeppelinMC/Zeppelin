@@ -4,6 +4,8 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"net"
+
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 const (
@@ -21,6 +23,8 @@ const (
 type Listener struct {
 	net.Listener
 	cfg Config
+
+	ApprovePlayer func(*Conn) (ok bool, disconnectionReason *text.TextComponent)
 
 	newConns chan *Conn
 	err      chan error

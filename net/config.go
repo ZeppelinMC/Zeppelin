@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/zeppelinmc/zeppelin/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/text"
 )
 
 type Config struct {
@@ -34,6 +35,9 @@ func (c Config) New() (*Listener, error) {
 
 		newConns: make(chan *Conn),
 		err:      make(chan error),
+		ApprovePlayer: func(c *Conn) (ok bool, disconnectionReason *text.TextComponent) {
+			return true, nil
+		},
 	}
 	lis.privKey, err = rsa.GenerateKey(rand.Reader, 1024)
 

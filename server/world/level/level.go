@@ -16,6 +16,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/level/seed"
 )
 
+var SessionLock = []byte{0xE2, 0x98, 0x83}
+
 // A game rule is a string containing an integer or a boolean
 type GameRule string
 
