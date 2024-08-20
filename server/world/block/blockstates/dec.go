@@ -3,6 +3,7 @@ package blockstates
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"unsafe"
 
@@ -66,8 +67,18 @@ func ReadBlock(f io.ReaderAt, loc BlockLocation) (Block, error) {
 	return blockStates, nil
 }
 
+var magic = [...]byte{0x0F, 0x06, 0x60, 0xF0}
+
 // ReadHeader reads the header of the block states format. The header contains locations for each block
 func ReadHeader(f io.Reader) (map[string]BlockLocation, error) {
+	var rmagic [4]byte
+	if _, err := f.Read(rmagic[:]); err != nil {
+		return nil, err
+	}
+	if rmagic != magic {
+		return nil, fmt.Errorf("invalid magic header")
+	}
+
 	var blockCount int32
 	if err := binary.Read(f, binary.BigEndian, &blockCount); err != nil {
 		return nil, err
@@ -93,8 +104,11 @@ func ReadHeader(f io.Reader) (map[string]BlockLocation, error) {
 	return locations, nil
 }
 
-// reads a string prepended by a byte length, l should be a byte slice with a length of one, so make([]byte, 1) should work
+// reads a string prepended by a byte length, l should be a byte slice with a length of one, so make([]byte, 1) will work. nil will also work
 func readString(f io.Reader, l []byte) (string, error) {
+	if l == nil {
+		l = make([]byte, 1)
+	}
 	if _, err := f.Read(l); err != nil {
 		return "", err
 	}

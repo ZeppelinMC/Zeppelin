@@ -1,0 +1,30 @@
+blockstates format (v0):
+
+data types:
+    byte- 1 byte, unsigned
+    (u)int16- 2 bytes, big endian (u=unsigned)
+    (u)int32- 4 bytes, big endian (u=unsigned)
+    string- prepended by a length (1 byte)
+
+file:
+    magic header:
+        4 bytes (0x0F, 0x06, 0x60, 0xF0)
+    location table:
+        4 bytes | count:int32
+
+        for 0...count:
+            min 1 byte | blockName:string
+            4 bytes | offset:int32
+            4 bytes | size:int32
+    
+    block (at offset): 
+        2 bytes | count:uint16
+        
+        for 0...count:
+            4 bytes | blockStateId:int32
+            1 byte  | propertyCount:byte
+            for 0...propertyCount:
+                min 1 byte | propertyName: string
+                min 1 byte | propertyValue: string
+
+Last edited by oq, 20th August 2024
