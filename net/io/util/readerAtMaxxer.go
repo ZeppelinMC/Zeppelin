@@ -19,7 +19,7 @@ type ReaderAtMaxxer struct {
 }
 
 func (r *ReaderAtMaxxer) Read(data []byte) (i int, err error) {
-	if r.read > r.max {
+	if r.read >= r.max {
 		return 0, io.EOF
 	}
 

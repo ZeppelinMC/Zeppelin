@@ -67,12 +67,12 @@ func (f *File) Encode(w *os.File, compressionScheme byte) error {
 
 		switch compressionScheme {
 		case CompressionGzip:
-			data, err = compress.CompressGzip(chunkBuffer, chunkBuffer.Len(), nil)
+			data, err = compress.CompressGzip(chunkBuffer.Bytes(), nil)
 			if err != nil {
 				return err
 			}
 		case CompressionZlib:
-			data, err = compress.CompressZlib(chunkBuffer, chunkBuffer.Len(), nil)
+			data, err = compress.CompressZlib(chunkBuffer.Bytes(), nil)
 			if err != nil {
 				return err
 			}

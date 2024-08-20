@@ -18,6 +18,15 @@ func (mgr *Manager) Encode() *play.Commands {
 		pk.Nodes[0].Children = append(pk.Nodes[0].Children, commandNodeIndex)
 		pk.Nodes = append(pk.Nodes, cmd.Node.Node)
 
+		if cmd.Namespace != "" {
+			pk.Nodes[0].Children = append(pk.Nodes[0].Children, int32(len(pk.Nodes)))
+			pk.Nodes = append(pk.Nodes, play.Node{
+				Flags:        play.NodeLiteral | play.NodeRedirect,
+				Name:         cmd.Namespace + ":" + cmd.Node.Name,
+				RedirectNode: commandNodeIndex,
+			})
+		}
+
 		for _, alias := range cmd.Aliases {
 			pk.Nodes[0].Children = append(pk.Nodes[0].Children, int32(len(pk.Nodes)))
 			pk.Nodes = append(pk.Nodes, play.Node{
@@ -25,6 +34,15 @@ func (mgr *Manager) Encode() *play.Commands {
 				Name:         alias,
 				RedirectNode: commandNodeIndex,
 			})
+
+			if cmd.Namespace != "" {
+				pk.Nodes[0].Children = append(pk.Nodes[0].Children, int32(len(pk.Nodes)))
+				pk.Nodes = append(pk.Nodes, play.Node{
+					Flags:        play.NodeLiteral | play.NodeRedirect,
+					Name:         cmd.Namespace + ":" + alias,
+					RedirectNode: commandNodeIndex,
+				})
+			}
 		}
 
 		for _, child := range cmd.Node.children {

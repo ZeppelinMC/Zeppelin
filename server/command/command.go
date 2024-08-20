@@ -6,8 +6,9 @@ import (
 )
 
 type Command struct {
-	Node    Node
-	Aliases []string
+	Node      Node
+	Aliases   []string
+	Namespace string
 
 	Callback           func(CommandCallContext)
 	SuggestionCallback func()

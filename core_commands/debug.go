@@ -10,8 +10,9 @@ import (
 )
 
 var debug = command.Command{
-	Node:    command.NewCommand("debug"),
-	Aliases: []string{"f3"},
+	Node:      command.NewCommand("debug"),
+	Aliases:   []string{"f3"},
+	Namespace: "zeppelin",
 	Callback: func(ccc command.CommandCallContext) {
 		player := ccc.Executor.Player()
 		if player == nil {

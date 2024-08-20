@@ -1,28 +1,11 @@
 package compress
 
 import (
-	"bytes"
-	"io"
-
 	"github.com/4kills/go-libdeflate/v2"
-	"github.com/zeppelinmc/zeppelin/net/io/buffers"
 )
 
 // Decompress gunzip. The data returned is only safe to use until the next operation
-func DecompressGzip(data io.Reader, compressedLength int, decompressedLength *int) ([]byte, error) {
-	var compressedBuffer = buffers.Buffers.Get().(*bytes.Buffer)
-	defer buffers.Buffers.Put(compressedBuffer)
-	compressedBuffer.Reset()
-	if compressedBuffer.Len() < compressedLength {
-		compressedBuffer.Grow(compressedLength)
-	}
-
-	if _, err := data.Read(compressedBuffer.Bytes()[:compressedLength]); err != nil {
-		return nil, err
-	}
-
-	compressed := compressedBuffer.Bytes()[:compressedLength]
-
+func DecompressGzip(compressed []byte, decompressedLength *int) ([]byte, error) {
 	dc := decompressors.Get().(libdeflate.Decompressor)
 	defer decompressors.Put(dc)
 
@@ -44,20 +27,7 @@ func DecompressGzip(data io.Reader, compressedLength int, decompressedLength *in
 
 // Compresses gunzip. If compressedLength is provided, data returned will only be safe to use until the next operation.
 // It is recommmended to provide the compressed length to avoid allocation. If you don't know it, provide a number likely bigger than the compressed length.
-func CompressGzip(decompressedData io.Reader, decompressedLength int, compressedLength *int) (compressed []byte, err error) {
-	var decompressedBuffer = buffers.Buffers.Get().(*bytes.Buffer)
-	defer buffers.Buffers.Put(decompressedBuffer)
-	decompressedBuffer.Reset()
-	if decompressedBuffer.Len() < decompressedLength {
-		decompressedBuffer.Grow(decompressedLength)
-	}
-
-	if _, err := decompressedData.Read(decompressedBuffer.Bytes()[:decompressedLength]); err != nil {
-		return nil, err
-	}
-
-	decompressed := decompressedBuffer.Bytes()[:decompressedLength]
-
+func CompressGzip(decompressedData []byte, compressedLength *int) (compressed []byte, err error) {
 	c := compressors.Get().(libdeflate.Compressor)
 	defer compressors.Put(c)
 
@@ -68,11 +38,11 @@ func CompressGzip(decompressedData io.Reader, decompressedLength int, compressed
 		}
 		defer bufs.Put(dst)
 
-		_, compressedResult, err := c.Compress(decompressed, dst[:*compressedLength], libdeflate.ModeGzip)
+		_, compressedResult, err := c.Compress(decompressedData, dst[:*compressedLength], libdeflate.ModeGzip)
 
 		return compressedResult, err
 	} else {
-		_, compressedResult, err := c.Compress(decompressed, nil, libdeflate.ModeGzip)
+		_, compressedResult, err := c.Compress(decompressedData, nil, libdeflate.ModeGzip)
 
 		return compressedResult, err
 	}

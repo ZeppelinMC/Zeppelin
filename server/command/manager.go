@@ -63,7 +63,16 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 func (mgr *Manager) findCommand(name string) *Command {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
+
+	var namespace string
+	if i := strings.Index(name, ":"); i != -1 && i != len(name) {
+		namespace = name[:i]
+		name = name[i+1:]
+	}
 	for _, cmd := range mgr.commands {
+		if namespace != "" && cmd.Namespace != namespace {
+			continue
+		}
 		if cmd.Node.Name == name {
 			return &cmd
 		}

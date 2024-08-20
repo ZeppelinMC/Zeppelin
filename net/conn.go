@@ -10,7 +10,6 @@ import (
 	"sync/atomic"
 	"unicode/utf16"
 
-	"github.com/zeppelinmc/zeppelin/log"
 	"github.com/zeppelinmc/zeppelin/net/cfb8"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/io/compress"
@@ -130,7 +129,7 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 
 			dataLength := io.AppendVarInt(nil, int32(packetBuf.Len()))
 
-			compressedPacket, err := compress.CompressZlib(packetBuf, packetBuf.Len(), &MaxCompressedPacketSize)
+			compressedPacket, err := compress.CompressZlib(packetBuf.Bytes(), &MaxCompressedPacketSize)
 			if err != nil {
 				return err
 			}
@@ -245,7 +244,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 				rd = io.NewReader(bytes.NewReader(packet), int(length))
 			}
 		} else { //packet is compressed
-			length = dataLength
+			/*length = dataLength
 			compressedLength := packetLength - int32(dataLengthSize)
 
 			var ilength = int(length)
@@ -263,7 +262,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 			uncompressedPacket = data
 			length = int32(len(data))
 
-			rd = io.NewReader(bytes.NewReader(uncompressedPacket), int(length))
+			rd = io.NewReader(bytes.NewReader(uncompressedPacket), int(length))*/
 		}
 	}
 
