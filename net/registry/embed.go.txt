@@ -1,9 +1,11 @@
 package registry
 
-var Registries = map[string]interface{}{"minecraft:banner_pattern": map[string]struct {
+// DO NOT TOUCH!
+
+var _Registries = registries{BannerPattern: map[string]struct {
 	AssetId        string "nbt:\"asset_id\""
 	TranslationKey string "nbt:\"translation_key\""
-}{"minecraft:base": {AssetId: "minecraft:base", TranslationKey: "block.minecraft.banner.base"}, "minecraft:border": {AssetId: "minecraft:border", TranslationKey: "block.minecraft.banner.border"}, "minecraft:bricks": {AssetId: "minecraft:bricks", TranslationKey: "block.minecraft.banner.bricks"}, "minecraft:circle": {AssetId: "minecraft:circle", TranslationKey: "block.minecraft.banner.circle"}, "minecraft:creeper": {AssetId: "minecraft:creeper", TranslationKey: "block.minecraft.banner.creeper"}, "minecraft:cross": {AssetId: "minecraft:cross", TranslationKey: "block.minecraft.banner.cross"}, "minecraft:curly_border": {AssetId: "minecraft:curly_border", TranslationKey: "block.minecraft.banner.curly_border"}, "minecraft:diagonal_left": {AssetId: "minecraft:diagonal_left", TranslationKey: "block.minecraft.banner.diagonal_left"}, "minecraft:diagonal_right": {AssetId: "minecraft:diagonal_right", TranslationKey: "block.minecraft.banner.diagonal_right"}, "minecraft:diagonal_up_left": {AssetId: "minecraft:diagonal_up_left", TranslationKey: "block.minecraft.banner.diagonal_up_left"}, "minecraft:diagonal_up_right": {AssetId: "minecraft:diagonal_up_right", TranslationKey: "block.minecraft.banner.diagonal_up_right"}, "minecraft:flow": {AssetId: "minecraft:flow", TranslationKey: "block.minecraft.banner.flow"}, "minecraft:flower": {AssetId: "minecraft:flower", TranslationKey: "block.minecraft.banner.flower"}, "minecraft:globe": {AssetId: "minecraft:globe", TranslationKey: "block.minecraft.banner.globe"}, "minecraft:gradient": {AssetId: "minecraft:gradient", TranslationKey: "block.minecraft.banner.gradient"}, "minecraft:gradient_up": {AssetId: "minecraft:gradient_up", TranslationKey: "block.minecraft.banner.gradient_up"}, "minecraft:guster": {AssetId: "minecraft:guster", TranslationKey: "block.minecraft.banner.guster"}, "minecraft:half_horizontal": {AssetId: "minecraft:half_horizontal", TranslationKey: "block.minecraft.banner.half_horizontal"}, "minecraft:half_horizontal_bottom": {AssetId: "minecraft:half_horizontal_bottom", TranslationKey: "block.minecraft.banner.half_horizontal_bottom"}, "minecraft:half_vertical": {AssetId: "minecraft:half_vertical", TranslationKey: "block.minecraft.banner.half_vertical"}, "minecraft:half_vertical_right": {AssetId: "minecraft:half_vertical_right", TranslationKey: "block.minecraft.banner.half_vertical_right"}, "minecraft:mojang": {AssetId: "minecraft:mojang", TranslationKey: "block.minecraft.banner.mojang"}, "minecraft:piglin": {AssetId: "minecraft:piglin", TranslationKey: "block.minecraft.banner.piglin"}, "minecraft:rhombus": {AssetId: "minecraft:rhombus", TranslationKey: "block.minecraft.banner.rhombus"}, "minecraft:skull": {AssetId: "minecraft:skull", TranslationKey: "block.minecraft.banner.skull"}, "minecraft:small_stripes": {AssetId: "minecraft:small_stripes", TranslationKey: "block.minecraft.banner.small_stripes"}, "minecraft:square_bottom_left": {AssetId: "minecraft:square_bottom_left", TranslationKey: "block.minecraft.banner.square_bottom_left"}, "minecraft:square_bottom_right": {AssetId: "minecraft:square_bottom_right", TranslationKey: "block.minecraft.banner.square_bottom_right"}, "minecraft:square_top_left": {AssetId: "minecraft:square_top_left", TranslationKey: "block.minecraft.banner.square_top_left"}, "minecraft:square_top_right": {AssetId: "minecraft:square_top_right", TranslationKey: "block.minecraft.banner.square_top_right"}, "minecraft:straight_cross": {AssetId: "minecraft:straight_cross", TranslationKey: "block.minecraft.banner.straight_cross"}, "minecraft:stripe_bottom": {AssetId: "minecraft:stripe_bottom", TranslationKey: "block.minecraft.banner.stripe_bottom"}, "minecraft:stripe_center": {AssetId: "minecraft:stripe_center", TranslationKey: "block.minecraft.banner.stripe_center"}, "minecraft:stripe_downleft": {AssetId: "minecraft:stripe_downleft", TranslationKey: "block.minecraft.banner.stripe_downleft"}, "minecraft:stripe_downright": {AssetId: "minecraft:stripe_downright", TranslationKey: "block.minecraft.banner.stripe_downright"}, "minecraft:stripe_left": {AssetId: "minecraft:stripe_left", TranslationKey: "block.minecraft.banner.stripe_left"}, "minecraft:stripe_middle": {AssetId: "minecraft:stripe_middle", TranslationKey: "block.minecraft.banner.stripe_middle"}, "minecraft:stripe_right": {AssetId: "minecraft:stripe_right", TranslationKey: "block.minecraft.banner.stripe_right"}, "minecraft:stripe_top": {AssetId: "minecraft:stripe_top", TranslationKey: "block.minecraft.banner.stripe_top"}, "minecraft:triangle_bottom": {AssetId: "minecraft:triangle_bottom", TranslationKey: "block.minecraft.banner.triangle_bottom"}, "minecraft:triangle_top": {AssetId: "minecraft:triangle_top", TranslationKey: "block.minecraft.banner.triangle_top"}, "minecraft:triangles_bottom": {AssetId: "minecraft:triangles_bottom", TranslationKey: "block.minecraft.banner.triangles_bottom"}, "minecraft:triangles_top": {AssetId: "minecraft:triangles_top", TranslationKey: "block.minecraft.banner.triangles_top"}}, "minecraft:chat_type": map[string]ChatType{"minecraft:chat": {Chat: struct {
+}{"minecraft:base": {AssetId: "minecraft:base", TranslationKey: "block.minecraft.banner.base"}, "minecraft:border": {AssetId: "minecraft:border", TranslationKey: "block.minecraft.banner.border"}, "minecraft:bricks": {AssetId: "minecraft:bricks", TranslationKey: "block.minecraft.banner.bricks"}, "minecraft:circle": {AssetId: "minecraft:circle", TranslationKey: "block.minecraft.banner.circle"}, "minecraft:creeper": {AssetId: "minecraft:creeper", TranslationKey: "block.minecraft.banner.creeper"}, "minecraft:cross": {AssetId: "minecraft:cross", TranslationKey: "block.minecraft.banner.cross"}, "minecraft:curly_border": {AssetId: "minecraft:curly_border", TranslationKey: "block.minecraft.banner.curly_border"}, "minecraft:diagonal_left": {AssetId: "minecraft:diagonal_left", TranslationKey: "block.minecraft.banner.diagonal_left"}, "minecraft:diagonal_right": {AssetId: "minecraft:diagonal_right", TranslationKey: "block.minecraft.banner.diagonal_right"}, "minecraft:diagonal_up_left": {AssetId: "minecraft:diagonal_up_left", TranslationKey: "block.minecraft.banner.diagonal_up_left"}, "minecraft:diagonal_up_right": {AssetId: "minecraft:diagonal_up_right", TranslationKey: "block.minecraft.banner.diagonal_up_right"}, "minecraft:flow": {AssetId: "minecraft:flow", TranslationKey: "block.minecraft.banner.flow"}, "minecraft:flower": {AssetId: "minecraft:flower", TranslationKey: "block.minecraft.banner.flower"}, "minecraft:globe": {AssetId: "minecraft:globe", TranslationKey: "block.minecraft.banner.globe"}, "minecraft:gradient": {AssetId: "minecraft:gradient", TranslationKey: "block.minecraft.banner.gradient"}, "minecraft:gradient_up": {AssetId: "minecraft:gradient_up", TranslationKey: "block.minecraft.banner.gradient_up"}, "minecraft:guster": {AssetId: "minecraft:guster", TranslationKey: "block.minecraft.banner.guster"}, "minecraft:half_horizontal": {AssetId: "minecraft:half_horizontal", TranslationKey: "block.minecraft.banner.half_horizontal"}, "minecraft:half_horizontal_bottom": {AssetId: "minecraft:half_horizontal_bottom", TranslationKey: "block.minecraft.banner.half_horizontal_bottom"}, "minecraft:half_vertical": {AssetId: "minecraft:half_vertical", TranslationKey: "block.minecraft.banner.half_vertical"}, "minecraft:half_vertical_right": {AssetId: "minecraft:half_vertical_right", TranslationKey: "block.minecraft.banner.half_vertical_right"}, "minecraft:mojang": {AssetId: "minecraft:mojang", TranslationKey: "block.minecraft.banner.mojang"}, "minecraft:piglin": {AssetId: "minecraft:piglin", TranslationKey: "block.minecraft.banner.piglin"}, "minecraft:rhombus": {AssetId: "minecraft:rhombus", TranslationKey: "block.minecraft.banner.rhombus"}, "minecraft:skull": {AssetId: "minecraft:skull", TranslationKey: "block.minecraft.banner.skull"}, "minecraft:small_stripes": {AssetId: "minecraft:small_stripes", TranslationKey: "block.minecraft.banner.small_stripes"}, "minecraft:square_bottom_left": {AssetId: "minecraft:square_bottom_left", TranslationKey: "block.minecraft.banner.square_bottom_left"}, "minecraft:square_bottom_right": {AssetId: "minecraft:square_bottom_right", TranslationKey: "block.minecraft.banner.square_bottom_right"}, "minecraft:square_top_left": {AssetId: "minecraft:square_top_left", TranslationKey: "block.minecraft.banner.square_top_left"}, "minecraft:square_top_right": {AssetId: "minecraft:square_top_right", TranslationKey: "block.minecraft.banner.square_top_right"}, "minecraft:straight_cross": {AssetId: "minecraft:straight_cross", TranslationKey: "block.minecraft.banner.straight_cross"}, "minecraft:stripe_bottom": {AssetId: "minecraft:stripe_bottom", TranslationKey: "block.minecraft.banner.stripe_bottom"}, "minecraft:stripe_center": {AssetId: "minecraft:stripe_center", TranslationKey: "block.minecraft.banner.stripe_center"}, "minecraft:stripe_downleft": {AssetId: "minecraft:stripe_downleft", TranslationKey: "block.minecraft.banner.stripe_downleft"}, "minecraft:stripe_downright": {AssetId: "minecraft:stripe_downright", TranslationKey: "block.minecraft.banner.stripe_downright"}, "minecraft:stripe_left": {AssetId: "minecraft:stripe_left", TranslationKey: "block.minecraft.banner.stripe_left"}, "minecraft:stripe_middle": {AssetId: "minecraft:stripe_middle", TranslationKey: "block.minecraft.banner.stripe_middle"}, "minecraft:stripe_right": {AssetId: "minecraft:stripe_right", TranslationKey: "block.minecraft.banner.stripe_right"}, "minecraft:stripe_top": {AssetId: "minecraft:stripe_top", TranslationKey: "block.minecraft.banner.stripe_top"}, "minecraft:triangle_bottom": {AssetId: "minecraft:triangle_bottom", TranslationKey: "block.minecraft.banner.triangle_bottom"}, "minecraft:triangle_top": {AssetId: "minecraft:triangle_top", TranslationKey: "block.minecraft.banner.triangle_top"}, "minecraft:triangles_bottom": {AssetId: "minecraft:triangles_bottom", TranslationKey: "block.minecraft.banner.triangles_bottom"}, "minecraft:triangles_top": {AssetId: "minecraft:triangles_top", TranslationKey: "block.minecraft.banner.triangles_top"}}, ChatType: map[string]ChatType{"minecraft:chat": {Chat: struct {
 	Parameters     []string "nbt:\"parameters\""
 	TranslationKey string   "nbt:\"translation_key\""
 	Style          struct {
@@ -94,13 +96,13 @@ var Registries = map[string]interface{}{"minecraft:banner_pattern": map[string]s
 }{Color: "", Italic: false}}, Narration: struct {
 	Parameters     []string "nbt:\"parameters\""
 	TranslationKey string   "nbt:\"translation_key\""
-}{Parameters: []string{"sender", "content"}, TranslationKey: "chat.type.text.narrate"}}}, "minecraft:damage_type": map[string]struct {
+}{Parameters: []string{"sender", "content"}, TranslationKey: "chat.type.text.narrate"}}}, DamageType: map[string]struct {
 	Exhaustion       float32 "nbt:\"exhaustion\""
 	MessageID        string  "nbt:\"message_id\""
 	Scaling          string  "nbt:\"scaling\""
 	DeathMessageType string  "nbt:\"death_message_type,omitempty\""
 	Effects          string  "nbt:\"effects,omitempty\""
-}{"minecraft:arrow": {Exhaustion: 0.1, MessageID: "arrow", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:bad_respawn_point": {Exhaustion: 0.1, MessageID: "badRespawnPoint", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:cactus": {Exhaustion: 0.1, MessageID: "cactus", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:campfire": {Exhaustion: 0.1, MessageID: "inFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:cramming": {Exhaustion: 0, MessageID: "cramming", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:dragon_breath": {Exhaustion: 0, MessageID: "dragonBreath", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:drown": {Exhaustion: 0, MessageID: "drown", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:dry_out": {Exhaustion: 0.1, MessageID: "dryout", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:explosion": {Exhaustion: 0.1, MessageID: "explosion", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:fall": {Exhaustion: 0, MessageID: "fall", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:falling_anvil": {Exhaustion: 0.1, MessageID: "anvil", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:falling_block": {Exhaustion: 0.1, MessageID: "fallingBlock", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:falling_stalactite": {Exhaustion: 0.1, MessageID: "fallingStalactite", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:fireball": {Exhaustion: 0.1, MessageID: "fireball", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:fireworks": {Exhaustion: 0.1, MessageID: "fireworks", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:fly_into_wall": {Exhaustion: 0, MessageID: "flyIntoWall", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:freeze": {Exhaustion: 0, MessageID: "freeze", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:generic": {Exhaustion: 0, MessageID: "generic", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:generic_kill": {Exhaustion: 0, MessageID: "genericKill", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:hot_floor": {Exhaustion: 0.1, MessageID: "hotFloor", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:in_fire": {Exhaustion: 0.1, MessageID: "inFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:in_wall": {Exhaustion: 0, MessageID: "inWall", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:indirect_magic": {Exhaustion: 0, MessageID: "indirectMagic", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:lava": {Exhaustion: 0.1, MessageID: "lava", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:lightning_bolt": {Exhaustion: 0.1, MessageID: "lightningBolt", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:magic": {Exhaustion: 0, MessageID: "magic", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:mob_attack": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:mob_attack_no_aggro": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:mob_projectile": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:on_fire": {Exhaustion: 0, MessageID: "onFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:out_of_world": {Exhaustion: 0, MessageID: "outOfWorld", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:outside_border": {Exhaustion: 0, MessageID: "outsideBorder", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:player_attack": {Exhaustion: 0.1, MessageID: "player", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:player_explosion": {Exhaustion: 0.1, MessageID: "explosion.player", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:sonic_boom": {Exhaustion: 0, MessageID: "sonic_boom", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:spit": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:stalagmite": {Exhaustion: 0, MessageID: "stalagmite", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:starve": {Exhaustion: 0, MessageID: "starve", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:sting": {Exhaustion: 0.1, MessageID: "sting", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:sweet_berry_bush": {Exhaustion: 0.1, MessageID: "sweetBerryBush", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:thorns": {Exhaustion: 0.1, MessageID: "thorns", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:thrown": {Exhaustion: 0.1, MessageID: "thrown", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:trident": {Exhaustion: 0.1, MessageID: "trident", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:unattributed_fireball": {Exhaustion: 0.1, MessageID: "onFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:wind_charge": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:wither": {Exhaustion: 0, MessageID: "wither", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:wither_skull": {Exhaustion: 0.1, MessageID: "witherSkull", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}}, "minecraft:dimension_type": struct {
+}{"minecraft:arrow": {Exhaustion: 0.1, MessageID: "arrow", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:bad_respawn_point": {Exhaustion: 0.1, MessageID: "badRespawnPoint", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:cactus": {Exhaustion: 0.1, MessageID: "cactus", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:campfire": {Exhaustion: 0.1, MessageID: "inFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:cramming": {Exhaustion: 0, MessageID: "cramming", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:dragon_breath": {Exhaustion: 0, MessageID: "dragonBreath", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:drown": {Exhaustion: 0, MessageID: "drown", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:dry_out": {Exhaustion: 0.1, MessageID: "dryout", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:explosion": {Exhaustion: 0.1, MessageID: "explosion", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:fall": {Exhaustion: 0, MessageID: "fall", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:falling_anvil": {Exhaustion: 0.1, MessageID: "anvil", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:falling_block": {Exhaustion: 0.1, MessageID: "fallingBlock", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:falling_stalactite": {Exhaustion: 0.1, MessageID: "fallingStalactite", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:fireball": {Exhaustion: 0.1, MessageID: "fireball", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:fireworks": {Exhaustion: 0.1, MessageID: "fireworks", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:fly_into_wall": {Exhaustion: 0, MessageID: "flyIntoWall", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:freeze": {Exhaustion: 0, MessageID: "freeze", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:generic": {Exhaustion: 0, MessageID: "generic", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:generic_kill": {Exhaustion: 0, MessageID: "genericKill", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:hot_floor": {Exhaustion: 0.1, MessageID: "hotFloor", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:in_fire": {Exhaustion: 0.1, MessageID: "inFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:in_wall": {Exhaustion: 0, MessageID: "inWall", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:indirect_magic": {Exhaustion: 0, MessageID: "indirectMagic", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:lava": {Exhaustion: 0.1, MessageID: "lava", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:lightning_bolt": {Exhaustion: 0.1, MessageID: "lightningBolt", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:magic": {Exhaustion: 0, MessageID: "magic", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:mob_attack": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:mob_attack_no_aggro": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:mob_projectile": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:on_fire": {Exhaustion: 0, MessageID: "onFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:out_of_world": {Exhaustion: 0, MessageID: "outOfWorld", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:outside_border": {Exhaustion: 0, MessageID: "outsideBorder", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:player_attack": {Exhaustion: 0.1, MessageID: "player", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:player_explosion": {Exhaustion: 0.1, MessageID: "explosion.player", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:sonic_boom": {Exhaustion: 0, MessageID: "sonic_boom", Scaling: "always", DeathMessageType: "", Effects: ""}, "minecraft:spit": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:stalagmite": {Exhaustion: 0, MessageID: "stalagmite", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:starve": {Exhaustion: 0, MessageID: "starve", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:sting": {Exhaustion: 0.1, MessageID: "sting", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:sweet_berry_bush": {Exhaustion: 0.1, MessageID: "sweetBerryBush", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:thorns": {Exhaustion: 0.1, MessageID: "thorns", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:thrown": {Exhaustion: 0.1, MessageID: "thrown", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:trident": {Exhaustion: 0.1, MessageID: "trident", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:unattributed_fireball": {Exhaustion: 0.1, MessageID: "onFire", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:wind_charge": {Exhaustion: 0.1, MessageID: "mob", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:wither": {Exhaustion: 0, MessageID: "wither", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}, "minecraft:wither_skull": {Exhaustion: 0.1, MessageID: "witherSkull", Scaling: "when_caused_by_living_non_player", DeathMessageType: "", Effects: ""}}, DimensionType: struct {
 	Overworld      Dimension  "nbt:\"minecraft:overworld\""
 	OverworldCaves Dimension  "nbt:\"minecraft:overworld_caves\""
 	TheEnd         Dimension  "nbt:\"minecraft:the_end\""
@@ -117,250 +119,7 @@ var Registries = map[string]interface{}{"minecraft:banner_pattern": map[string]s
 	MaxInclusive int32  "nbt:\"max_inclusive\""
 	MinInclusive int32  "nbt:\"min_inclusive\""
 	Type         string "nbt:\"type\""
-}{MaxInclusive: 7, MinInclusive: 0, Type: "minecraft:uniform"}}, TheNether: Dimension1{FixedTime: 18000, AmbientLight: 0.1, BedWorks: false, CoordinateScale: 8, Effects: "minecraft:the_nether", HasCeiling: true, HasRaids: false, HasSkylight: false, Height: 256, Infiniburn: "#minecraft:infiniburn_nether", LogicalHeight: 128, MinY: 0, MonsterSpawnBlockLightLimit: 15, Natural: false, Ultrawarm: true, PiglinSafe: true, RespawnAnchorWorks: true, MonsterSpawnLightLevel: 7}}, "minecraft:enchantment": map[string]struct {
-	AnvilCost   int32 "nbt:\"anvil_cost\""
-	Description struct {
-		Translate string "nbt:\"translate\""
-	} "nbt:\"description\""
-	Effects struct {
-		SmashDamagePerFallenBlock []struct {
-			Effect struct {
-				Type  string "nbt:\"type\""
-				Value struct {
-					Base               float32 "nbt:\"base\""
-					PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-					Type               string  "nbt:\"type\""
-				} "nbt:\"value\""
-			} "nbt:\"effect\""
-		} "nbt:\"minecraft:smash_damage_per_fallen_block\""
-		PreventArmorChange struct{} "nbt:\"minecraft:prevent_armor_change\""
-		HitBlock           []struct {
-			Effect struct {
-				Effects []struct {
-					Type   string  "nbt:\"type\""
-					Entity string  "nbt:\"entity\""
-					Pitch  float32 "nbt:\"pitch\""
-					Sound  string  "nbt:\"sound\""
-					Volume float32 "nbt:\"volume\""
-				} "nbt:\"effects\""
-				Type string "nbt:\"type\""
-			} "nbt:\"effect\""
-			Requirements struct {
-				Condition string "nbt:\"condition\""
-				Terms     []struct {
-					Block      string "nbt:\"block\""
-					Condition  string "nbt:\"condition\""
-					Thundering bool   "nbt:\"thundering\""
-					Entity     string "nbt:\"entity\""
-					Predicate  struct {
-						Type      string "nbt:\"type\""
-						CanSeeSky bool   "nbt:\"can_see_sky\""
-					} "nbt:\"predicate\""
-				} "nbt:\"terms\""
-			} "nbt:\"requirements\""
-		} "nbt:\"minecraft:hit_block\""
-		ArmorEffectiveness []struct {
-			Effect struct {
-				Type  string "nbt:\"type\""
-				Value struct {
-					Base               float32 "nbt:\"base\""
-					PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-					Type               string  "nbt:\"type\""
-				} "nbt:\"value\""
-			} "nbt:\"effect\""
-		} "nbt:\"minecraft:armor_effectiveness\""
-		Attributes []struct {
-			Amount struct {
-				Added              float32 "nbt:\"added\""
-				Base               float32 "nbt:\"base\""
-				PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-				Type               string  "nbt:\"type\""
-			} "nbt:\"amount\""
-			Atrribute string "nbt:\"attribute\""
-			Id        string "nbt:\"id\""
-			Operation string "nbt:\"operation\""
-		} "nbt:\"minecraft:attributes\""
-		AmmoUse []struct {
-			Effect struct {
-				Type  string  "nbt:\"type\""
-				Value float32 "nbt:\"value\""
-			} "nbt:\"effect\""
-			Requirements struct {
-				Condition string "nbt:\"condition\""
-				Predicate struct {
-					Items string "nbt:\"items\""
-				} "nbt:\"predicate\""
-			} "nbt:\"requirements\""
-		} "nbt:\"minecraft:ammo_use\""
-		ProjectileSpawned []struct {
-			Effect struct {
-				Duration float32 "nbt:\"duration\""
-				Type     string  "nbt:\"type\""
-			} "nbt:\"effect\""
-		} "nbt:\"minecraft:projectile_spawned\""
-		LocationChanged []struct {
-			Effect struct {
-				BlockState struct {
-					State struct {
-						Name       string
-						Properties map[string]interface{}
-					} "nbt:\"state\""
-					Type string "nbt:\"type\""
-				} "nbt:\"block_state\""
-				Height    float32 "nbt:\"height\""
-				Offset    []int32 "nbt:\"offset\""
-				Predicate struct {
-					Predicates []struct {
-						Offset []int32 "nbt:\"offset\""
-						Tag    string  "nbt:\"tag\""
-						Type   string  "nbt:\"type\""
-						Blocks string  "nbt:\"blocks\""
-						Fluids string  "nbt:\"fluids\""
-					} "nbt:\"predicates\""
-					Radius struct {
-						Max   float32 "nbt:\"max\""
-						Min   float32 "nbt:\"min\""
-						Type  string  "nbt:\"type\""
-						Value struct {
-							Base               float32 "nbt:\"base\""
-							PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-							Type               string  "nbt:\"type\""
-						} "nbt:\"value\""
-					} "nbt:\"radius\""
-					Type string "nbt:\"type\""
-				} "nbt:\"predicate\""
-				TriggerGameEvent string "nbt:\"trigger_game_event\""
-				Type             string "nbt:\"type\""
-			} "nbt:\"effect\""
-			Requirements struct {
-				Condition string "nbt:\"condition\""
-				Entity    string "nbt:\"entity\""
-				Predicate struct {
-					Flags struct {
-						IsOnGround bool "nbt:\"is_on_ground\""
-					} "nbt:\"flags\""
-				} "nbt:\"predicate\""
-			} "nbt:\"requirements\""
-		} "nbt:\"minecraft:location_changed\""
-		DamageImmunity []struct {
-			Effect       struct{}
-			Requirements struct {
-				Condition string "nbt:\"condition\""
-				Predicate struct {
-					Tags []struct {
-						Expected bool   "nbt:\"expected\""
-						Id       string "nbt:\"id\""
-					} "nbt:\"tags\""
-				} "nbt:\"predicate\""
-			} "nbt:\"requirements\""
-		} "nbt:\"minecraft:damage_immunity\""
-		DamageProtection []struct {
-			Effect struct {
-				Type  string "nbt:\"type\""
-				Value struct {
-					Base               float32 "nbt:\"base\""
-					PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-					Type               string  "nbt:\"type\""
-				} "nbt:\"value\""
-			} "nbt:\"effect\""
-			Requirements struct {
-				Condition string "nbt:\"condition\""
-				Predicate struct {
-					Tags []struct {
-						Expected bool   "nbt:\"expected\""
-						Id       string "nbt:\"id\""
-					} "nbt:\"tags\""
-				} "nbt:\"predicate\""
-				Terms []struct {
-					Condition string "nbt:\"condition\""
-					Predicate struct {
-						Tags []struct {
-							Expected bool   "nbt:\"expected\""
-							Id       string "nbt:\"id\""
-						} "nbt:\"tags\""
-					} "nbt:\"predicate\""
-				} "nbt:\"terms\""
-			} "nbt:\"requirements\""
-		} "nbt:\"minecraft:damage_protection\""
-		Damage []struct {
-			Effect struct {
-				Type  string "nbt:\"type\""
-				Value struct {
-					Base               float32 "nbt:\"base\""
-					PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-					Type               string  "nbt:\"type\""
-				} "nbt:\"value\""
-			} "nbt:\"effect\""
-			Requirements struct {
-				Condition string "nbt:\"condition\""
-				Entity    string "nbt:\"entity\""
-				Predicate struct {
-					Type string "nbt:\"type\""
-				} "nbt:\"predicate\""
-			} "nbt:\"requirements\""
-		} "nbt:\"minecraft:damage\""
-		PostAttack []struct {
-			Affected string "nbt:\"affected\""
-			Effect   struct {
-				MaxAmplifier float32 "nbt:\"max_amplifier\""
-				MaxDuration  struct {
-					Base               float32 "nbt:\"base\""
-					PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-					Type               string  "nbt:\"type\""
-				} "nbt:\"max_duration\""
-				Duration struct {
-					Base               float32 "nbt:\"base\""
-					PerLevelAboveFirst float32 "nbt:\"per_level_above_first\""
-					Type               string  "nbt:\"type\""
-				} "nbt:\"duration\""
-				MinAmplifier float32 "nbt:\"min_amplifier\""
-				MinDuration  float32 "nbt:\"min_duration\""
-				ToApply      string  "nbt:\"to_apply\""
-				Type         string  "nbt:\"type\""
-				Effects      []struct {
-					Type   string  "nbt:\"type\""
-					Entity string  "nbt:\"entity\""
-					Pitch  float32 "nbt:\"pitch\""
-					Sound  string  "nbt:\"sound\""
-					Volume float32 "nbt:\"volume\""
-				} "nbt:\"effects\""
-			} "nbt:\"effect\""
-			Enchanted    string "nbt:\"enchanted\""
-			Requirements struct {
-				Condition string "nbt:\"condition\""
-				Predicate struct {
-					IsDirect bool "nbt:\"is_direct\""
-				} "nbt:\"predicate\""
-				Terms []struct {
-					Condition  string "nbt:\"condition\""
-					Thundering bool   "nbt:\"thundering\""
-					Entity     string "nbt:\"entity\""
-					Predicate  struct {
-						IsDirect bool   "nbt:\"is_direct\""
-						Type     string "nbt:\"type\""
-						Location struct {
-							CanSeeSky bool "nbt:\"can_see_sky\""
-						} "nbt:\"location\""
-					} "nbt:\"predicate\""
-				} "nbt:\"terms\""
-			} "nbt:\"requirements\""
-		} "nbt:\"minecraft:post_attack\""
-	} "nbt:\"effects\""
-	MaxCost struct {
-		Base               int32 "nbt:\"base\""
-		PerLevelAboveFirst int32 "nbt:\"per_level_above_first\""
-	} "nbt:\"max_cost\""
-	MinCost struct {
-		Base               int32 "nbt:\"base\""
-		PerLevelAboveFirst int32 "nbt:\"per_level_above_first\""
-	} "nbt:\"min_cost\""
-	MaxLevel       int32    "nbt:\"max_level\""
-	Slots          []string "nbt:\"slots\""
-	SupportedItems string   "nbt:\"supported_items\""
-	Weight         int32    "nbt:\"weight\""
-	ExclusiveSet   string   "nbt:\"exclusive_set\""
-	PrimaryItems   string   "nbt:\"primary_items\""
-}(nil), "minecraft:jukebox_song": map[string]struct {
+}{MaxInclusive: 7, MinInclusive: 0, Type: "minecraft:uniform"}}, TheNether: Dimension1{FixedTime: 18000, AmbientLight: 0.1, BedWorks: false, CoordinateScale: 8, Effects: "minecraft:the_nether", HasCeiling: true, HasRaids: false, HasSkylight: false, Height: 256, Infiniburn: "#minecraft:infiniburn_nether", LogicalHeight: 128, MinY: 0, MonsterSpawnBlockLightLimit: 15, Natural: false, Ultrawarm: true, PiglinSafe: true, RespawnAnchorWorks: true, MonsterSpawnLightLevel: 7}}, JukeboxSong: map[string]struct {
 	ComparatorOutput int32 "nbt:\"comparator_output\""
 	Description      struct {
 		Translate string "nbt:\"translate\""
@@ -405,11 +164,11 @@ var Registries = map[string]interface{}{"minecraft:banner_pattern": map[string]s
 	Translate string "nbt:\"translate\""
 }{Translate: "jukebox_song.minecraft.wait"}, LengthInSeconds: 238, SoundEvent: "minecraft:music_disc.wait"}, "minecraft:ward": {ComparatorOutput: 10, Description: struct {
 	Translate string "nbt:\"translate\""
-}{Translate: "jukebox_song.minecraft.ward"}, LengthInSeconds: 251, SoundEvent: "minecraft:music_disc.ward"}}, "minecraft:painting_variant": map[string]struct {
+}{Translate: "jukebox_song.minecraft.ward"}, LengthInSeconds: 251, SoundEvent: "minecraft:music_disc.ward"}}, PaintingVariant: map[string]struct {
 	AssetId string "nbt:\"asset_id\""
 	Height  int32  "nbt:\"height\""
 	Weight  int32  "nbt:\"width\""
-}{"minecraft:alban": {AssetId: "minecraft:alban", Height: 1, Weight: 1}, "minecraft:aztec": {AssetId: "minecraft:aztec", Height: 1, Weight: 1}, "minecraft:aztec2": {AssetId: "minecraft:aztec2", Height: 1, Weight: 1}, "minecraft:backyard": {AssetId: "minecraft:backyard", Height: 4, Weight: 3}, "minecraft:baroque": {AssetId: "minecraft:baroque", Height: 2, Weight: 2}, "minecraft:bomb": {AssetId: "minecraft:bomb", Height: 1, Weight: 1}, "minecraft:bouquet": {AssetId: "minecraft:bouquet", Height: 3, Weight: 3}, "minecraft:burning_skull": {AssetId: "minecraft:burning_skull", Height: 4, Weight: 4}, "minecraft:bust": {AssetId: "minecraft:bust", Height: 2, Weight: 2}, "minecraft:cavebird": {AssetId: "minecraft:cavebird", Height: 3, Weight: 3}, "minecraft:changing": {AssetId: "minecraft:changing", Height: 2, Weight: 4}, "minecraft:cotan": {AssetId: "minecraft:cotan", Height: 3, Weight: 3}, "minecraft:courbet": {AssetId: "minecraft:courbet", Height: 1, Weight: 2}, "minecraft:creebet": {AssetId: "minecraft:creebet", Height: 1, Weight: 2}, "minecraft:donkey_kong": {AssetId: "minecraft:donkey_kong", Height: 3, Weight: 4}, "minecraft:earth": {AssetId: "minecraft:earth", Height: 2, Weight: 2}, "minecraft:endboss": {AssetId: "minecraft:endboss", Height: 3, Weight: 3}, "minecraft:fern": {AssetId: "minecraft:fern", Height: 3, Weight: 3}, "minecraft:fighters": {AssetId: "minecraft:fighters", Height: 2, Weight: 4}, "minecraft:finding": {AssetId: "minecraft:finding", Height: 2, Weight: 4}, "minecraft:fire": {AssetId: "minecraft:fire", Height: 2, Weight: 2}, "minecraft:graham": {AssetId: "minecraft:graham", Height: 2, Weight: 1}, "minecraft:humble": {AssetId: "minecraft:humble", Height: 2, Weight: 2}, "minecraft:kebab": {AssetId: "minecraft:kebab", Height: 1, Weight: 1}, "minecraft:lowmist": {AssetId: "minecraft:lowmist", Height: 2, Weight: 4}, "minecraft:match": {AssetId: "minecraft:match", Height: 2, Weight: 2}, "minecraft:meditative": {AssetId: "minecraft:meditative", Height: 1, Weight: 1}, "minecraft:orb": {AssetId: "minecraft:orb", Height: 4, Weight: 4}, "minecraft:owlemons": {AssetId: "minecraft:owlemons", Height: 3, Weight: 3}, "minecraft:passage": {AssetId: "minecraft:passage", Height: 2, Weight: 4}, "minecraft:pigscene": {AssetId: "minecraft:pigscene", Height: 4, Weight: 4}, "minecraft:plant": {AssetId: "minecraft:plant", Height: 1, Weight: 1}, "minecraft:pointer": {AssetId: "minecraft:pointer", Height: 4, Weight: 4}, "minecraft:pond": {AssetId: "minecraft:pond", Height: 4, Weight: 3}, "minecraft:pool": {AssetId: "minecraft:pool", Height: 1, Weight: 2}, "minecraft:prairie_ride": {AssetId: "minecraft:prairie_ride", Height: 2, Weight: 1}, "minecraft:sea": {AssetId: "minecraft:sea", Height: 1, Weight: 2}, "minecraft:skeleton": {AssetId: "minecraft:skeleton", Height: 3, Weight: 4}, "minecraft:skull_and_roses": {AssetId: "minecraft:skull_and_roses", Height: 2, Weight: 2}, "minecraft:stage": {AssetId: "minecraft:stage", Height: 2, Weight: 2}, "minecraft:sunflowers": {AssetId: "minecraft:sunflowers", Height: 3, Weight: 3}, "minecraft:sunset": {AssetId: "minecraft:sunset", Height: 1, Weight: 2}, "minecraft:tides": {AssetId: "minecraft:tides", Height: 3, Weight: 3}, "minecraft:unpacked": {AssetId: "minecraft:unpacked", Height: 4, Weight: 4}, "minecraft:void": {AssetId: "minecraft:void", Height: 2, Weight: 2}, "minecraft:wanderer": {AssetId: "minecraft:wanderer", Height: 2, Weight: 1}, "minecraft:wasteland": {AssetId: "minecraft:wasteland", Height: 1, Weight: 1}, "minecraft:water": {AssetId: "minecraft:water", Height: 2, Weight: 2}, "minecraft:wind": {AssetId: "minecraft:wind", Height: 2, Weight: 2}, "minecraft:wither": {AssetId: "minecraft:wither", Height: 2, Weight: 2}}, "minecraft:trim_material": map[string]struct {
+}{"minecraft:alban": {AssetId: "minecraft:alban", Height: 1, Weight: 1}, "minecraft:aztec": {AssetId: "minecraft:aztec", Height: 1, Weight: 1}, "minecraft:aztec2": {AssetId: "minecraft:aztec2", Height: 1, Weight: 1}, "minecraft:backyard": {AssetId: "minecraft:backyard", Height: 4, Weight: 3}, "minecraft:baroque": {AssetId: "minecraft:baroque", Height: 2, Weight: 2}, "minecraft:bomb": {AssetId: "minecraft:bomb", Height: 1, Weight: 1}, "minecraft:bouquet": {AssetId: "minecraft:bouquet", Height: 3, Weight: 3}, "minecraft:burning_skull": {AssetId: "minecraft:burning_skull", Height: 4, Weight: 4}, "minecraft:bust": {AssetId: "minecraft:bust", Height: 2, Weight: 2}, "minecraft:cavebird": {AssetId: "minecraft:cavebird", Height: 3, Weight: 3}, "minecraft:changing": {AssetId: "minecraft:changing", Height: 2, Weight: 4}, "minecraft:cotan": {AssetId: "minecraft:cotan", Height: 3, Weight: 3}, "minecraft:courbet": {AssetId: "minecraft:courbet", Height: 1, Weight: 2}, "minecraft:creebet": {AssetId: "minecraft:creebet", Height: 1, Weight: 2}, "minecraft:donkey_kong": {AssetId: "minecraft:donkey_kong", Height: 3, Weight: 4}, "minecraft:earth": {AssetId: "minecraft:earth", Height: 2, Weight: 2}, "minecraft:endboss": {AssetId: "minecraft:endboss", Height: 3, Weight: 3}, "minecraft:fern": {AssetId: "minecraft:fern", Height: 3, Weight: 3}, "minecraft:fighters": {AssetId: "minecraft:fighters", Height: 2, Weight: 4}, "minecraft:finding": {AssetId: "minecraft:finding", Height: 2, Weight: 4}, "minecraft:fire": {AssetId: "minecraft:fire", Height: 2, Weight: 2}, "minecraft:graham": {AssetId: "minecraft:graham", Height: 2, Weight: 1}, "minecraft:humble": {AssetId: "minecraft:humble", Height: 2, Weight: 2}, "minecraft:kebab": {AssetId: "minecraft:kebab", Height: 1, Weight: 1}, "minecraft:lowmist": {AssetId: "minecraft:lowmist", Height: 2, Weight: 4}, "minecraft:match": {AssetId: "minecraft:match", Height: 2, Weight: 2}, "minecraft:meditative": {AssetId: "minecraft:meditative", Height: 1, Weight: 1}, "minecraft:orb": {AssetId: "minecraft:orb", Height: 4, Weight: 4}, "minecraft:owlemons": {AssetId: "minecraft:owlemons", Height: 3, Weight: 3}, "minecraft:passage": {AssetId: "minecraft:passage", Height: 2, Weight: 4}, "minecraft:pigscene": {AssetId: "minecraft:pigscene", Height: 4, Weight: 4}, "minecraft:plant": {AssetId: "minecraft:plant", Height: 1, Weight: 1}, "minecraft:pointer": {AssetId: "minecraft:pointer", Height: 4, Weight: 4}, "minecraft:pond": {AssetId: "minecraft:pond", Height: 4, Weight: 3}, "minecraft:pool": {AssetId: "minecraft:pool", Height: 1, Weight: 2}, "minecraft:prairie_ride": {AssetId: "minecraft:prairie_ride", Height: 2, Weight: 1}, "minecraft:sea": {AssetId: "minecraft:sea", Height: 1, Weight: 2}, "minecraft:skeleton": {AssetId: "minecraft:skeleton", Height: 3, Weight: 4}, "minecraft:skull_and_roses": {AssetId: "minecraft:skull_and_roses", Height: 2, Weight: 2}, "minecraft:stage": {AssetId: "minecraft:stage", Height: 2, Weight: 2}, "minecraft:sunflowers": {AssetId: "minecraft:sunflowers", Height: 3, Weight: 3}, "minecraft:sunset": {AssetId: "minecraft:sunset", Height: 1, Weight: 2}, "minecraft:tides": {AssetId: "minecraft:tides", Height: 3, Weight: 3}, "minecraft:unpacked": {AssetId: "minecraft:unpacked", Height: 4, Weight: 4}, "minecraft:void": {AssetId: "minecraft:void", Height: 2, Weight: 2}, "minecraft:wanderer": {AssetId: "minecraft:wanderer", Height: 2, Weight: 1}, "minecraft:wasteland": {AssetId: "minecraft:wasteland", Height: 1, Weight: 1}, "minecraft:water": {AssetId: "minecraft:water", Height: 2, Weight: 2}, "minecraft:wind": {AssetId: "minecraft:wind", Height: 2, Weight: 2}, "minecraft:wither": {AssetId: "minecraft:wither", Height: 2, Weight: 2}}, TrimMaterial: map[string]struct {
 	AssetName   string "nbt:\"asset_name\""
 	Description struct {
 		Color     string "nbt:\"color\""
@@ -492,7 +251,7 @@ var Registries = map[string]interface{}{"minecraft:banner_pattern": map[string]s
 	Diamond string "nbt:\"minecraft:diamond,omitempty\""
 	Gold    string "nbt:\"minecraft:gold,omitempty\""
 	Iron    string "nbt:\"minecraft:iron,omitempty\""
-}{Diamond: "", Gold: "", Iron: ""}}}, "minecraft:trim_pattern": map[string]struct {
+}{Diamond: "", Gold: "", Iron: ""}}}, TrimPattern: map[string]struct {
 	AssetId     string "nbt:\"asset_id\""
 	Decal       bool   "nbt:\"decal\""
 	Description struct {
@@ -535,12 +294,12 @@ var Registries = map[string]interface{}{"minecraft:banner_pattern": map[string]s
 	Translate string "nbt:\"translate\""
 }{Translate: "trim_pattern.minecraft.wayfinder"}, TemplateItem: "minecraft:wayfinder_armor_trim_smithing_template"}, "minecraft:wild": {AssetId: "minecraft:wild", Decal: false, Description: struct {
 	Translate string "nbt:\"translate\""
-}{Translate: "trim_pattern.minecraft.wild"}, TemplateItem: "minecraft:wild_armor_trim_smithing_template"}}, "minecraft:wolf_variant": map[string]struct {
+}{Translate: "trim_pattern.minecraft.wild"}, TemplateItem: "minecraft:wild_armor_trim_smithing_template"}}, WolfVariant: map[string]struct {
 	AngryTexture string "nbt:\"angry_texture\""
 	Biomes       string "nbt:\"biomes\""
 	TameTexture  string "nbt:\"tame_texture\""
 	WildTexture  string "nbt:\"wild_texture\""
-}{"minecraft:ashen": {AngryTexture: "minecraft:entity/wolf/wolf_ashen_angry", Biomes: "minecraft:snowy_taiga", TameTexture: "minecraft:entity/wolf/wolf_ashen_tame", WildTexture: "minecraft:entity/wolf/wolf_ashen"}, "minecraft:black": {AngryTexture: "minecraft:entity/wolf/wolf_black_angry", Biomes: "minecraft:old_growth_pine_taiga", TameTexture: "minecraft:entity/wolf/wolf_black_tame", WildTexture: "minecraft:entity/wolf/wolf_black"}, "minecraft:chestnut": {AngryTexture: "minecraft:entity/wolf/wolf_chestnut_angry", Biomes: "minecraft:old_growth_spruce_taiga", TameTexture: "minecraft:entity/wolf/wolf_chestnut_tame", WildTexture: "minecraft:entity/wolf/wolf_chestnut"}, "minecraft:pale": {AngryTexture: "minecraft:entity/wolf/wolf_angry", Biomes: "minecraft:taiga", TameTexture: "minecraft:entity/wolf/wolf_tame", WildTexture: "minecraft:entity/wolf/wolf"}, "minecraft:rusty": {AngryTexture: "minecraft:entity/wolf/wolf_rusty_angry", Biomes: "#minecraft:is_jungle", TameTexture: "minecraft:entity/wolf/wolf_rusty_tame", WildTexture: "minecraft:entity/wolf/wolf_rusty"}, "minecraft:snowy": {AngryTexture: "minecraft:entity/wolf/wolf_snowy_angry", Biomes: "minecraft:grove", TameTexture: "minecraft:entity/wolf/wolf_snowy_tame", WildTexture: "minecraft:entity/wolf/wolf_snowy"}, "minecraft:spotted": {AngryTexture: "minecraft:entity/wolf/wolf_spotted_angry", Biomes: "#minecraft:is_savanna", TameTexture: "minecraft:entity/wolf/wolf_spotted_tame", WildTexture: "minecraft:entity/wolf/wolf_spotted"}, "minecraft:striped": {AngryTexture: "minecraft:entity/wolf/wolf_striped_angry", Biomes: "#minecraft:is_badlands", TameTexture: "minecraft:entity/wolf/wolf_striped_tame", WildTexture: "minecraft:entity/wolf/wolf_striped"}, "minecraft:woods": {AngryTexture: "minecraft:entity/wolf/wolf_woods_angry", Biomes: "minecraft:forest", TameTexture: "minecraft:entity/wolf/wolf_woods_tame", WildTexture: "minecraft:entity/wolf/wolf_woods"}}, "minecraft:worldgen/biome": map[string]struct {
+}{"minecraft:ashen": {AngryTexture: "minecraft:entity/wolf/wolf_ashen_angry", Biomes: "minecraft:snowy_taiga", TameTexture: "minecraft:entity/wolf/wolf_ashen_tame", WildTexture: "minecraft:entity/wolf/wolf_ashen"}, "minecraft:black": {AngryTexture: "minecraft:entity/wolf/wolf_black_angry", Biomes: "minecraft:old_growth_pine_taiga", TameTexture: "minecraft:entity/wolf/wolf_black_tame", WildTexture: "minecraft:entity/wolf/wolf_black"}, "minecraft:chestnut": {AngryTexture: "minecraft:entity/wolf/wolf_chestnut_angry", Biomes: "minecraft:old_growth_spruce_taiga", TameTexture: "minecraft:entity/wolf/wolf_chestnut_tame", WildTexture: "minecraft:entity/wolf/wolf_chestnut"}, "minecraft:pale": {AngryTexture: "minecraft:entity/wolf/wolf_angry", Biomes: "minecraft:taiga", TameTexture: "minecraft:entity/wolf/wolf_tame", WildTexture: "minecraft:entity/wolf/wolf"}, "minecraft:rusty": {AngryTexture: "minecraft:entity/wolf/wolf_rusty_angry", Biomes: "#minecraft:is_jungle", TameTexture: "minecraft:entity/wolf/wolf_rusty_tame", WildTexture: "minecraft:entity/wolf/wolf_rusty"}, "minecraft:snowy": {AngryTexture: "minecraft:entity/wolf/wolf_snowy_angry", Biomes: "minecraft:grove", TameTexture: "minecraft:entity/wolf/wolf_snowy_tame", WildTexture: "minecraft:entity/wolf/wolf_snowy"}, "minecraft:spotted": {AngryTexture: "minecraft:entity/wolf/wolf_spotted_angry", Biomes: "#minecraft:is_savanna", TameTexture: "minecraft:entity/wolf/wolf_spotted_tame", WildTexture: "minecraft:entity/wolf/wolf_spotted"}, "minecraft:striped": {AngryTexture: "minecraft:entity/wolf/wolf_striped_angry", Biomes: "#minecraft:is_badlands", TameTexture: "minecraft:entity/wolf/wolf_striped_tame", WildTexture: "minecraft:entity/wolf/wolf_striped"}, "minecraft:woods": {AngryTexture: "minecraft:entity/wolf/wolf_woods_angry", Biomes: "minecraft:forest", TameTexture: "minecraft:entity/wolf/wolf_woods_tame", WildTexture: "minecraft:entity/wolf/wolf_woods"}}, WorldgenBiome: map[string]struct {
 	Downfall float32 "nbt:\"downfall\""
 	Effects  struct {
 		FogColor     int32 "nbt:\"fog_color\""

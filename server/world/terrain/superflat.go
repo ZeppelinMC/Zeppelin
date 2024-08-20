@@ -6,7 +6,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 )
 
-// A superflat chunk generator. A superflat world is just 4 layers. One bedrock, two dirt, and one grass block, so it is very easy to implement
+// superflat chunk generator
 type SuperflatTerrain struct {
 }
 
@@ -26,5 +26,5 @@ func (SuperflatTerrain) NewChunk(cx, cz int32) chunk.Chunk {
 }
 
 func (SuperflatTerrain) GenerateWorldSpawn() (x, y, z int32) {
-	return rand.Int31n(160), 4, rand.Int31n(160)
+	return rand.Int31n(160), 5, rand.Int31n(160)
 }

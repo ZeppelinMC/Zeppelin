@@ -27,6 +27,9 @@ func New(str string) Seed {
 
 // HashCode is an implementation of Java's hashCode function. It used to turn any string seed into a long seed
 func hashCode(s string) int64 {
+	if len(s) == 0 {
+		return 0
+	}
 	var result int64
 	n := len(s)
 

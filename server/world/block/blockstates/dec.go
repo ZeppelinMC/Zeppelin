@@ -51,7 +51,7 @@ func ReadBlock(f io.ReaderAt, loc BlockLocation) (Block, error) {
 		blockStates[i].Id = blockStateId
 		blockStates[i].Properties = make(map[string]string, propertyCount)
 
-		for i := 0; i < int(propertyCount); i++ {
+		for j := 0; j < int(propertyCount); j++ {
 			propertyName, err := readString(maxxer, stringlen)
 			if err != nil {
 				return blockStates, nil
@@ -79,10 +79,13 @@ func ReadHeader(f io.Reader) (map[string]BlockLocation, error) {
 		return nil, fmt.Errorf("invalid magic header")
 	}
 
-	var blockCount int32
-	if err := binary.Read(f, binary.BigEndian, &blockCount); err != nil {
+	var locations_tmp [8]byte
+
+	if _, err := f.Read(locations_tmp[:4]); err != nil {
 		return nil, err
 	}
+
+	blockCount := int32(locations_tmp[0])<<24 | int32(locations_tmp[1])<<16 | int32(locations_tmp[2])<<8 | int32(locations_tmp[3])
 
 	var locations = make(map[string]BlockLocation, blockCount)
 
@@ -94,9 +97,12 @@ func ReadHeader(f io.Reader) (map[string]BlockLocation, error) {
 		}
 
 		var location BlockLocation
-		if err := binary.Read(f, binary.BigEndian, location); err != nil {
+
+		if _, err := f.Read(locations_tmp[:]); err != nil {
 			return nil, err
 		}
+		location.Offset = int32(locations_tmp[0])<<24 | int32(locations_tmp[1])<<16 | int32(locations_tmp[2])<<8 | int32(locations_tmp[3])
+		location.Size = int32(locations_tmp[4])<<24 | int32(locations_tmp[5])<<16 | int32(locations_tmp[6])<<8 | int32(locations_tmp[7])
 
 		locations[name] = location
 	}

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"math/rand"
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
 	"time"
 
 	"github.com/zeppelinmc/zeppelin/core_commands"
@@ -19,16 +21,33 @@ var timeStart = time.Now()
 
 func main() {
 	log.Infolnf("Zeppelin 1.21 Minecraft server with %s on platform %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-
 	if util.HasArgument("--cpuprof") {
 		f, _ := os.Create("zeppelin-cpu-profile")
 		pprof.StartCPUProfile(f)
 		log.Infoln("Started CPU profiler (writing to zeppelin-cpu-profile)")
+
+		defer func() {
+			log.Infoln("Stopped CPU profiler")
+			pprof.StopCPUProfile()
+			f.Close()
+		}()
+	}
+
+	if util.HasArgument("--memprof") {
+		defer func() {
+			log.InfolnClean("Writing memory profile to zeppelin-mem-profile")
+			f, _ := os.Create("zeppelin-mem-profile")
+			pprof.Lookup("allocs").WriteTo(f, 0)
+			f.Close()
+		}()
 	}
 
 	cfg := loadConfig()
+	if cfg.LevelSeed == "" {
+		cfg.LevelSeed = strconv.FormatInt(rand.Int63(), 10)
+	}
 
-	w, err := world.NewWorld(cfg.LevelName)
+	w, err := world.NewWorld(cfg)
 	if err != nil {
 		log.Errorlnf("Error preparing level: %v", w)
 		return
@@ -58,15 +77,4 @@ func main() {
 		go notRawTerminal(srv)
 	}
 	srv.Start(timeStart)
-
-	if util.HasArgument("--cpuprof") {
-		log.Infoln("Stopped CPU profiler")
-		pprof.StopCPUProfile()
-	}
-	if util.HasArgument("--memprof") {
-		log.InfolnClean("Writing memory profile to zeppelin-mem-profile")
-		f, _ := os.Create("zeppelin-mem-profile")
-		pprof.Lookup("allocs").WriteTo(f, 0)
-		f.Close()
-	}
 }

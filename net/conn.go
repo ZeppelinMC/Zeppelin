@@ -13,6 +13,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/cfb8"
 	"github.com/zeppelinmc/zeppelin/net/io"
 	"github.com/zeppelinmc/zeppelin/net/io/compress"
+	"github.com/zeppelinmc/zeppelin/net/io/util"
 	"github.com/zeppelinmc/zeppelin/net/packet"
 	"github.com/zeppelinmc/zeppelin/net/packet/handshake"
 	"github.com/zeppelinmc/zeppelin/net/packet/login"
@@ -47,6 +48,7 @@ type Conn struct {
 
 	usesForge bool
 	read_mu   sync.Mutex
+	write_mu  sync.Mutex
 }
 
 func (conn *Conn) UsesForge() bool {
@@ -85,6 +87,9 @@ var pkpool = sync.Pool{
 }
 
 func (conn *Conn) WritePacket(pk packet.Packet) error {
+	conn.write_mu.Lock()
+	defer conn.write_mu.Unlock()
+
 	var packetBuf = pkpool.Get().(*bytes.Buffer)
 	packetBuf.Reset()
 	defer pkpool.Put(packetBuf)
@@ -244,13 +249,18 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 				rd = io.NewReader(bytes.NewReader(packet), int(length))
 			}
 		} else { //packet is compressed
-			/*length = dataLength
+			length = dataLength
 			compressedLength := packetLength - int32(dataLengthSize)
 
 			var ilength = int(length)
-			uncompressedPacket, err := compress.DecompressZlib(conn, int(compressedLength), &ilength)
+
+			var packetBuf = pkpool.Get().(*bytes.Buffer)
+			packetBuf.Reset()
+			packetBuf.ReadFrom(util.NewReaderMaxxer(conn, int(compressedLength)))
+			defer pkpool.Put(packetBuf)
+
+			uncompressedPacket, err := compress.DecompressZlib(packetBuf.Bytes(), &ilength)
 			if err != nil {
-				log.Println(err)
 				return nil, err
 			}
 
@@ -262,7 +272,7 @@ func (conn *Conn) ReadPacket() (packet.Packet, error) {
 			uncompressedPacket = data
 			length = int32(len(data))
 
-			rd = io.NewReader(bytes.NewReader(uncompressedPacket), int(length))*/
+			rd = io.NewReader(bytes.NewReader(uncompressedPacket), int(length))
 		}
 	}
 

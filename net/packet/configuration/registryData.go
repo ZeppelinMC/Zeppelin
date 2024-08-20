@@ -8,10 +8,10 @@ import (
 	"github.com/zeppelinmc/zeppelin/net/registry"
 )
 
-var RegistryPackets = make([]*RegistryData, 0, len(registry.RegistryMap))
+var RegistryPackets = make([]*RegistryData, 0, len(registry.Registries))
 
 func init() {
-	for key, registry := range registry.RegistryMap {
+	for key, registry := range registry.Registries {
 		RegistryPackets = append(RegistryPackets, &RegistryData{
 			RegistryId: key,
 			Registry:   registry,

@@ -39,7 +39,9 @@ func (c Config) New() (*Listener, error) {
 			return true, nil
 		},
 	}
-	lis.privKey, err = rsa.GenerateKey(rand.Reader, 1024)
+	if c.Encrypt {
+		lis.privKey, err = rsa.GenerateKey(rand.Reader, 1024)
+	}
 
 	go lis.listen()
 

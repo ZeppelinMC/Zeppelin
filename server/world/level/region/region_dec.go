@@ -133,7 +133,7 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	case CompressionNone:
 		data = chunkBuffer.Bytes()
 	case CompressionLZ4:
-		data, err = compress.DecompressLZ4(rawReader)
+		data, err = compress.DecompressLZ4(chunkBuffer.Bytes())
 		if err != nil {
 			return nil, err
 		}

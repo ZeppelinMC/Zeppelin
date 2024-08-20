@@ -7,9 +7,11 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/atomic"
 	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/properties"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
+	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
 )
 
@@ -20,21 +22,27 @@ type World struct {
 
 	levelPrepared bool
 
+	props properties.ServerProperties
+
 	lock *os.File
 
 	path              string
 	worldAge, dayTime atomic.AtomicValue[int64]
 }
 
-func NewWorld(path string) (*World, error) {
+func NewWorld(props properties.ServerProperties) (*World, error) {
 	var err error
 	w := &World{
-		path:      path,
+		path:      props.LevelName,
 		Broadcast: session.NewBroadcast(),
+		props:     props,
 	}
-	w.Level, err = level.LoadWorldLevel(path)
+
+	owgen := terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed))
+
+	w.Level, err = level.Open(props.LevelName)
 	if err != nil {
-		w.prepareLevel()
+		w.prepareLevel(owgen, props)
 	}
 
 	if w.obtainLock() != nil {
@@ -45,19 +53,24 @@ func NewWorld(path string) (*World, error) {
 	w.dayTime = atomic.Value(w.Level.Data.DayTime)
 	w.dimensions = map[string]*dimension.Dimension{
 		"minecraft:overworld": dimension.New(
-			path+"/region",
+			props.LevelName+"/region",
 			"minecraft:overworld",
 			"minecraft:overworld",
 			w.Broadcast,
-			terrain.NewTerrainGenerator(int64(w.Data.WorldGenSettings.Seed)),
+			owgen,
 			true,
 		),
 	}
 
+	level.Refresh(w.props, &w.Level)
+
 	return w, nil
 }
 
-func (w *World) prepareLevel() {
+// prepareLevel creates a new level.dat file and other world folders
+func (w *World) prepareLevel(owgen region.Generator, props properties.ServerProperties) {
+	w.Level = level.New(owgen, props, w.path)
+
 	os.MkdirAll(w.path+"/playerdata", 0755)
 
 	os.Mkdir(w.path+"/region", 0755)
@@ -92,6 +105,8 @@ func (w *World) Save() {
 		dim.Save()
 		log.Infoln("Saved dimension", dim.Name())
 	}
+
+	level.Create(w.Level)
 	w.lock.Close()
 }
 

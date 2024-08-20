@@ -2,12 +2,9 @@ package registry
 
 import (
 	_ "embed"
-	"reflect"
 )
 
-// This packet contains registries that are sent to the client. Because of the way Go maps aren't ordered, sending a registry data packet will set its Indexes field to the order in which its entries were encoded, which can then be used to get registry ids
-
-var RegistryMap = make(map[string]any)
+// This packet contains registries that are sent to the client. Because  Go maps aren't ordered, sending a registry data packet will set its Indexes field to the order in which its entries were encoded, which can then be used to get registry ids
 
 type ChatType struct {
 	Chat struct {
@@ -71,7 +68,7 @@ type Dimension struct {
 	} `nbt:"monster_spawn_light_level"`
 }
 
-type registries struct {
+/*type registries struct {
 	BannerPattern map[string]struct {
 		AssetId        string `nbt:"asset_id"`
 		TranslationKey string `nbt:"translation_key"`
@@ -409,11 +406,14 @@ type registries struct {
 		HasPrecipitation bool    `nbt:"has_precipitation"`
 		Temperature      float32 `nbt:"temperature"`
 	} `nbt:"minecraft:worldgen/biome"`
-}
+}*/
 
-func init() {
+/*func init() {
 	v := reflect.ValueOf(Registries)
 	for i := 0; i < v.NumField(); i++ {
 		RegistryMap[v.Type().Field(i).Tag.Get("nbt")] = v.Field(i).Interface()
 	}
+
+	os.WriteFile("d.go", fmt.Appendf(nil, "package registry\n\nvar Registries = %#v", RegistryMap), 0755)
 }
+*/

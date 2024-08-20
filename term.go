@@ -17,10 +17,8 @@ func notRawTerminal(srv *server.Server) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-cmdl:
-	for {
-		select {
-		case <-interrupt:
+	go func() {
+		for range interrupt {
 			newText := "\r> stop"
 			fmt.Print(newText)
 			l := len(line) + 3 // the addtitional 3 chars are "\r> "
@@ -29,15 +27,17 @@ cmdl:
 			}
 			fmt.Println()
 			srv.Stop()
-			break cmdl
-		default:
-			if !scanner.Scan() {
-				break
-			}
-			line = scanner.Text()
-			srv.CommandManager.Call(line, srv.Console)
-			fmt.Print("\r> ")
+			os.Stdin.Close()
 		}
+	}()
+
+	for {
+		if !scanner.Scan() {
+			break
+		}
+		line = scanner.Text()
+		srv.CommandManager.Call(line, srv.Console)
+		fmt.Print("\r> ")
 	}
 }
 

@@ -1,6 +1,7 @@
 package compress
 
 import (
+	"bytes"
 	"sync"
 
 	"github.com/4kills/go-libdeflate/v2"
@@ -21,5 +22,5 @@ var compressors = sync.Pool{
 }
 
 var bufs = sync.Pool{
-	New: func() any { return make([]byte, 0) },
+	New: func() any { return new(bytes.Buffer) },
 }

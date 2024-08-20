@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/zeppelinmc/zeppelin/nbt"
+	"github.com/zeppelinmc/zeppelin/properties"
+	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/server/world/level/seed"
 )
 
@@ -38,6 +40,10 @@ func (stamp UnixMilliTimestamp) Time() time.Time {
 	return time.UnixMilli(int64(stamp))
 }
 
+func Now() UnixMilliTimestamp {
+	return UnixMilliTimestamp(time.Now().UnixMilli())
+}
+
 type DimensionGenerationSettings struct {
 	Generator struct {
 		BiomeSource struct {
@@ -55,6 +61,7 @@ type Level struct {
 		BorderCenterX        float64
 		BorderCenterZ        float64
 		BorderDamagePerBlock float64
+		BorderSize           float64
 		BorderSafeZone       float64
 		BorderSizeLerpTarget float64
 		BorderSizeLerpTime   int64
@@ -123,7 +130,7 @@ type Level struct {
 }
 
 // worldPath is the base path of the world
-func LoadWorldLevel(worldPath string) (Level, error) {
+func Open(worldPath string) (Level, error) {
 	var level Level
 	file, err := os.Open(worldPath + "/level.dat")
 	if err != nil {
@@ -143,4 +150,91 @@ func LoadWorldLevel(worldPath string) (Level, error) {
 	level.basePath = worldPath
 
 	return level, err
+}
+
+func Create(l Level) error {
+	file, err := os.Create(l.basePath + "/level.dat")
+	if err != nil {
+		return err
+	}
+	w := gzip.NewWriter(file)
+
+	defer w.Close()
+	defer file.Close()
+
+	return nbt.NewEncoder(w).Encode("", l)
+}
+
+func New(gen region.Generator, props properties.ServerProperties, worldPath string) Level {
+	var l Level
+	l.Data.SpawnX, l.Data.SpawnY, l.Data.SpawnZ = gen.GenerateWorldSpawn()
+	l.Data.AllowCommands = true
+	l.Data.BorderDamagePerBlock = 0.2
+	l.Data.BorderSize = 60000000
+	l.Data.BorderSafeZone = 5
+	l.Data.BorderSizeLerpTarget = 60000000
+	l.Data.BorderWarningBlocks = 5
+	l.Data.BorderWarningTime = 15
+	l.Data.DataPacks.Enabled = []string{"vanilla"}
+	l.Data.Difficulty = diffstr(props.Difficulty)
+	l.Data.WorldGenSettings.Seed = seed.New(props.LevelSeed)
+	l.Data.WorldGenSettings.GenerateFeatures = props.GenerateStructures
+	l.Data.GameType = gmstr(props.Gamemode)
+	l.Data.Hardcore = props.Hardcore
+	l.Data.Initialized = true
+	l.Data.LastPlayed = Now()
+	l.Data.LevelName = props.LevelName
+	l.Data.VersionInt = 19133
+
+	l.Data.Version.Id = 3953
+	l.Data.Version.Name = "1.21"
+	l.Data.Version.Series = "main"
+	l.Data.ServerBrands = []string{"Zeppelin"}
+
+	return l
+}
+
+func Refresh(props properties.ServerProperties, l *Level) {
+	l.Data.AllowCommands = true
+	l.Data.DataPacks.Enabled = []string{"vanilla"}
+	l.Data.Difficulty = diffstr(props.Difficulty)
+	l.Data.WorldGenSettings.GenerateFeatures = props.GenerateStructures
+	l.Data.GameType = gmstr(props.Gamemode)
+	l.Data.Hardcore = props.Hardcore
+	l.Data.Initialized = true
+	l.Data.LastPlayed = Now()
+	l.Data.LevelName = props.LevelName
+	l.Data.VersionInt = 19133
+
+	l.Data.Version.Id = 3953
+	l.Data.Version.Name = "1.21"
+	l.Data.Version.Series = "main"
+	l.Data.ServerBrands = []string{"Zeppelin"}
+}
+
+func diffstr(str string) byte {
+	switch str {
+	case "peaceful":
+		return 0
+	case "normal":
+		return 2
+	case "hard":
+		return 3
+	default:
+		return 1
+	}
+}
+
+func gmstr(str string) GameMode {
+	switch str {
+	case "creative":
+		return GameModeCreative
+	case "adventure":
+		return GameModeAdventure
+	case "spectator":
+		return GameModeSpectator
+
+	default:
+		return GameModeSurvival
+	}
 }

@@ -18,6 +18,8 @@ func New(y int8, blockPalette []Block, blockStates []int64, biomePalette []strin
 		blockLight:        blocklight,
 		blockBitsPerEntry: blockBitsPerEntry(len(blockPalette)),
 		biomeBitsPerEntry: biomeBitsPerEntry(len(biomePalette)),
+
+		stateCache: make(map[Block]int64),
 	}
 	s.biomes.Palette = biomePalette
 	s.biomes.Data = biomesData
@@ -36,6 +38,9 @@ type Section struct {
 		Data    []int64  `nbt:"data"`
 		Palette []string `nbt:"palette"`
 	} `nbt:"biomes"`
+
+	// stateCache caches states for blocks with no properties
+	stateCache map[Block]int64
 
 	blockBitsPerEntry int
 	biomeBitsPerEntry int
@@ -110,31 +115,41 @@ func (sec *Section) setBlockState(x, y, z byte, state int64) error {
 // Sets the block at the position and returns its new state (index in the block palette). Resizes the palette if needed
 // X, Y, Z should be relative to the chunk section (AKA x&0x0f, y&0x0f, z&0x0f)
 func (sec *Section) SetBlock(x, y, z byte, b Block) (state int64) {
-	state, ok := sec.index(b)
-	if !ok {
-		oldBPE := sec.blockBitsPerEntry
-		sec.add(b)
-		state = int64(len(sec.blockPalette) - 1)
-		if oldBPE != sec.blockBitsPerEntry {
-			data := make([]int64, 4096/(64/sec.blockBitsPerEntry))
-			newSec := Section{
-				y:                 sec.y,
-				blockLight:        sec.blockLight,
-				skyLight:          sec.skyLight,
-				blockPalette:      sec.blockPalette,
-				blockStates:       data,
-				biomes:            sec.biomes,
-				blockBitsPerEntry: sec.blockBitsPerEntry,
-			}
-			for x := byte(0); x < 16; x++ {
-				for y := byte(0); y < 16; y++ {
-					for z := byte(0); z < 16; z++ {
-						newSec.setBlockState(x, y, z, sec.blockState(x, y, z))
+	var skip bool
+	if s, ok := sec.stateCache[b]; ok {
+		state = s
+		skip = true
+	}
+	if !skip {
+		var ok bool
+		state, ok = sec.index(b)
+		if !ok {
+			oldBPE := sec.blockBitsPerEntry
+			sec.add(b)
+			state = int64(len(sec.blockPalette) - 1)
+			if oldBPE != sec.blockBitsPerEntry {
+				data := make([]int64, 4096/(64/sec.blockBitsPerEntry))
+				newSec := Section{
+					y:                 sec.y,
+					blockLight:        sec.blockLight,
+					skyLight:          sec.skyLight,
+					blockPalette:      sec.blockPalette,
+					blockStates:       data,
+					biomes:            sec.biomes,
+					blockBitsPerEntry: sec.blockBitsPerEntry,
+					stateCache:        make(map[Block]int64),
+				}
+				for x := byte(0); x < 16; x++ {
+					for y := byte(0); y < 16; y++ {
+						for z := byte(0); z < 16; z++ {
+							newSec.setBlockState(x, y, z, sec.blockState(x, y, z))
+						}
 					}
 				}
+				*sec = newSec
 			}
-			*sec = newSec
 		}
+		sec.stateCache[b] = state
 	}
 
 	long, off := sec.offset(int(x), int(y), int(z))

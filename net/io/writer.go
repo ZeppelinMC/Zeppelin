@@ -193,6 +193,17 @@ func (w Writer) TextComponent(comp text.TextComponent) error {
 	return w.NBT(comp)
 }
 
+func (w Writer) StringTextComponent(text string) error {
+	if err := w.Byte(8); err != nil {
+		return err
+	}
+	if err := w.Short(int16(len(text))); err != nil {
+		return err
+	}
+
+	return w.String(text)
+}
+
 func (w Writer) NBT(data any) error {
 	enc := nbt.NewEncoder(w.w)
 	enc.WriteRootName(false)

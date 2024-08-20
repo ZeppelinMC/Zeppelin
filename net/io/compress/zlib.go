@@ -1,6 +1,8 @@
 package compress
 
 import (
+	"bytes"
+
 	"github.com/4kills/go-libdeflate/v2"
 )
 
@@ -11,13 +13,15 @@ func DecompressZlib(compressed []byte, decompressedLength *int) ([]byte, error) 
 	defer decompressors.Put(dc)
 
 	if decompressedLength != nil {
-		dst := bufs.Get().([]byte)
-		if len(dst) < int(*decompressedLength) {
-			dst = make([]byte, *decompressedLength)
+		dst := bufs.Get().(*bytes.Buffer)
+		if dst.Len() < int(*decompressedLength) {
+			dst.Grow(*decompressedLength)
 		}
 		defer bufs.Put(dst)
 
-		_, decompressedResult, err := dc.DecompressZlib(compressed, dst[:*decompressedLength])
+		c := dst.Bytes()[:*decompressedLength]
+
+		_, decompressedResult, err := dc.DecompressZlib(compressed, c)
 
 		return decompressedResult, err
 	} else {
@@ -33,13 +37,15 @@ func CompressZlib(decompressedData []byte, compressedLength *int) (compressed []
 	defer compressors.Put(c)
 
 	if compressedLength != nil {
-		dst := bufs.Get().([]byte)
-		if len(dst) < int(*compressedLength) {
-			dst = make([]byte, *compressedLength)
+		dst := bufs.Get().(*bytes.Buffer)
+		if dst.Len() < int(*compressedLength) {
+			dst.Grow(*compressedLength)
 		}
 		defer bufs.Put(dst)
 
-		_, compressedResult, err := c.CompressZlib(decompressedData, dst[:*compressedLength])
+		dc := dst.Bytes()[:*compressedLength]
+
+		_, compressedResult, err := c.CompressZlib(decompressedData, dc)
 
 		return compressedResult, err
 	} else {
