@@ -6,19 +6,6 @@ Blazingly fast, highly optimized server implementation written in [Go](https://g
 ## Why
 Why not?
 
-## Progress
-- Chunk reading and writing (Region/Anvil)
-
-- Terrain generation (WIP)
-
-- Player movement
-
-- Encryption, Authentication and compression
-
-- Secure chat
-
-- Command API
-
 ## Performance
 Zeppelin is heavily focused on performance and using as little memory as possible. Below are screenshots of the memory usage (Alloc=current memory usage, Total Alloc=lifetime memory usage) (Top=region loaded, bottom=Generated)
 
@@ -53,6 +40,63 @@ NOTE: all the properties are added to the structure, but they aren't being used 
 `--cpuprof`: run the server with the cpu profiler
 
 `--memprof`: run the server with the memory profiler
+
+## Roadmap  
+
+### World
+- [x] Read level dat file
+- Chunks
+    - [x] Loading from MCA
+    - [x] Encoding 
+    - [x] Manipulation (get/set block, get/set light level) 
+    - [ ] Lighting calculation 
+    - [x] MCA writing 
+- [ ] Entities
+- [ ] Daytime
+- [ ] Ticking
+    - Only the daytime is being ticked currently.
+- [ ] Custom block behaviour.
+- [x] Terrain Generation
+    - [x] Superflat
+    - [x] Normal (extremely basic)
+- [ ] Particles
+- [x] Custom dimensions
+- [ ] Custom chunk format 
+
+
+### Player
+- [x] Reading, writing and generating playerdata (from world level)
+- [x] Movement (position, rotation)
+- [x] Metadata (sneaking, sprinting, client info)
+- [x] Arm swing animation
+- [x] Encryption
+- [x] Authentication
+- [x] Secure chat
+- [ ] Interactions
+- [ ] Combat
+- [x] Inventory
+    - Only works in Creative mode.
+
+
+### Network
+- [x] Server registries
+- [x] Shared registries
+- [ ] Slot
+- [x] Server list ping
+    - No server icon support yet.
+- [ ] Multi-protocol
+
+### Other
+- [x] NBT writing
+- [x] NBT reading
+    - Needs to be further optimized.
+- [x] Text formatting
+- [ ] RCON support
+- [x] Command API
+    - No argument support yet.
+- [ ] Custom locales
+- [ ] Placeholder API
+- [x] Supports latest version. (1.21)
 
 ## Acknowledgements
 [Angel](https://github.com/aimjel) - help with chunk related calculations (0x8D989E86)
