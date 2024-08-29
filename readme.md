@@ -1,58 +1,54 @@
 # Zeppelin
-Blazingly fast, highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21
+Highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21
 
 [Discord Server](https://discord.gg/T8qEtDWPak)
 
-## Why
-Why not?
+## Goal
+A fast, efficient, and reliable server, with a plugin API and clean code
 
-## Progress
-- Chunk reading and writing (Region/Anvil)
+## Protocol Coverage
+- Packet encryption (AES/CFB8)
 
-- Terrain generation (WIP)
+- Packet compression (Zlib)
 
-- Player movement
+- Authentication
 
-- Encryption, Authentication and compression
+- Named Binary Tag (NBT)
 
-- Secure chat
+- Text formatting
 
-- Command API
+- Chat signing
 
-## Performance
-Zeppelin is heavily focused on performance and using as little memory as possible. Below are screenshots of the memory usage (Alloc=current memory usage, Total Alloc=lifetime memory usage) (Top=region loaded, bottom=Generated)
+## Progress 
+- Chunk encoding and manipulation
 
-![Region loaded](https://github.com/user-attachments/assets/e6dc0d87-48f7-49b6-a425-c4090f17f009)
+- Region/Anvil decoding and encoding (temp disabled)
 
-![Generated](https://github.com/user-attachments/assets/f02bd4b0-7680-4bc8-bab4-4451eb43fe13)
+- WIP terrain generation
 
+- Player movement including metadata
 
+## API
+### Protocol:
+- NBT: protocol/nbt
 
-## Supported Platforms
-Zeppelin supports *unix with plugins.
+- .properties: protocol/properties
 
-*Windows is unsupported. You can run it on WSL or MSYS2 as long as you can have libdeflate installed. (WSL is recommended because it has support for go plugins aswell)*
+- text formatting: protocol/text
 
-## Installation
-To run Zeppelin, you need to install the [Go compiler](https://go.dev), a C compiler, and libdeflate.
+- network and packets: protocol/net
+### Server:
+- Commands: server/command (server.CommandManager) - can register custom commands
 
-### Configuration
-Configuration is in the standard server.properties. Zeppelin includes a couple of custom properties, and removes some too.
-NOTE: all the properties are added to the structure, but they aren't being used yet! (the properties that are in the structure are either used or will be used)
+- World: server/world (server.World) - can register custom dimensions, modify chunks etc
 
-## Privacy
-- The server allows for chat signing
+- Registry: server/registry - shared registry constants
 
-- The server respects the client's settings not to show in server listing
+- Container (inventory): server/container
 
-## Boot Arguments
-`--no-raw-terminal`: disables the raw terminal option which might be useful for systems that don't work well with it
+- Player: server/player (Session.Player())
 
-`--no-plugins`: disables plugin loading which might be useful if your system doesn't support plugins and want to remove the warning message
-
-`--cpuprof`: run the server with the cpu profiler
-
-`--memprof`: run the server with the memory profiler
+- Session: server/session (api) | server/session/std (impl)
 
 ## Acknowledgements
 [Angel](https://github.com/aimjel) - help with chunk related calculations (0x8D989E86)

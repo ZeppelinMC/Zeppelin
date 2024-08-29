@@ -7,10 +7,10 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/aimjel/minecraft/nbt"
-	"github.com/zeppelinmc/zeppelin/net/io/buffers"
-	"github.com/zeppelinmc/zeppelin/net/io/compress"
-	"github.com/zeppelinmc/zeppelin/net/io/util"
+	"github.com/zeppelinmc/zeppelin/protocol/nbt/qnbt"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/buffers"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/compress"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/util"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
@@ -78,7 +78,7 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}*/
 
-	locationIndex := ((uint32(x) % 32) + (uint32(z)%32)*32) * 4
+	locationIndex := 4 * ((x & 31) + (z&31)*32)
 	if int(locationIndex) >= len(r.locations) {
 		if r.generator != nil {
 			r.chunks[hash] = new(chunk.Chunk)
@@ -145,7 +145,7 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	//defer anvilChunks.Put(anvil)
 	var anvil = new(anvilChunk)
 
-	if err := nbt.Unmarshal(data, anvil); err != nil {
+	if _, err := qnbt.Unmarshal(data, anvil); err != nil {
 		return nil, err
 	}
 

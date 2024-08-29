@@ -1,20 +1,20 @@
 package handler
 
 import (
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/server/world/level/item"
-	"github.com/zeppelinmc/zeppelin/text"
 )
 
 func init() {
 	std.RegisterHandler(net.PlayState, play.PacketIdSetCreativeModeSlot, handleSetCreativeSlot)
 }
 
-func handleSetCreativeSlot(s *std.StandardSession, pk packet.Packet) {
+func handleSetCreativeSlot(s *std.StandardSession, pk packet.Decodeable) {
 	scs, ok := pk.(*play.SetCreativeModeSlot)
 	if !ok {
 		return

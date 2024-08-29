@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/metadata"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 )
 
@@ -14,7 +14,7 @@ func init() {
 	std.RegisterHandler(net.ConfigurationState, configuration.PacketIdClientInformation, handleClientInfo)
 }
 
-func handleClientInfo(s *std.StandardSession, p packet.Packet) {
+func handleClientInfo(s *std.StandardSession, p packet.Decodeable) {
 	var inf configuration.ClientInformation
 	switch pk := p.(type) {
 	case *configuration.ClientInformation:

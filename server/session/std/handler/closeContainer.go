@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 )
@@ -12,7 +12,7 @@ func init() {
 	std.RegisterHandler(net.PlayState, play.PacketIdCloseContainer, handleCloseContainer)
 }
 
-func handleCloseContainer(s *std.StandardSession, p packet.Packet) {
+func handleCloseContainer(s *std.StandardSession, p packet.Decodeable) {
 	pk, ok := p.(*play.CloseContainer)
 	if !ok {
 		return

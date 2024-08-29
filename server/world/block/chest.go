@@ -3,13 +3,13 @@ package block
 import (
 	"strconv"
 
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
-	"github.com/zeppelinmc/zeppelin/text"
 )
 
 type Chest struct {

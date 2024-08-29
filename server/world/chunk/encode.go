@@ -5,12 +5,12 @@ import (
 	"slices"
 	"unsafe"
 
-	"github.com/zeppelinmc/zeppelin/log"
-	"github.com/zeppelinmc/zeppelin/net/io"
-	"github.com/zeppelinmc/zeppelin/net/io/buffers"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/buffers"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
 var emptyLightBuffer = make([]byte, 2048)

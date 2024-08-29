@@ -4,20 +4,20 @@ import (
 	"net"
 
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/net/metadata"
-	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
-	"github.com/zeppelinmc/zeppelin/net/packet/login"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/properties"
+	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/properties"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
 
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
-	"github.com/zeppelinmc/zeppelin/text"
 )
 
 type Session interface {

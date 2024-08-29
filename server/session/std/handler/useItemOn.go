@@ -2,13 +2,11 @@ package handler
 
 import (
 	"math"
-	"slices"
 
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/metadata"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/server/registry"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	"github.com/zeppelinmc/zeppelin/server/world/block"
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
@@ -20,7 +18,7 @@ func init() {
 	std.RegisterHandler(net.PlayState, play.PacketIdUseItemOn, handleUseItemOn)
 }
 
-func handleUseItemOn(s *std.StandardSession, pk packet.Packet) {
+func handleUseItemOn(s *std.StandardSession, pk packet.Decodeable) {
 	use, ok := pk.(*play.UseItemOn)
 	if !ok {
 		return
@@ -35,12 +33,12 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Packet) {
 		return
 	}
 
-	b, err := dimension.Block(use.BlockX, use.BlockY, use.BlockZ)
+	currentBlockLook, err := dimension.Block(use.BlockX, use.BlockY, use.BlockZ)
 	if err != nil {
 		return
 	}
 
-	usable, ok := b.(block.Usable)
+	usable, ok := currentBlockLook.(block.Usable)
 	if ok && s.Player().MetadataIndex(metadata.PoseIndex) != metadata.Sneaking {
 		usable.Use(s, *use, dimension)
 		return
@@ -54,8 +52,6 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Packet) {
 	if !ok {
 		return
 	}
-
-	currentBlockName, _ := b.Encode()
 
 	var blockX, blockY, blockZ = use.BlockX, use.BlockY, use.BlockZ
 	yaw, _ := s.Player().Rotation()
@@ -84,7 +80,7 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Packet) {
 		axis, facing = "x", "east"
 	}
 
-	replaceable := slices.Index(std.Tags.Tags["minecraft:block"]["minecraft:replaceable"], registry.Block.Get(currentBlockName)) != -1
+	replaceable := block.Is(currentBlockLook, "minecraft:replaceable")
 
 	if replaceable {
 		blockX, blockY, blockZ = use.BlockX, use.BlockY, use.BlockZ

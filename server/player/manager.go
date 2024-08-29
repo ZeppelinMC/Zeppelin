@@ -33,6 +33,7 @@ func (cache *PlayerManager) SaveAll() {
 	defer cache.mu.RUnlock()
 	for _, player := range cache.m {
 		player.sync()
+
 		player.data.Save()
 	}
 }

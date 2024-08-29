@@ -3,11 +3,11 @@ package handler
 import (
 	"math"
 
-	"github.com/zeppelinmc/zeppelin/log"
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
 func init() {
@@ -21,7 +21,7 @@ func chunkPos(x, z float64) (cx, cz int32) {
 	return int32(math.Floor(x / 16)), int32(math.Floor(z / 16))
 }
 
-func handleMovement(s *std.StandardSession, p packet.Packet) {
+func handleMovement(s *std.StandardSession, p packet.Decodeable) {
 	if s.AwaitingTeleportAcknowledgement.Get() {
 		return
 	}

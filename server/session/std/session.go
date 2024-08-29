@@ -9,15 +9,16 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/atomic"
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/io"
-	"github.com/zeppelinmc/zeppelin/net/metadata"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
-	"github.com/zeppelinmc/zeppelin/net/packet/login"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/properties"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/login"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net/tags"
+	"github.com/zeppelinmc/zeppelin/protocol/properties"
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/player"
@@ -32,8 +33,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
-	"github.com/zeppelinmc/zeppelin/text"
 	"github.com/zeppelinmc/zeppelin/util"
+	"github.com/zeppelinmc/zeppelin/util/atomic"
 )
 
 var _ session.Session = (*StandardSession)(nil)
@@ -127,7 +128,7 @@ func (session *StandardSession) CommandManager() *command.Manager {
 	return session.commandManager
 }
 
-func (session *StandardSession) WritePacket(pk packet.Packet) error {
+func (session *StandardSession) WritePacket(pk packet.Encodeable) error {
 	if PacketWriteInterceptor != nil {
 		var stop bool
 		PacketWriteInterceptor(session, pk, &stop)
@@ -138,7 +139,7 @@ func (session *StandardSession) WritePacket(pk packet.Packet) error {
 	return session.conn.WritePacket(pk)
 }
 
-func (session *StandardSession) ReadPacket() (packet.Packet, error) {
+func (session *StandardSession) ReadPacket() (packet.Decodeable, error) {
 	return session.conn.ReadPacket()
 }
 
@@ -268,14 +269,13 @@ func (session *StandardSession) Configure() error {
 		return err
 	}
 
-	if err := session.WritePacket(Tags); err != nil {
+	if err := session.WritePacket(tags.Tags); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (session *StandardSession) login() error {
-	session.ChunkLoadWorker.start()
 	if err := session.WritePacket(&play.Login{
 		EntityID:   session.player.EntityId(),
 		Dimensions: []string{session.player.Dimension()},
@@ -348,7 +348,7 @@ func (session *StandardSession) login() error {
 	x, y, z := session.player.Position()
 	yaw, pitch := session.player.Rotation()
 
-	status := session.statusProviderProvider()()
+	status := session.statusProviderProvider()(session.conn)
 
 	if err := session.WritePacket(&play.ServerData{
 		MOTD: status.Description,
@@ -569,6 +569,7 @@ func (session *StandardSession) sendSpawnChunks() error {
 	}
 
 	session.awaitingChunkBatchAcknowledgement.Set(true)
+	session.ChunkLoadWorker.start()
 
 	return nil
 }

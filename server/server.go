@@ -2,27 +2,28 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"runtime"
+	"slices"
 	"time"
 
 	nnet "net"
 
-	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
-	"github.com/zeppelinmc/zeppelin/net/packet/status"
-	"github.com/zeppelinmc/zeppelin/properties"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/protocol/properties"
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/player"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	_ "github.com/zeppelinmc/zeppelin/server/session/std/handler"
 	"github.com/zeppelinmc/zeppelin/server/tick"
-	"github.com/zeppelinmc/zeppelin/text"
-	"github.com/zeppelinmc/zeppelin/util"
 
 	"github.com/zeppelinmc/zeppelin/server/world"
 	_ "github.com/zeppelinmc/zeppelin/server/world/terrain"
 
-	"github.com/zeppelinmc/zeppelin/log"
-	"github.com/zeppelinmc/zeppelin/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
 // Creates a new server instance using the specified config, returns an error if unable to bind listener
@@ -52,6 +53,7 @@ func New(cfg properties.ServerProperties, world *world.World) (*Server, error) {
 		Players:  player.NewPlayerManager(),
 		stopLoop: make(chan struct{}),
 	}
+	server.icon, _ = os.ReadFile("server-icon.png")
 	server.Console = &Console{Server: server}
 	server.World.Broadcast.AddDummy(server.Console)
 	server.listener.SetStatusProvider(server.provideStatus)
@@ -67,7 +69,7 @@ func New(cfg properties.ServerProperties, world *world.World) (*Server, error) {
 		compstr = "no compression"
 	}
 
-	log.Infof("Compression threshold is %d (%s)\n", cfg.NetworkCompressionThreshold, compstr)
+	log.Infolnf("Network compression threshold is %d (%s)", cfg.NetworkCompressionThreshold, compstr)
 	server.createTicker()
 	return server, err
 }
@@ -82,6 +84,7 @@ type Server struct {
 	World *world.World
 
 	Console *Console
+	icon    []byte
 
 	CommandManager        *command.Manager
 	onConnectionIntercept func(conn *net.Conn, stop *bool)
@@ -96,7 +99,7 @@ func (srv *Server) setOnConnectionIntercept(i func(conn *net.Conn, stop *bool)) 
 	srv.onConnectionIntercept = i
 }
 
-func (srv *Server) provideStatus() status.StatusResponseData {
+func (srv *Server) provideStatus(*net.Conn) status.StatusResponseData {
 	count := srv.World.Broadcast.NumSession()
 	max := srv.cfg.MaxPlayers
 	if max == -1 {
@@ -113,6 +116,7 @@ func (srv *Server) provideStatus() status.StatusResponseData {
 			Online: count,
 			Sample: srv.World.Broadcast.Sample(),
 		},
+		Favicon:            srv.icon,
 		EnforcesSecureChat: srv.cfg.EnforceSecureProfile,
 	}
 }
@@ -126,7 +130,7 @@ func (srv *Server) Properties() properties.ServerProperties {
 }
 
 func (srv *Server) Start(ts time.Time) {
-	if !util.HasArgument("--no-plugins") {
+	if slices.Index(os.Args, "--no-plugins") != -1 {
 		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" || runtime.GOOS == "freebsd" {
 			log.Infoln("Loading plugins")
 			srv.loadPlugins()

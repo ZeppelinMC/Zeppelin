@@ -17,7 +17,6 @@ const (
 	DirectionNZ = "north"
 )
 
-// Deprecated: not working
 func YawDirection(yaw float32) string {
 	normalizedYaw := NormalizeYaw(yaw)
 	if normalizedYaw >= 315.0 || normalizedYaw < 45.0 {

@@ -1,18 +1,18 @@
 package handler
 
 import (
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
-	"github.com/zeppelinmc/zeppelin/text"
 )
 
 func init() {
 	std.RegisterHandler(net.PlayState, play.PacketIdPlayerAbilitiesServerbound, handlePlayerAbilities)
 }
 
-func handlePlayerAbilities(s *std.StandardSession, pk packet.Packet) {
+func handlePlayerAbilities(s *std.StandardSession, pk packet.Decodeable) {
 	abs, ok := pk.(*play.PlayerAbilitiesServerbound)
 	if !ok {
 		return

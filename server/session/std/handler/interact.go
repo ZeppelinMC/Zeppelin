@@ -3,9 +3,9 @@ package handler
 import (
 	"math"
 
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 )
@@ -14,7 +14,7 @@ func init() {
 	std.RegisterHandler(net.PlayState, play.PacketIdInteract, handleInteract)
 }
 
-func handleInteract(s *std.StandardSession, pk packet.Packet) {
+func handleInteract(s *std.StandardSession, pk packet.Decodeable) {
 	interact, ok := pk.(*play.Interact)
 	if !ok {
 		return

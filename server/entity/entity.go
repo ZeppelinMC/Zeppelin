@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
 )
 
 var entityId atomic.Int32

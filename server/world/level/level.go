@@ -5,15 +5,14 @@
 package level
 
 import (
-	"bytes"
 	"compress/gzip"
 	"io"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/zeppelinmc/zeppelin/nbt"
-	"github.com/zeppelinmc/zeppelin/properties"
+	"github.com/zeppelinmc/zeppelin/protocol/nbt"
+	"github.com/zeppelinmc/zeppelin/protocol/properties"
 	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/server/world/level/seed"
 )
@@ -146,7 +145,7 @@ func Open(worldPath string) (Level, error) {
 	rd.Close()
 	file.Close()
 
-	_, err = nbt.NewDecoder(bytes.NewReader(buf)).Decode(&level)
+	_, err = nbt.Unmarshal(buf, &level)
 	level.basePath = worldPath
 
 	return level, err

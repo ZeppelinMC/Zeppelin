@@ -1,6 +1,6 @@
 package command
 
-import "github.com/zeppelinmc/zeppelin/net/packet/play"
+import "github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 
 func (mgr *Manager) Encode() *play.Commands {
 	if mgr.graph != nil {

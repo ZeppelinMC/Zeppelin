@@ -1,8 +1,8 @@
 package session
 
 import (
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/text"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
 func (b *Broadcast) SecureChatMessage(session Session, pk play.ChatMessage, index int32) {
@@ -13,6 +13,10 @@ func (b *Broadcast) SecureChatMessage(session Session, pk play.ChatMessage, inde
 	defer b.prev_msgs_mu.Unlock()
 
 	for _, ses := range b.sessions {
+		ses.PlayerChatMessage(pk, session, "minecraft:chat", index, b.previousMessages)
+	}
+
+	for _, ses := range b.dummies {
 		ses.PlayerChatMessage(pk, session, "minecraft:chat", index, b.previousMessages)
 	}
 	b.appendMessage()
@@ -29,6 +33,9 @@ func (b *Broadcast) DisguisedChatMessage(session Session, content text.TextCompo
 	defer b.sessions_mu.RUnlock()
 
 	for _, ses := range b.sessions {
+		ses.DisguisedChatMessage(content, session, "minecraft:chat")
+	}
+	for _, ses := range b.dummies {
 		ses.DisguisedChatMessage(content, session, "minecraft:chat")
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
 func Encode(f *os.File, blocks map[string]Block) error {

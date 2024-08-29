@@ -2,7 +2,7 @@ package section
 
 import (
 	_ "embed"
-	"os"
+	"io"
 
 	"github.com/zeppelinmc/zeppelin/server/world/block/blockstates"
 	"github.com/zeppelinmc/zeppelin/util"
@@ -10,12 +10,19 @@ import (
 
 var blocks = make(map[string]blockstates.Block)
 
-var blockFile *os.File
-var header map[string]blockstates.BlockLocation
+type RReaderAt interface {
+	io.Reader
+	io.ReaderAt
+}
 
-func init() {
-	blockFile, _ = os.Open("./blockstates")
-	header, _ = blockstates.ReadHeader(blockFile)
+var header map[string]blockstates.BlockLocation
+var blockFile RReaderAt
+
+func ImportStates(f RReaderAt) (err error) {
+	blockFile = f
+	header, err = blockstates.ReadHeader(blockFile)
+
+	return
 }
 
 var registeredBlocks = make(map[string]Block)

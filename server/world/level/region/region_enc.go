@@ -8,9 +8,9 @@ import (
 	"encoding/binary"
 	"os"
 
-	"github.com/zeppelinmc/zeppelin/nbt"
-	"github.com/zeppelinmc/zeppelin/net/io/buffers"
-	"github.com/zeppelinmc/zeppelin/net/io/compress"
+	"github.com/zeppelinmc/zeppelin/protocol/nbt"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/buffers"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/compress"
 )
 
 type bufferCloser struct {

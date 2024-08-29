@@ -6,12 +6,12 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/atomic"
-	"github.com/zeppelinmc/zeppelin/net/metadata"
+	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
+	"github.com/zeppelinmc/zeppelin/util/atomic"
 )
 
 var _ entity.LivingEntity = (*Player)(nil)

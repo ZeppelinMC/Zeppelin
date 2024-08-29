@@ -10,9 +10,10 @@ require (
 
 require (
 	github.com/4kills/go-libdeflate/v2 v2.2.0
-	github.com/aimjel/minecraft v0.0.0-20240807071716-1ebc689ab9a8
 	github.com/pierrec/lz4/v4 v4.1.21
 )
+
+require github.com/oq-x/unsafe2 v0.0.0-20240826185617-691f34b78bf1
 
 require (
 	github.com/aquilax/go-perlin v1.1.0

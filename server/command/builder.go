@@ -1,6 +1,6 @@
 package command
 
-import "github.com/zeppelinmc/zeppelin/net/packet/play"
+import "github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 
 const (
 	Bool = iota

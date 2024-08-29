@@ -1,7 +1,7 @@
 package container
 
 import (
-	"github.com/zeppelinmc/zeppelin/net/slot"
+	"github.com/zeppelinmc/zeppelin/protocol/net/slot"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/level/item"
 )

@@ -7,7 +7,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/zeppelinmc/zeppelin/net/io/util"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/util"
 )
 
 type BlockLocation struct {

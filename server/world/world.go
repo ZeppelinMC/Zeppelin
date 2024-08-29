@@ -5,14 +5,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zeppelinmc/zeppelin/atomic"
-	"github.com/zeppelinmc/zeppelin/log"
-	"github.com/zeppelinmc/zeppelin/properties"
+	"github.com/zeppelinmc/zeppelin/protocol/properties"
 	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
+	"github.com/zeppelinmc/zeppelin/util/atomic"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
 type World struct {
@@ -30,6 +30,8 @@ type World struct {
 	worldAge, dayTime atomic.AtomicValue[int64]
 }
 
+const version = 19133
+
 func NewWorld(props properties.ServerProperties) (*World, error) {
 	var err error
 	w := &World{
@@ -43,6 +45,13 @@ func NewWorld(props properties.ServerProperties) (*World, error) {
 	w.Level, err = level.Open(props.LevelName)
 	if err != nil {
 		w.prepareLevel(owgen, props)
+	}
+
+	if w.Level.Data.VersionInt > version {
+		return nil, fmt.Errorf("world is too old!")
+	}
+	if w.Level.Data.VersionInt < version {
+		return nil, fmt.Errorf("world is too new!")
 	}
 
 	if w.obtainLock() != nil {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"plugin"
 
-	"github.com/zeppelinmc/zeppelin/log"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
 type Plugin struct {

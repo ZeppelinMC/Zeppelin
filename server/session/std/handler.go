@@ -3,19 +3,19 @@ package std
 import (
 	"time"
 
-	"github.com/zeppelinmc/zeppelin/log"
-	"github.com/zeppelinmc/zeppelin/net"
-	"github.com/zeppelinmc/zeppelin/net/io"
-	"github.com/zeppelinmc/zeppelin/net/packet"
-	"github.com/zeppelinmc/zeppelin/net/packet/configuration"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
-	"github.com/zeppelinmc/zeppelin/text"
+	"github.com/zeppelinmc/zeppelin/protocol/net"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/configuration"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/text"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
-var PacketReadInterceptor func(s *StandardSession, pk packet.Packet, stop *bool)
-var PacketWriteInterceptor func(s *StandardSession, pk packet.Packet, stop *bool)
+var PacketReadInterceptor func(s *StandardSession, pk packet.Decodeable, stop *bool)
+var PacketWriteInterceptor func(s *StandardSession, pk packet.Encodeable, stop *bool)
 
-type handler func(*StandardSession, packet.Packet)
+type handler func(*StandardSession, packet.Decodeable)
 
 var handlers = make(map[[2]int32]handler)
 
@@ -26,7 +26,7 @@ func (session *StandardSession) inConfiguration() bool {
 	return session.conn.State() == net.ConfigurationState
 }
 
-func (session *StandardSession) readIntercept(pk packet.Packet) (stop bool) {
+func (session *StandardSession) readIntercept(pk packet.Decodeable) (stop bool) {
 	if PacketReadInterceptor != nil {
 		PacketReadInterceptor(session, pk, &stop)
 	}

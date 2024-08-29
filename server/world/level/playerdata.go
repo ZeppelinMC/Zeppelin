@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/nbt"
-	"github.com/zeppelinmc/zeppelin/net/packet/play"
+	"github.com/zeppelinmc/zeppelin/protocol/nbt"
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/container"
 	"github.com/zeppelinmc/zeppelin/server/entity"
 	datauuid "github.com/zeppelinmc/zeppelin/server/world/level/uuid"
@@ -103,6 +103,7 @@ func (data *PlayerData) Save() error {
 	if err := gzip.Close(); err != nil {
 		return err
 	}
+
 	return file.Close()
 }
 
