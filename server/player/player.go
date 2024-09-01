@@ -22,21 +22,20 @@ type Player struct {
 
 	data level.Player
 	x, y, z,
-	vx, vy, vz a.Int64
-	yaw, pitch a.Int32
+	vx, vy, vz a.Uint64
+	yaw, pitch a.Uint32
 	onGround   a.Bool
 
+	food a.Int32
 	health,
-	food,
 	foodExhaustion,
-	foodSaturation a.Int32
+	foodSaturation a.Uint32
 
 	abilities atomic.AtomicValue[level.PlayerAbilities]
 
 	dimension atomic.AtomicValue[string]
 
-	gameMode atomic.AtomicValue[level.GameMode]
-
+	gameMode         a.Int32
 	selectedItemSlot a.Int32
 
 	recipeBook atomic.AtomicValue[level.RecipeBook]
@@ -83,31 +82,31 @@ func (mgr *PlayerManager) New(data level.Player) *Player {
 			metadata.PlayerMainHandIndex:           metadata.Byte(1),
 		},
 
-		x: *atomicFloat64(data.Pos[0]),
-		y: *atomicFloat64(data.Pos[1]),
-		z: *atomicFloat64(data.Pos[2]),
+		x: atomicFloat64(data.Pos[0]),
+		y: atomicFloat64(data.Pos[1]),
+		z: atomicFloat64(data.Pos[2]),
 
-		vx: *atomicFloat64(data.Motion[0]),
-		vy: *atomicFloat64(data.Motion[1]),
-		vz: *atomicFloat64(data.Motion[2]),
+		vx: atomicFloat64(data.Motion[0]),
+		vy: atomicFloat64(data.Motion[1]),
+		vz: atomicFloat64(data.Motion[2]),
 
-		yaw:   *atomicFloat32(data.Rotation[0]),
-		pitch: *atomicFloat32(data.Rotation[1]),
+		yaw:   atomicFloat32(data.Rotation[0]),
+		pitch: atomicFloat32(data.Rotation[1]),
 
-		onGround: *atomicBool(data.OnGround),
+		onGround: atomicBool(data.OnGround),
 
 		dimension: atomic.Value(data.Dimension),
 
-		gameMode: atomic.Value(data.PlayerGameType),
+		gameMode: atomicInt32(int32(data.PlayerGameType)),
 
 		recipeBook: atomic.Value(data.RecipeBook),
 
-		selectedItemSlot: *atomicInt32(data.SelectedItemSlot),
+		selectedItemSlot: atomicInt32(data.SelectedItemSlot),
 
-		health:         *atomicFloat32(data.Health),
-		food:           *atomicInt32(data.FoodLevel),
-		foodExhaustion: *atomicFloat32(data.FoodExhaustionLevel),
-		foodSaturation: *atomicFloat32(data.FoodSaturationLevel),
+		health:         atomicFloat32(data.Health),
+		food:           atomicInt32(data.FoodLevel),
+		foodExhaustion: atomicFloat32(data.FoodExhaustionLevel),
+		foodSaturation: atomicFloat32(data.FoodSaturationLevel),
 
 		abilities: atomic.Value(data.Abilities),
 
@@ -131,11 +130,11 @@ func (p *Player) UUID() uuid.UUID {
 }
 
 func (p *Player) Position() (x, y, z float64) {
-	return i64f(p.x.Load()), i64f(p.y.Load()), i64f(p.z.Load())
+	return u64f(p.x.Load()), u64f(p.y.Load()), u64f(p.z.Load())
 }
 
 func (p *Player) Rotation() (yaw, pitch float32) {
-	return i32f(p.yaw.Load()), i32f(p.pitch.Load())
+	return u32f(p.yaw.Load()), u32f(p.pitch.Load())
 }
 
 func (p *Player) OnGround() bool {
@@ -143,14 +142,14 @@ func (p *Player) OnGround() bool {
 }
 
 func (p *Player) SetPosition(x, y, z float64) {
-	p.x.Store(f64i(x))
-	p.y.Store(f64i(y))
-	p.z.Store(f64i(z))
+	p.x.Store(f64u(x))
+	p.y.Store(f64u(y))
+	p.z.Store(f64u(z))
 }
 
 func (p *Player) SetRotation(yaw, pitch float32) {
-	p.yaw.Store(f32i(yaw))
-	p.pitch.Store(f32i(pitch))
+	p.yaw.Store(f32u(yaw))
+	p.pitch.Store(f32u(pitch))
 }
 
 func (p *Player) SetOnGround(val bool) {
@@ -158,13 +157,13 @@ func (p *Player) SetOnGround(val bool) {
 }
 
 func (p *Player) Motion() (x, y, z float64) {
-	return i64f(p.vx.Load()), i64f(p.vy.Load()), i64f(p.vz.Load())
+	return u64f(p.vx.Load()), u64f(p.vy.Load()), u64f(p.vz.Load())
 }
 
 func (p *Player) SetMotion(x, y, z float64) {
-	p.vx.Store(f64i(x))
-	p.vy.Store(f64i(y))
-	p.vz.Store(f64i(z))
+	p.vx.Store(f64u(x))
+	p.vy.Store(f64u(y))
+	p.vz.Store(f64u(z))
 }
 
 func (p *Player) EntityId() int32 {
@@ -213,11 +212,11 @@ func (p *Player) SetDimension(dim string) {
 }
 
 func (p *Player) Health() float32 {
-	return i32f(p.health.Load())
+	return u32f(p.health.Load())
 }
 
 func (p *Player) SetHealth(h float32) {
-	p.health.Store(f32i(h))
+	p.health.Store(f32u(h))
 }
 
 func (p *Player) Food() int32 {
@@ -229,19 +228,19 @@ func (p *Player) SetFood(f int32) {
 }
 
 func (p *Player) FoodSaturation() float32 {
-	return i32f(p.foodSaturation.Load())
+	return u32f(p.foodSaturation.Load())
 }
 
 func (p *Player) SetFoodSaturation(fs float32) {
-	p.foodSaturation.Store(f32i(fs))
+	p.foodSaturation.Store(f32u(fs))
 }
 
 func (p *Player) FoodExhaustion() float32 {
-	return i32f(p.foodExhaustion.Load())
+	return u32f(p.foodExhaustion.Load())
 }
 
 func (p *Player) SetFoodExhaustion(fh float32) {
-	p.foodExhaustion.Store(f32i(fh))
+	p.foodExhaustion.Store(f32u(fh))
 }
 
 func (p *Player) Abilities() level.PlayerAbilities {
@@ -253,11 +252,11 @@ func (p *Player) SetAbilities(abs level.PlayerAbilities) {
 }
 
 func (p *Player) GameMode() level.GameMode {
-	return p.gameMode.Get()
+	return level.GameMode(p.gameMode.Load())
 }
 
 func (p *Player) SetGameMode(mode level.GameMode) {
-	p.gameMode.Set(mode)
+	p.gameMode.Store(int32(mode))
 }
 
 func (p *Player) Attribute(id string) *entity.Attribute {
@@ -351,10 +350,10 @@ func (p *Player) sync() {
 	p.data.Attributes = p.attributes
 	p.att_mu.RUnlock()
 
-	p.data.Health = i32f(p.health.Load())
+	p.data.Health = u32f(p.health.Load())
 	p.data.FoodLevel = p.food.Load()
-	p.data.FoodExhaustionLevel = i32f(p.foodExhaustion.Load())
-	p.data.FoodSaturationLevel = i32f(p.foodSaturation.Load())
-	p.data.PlayerGameType = p.gameMode.Get()
+	p.data.FoodExhaustionLevel = u32f(p.foodExhaustion.Load())
+	p.data.FoodSaturationLevel = u32f(p.foodSaturation.Load())
+	p.data.PlayerGameType = level.GameMode(p.gameMode.Load())
 	p.data.SelectedItemSlot = p.selectedItemSlot.Load()
 }

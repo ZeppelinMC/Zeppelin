@@ -50,5 +50,14 @@ A fast, efficient, and reliable server, with a plugin API and clean code
 
 - Session: server/session (api) | server/session/std (impl)
 
+## Boot Arguments
+`--no-plugins`: skips plugin loading
+
+`--memprof`: uses memory profiler
+
+`--cpuprof`: uses cpu profiler
+
+`--xmem=<amount>`: limits memory usage to `amount`, for example: `--xmem=1gib`
+
 ## Acknowledgements
 [Angel](https://github.com/aimjel) - help with chunk related calculations (0x8D989E86)
