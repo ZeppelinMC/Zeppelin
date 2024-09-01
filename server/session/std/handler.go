@@ -12,8 +12,8 @@ import (
 	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
-var PacketReadInterceptor func(s *StandardSession, pk packet.Decodeable, stop *bool)
-var PacketWriteInterceptor func(s *StandardSession, pk packet.Encodeable, stop *bool)
+var PacketReadInterceptor func(s *StandardSession, pk packet.Decodeable) bool
+var PacketWriteInterceptor func(s *StandardSession, pk packet.Encodeable) bool
 
 type handler func(*StandardSession, packet.Decodeable)
 
@@ -28,7 +28,7 @@ func (session *StandardSession) inConfiguration() bool {
 
 func (session *StandardSession) readIntercept(pk packet.Decodeable) (stop bool) {
 	if PacketReadInterceptor != nil {
-		PacketReadInterceptor(session, pk, &stop)
+		return PacketReadInterceptor(session, pk)
 	}
 
 	return
@@ -36,7 +36,6 @@ func (session *StandardSession) readIntercept(pk packet.Decodeable) (stop bool) 
 
 func (session *StandardSession) handlePackets() {
 	keepAlive := time.NewTicker(time.Second * 20)
-	//ticker := session.tick.New()
 	for {
 		select {
 		case <-keepAlive.C:
@@ -72,12 +71,12 @@ func (session *StandardSession) handlePackets() {
 					session.broadcast.PlayerInfoUpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						_, data, _ := io.ReadVarInt(pk.Data)
+						_, data, _ := io.VarInt(pk.Data)
 						session.clientName = string(data)
 					}
 				case *play.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						_, data, _ := io.ReadVarInt(pk.Data)
+						_, data, _ := io.VarInt(pk.Data)
 						session.clientName = string(data)
 					}
 				case *configuration.AcknowledgeFinishConfiguration:

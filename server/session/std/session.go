@@ -46,6 +46,7 @@ type StandardSession struct {
 	broadcast *session.Broadcast
 	config    properties.ServerProperties
 
+	Input           Input
 	ChunkLoadWorker *ChunkLoadWorker
 
 	conn *net.Conn
@@ -121,6 +122,10 @@ func New(
 	}
 	s.ChunkLoadWorker = NewChunkLoadWorker(s)
 
+	s.Input.SetPosition(s.player.Position())
+	s.Input.SetRotation(s.player.Rotation())
+	s.Input.SetOnGround(s.player.OnGround())
+
 	return s
 }
 
@@ -130,9 +135,7 @@ func (session *StandardSession) CommandManager() *command.Manager {
 
 func (session *StandardSession) WritePacket(pk packet.Encodeable) error {
 	if PacketWriteInterceptor != nil {
-		var stop bool
-		PacketWriteInterceptor(session, pk, &stop)
-		if stop {
+		if PacketWriteInterceptor(session, pk) {
 			return nil
 		}
 	}
@@ -388,6 +391,7 @@ func (session *StandardSession) login() error {
 	}
 
 	session.broadcast.SpawnPlayer(session)
+	session.createTicker()
 
 	return nil
 }

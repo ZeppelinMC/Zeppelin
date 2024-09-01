@@ -103,6 +103,9 @@ type chunk struct {
 }
 
 func BenchmarkXxx(b *testing.B) {
+	f1, _ := os.Create("testdata/cpu.prof")
+	pprof.StartCPUProfile(f1)
+
 	for i := 0; i < b.N; i++ {
 		Unmarshal(chunkData, &chunk{})
 	}
@@ -110,4 +113,7 @@ func BenchmarkXxx(b *testing.B) {
 	f, _ := os.Create("testdata/mem.prof")
 	pprof.Lookup("allocs").WriteTo(f, 0)
 	f.Close()
+
+	pprof.StopCPUProfile()
+	f1.Close()
 }

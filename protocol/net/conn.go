@@ -23,6 +23,12 @@ import (
 	"github.com/google/uuid"
 )
 
+var PacketEncodeInterceptor func(c *Conn, pk packet.Encodeable) (stop bool)
+var PacketDecodeInterceptor func(c *Conn, pk packet.Decodeable) (stop bool)
+
+var PacketWriteInterceptor func(c *Conn, pk *bytes.Buffer) (stop bool)
+var PacketReadInterceptor func(c *Conn, pk *bytes.Reader) (stop bool)
+
 const (
 	clientVeryOldMsg = "Your client is WAYYYYYY too old!!! this server supports MC 1.21"
 	clientTooOldMsg  = "Your client is too old! this server supports MC 1.21"
@@ -87,6 +93,12 @@ var pkpool = sync.Pool{
 }
 
 func (conn *Conn) WritePacket(pk packet.Encodeable) error {
+	if PacketEncodeInterceptor != nil {
+		if PacketEncodeInterceptor(conn, pk) {
+			return nil
+		}
+	}
+
 	conn.write_mu.Lock()
 	defer conn.write_mu.Unlock()
 
@@ -101,6 +113,12 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 	}
 	if err := pk.Encode(w); err != nil {
 		return err
+	}
+
+	if PacketWriteInterceptor != nil {
+		if PacketWriteInterceptor(conn, packetBuf) {
+			return nil
+		}
 	}
 
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
@@ -202,7 +220,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 		if _, err := conn.Read(packet); err != nil {
 			return nil, err
 		}
-		id, data, err := io.ReadVarInt(packet)
+		id, data, err := io.VarInt(packet)
 		if err != nil {
 			return nil, err
 		}
@@ -238,7 +256,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 					return nil, err
 				}
 
-				id, data, err := io.ReadVarInt(packet)
+				id, data, err := io.VarInt(packet)
 				if err != nil {
 					return nil, err
 				}
@@ -246,7 +264,15 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 				packet = data
 				length = int32(len(data))
 
-				rd = io.NewReader(bytes.NewReader(packet), int(length))
+				r := bytes.NewReader(packet)
+
+				if PacketReadInterceptor != nil {
+					if PacketReadInterceptor(conn, r) {
+						return nil, fmt.Errorf("stopped by interceptor")
+					}
+				}
+
+				rd = io.NewReader(r, int(length))
 			}
 		} else { //packet is compressed
 			length = dataLength
@@ -264,7 +290,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 				return nil, err
 			}
 
-			id, data, err := io.ReadVarInt(uncompressedPacket)
+			id, data, err := io.VarInt(uncompressedPacket)
 			if err != nil {
 				return nil, err
 			}
@@ -272,12 +298,21 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 			uncompressedPacket = data
 			length = int32(len(data))
 
-			rd = io.NewReader(bytes.NewReader(uncompressedPacket), int(length))
+			r := bytes.NewReader(uncompressedPacket)
+
+			if PacketReadInterceptor != nil {
+				if PacketReadInterceptor(conn, r) {
+					return nil, fmt.Errorf("stopped by interceptor")
+				}
+			}
+
+			rd = io.NewReader(r, int(length))
 		}
 	}
 
 	var pk packet.Decodeable
 	pc, ok := ServerboundPool[conn.state.Load()][packetId]
+
 	if !ok {
 		return packet.UnknownPacket{
 			Id:      packetId,
@@ -286,6 +321,13 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 		}, nil
 	} else {
 		pk = pc()
+
+		if PacketDecodeInterceptor != nil {
+			if PacketDecodeInterceptor(conn, pk) {
+				return nil, fmt.Errorf("stopped by interceptor")
+			}
+		}
+
 		err := pk.Decode(rd)
 		return pk, err
 	}

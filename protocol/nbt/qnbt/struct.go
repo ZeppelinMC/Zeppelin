@@ -18,10 +18,10 @@ var structs = sync.Pool{
 
 func newStruct(t *structType, ptr unsafe.Pointer) *struct_t {
 	s := structs.Get().(*struct_t)
+	clear(s.names)
+
 	s.t = t
 	s.ptr = ptr
-
-	clear(s.names)
 
 	for i, f := range t.fields {
 		if !f.name.exported() {
@@ -68,6 +68,7 @@ type struct_t struct {
 
 func (s *struct_t) field(n string) (f *structField, ptr unsafe.Pointer, ok bool) {
 	i, ok := s.names[n]
+
 	if !ok {
 		return nil, nil, ok
 	}

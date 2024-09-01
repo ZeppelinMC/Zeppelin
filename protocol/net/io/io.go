@@ -3,6 +3,7 @@ package io
 import (
 	"fmt"
 	"io"
+	"unsafe"
 )
 
 func AppendByte(data []byte, b int8) []byte {
@@ -52,7 +53,7 @@ func WriteVarInt(w io.Writer, value int32) error {
 	return err
 }
 
-func ReadVarInt(data []byte) (int32, []byte, error) {
+func VarInt(data []byte) (int32, []byte, error) {
 	var (
 		position    int
 		currentByte byte
@@ -81,6 +82,37 @@ func ReadVarInt(data []byte) (int32, []byte, error) {
 	}
 
 	return value, data, nil
+}
+
+func ReadVarInt(r io.Reader) (int32, error) {
+	var (
+		position     int32
+		currentByte  byte
+		CONTINUE_BIT byte = 128
+		SEGMENT_BITS byte = 127
+
+		value int32
+	)
+
+	for {
+		if _, err := r.Read(unsafe.Slice(&currentByte, 1)); err != nil {
+			return value, err
+		}
+
+		value |= int32((currentByte & SEGMENT_BITS)) << position
+
+		if (currentByte & CONTINUE_BIT) == 0 {
+			break
+		}
+
+		position += 7
+
+		if position >= 32 {
+			return value, fmt.Errorf("VarInt is too big")
+		}
+	}
+
+	return value, nil
 }
 
 func AppendVarLong(data []byte, value int64) []byte {

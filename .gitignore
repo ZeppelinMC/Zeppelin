@@ -21,3 +21,5 @@ data.qfg
 /blockstates
 server-icon.png
 /resources
+/server/session/atomicSlice.go
+/server/session/a_test.go

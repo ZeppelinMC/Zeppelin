@@ -10,6 +10,19 @@ import (
 	"github.com/zeppelinmc/zeppelin/server"
 )
 
+func GetFlag(name string) (string, bool) {
+	name = "--" + name + "="
+	for _, a := range os.Args {
+		if i := strings.Index(a, name); i == 0 {
+			if len(name)+i < len(a) {
+				return a[len(name)+i:], true
+			}
+		}
+	}
+
+	return "", false
+}
+
 func StartConsole(srv *server.Server) {
 	var line string
 	var scanner = bufio.NewScanner(os.Stdin)

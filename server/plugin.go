@@ -9,11 +9,22 @@ import (
 )
 
 type Plugin struct {
+	basePluginsPath string
+
 	srv        *Server
 	Identifier string
 
 	OnLoad func(*Plugin)
 	Unload func(*Plugin)
+}
+
+func (p Plugin) FS() fs.FS {
+	return os.DirFS(p.Dir())
+}
+
+// Dir returns the base directory for the plugin (plugins/<identifier>)
+func (p Plugin) Dir() string {
+	return p.basePluginsPath + "/" + p.Identifier
 }
 
 func (p Plugin) Server() *Server {
@@ -48,6 +59,7 @@ func (srv *Server) loadPlugin(name string) {
 		log.Errorlnf("Invalid plugin export for %s", name)
 		return
 	}
+	plugin.basePluginsPath = "plugins"
 	plugin.srv = srv
 	plugin.OnLoad(plugin)
 }

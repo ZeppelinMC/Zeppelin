@@ -130,7 +130,7 @@ func (srv *Server) Properties() properties.ServerProperties {
 }
 
 func (srv *Server) Start(ts time.Time) {
-	if slices.Index(os.Args, "--no-plugins") != -1 {
+	if slices.Index(os.Args, "--no-plugins") == -1 {
 		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" || runtime.GOOS == "freebsd" {
 			log.Infoln("Loading plugins")
 			srv.loadPlugins()

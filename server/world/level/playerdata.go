@@ -15,7 +15,7 @@ import (
 	datauuid "github.com/zeppelinmc/zeppelin/server/world/level/uuid"
 )
 
-type PlayerData struct {
+type Player struct {
 	// the path of this playerdata file, not a field in the nbt
 	path string `nbt:"-"`
 	// the base path of the world
@@ -88,7 +88,7 @@ type PlayerData struct {
 	} `nbt:"warden_spawn_tracker"`
 }
 
-func (data *PlayerData) Save() error {
+func (data *Player) Save() error {
 	os.MkdirAll(data.basePath+"/playerdata", 0755)
 	os.Rename(data.path, data.path+"_old")
 	file, err := os.Create(data.path)
@@ -107,8 +107,8 @@ func (data *PlayerData) Save() error {
 	return file.Close()
 }
 
-func (w *Level) PlayerData(uuid string) (PlayerData, error) {
-	var playerData PlayerData
+func (w *Level) PlayerData(uuid string) (Player, error) {
+	var playerData Player
 	path := fmt.Sprintf("%s/playerdata/%s.dat", w.basePath, uuid)
 
 	file, err := os.Open(path)
@@ -131,8 +131,8 @@ func (w *Level) PlayerData(uuid string) (PlayerData, error) {
 	return playerData, err
 }
 
-func (w *Level) NewPlayerData(uuid uuid.UUID) PlayerData {
-	return PlayerData{
+func (w *Level) NewPlayerData(uuid uuid.UUID) Player {
+	return Player{
 		path:     fmt.Sprintf("%s/playerdata/%s.dat", w.basePath, uuid),
 		basePath: w.basePath,
 		Pos:      [3]float64{float64(w.Data.SpawnX), float64(w.Data.SpawnY), float64(w.Data.SpawnZ)},

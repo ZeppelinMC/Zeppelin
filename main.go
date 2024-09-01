@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 	"slices"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/command"
 	"github.com/zeppelinmc/zeppelin/server/world"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
+	"github.com/zeppelinmc/zeppelin/util"
 	"github.com/zeppelinmc/zeppelin/util/console"
 	"github.com/zeppelinmc/zeppelin/util/log"
 	"golang.org/x/term"
@@ -26,9 +28,17 @@ var timeStart = time.Now()
 
 func main() {
 	log.Infolnf("Zeppelin 1.21 Minecraft server with %s on platform %s-%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-
 	if !loadStates() {
 		return
+	}
+
+	max, ok := console.GetFlag("xmem")
+	if ok {
+		m, err := util.ParseSizeUnit(max)
+		if err == nil {
+			debug.SetMemoryLimit(int64(m))
+			log.Infolnf("Memory usage is limited to %s", util.FormatSizeUnit(m))
+		}
 	}
 
 	if slices.Index(os.Args, "--cpuprof") != -1 {

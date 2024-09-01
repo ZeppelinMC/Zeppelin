@@ -96,7 +96,7 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Decodeable) {
 
 	blockSet = blockSet.New(map[string]string{"axis": axis, "facing": facing})
 
-	s.Conn().WritePacket(&play.AcknowledgeBlockChange{SequenceId: use.Sequence})
+	s.WritePacket(&play.AcknowledgeBlockChange{SequenceId: use.Sequence})
 	pos := pos.New(blockX, blockY, blockZ)
 
 	dimension.SetBlock(pos, blockSet, true)

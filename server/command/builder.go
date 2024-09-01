@@ -56,6 +56,12 @@ const (
 	UUID
 )
 
+const (
+	StringSingleWord = iota
+	StringQuotablePhrase
+	StringGreedyPhrase
+)
+
 type Node struct {
 	play.Node
 	children []Node
@@ -85,6 +91,43 @@ func NewBoolArgument(name string, nodes ...Node) Node {
 			Flags:    play.NodeArgument,
 			Name:     name,
 			ParserId: Bool,
+		},
+		children: nodes,
+	}
+}
+
+func NewIntegerArgument(name string, min, max *int32, nodes ...Node) Node {
+	flags := byte(0)
+
+	var m, x int32
+
+	if min != nil {
+		flags &= 0x01
+		m = *min
+	}
+	if max != nil {
+		flags &= 0x02
+		x = *max
+	}
+
+	return Node{
+		Node: play.Node{
+			Flags:      play.NodeArgument,
+			Name:       name,
+			ParserId:   Integer,
+			Properties: []any{flags, m, x},
+		},
+		children: nodes,
+	}
+}
+
+func NewStringArgument(name string, typ int32, nodes ...Node) Node {
+	return Node{
+		Node: play.Node{
+			Flags:      play.NodeArgument,
+			Name:       name,
+			ParserId:   Integer,
+			Properties: []any{typ},
 		},
 		children: nodes,
 	}

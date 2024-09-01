@@ -247,10 +247,6 @@ func (d *Decoder) decodeIntArray(len int, ptr unsafe.Pointer) error {
 			return err
 		}
 
-		if !native.SystemBigEndian {
-			native.Convert32(unsafe.Slice((*byte)(ptr), 4))
-		}
-
 		ptr = unsafe.Add(ptr, 4)
 	}
 
