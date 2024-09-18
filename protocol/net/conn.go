@@ -27,8 +27,8 @@ import (
 var PacketEncodeInterceptor func(c *Conn, pk packet.Encodeable) (stop bool)
 var PacketDecodeInterceptor func(c *Conn, pk packet.Decodeable) (stop bool)
 
-var PacketWriteInterceptor func(c *Conn, pk *bytes.Buffer) (stop bool)
-var PacketReadInterceptor func(c *Conn, pk *bytes.Reader) (stop bool)
+var PacketWriteInterceptor func(c *Conn, pk *bytes.Buffer, headerSize int32) (stop bool)
+var PacketReadInterceptor func(c *Conn, pk *bytes.Reader, packetId int32) (stop bool)
 
 const (
 	clientVeryOldMsg = "Your client is WAYYYYYY too old!!! this server supports MC 1.21"
@@ -108,10 +108,14 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 
 	w := encoding.NewWriter(packetBuf)
 	// write the header for the packet
+
+	var headerSize int32
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet {
 		packetBuf.Write([]byte{0x80, 0x80, 0})
+		headerSize = 3
 	} else if conn.compressionSet {
 		packetBuf.Write([]byte{0x80, 0x80, 0, 0x80, 0x80, 0})
+		headerSize = 6
 	}
 
 	if err := w.VarInt(pk.ID()); err != nil {
@@ -122,7 +126,7 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 	}
 
 	if PacketWriteInterceptor != nil {
-		if PacketWriteInterceptor(conn, packetBuf) {
+		if PacketWriteInterceptor(conn, packetBuf, headerSize) {
 			return nil
 		}
 	}
@@ -232,6 +236,12 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 		packet = data
 		length = int32(len(data))
 
+		if PacketReadInterceptor != nil {
+			if PacketReadInterceptor(conn, bytes.NewReader(packet), packetId) {
+				return nil, fmt.Errorf("stopped by interceptor")
+			}
+		}
+
 		rd = encoding.NewReader(bytes.NewReader(packet), int(length))
 	} else {
 		var packetLength int32
@@ -271,7 +281,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 				r := bytes.NewReader(packet)
 
 				if PacketReadInterceptor != nil {
-					if PacketReadInterceptor(conn, r) {
+					if PacketReadInterceptor(conn, r, packetId) {
 						return nil, fmt.Errorf("stopped by interceptor")
 					}
 				}
@@ -305,7 +315,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 			r := bytes.NewReader(uncompressedPacket)
 
 			if PacketReadInterceptor != nil {
-				if PacketReadInterceptor(conn, r) {
+				if PacketReadInterceptor(conn, r, packetId) {
 					return nil, fmt.Errorf("stopped by interceptor")
 				}
 			}

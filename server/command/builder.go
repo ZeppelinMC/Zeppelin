@@ -1,6 +1,8 @@
 package command
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
+)
 
 const (
 	Bool = iota
@@ -97,25 +99,25 @@ func NewBoolArgument(name string, nodes ...Node) Node {
 }
 
 func NewIntegerArgument(name string, min, max *int32, nodes ...Node) Node {
-	flags := byte(0)
-
-	var m, x int32
+	flags := int8(0)
+	var props = make([]any, 1, 3)
 
 	if min != nil {
 		flags &= 0x01
-		m = *min
+		props = append(props, *min)
 	}
 	if max != nil {
 		flags &= 0x02
-		x = *max
+		props = append(props, *max)
 	}
+	props[0] = flags
 
 	return Node{
 		Node: play.Node{
 			Flags:      play.NodeArgument,
 			Name:       name,
 			ParserId:   Integer,
-			Properties: []any{flags, m, x},
+			Properties: props,
 		},
 		children: nodes,
 	}
@@ -126,7 +128,7 @@ func NewStringArgument(name string, typ int, nodes ...Node) Node {
 		Node: play.Node{
 			Flags:      play.NodeArgument,
 			Name:       name,
-			ParserId:   Integer,
+			ParserId:   String,
 			Properties: []any{typ},
 		},
 		children: nodes,

@@ -1,5 +1,5 @@
 # Zeppelin
-Highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21
+Highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21.1
 
 [Discord Server](https://discord.gg/T8qEtDWPak)
 

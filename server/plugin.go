@@ -33,14 +33,13 @@ func (p Plugin) Server() *Server {
 
 func (srv *Server) loadPlugins() {
 	os.Mkdir("plugins", 0755)
-	fs.WalkDir(os.DirFS("plugins"), ".", func(path string, e fs.DirEntry, err error) error {
-		if path == "." || err != nil || e.IsDir() {
-			return nil
+	dir, _ := os.ReadDir("plugins")
+	for _, entry := range dir {
+		if entry.IsDir() {
+			continue
 		}
-
-		srv.loadPlugin("plugins/" + path)
-		return nil
-	})
+		srv.loadPlugin("plugins/" + entry.Name())
+	}
 }
 
 func (srv *Server) loadPlugin(name string) {
@@ -62,4 +61,5 @@ func (srv *Server) loadPlugin(name string) {
 	plugin.basePluginsPath = "plugins"
 	plugin.srv = srv
 	plugin.OnLoad(plugin)
+	os.Mkdir(plugin.Dir(), 0755)
 }

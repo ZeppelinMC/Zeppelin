@@ -57,6 +57,9 @@ func (mgr *Manager) Call(command string, caller session.Session) {
 	if len(arguments) > 1 {
 		ctx.Arguments = arguments[1:]
 	}
+	if cmd.Callback == nil {
+		return
+	}
 	cmd.Callback(ctx)
 }
 
