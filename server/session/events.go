@@ -1,5 +1,7 @@
 package session
 
+import "github.com/zeppelinmc/zeppelin/protocol/text"
+
 func NewEvent[T any](handlers ...func(T)) Event[T] {
 	return Event[T]{handlers}
 }
@@ -62,4 +64,8 @@ type EventManager struct {
 // Default is the default event manager
 var Default = EventManager{
 	OnSessionAdd: NewEvent(onSessionAdd),
+}
+
+func onSessionAdd(s Session) {
+	s.Broadcast().SystemChatMessage(text.Unmarshalf('&', "&e%s joined the game", s.Username()))
 }
