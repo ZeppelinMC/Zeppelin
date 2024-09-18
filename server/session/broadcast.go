@@ -28,14 +28,17 @@ type Broadcast struct {
 	dummies     []Session
 	sessions_mu sync.RWMutex
 
+	EventManager EventManager
+
 	prev_msgs_mu     sync.Mutex
 	previousMessages []play.PreviousMessage
 }
 
 func NewBroadcast(dummies ...Session) *Broadcast {
 	return &Broadcast{
-		sessions: make(map[uuid.UUID]Session),
-		dummies:  dummies,
+		sessions:     make(map[uuid.UUID]Session),
+		dummies:      dummies,
+		EventManager: Default,
 	}
 }
 
@@ -222,7 +225,6 @@ func (b *Broadcast) RemovePlayer(session Session) {
 // when a new player joins the server
 func (b *Broadcast) AddPlayer(session Session) {
 	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
 
 	newListed, newGameMode, newLatency := session.Listed(), int32(session.Player().GameMode()), int32(session.Latency())
 
@@ -280,6 +282,9 @@ func (b *Broadcast) AddPlayer(session Session) {
 
 	session.PlayerInfoUpdate(toPlayerPk)
 	b.sessions[session.UUID()] = session
+
+	b.sessions_mu.Unlock()
+	b.EventManager.OnSessionAdd.call(session)
 }
 
 func (b *Broadcast) SpawnPlayer(session Session) {

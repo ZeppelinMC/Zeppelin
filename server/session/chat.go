@@ -39,3 +39,15 @@ func (b *Broadcast) DisguisedChatMessage(session Session, content text.TextCompo
 		ses.DisguisedChatMessage(content, session, "minecraft:chat")
 	}
 }
+
+func (b *Broadcast) SystemChatMessage(content text.TextComponent) {
+	b.sessions_mu.RLock()
+	defer b.sessions_mu.RUnlock()
+
+	for _, ses := range b.sessions {
+		ses.SystemMessage(content)
+	}
+	for _, ses := range b.dummies {
+		ses.SystemMessage(content)
+	}
+}

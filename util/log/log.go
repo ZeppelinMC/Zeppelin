@@ -73,6 +73,7 @@ var colors = map[string]*color.Color{
 	"aqua":         color.New(color.FgHiCyan),
 	"red":          color.New(color.FgHiRed),
 	"light_purple": color.New(color.FgHiMagenta),
+	"yellow":       color.New(color.FgHiYellow),
 	"white":        color.New(color.FgHiWhite),
 }
 
