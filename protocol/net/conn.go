@@ -235,14 +235,15 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 		packetId = id
 		packet = data
 		length = int32(len(data))
+		br := bytes.NewReader(packet)
 
 		if PacketReadInterceptor != nil {
-			if PacketReadInterceptor(conn, bytes.NewReader(packet), packetId) {
+			if PacketReadInterceptor(conn, br, packetId) {
 				return nil, fmt.Errorf("stopped by interceptor")
 			}
 		}
 
-		rd = encoding.NewReader(bytes.NewReader(packet), int(length))
+		rd = encoding.NewReader(br, int(length))
 	} else {
 		var packetLength int32
 		if _, err := rd.VarInt(&packetLength); err != nil {
