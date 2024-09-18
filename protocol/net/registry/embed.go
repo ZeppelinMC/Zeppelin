@@ -105,11 +105,11 @@ var Registries = map[string]interface{}{"minecraft:banner_pattern": map[string]s
 	OverworldCaves Dimension  "nbt:\"minecraft:overworld_caves\""
 	TheEnd         Dimension  "nbt:\"minecraft:the_end\""
 	TheNether      Dimension1 "nbt:\"minecraft:the_nether\""
-}{Overworld: Dimension{FixedTime: 0, AmbientLight: 0, BedWorks: true, CoordinateScale: 1, Effects: "minecraft:overworld", HasCeiling: false, HasRaids: true, HasSkylight: true, Height: 384, Infiniburn: "#minecraft:infiniburn_overworld", LogicalHeight: 384, MinY: -64, MonsterSpawnBlockLightLimit: 0, Natural: true, Ultrawarm: false, PiglinSafe: false, RespawnAnchorWorks: false, MonsterSpawnLightLevel: struct {
+}{Overworld: Dimension{AmbientLight: 0, BedWorks: true, CoordinateScale: 1, Effects: "minecraft:overworld", HasCeiling: false, HasRaids: true, HasSkylight: true, Height: 384, Infiniburn: "#minecraft:infiniburn_overworld", LogicalHeight: 384, MinY: -64, MonsterSpawnBlockLightLimit: 0, Natural: true, Ultrawarm: false, PiglinSafe: false, RespawnAnchorWorks: false, MonsterSpawnLightLevel: struct {
 	MaxInclusive int32  "nbt:\"max_inclusive\""
 	MinInclusive int32  "nbt:\"min_inclusive\""
 	Type         string "nbt:\"type\""
-}{MaxInclusive: 7, MinInclusive: 0, Type: "minecraft:uniform"}}, OverworldCaves: Dimension{FixedTime: 0, AmbientLight: 0, BedWorks: true, CoordinateScale: 1, Effects: "minecraft:overworld", HasCeiling: true, HasRaids: true, HasSkylight: true, Height: 384, Infiniburn: "#minecraft:infiniburn_overworld", LogicalHeight: 384, MinY: -64, MonsterSpawnBlockLightLimit: 0, Natural: true, Ultrawarm: false, PiglinSafe: false, RespawnAnchorWorks: false, MonsterSpawnLightLevel: struct {
+}{MaxInclusive: 7, MinInclusive: 0, Type: "minecraft:uniform"}}, OverworldCaves: Dimension{AmbientLight: 0, BedWorks: true, CoordinateScale: 1, Effects: "minecraft:overworld", HasCeiling: true, HasRaids: true, HasSkylight: true, Height: 384, Infiniburn: "#minecraft:infiniburn_overworld", LogicalHeight: 384, MinY: -64, MonsterSpawnBlockLightLimit: 0, Natural: true, Ultrawarm: false, PiglinSafe: false, RespawnAnchorWorks: false, MonsterSpawnLightLevel: struct {
 	MaxInclusive int32  "nbt:\"max_inclusive\""
 	MinInclusive int32  "nbt:\"min_inclusive\""
 	Type         string "nbt:\"type\""

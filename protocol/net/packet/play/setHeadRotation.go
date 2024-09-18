@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdSetHeadRotation = 0x48
@@ -14,14 +16,14 @@ func (SetHeadRotation) ID() int32 {
 	return PacketIdSetHeadRotation
 }
 
-func (s *SetHeadRotation) Encode(w io.Writer) error {
+func (s *SetHeadRotation) Encode(w encoding.Writer) error {
 	if err := w.VarInt(s.EntityId); err != nil {
 		return err
 	}
 	return w.Ubyte(s.HeadYaw)
 }
 
-func (s *SetHeadRotation) Decode(r io.Reader) error {
+func (s *SetHeadRotation) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&s.EntityId); err != nil {
 		return err
 	}

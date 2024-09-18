@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdSwingArm = 0x36
@@ -18,11 +20,11 @@ func (SwingArm) ID() int32 {
 	return PacketIdSwingArm
 }
 
-func (e *SwingArm) Encode(w io.Writer) error {
+func (e *SwingArm) Encode(w encoding.Writer) error {
 	return w.VarInt(e.Hand)
 }
 
-func (e *SwingArm) Decode(r io.Reader) error {
+func (e *SwingArm) Decode(r encoding.Reader) error {
 	_, err := r.VarInt(&e.Hand)
 	return err
 }

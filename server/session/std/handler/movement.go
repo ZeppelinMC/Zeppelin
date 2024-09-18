@@ -15,7 +15,7 @@ func init() {
 }
 
 func handleMovement(s *std.StandardSession, p packet.Decodeable) {
-	if s.AwaitingTeleportAcknowledgement.Get() {
+	if s.AwaitingTeleportAcknowledgement.Load() {
 		return
 	}
 	switch pk := p.(type) {

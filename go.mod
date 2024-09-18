@@ -13,9 +13,11 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21
 )
 
-require github.com/oq-x/unsafe2 v0.0.0-20240826185617-691f34b78bf1
+require github.com/oq-x/unsafe2 v0.0.0-20240901191313-2b7bec1d9e3b
 
 require (
+	github.com/4kills/go-zlib v1.2.0
+	github.com/aimjel/minecraft v0.0.0-20240907220502-e1fe5798908b
 	github.com/aquilax/go-perlin v1.1.0
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

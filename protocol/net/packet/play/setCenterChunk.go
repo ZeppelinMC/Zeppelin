@@ -1,8 +1,10 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
-//clientbound
+// clientbound
 const PacketIdSetCenterChunk = 0x54
 
 type SetCenterChunk struct {
@@ -13,14 +15,14 @@ func (SetCenterChunk) ID() int32 {
 	return 0x54
 }
 
-func (s *SetCenterChunk) Encode(w io.Writer) error {
+func (s *SetCenterChunk) Encode(w encoding.Writer) error {
 	if err := w.VarInt(s.ChunkX); err != nil {
 		return err
 	}
 	return w.VarInt(s.ChunkZ)
 }
 
-func (s *SetCenterChunk) Decode(r io.Reader) error {
+func (s *SetCenterChunk) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&s.ChunkX); err != nil {
 		return err
 	}

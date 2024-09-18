@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdUpdateTime = 0x64
@@ -14,14 +16,14 @@ func (UpdateTime) ID() int32 {
 	return PacketIdUpdateTime
 }
 
-func (u *UpdateTime) Encode(w io.Writer) error {
+func (u *UpdateTime) Encode(w encoding.Writer) error {
 	if err := w.Long(u.WorldAge); err != nil {
 		return err
 	}
 	return w.Long(u.TimeOfDay)
 }
 
-func (u *UpdateTime) Decode(r io.Reader) error {
+func (u *UpdateTime) Decode(r encoding.Reader) error {
 	if err := r.Long(&u.WorldAge); err != nil {
 		return err
 	}

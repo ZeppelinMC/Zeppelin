@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdPlayerAbilitiesClientbound = 0x38
@@ -21,7 +23,7 @@ func (PlayerAbilitiesClientbound) ID() int32 {
 	return PacketIdPlayerAbilitiesClientbound
 }
 
-func (a *PlayerAbilitiesClientbound) Encode(w io.Writer) error {
+func (a *PlayerAbilitiesClientbound) Encode(w encoding.Writer) error {
 	if err := w.Byte(a.Flags); err != nil {
 		return err
 	}
@@ -31,7 +33,7 @@ func (a *PlayerAbilitiesClientbound) Encode(w io.Writer) error {
 	return w.Float(a.FOVModifier)
 }
 
-func (a *PlayerAbilitiesClientbound) Decode(r io.Reader) error {
+func (a *PlayerAbilitiesClientbound) Decode(r encoding.Reader) error {
 	if err := r.Byte(&a.Flags); err != nil {
 		return err
 	}

@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdDeleteMessage = 0x1C
@@ -14,7 +16,7 @@ func (DeleteMessage) ID() int32 {
 	return PacketIdDeleteMessage
 }
 
-func (b *DeleteMessage) Encode(w io.Writer) error {
+func (b *DeleteMessage) Encode(w encoding.Writer) error {
 	if err := w.VarInt(b.MessageId + 1); err != nil {
 		return err
 	}
@@ -24,7 +26,7 @@ func (b *DeleteMessage) Encode(w io.Writer) error {
 	return nil
 }
 
-func (b *DeleteMessage) Decode(r io.Reader) error {
+func (b *DeleteMessage) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&b.MessageId); err != nil {
 		return err
 	}

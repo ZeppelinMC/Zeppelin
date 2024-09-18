@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/slot"
 )
 
@@ -19,7 +19,7 @@ func (SetContainerContent) ID() int32 {
 	return PacketIdSetContainerContent
 }
 
-func (s *SetContainerContent) Encode(w io.Writer) error {
+func (s *SetContainerContent) Encode(w encoding.Writer) error {
 	if err := w.Ubyte(s.WindowID); err != nil {
 		return err
 	}
@@ -38,6 +38,6 @@ func (s *SetContainerContent) Encode(w io.Writer) error {
 	return s.CarriedItem.Encode(w)
 }
 
-func (s *SetContainerContent) Decode(r io.Reader) error {
+func (s *SetContainerContent) Decode(r encoding.Reader) error {
 	return nil //TODO
 }

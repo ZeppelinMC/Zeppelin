@@ -23,7 +23,7 @@ type ChatType struct {
 }
 
 type Dimension1 struct {
-	FixedTime                   int64   `nbt:"fixed_time"`
+	FixedTime                   int64   `nbt:"fixed_time,omitempty"`
 	AmbientLight                float32 `nbt:"ambient_light"`
 	BedWorks                    bool    `nbt:"bed_works"`
 	CoordinateScale             float64 `nbt:"coordinate_scale"`
@@ -44,7 +44,7 @@ type Dimension1 struct {
 }
 
 type Dimension struct {
-	FixedTime                   int64   `nbt:"fixed_time"`
+	FixedTime                   int64   `nbt:"fixed_time,omitempty"`
 	AmbientLight                float32 `nbt:"ambient_light"`
 	BedWorks                    bool    `nbt:"bed_works"`
 	CoordinateScale             float64 `nbt:"coordinate_scale"`

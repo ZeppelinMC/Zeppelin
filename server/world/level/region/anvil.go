@@ -1,6 +1,4 @@
 // Package region provides decoding and encoding of Region (.mca) files
-// It can decode and encode chunks with all 3 compression schemes (Gzip, Zlib, LZ4) or without any compression
-// It uses the net/buffers package to allocate less.
 
 package region
 

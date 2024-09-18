@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 const (
 	UpdateRecipeBookActionInit = iota
@@ -34,7 +36,7 @@ func (UpdateRecipeBook) ID() int32 {
 	return PacketIdUpdateRecipeBook
 }
 
-func (u *UpdateRecipeBook) Encode(w io.Writer) error {
+func (u *UpdateRecipeBook) Encode(w encoding.Writer) error {
 	if err := w.VarInt(u.Action); err != nil {
 		return err
 	}
@@ -88,6 +90,6 @@ func (u *UpdateRecipeBook) Encode(w io.Writer) error {
 	return nil
 }
 
-func (*UpdateRecipeBook) Decode(io.Reader) error {
+func (*UpdateRecipeBook) Decode(encoding.Reader) error {
 	return nil //TODO
 }

@@ -3,7 +3,7 @@ package play
 import (
 	"fmt"
 
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 type Node struct {
@@ -51,7 +51,7 @@ func (Commands) ID() int32 {
 	return PacketIdCommands
 }
 
-func (c *Commands) Encode(w io.Writer) error {
+func (c *Commands) Encode(w encoding.Writer) error {
 	if err := w.VarInt(int32(len(c.Nodes))); err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (c *Commands) Encode(w io.Writer) error {
 	return w.VarInt(c.RootIndex)
 }
 
-func (c *Commands) encodeNode(w io.Writer, node Node) error {
+func (c *Commands) encodeNode(w encoding.Writer, node Node) error {
 	if err := w.Byte(node.Flags); err != nil {
 		return err
 	}
@@ -132,8 +132,4 @@ func (c *Commands) encodeNode(w io.Writer, node Node) error {
 		}
 	}
 	return nil
-}
-
-func (*Commands) Decode(io.Reader) error {
-	return nil //TODO
 }

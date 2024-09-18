@@ -1,4 +1,5 @@
-package io
+// Package encoding provides encoding and decoding of minecraft data types
+package encoding
 
 import (
 	"fmt"
@@ -37,6 +38,18 @@ func AppendVarInt(data []byte, value int32) []byte {
 		ux >>= 7
 	}
 	return append(data, byte(ux))
+}
+
+func PutVarInt(data []byte, value int32) (n int) {
+	ux := uint32(value)
+	var i int
+	for ; ux >= 0x80; i++ {
+		data[i] = byte(ux&0x7F) | 0x80
+		ux >>= 7
+	}
+	data[i] = byte(ux)
+
+	return i
 }
 
 func WriteVarInt(w io.Writer, value int32) error {

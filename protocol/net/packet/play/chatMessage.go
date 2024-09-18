@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 // serverbound
@@ -15,14 +15,14 @@ type ChatMessage struct {
 	Signature    [256]byte
 
 	MessageCount int32
-	Acknowledged io.FixedBitSet
+	Acknowledged encoding.FixedBitSet
 }
 
 func (ChatMessage) ID() int32 {
 	return 0x06
 }
 
-func (c *ChatMessage) Encode(w io.Writer) error {
+func (c *ChatMessage) Encode(w encoding.Writer) error {
 	if err := w.String(c.Message); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (c *ChatMessage) Encode(w io.Writer) error {
 	return w.FixedBitSet(c.Acknowledged)
 }
 
-func (c *ChatMessage) Decode(r io.Reader) error {
+func (c *ChatMessage) Decode(r encoding.Reader) error {
 	if err := r.String(&c.Message); err != nil {
 		return err
 	}

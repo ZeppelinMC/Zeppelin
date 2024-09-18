@@ -2,7 +2,7 @@ package play
 
 import (
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 // serverbound
@@ -19,7 +19,7 @@ func (PlayerSession) ID() int32 {
 	return 0x07
 }
 
-func (p *PlayerSession) Encode(w io.Writer) error {
+func (p *PlayerSession) Encode(w encoding.Writer) error {
 	if err := w.UUID(p.SessionID); err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (p *PlayerSession) Encode(w io.Writer) error {
 	return w.ByteArray(p.KeySignature)
 }
 
-func (p *PlayerSession) Decode(r io.Reader) error {
+func (p *PlayerSession) Decode(r encoding.Reader) error {
 	if err := r.UUID(&p.SessionID); err != nil {
 		return err
 	}

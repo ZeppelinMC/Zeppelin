@@ -1,9 +1,8 @@
 package login
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
-
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 // serverbound
@@ -18,14 +17,14 @@ func (LoginStart) ID() int32 {
 	return 0x00
 }
 
-func (l *LoginStart) Encode(w io.Writer) error {
+func (l *LoginStart) Encode(w encoding.Writer) error {
 	if err := w.String(l.Name); err != nil {
 		return err
 	}
 	return w.UUID(l.PlayerUUID)
 }
 
-func (l *LoginStart) Decode(r io.Reader) error {
+func (l *LoginStart) Decode(r encoding.Reader) error {
 	if err := r.String(&l.Name); err != nil {
 		return err
 	}

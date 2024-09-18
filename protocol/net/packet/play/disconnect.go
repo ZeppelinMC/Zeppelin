@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
@@ -16,10 +16,10 @@ func (Disconnect) ID() int32 {
 	return 0x1D
 }
 
-func (d *Disconnect) Encode(w io.Writer) error {
+func (d *Disconnect) Encode(w encoding.Writer) error {
 	return w.TextComponent(d.Reason)
 }
 
-func (d *Disconnect) Decode(r io.Reader) error {
+func (d *Disconnect) Decode(r encoding.Reader) error {
 	return r.TextComponent(&d.Reason)
 }

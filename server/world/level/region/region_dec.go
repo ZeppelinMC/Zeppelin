@@ -2,15 +2,16 @@ package region
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"sync"
 	"unsafe"
 
-	"github.com/zeppelinmc/zeppelin/protocol/nbt/qnbt"
+	"github.com/4kills/go-zlib"
+	"github.com/aimjel/minecraft/nbt"
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/buffers"
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/compress"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io/util"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
@@ -52,12 +53,6 @@ func (r *File) LoadedChunks() int32 {
 	return int32(len(r.chunks))
 }
 
-var anvilChunks = sync.Pool{
-	New: func() any {
-		return &anvilChunk{}
-	},
-}
-
 // 1MiB
 var MaxDecompressedChunkSize = 1024 * 1024
 
@@ -69,15 +64,6 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	if c, ok := r.chunks[hash]; ok {
 		return c, nil
 	}
-
-	/*if r.generator != nil {
-		r.chunks[hash] = new(chunk.Chunk)
-		r.generateChunkAt(x, z, r.chunks[hash], r.generator)
-		return r.chunks[hash], nil
-	} else {
-		return nil, fmt.Errorf("chunk %d %d not found", x, z)
-	}*/
-
 	locationIndex := 4 * ((x & 31) + (z&31)*32)
 	if int(locationIndex) >= len(r.locations) {
 		if r.generator != nil {
@@ -101,51 +87,46 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}
 
-	var chunkHeader = make([]byte, 5)
+	var chunkHeader [5]byte
 
-	_, err := r.reader.ReadAt(chunkHeader, int64(offset))
+	_, err := r.reader.ReadAt(chunkHeader[:], int64(offset))
 	if err != nil {
 		return nil, err
 	}
 
-	length := int32(chunkHeader[0])<<24 | int32(chunkHeader[1])<<16 | int32(chunkHeader[2])<<8 | int32(chunkHeader[3])
+	length := (int32(chunkHeader[0])<<24 | int32(chunkHeader[1])<<16 | int32(chunkHeader[2])<<8 | int32(chunkHeader[3])) - 1
 	compression := chunkHeader[4]
-	length--
 
 	if length == 0 {
 		return nil, fmt.Errorf("chunk %d %d not found", x, z)
 	}
 
-	var rawReader = util.NewReaderAtMaxxer(r.reader, int(length), int64(offset)+5)
+	var reader = io.NewSectionReader(r.reader, int64(offset)+5, int64(length))
 
 	var chunkBuffer = buffers.Buffers.Get().(*bytes.Buffer)
 	chunkBuffer.Reset()
-	chunkBuffer.ReadFrom(rawReader)
 	defer buffers.Buffers.Put(chunkBuffer)
 
-	var data []byte
-
 	switch compression {
-	case CompressionGzip:
-		data, _ = compress.DecompressGzip(chunkBuffer.Bytes(), &MaxDecompressedChunkSize)
 	case CompressionZlib:
-		data, _ = compress.DecompressZlib(chunkBuffer.Bytes(), &MaxDecompressedChunkSize)
+		z := compress.RZlib.Get().(*zlib.Reader)
+		z.Reset(reader, nil)
+
+		chunkBuffer.ReadFrom(z)
+		compress.RZlib.Put(z)
+	case CompressionGzip:
+		g := compress.RGzip.Get().(*gzip.Reader)
+		g.Reset(reader)
+
+		chunkBuffer.ReadFrom(g)
+		compress.RGzip.Put(z)
 	case CompressionNone:
-		data = chunkBuffer.Bytes()
-	case CompressionLZ4:
-		data, err = compress.DecompressLZ4(chunkBuffer.Bytes())
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("invalid compression method %d", compression)
+		chunkBuffer.ReadFrom(reader)
 	}
 
-	//var anvil = anvilChunks.Get().(*anvilChunk)
-	//defer anvilChunks.Put(anvil)
 	var anvil = new(anvilChunk)
 
-	if _, err := qnbt.Unmarshal(data, anvil); err != nil {
+	if err := nbt.Unmarshal(chunkBuffer.Bytes(), anvil); err != nil {
 		return nil, err
 	}
 
@@ -182,14 +163,6 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	}
 
 	return r.chunks[hash], err
-
-	/*chunk, ok := r.chunks[loc]
-		if !ok {
-			return chunk, fmt.Errorf("not found chunk")
-		}
-		return chunk, nil
-	}*/
-
 }
 
 func Empty(f *File, rx, rz int32, generateEmpty bool, generator Generator) {

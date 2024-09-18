@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
@@ -18,7 +18,7 @@ func (OpenScreen) ID() int32 {
 	return PacketIdOpenScreen
 }
 
-func (o *OpenScreen) Encode(w io.Writer) error {
+func (o *OpenScreen) Encode(w encoding.Writer) error {
 	if err := w.VarInt(o.WindowId); err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (o *OpenScreen) Encode(w io.Writer) error {
 	return w.TextComponent(o.WindowTitle)
 }
 
-func (o *OpenScreen) Decode(r io.Reader) error {
+func (o *OpenScreen) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&o.WindowId); err != nil {
 		return err
 	}

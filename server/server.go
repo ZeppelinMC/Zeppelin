@@ -136,6 +136,17 @@ func (srv *Server) Start(ts time.Time) {
 			srv.loadPlugins()
 		}
 	}
+
+	log.Infoln("Preparing world spawn...")
+	ow := srv.World.Dimension("minecraft:overworld")
+
+	spawnCX, spawnCZ := srv.World.Data.SpawnX>>4, srv.World.Data.SpawnZ>>4
+	for x := spawnCX - srv.cfg.ViewDistance; x < spawnCX+srv.cfg.ViewDistance; x++ {
+		for z := spawnCZ - srv.cfg.ViewDistance; z < spawnCZ+srv.cfg.ViewDistance; z++ {
+			ow.GetChunk(x, z)
+		}
+	}
+
 	srv.timeStart = ts
 	log.Infolnf("Done! (%s)", time.Since(ts))
 	for {
@@ -198,4 +209,7 @@ func (srv *Server) formatTimestart() string {
 
 func (srv *Server) createTicker() {
 	srv.TickManager = tick.New(20, srv.World.Broadcast)
+	srv.TickManager.AddNew(func() {
+		srv.World.IncrementTime()
+	})
 }

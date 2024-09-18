@@ -24,9 +24,8 @@ func handleChatMessage(s *std.StandardSession, pk packet.Decodeable) {
 			return
 		}
 		if cfg.EnforceSecureProfile {
-			i := s.ChatIndex.Get()
-			s.Broadcast().SecureChatMessage(s, *cm, i)
-			s.ChatIndex.Set(i + 1)
+			i := s.ChatIndex.Add(1)
+			s.Broadcast().SecureChatMessage(s, *cm, i-1)
 			return
 		}
 		if cfg.SystemChatFormat == "" {

@@ -10,7 +10,7 @@ import (
 )
 
 var debug = command.Command{
-	Node:      command.NewCommand("debug"),
+	Node:      command.NewLiteral("debug"),
 	Aliases:   []string{"f3"},
 	Namespace: "zeppelin",
 	Callback: func(ccc command.CommandCallContext) {

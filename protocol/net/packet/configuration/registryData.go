@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/registry"
 )
 
@@ -35,7 +35,7 @@ func (RegistryData) ID() int32 {
 	return 0x07
 }
 
-func (r *RegistryData) Encode(w io.Writer) error {
+func (r *RegistryData) Encode(w encoding.Writer) error {
 	if err := w.Identifier(r.RegistryId); err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (r *RegistryData) Encode(w io.Writer) error {
 	return nil
 }
 
-func (d *RegistryData) Decode(r io.Reader) error {
+func (d *RegistryData) Decode(r encoding.Reader) error {
 	return nil
 	//TODO
 }

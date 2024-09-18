@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdDamageEvent = 0x1A
@@ -19,7 +21,7 @@ func (DamageEvent) ID() int32 {
 	return PacketIdDamageEvent
 }
 
-func (d *DamageEvent) Encode(w io.Writer) error {
+func (d *DamageEvent) Encode(w encoding.Writer) error {
 	if err := w.VarInt(d.EntityId); err != nil {
 		return err
 	}
@@ -49,6 +51,6 @@ func (d *DamageEvent) Encode(w io.Writer) error {
 	return nil
 }
 
-func (d *DamageEvent) Decode(r io.Reader) error {
+func (d *DamageEvent) Decode(r encoding.Reader) error {
 	return nil //TODO
 }

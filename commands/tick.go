@@ -10,7 +10,7 @@ import (
 )
 
 var tick = command.Command{
-	Node: command.NewCommand("tick", command.NewCommand("info"), command.NewCommand("freeze"), command.NewCommand("unfreeze")),
+	Node: command.NewLiteral("tick", command.NewLiteral("info"), command.NewLiteral("freeze"), command.NewLiteral("unfreeze")),
 	Callback: func(ccc command.CommandCallContext) {
 		tickManager := ccc.Server.(*server.Server).TickManager
 		command := ccc.Arguments.Fallback(0, "info")

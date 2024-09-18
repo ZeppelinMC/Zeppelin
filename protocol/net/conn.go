@@ -5,15 +5,16 @@ import (
 	"crypto/md5"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"sync/atomic"
 	"unicode/utf16"
 
+	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/protocol/net/cfb8"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/compress"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io/util"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/handshake"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/login"
@@ -80,33 +81,38 @@ func (conn *Conn) State() int32 {
 	return conn.state.Load()
 }
 
-var pkbufpool = sync.Pool{
-	New: func() any {
-		return bytes.NewBuffer(nil)
-	},
-}
-
 var pkpool = sync.Pool{
 	New: func() any {
 		return bytes.NewBuffer(nil)
 	},
 }
 
+var pkcppool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(nil)
+	},
+}
+
 func (conn *Conn) WritePacket(pk packet.Encodeable) error {
+	conn.write_mu.Lock() //TODO: fix concurrent ticking with encryption!
+	defer conn.write_mu.Unlock()
 	if PacketEncodeInterceptor != nil {
 		if PacketEncodeInterceptor(conn, pk) {
 			return nil
 		}
 	}
 
-	conn.write_mu.Lock()
-	defer conn.write_mu.Unlock()
-
 	var packetBuf = pkpool.Get().(*bytes.Buffer)
 	packetBuf.Reset()
 	defer pkpool.Put(packetBuf)
 
-	w := io.NewWriter(packetBuf)
+	w := encoding.NewWriter(packetBuf)
+	// write the header for the packet
+	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet {
+		packetBuf.Write([]byte{0x80, 0x80, 0})
+	} else if conn.compressionSet {
+		packetBuf.Write([]byte{0x80, 0x80, 0, 0x80, 0x80, 0})
+	}
 
 	if err := w.VarInt(pk.ID()); err != nil {
 		return err
@@ -122,52 +128,50 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 	}
 
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
-		if err := io.WriteVarInt(conn, int32(packetBuf.Len())); err != nil {
-			return err
+		i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len()-3))
+		if i != 2 {
+			packetBuf.Bytes()[i] |= 0x80
 		}
+
 		_, err := packetBuf.WriteTo(conn)
 		return err
 	} else { // yes compression
-		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len()) { // packet is too small to be compressed
-			var buf = pkpool.Get().(*bytes.Buffer)
-			buf.Reset()
-			defer pkpool.Put(buf)
-
-			if err := io.WriteVarInt(buf, int32(packetBuf.Len()+1)); err != nil {
-				return err
-			}
-			if err := io.WriteVarInt(buf, 0); err != nil {
-				return err
-			}
-			if _, err := packetBuf.WriteTo(buf); err != nil {
-				return err
+		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len())-6 { // packet is too small to be compressed
+			i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len()-6))
+			if i != 2 {
+				packetBuf.Bytes()[i] |= 0x80
 			}
 
-			_, err := buf.WriteTo(conn)
+			_, err := packetBuf.WriteTo(conn)
 			return err
 		} else { // packet is compressed
-			var buf = pkpool.Get().(*bytes.Buffer)
-			buf.Reset()
-			defer pkpool.Put(buf)
-
-			dataLength := io.AppendVarInt(nil, int32(packetBuf.Len()))
-
-			compressedPacket, err := compress.CompressZlib(packetBuf.Bytes(), &MaxCompressedPacketSize)
-			if err != nil {
-				return err
+			uncompressedLength := int32(packetBuf.Len() - 6)
+			if i := encoding.PutVarInt(packetBuf.Bytes()[3:6], uncompressedLength); i != 2 {
+				packetBuf.Bytes()[i+3] |= 0x80
 			}
 
-			if err := io.WriteVarInt(buf, int32(len(compressedPacket)+len(dataLength))); err != nil {
-				return err
-			}
-			if _, err := buf.Write(dataLength); err != nil {
-				return err
-			}
-			if _, err := buf.Write(compressedPacket); err != nil {
-				return err
+			z := compress.WZlib.Get().(*zlib.Writer)
+			defer compress.WZlib.Put(z)
+
+			c := pkcppool.Get().(*bytes.Buffer)
+			c.Reset()
+			defer pkcppool.Put(c)
+
+			z.Reset(c)
+			z.Write(packetBuf.Bytes()[6:])
+			z.Flush()
+
+			compressedLength := c.Len() + 3
+
+			if i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(compressedLength)); i != 2 {
+				packetBuf.Bytes()[i] |= 0x80
 			}
 
-			_, err = buf.WriteTo(conn)
+			if _, err := conn.Write(packetBuf.Bytes()[:6]); err != nil {
+				return err
+			}
+			_, err := conn.Write(c.Bytes())
+
 			return err
 		}
 	}
@@ -201,7 +205,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 	conn.read_mu.Lock()
 	defer conn.read_mu.Unlock()
 
-	var rd = io.NewReader(conn, 0)
+	var rd = encoding.NewReader(conn, 0)
 	var (
 		length, packetId int32
 	)
@@ -220,7 +224,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 		if _, err := conn.Read(packet); err != nil {
 			return nil, err
 		}
-		id, data, err := io.VarInt(packet)
+		id, data, err := encoding.VarInt(packet)
 		if err != nil {
 			return nil, err
 		}
@@ -228,7 +232,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 		packet = data
 		length = int32(len(data))
 
-		rd = io.NewReader(bytes.NewReader(packet), int(length))
+		rd = encoding.NewReader(bytes.NewReader(packet), int(length))
 	} else {
 		var packetLength int32
 		if _, err := rd.VarInt(&packetLength); err != nil {
@@ -256,7 +260,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 					return nil, err
 				}
 
-				id, data, err := io.VarInt(packet)
+				id, data, err := encoding.VarInt(packet)
 				if err != nil {
 					return nil, err
 				}
@@ -272,7 +276,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 					}
 				}
 
-				rd = io.NewReader(r, int(length))
+				rd = encoding.NewReader(r, int(length))
 			}
 		} else { //packet is compressed
 			length = dataLength
@@ -282,7 +286,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 
 			var packetBuf = pkpool.Get().(*bytes.Buffer)
 			packetBuf.Reset()
-			packetBuf.ReadFrom(util.NewReaderMaxxer(conn, int(compressedLength)))
+			packetBuf.ReadFrom(io.LimitReader(conn, int64(compressedLength)))
 			defer pkpool.Put(packetBuf)
 
 			uncompressedPacket, err := compress.DecompressZlib(packetBuf.Bytes(), &ilength)
@@ -290,7 +294,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 				return nil, err
 			}
 
-			id, data, err := io.VarInt(uncompressedPacket)
+			id, data, err := encoding.VarInt(uncompressedPacket)
 			if err != nil {
 				return nil, err
 			}
@@ -306,7 +310,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 				}
 			}
 
-			rd = io.NewReader(r, int(length))
+			rd = encoding.NewReader(r, int(length))
 		}
 	}
 

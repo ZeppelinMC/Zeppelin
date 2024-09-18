@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdUseItemOn = 0x38
@@ -27,7 +29,7 @@ func (UseItemOn) ID() int32 {
 	return PacketIdUseItemOn
 }
 
-func (u *UseItemOn) Encode(w io.Writer) error {
+func (u *UseItemOn) Encode(w encoding.Writer) error {
 	if err := w.VarInt(u.Hand); err != nil {
 		return err
 	}
@@ -52,7 +54,7 @@ func (u *UseItemOn) Encode(w io.Writer) error {
 	return w.VarInt(u.Sequence)
 }
 
-func (u *UseItemOn) Decode(r io.Reader) error {
+func (u *UseItemOn) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&u.Hand); err != nil {
 		return err
 	}

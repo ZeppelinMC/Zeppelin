@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
@@ -21,7 +21,7 @@ func (DisguisedChatMessage) ID() int32 {
 	return PacketIdDisguisedChatMessage
 }
 
-func (p *DisguisedChatMessage) Encode(w io.Writer) error {
+func (p *DisguisedChatMessage) Encode(w encoding.Writer) error {
 	if err := w.TextComponent(p.Message); err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (p *DisguisedChatMessage) Encode(w io.Writer) error {
 	return nil
 }
 
-func (p *DisguisedChatMessage) Decode(r io.Reader) error {
+func (p *DisguisedChatMessage) Decode(r encoding.Reader) error {
 	if err := r.TextComponent(&p.Message); err != nil {
 		return err
 	}

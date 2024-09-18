@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdInteract = 0x16
@@ -23,7 +25,7 @@ func (Interact) ID() int32 {
 	return PacketIdInteract
 }
 
-func (i *Interact) Encode(w io.Writer) error {
+func (i *Interact) Encode(w encoding.Writer) error {
 	if err := w.VarInt(i.EntityId); err != nil {
 		return err
 	}
@@ -50,7 +52,7 @@ func (i *Interact) Encode(w io.Writer) error {
 	return w.Bool(i.Sneaking)
 }
 
-func (i *Interact) Decode(r io.Reader) error {
+func (i *Interact) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&i.EntityId); err != nil {
 		return err
 	}

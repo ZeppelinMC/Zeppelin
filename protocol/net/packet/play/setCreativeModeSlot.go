@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/slot"
 )
 
@@ -17,14 +17,14 @@ func (SetCreativeModeSlot) ID() int32 {
 	return PacketIdSetCreativeModeSlot
 }
 
-func (s *SetCreativeModeSlot) Encode(w io.Writer) error {
+func (s *SetCreativeModeSlot) Encode(w encoding.Writer) error {
 	if err := w.Short(s.Slot); err != nil {
 		return err
 	}
 	return s.ClickedItem.Encode(w)
 }
 
-func (s *SetCreativeModeSlot) Decode(r io.Reader) error {
+func (s *SetCreativeModeSlot) Decode(r encoding.Reader) error {
 	if err := r.Short(&s.Slot); err != nil {
 		return err
 	}

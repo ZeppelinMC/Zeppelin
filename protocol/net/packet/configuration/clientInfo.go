@@ -1,6 +1,8 @@
 package configuration
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 const (
 	ChatModeEnabled = iota
@@ -23,7 +25,7 @@ const (
 	MainHandRight
 )
 
-//serverbound
+// serverbound
 const PacketIdClientInformation = 0x00
 
 type ClientInformation struct {
@@ -41,7 +43,7 @@ func (ClientInformation) ID() int32 {
 	return 0x00
 }
 
-func (c *ClientInformation) Encode(w io.Writer) error {
+func (c *ClientInformation) Encode(w encoding.Writer) error {
 	if err := w.String(c.Locale); err != nil {
 		return err
 	}
@@ -66,7 +68,7 @@ func (c *ClientInformation) Encode(w io.Writer) error {
 	return w.Bool(c.AllowServerListing)
 }
 
-func (c *ClientInformation) Decode(r io.Reader) error {
+func (c *ClientInformation) Decode(r encoding.Reader) error {
 	if err := r.String(&c.Locale); err != nil {
 		return err
 	}

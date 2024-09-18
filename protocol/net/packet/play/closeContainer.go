@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdCloseContainer = 0x0F
@@ -13,10 +15,10 @@ func (CloseContainer) ID() int32 {
 	return PacketIdCloseContainer
 }
 
-func (c *CloseContainer) Encode(w io.Writer) error {
+func (c *CloseContainer) Encode(w encoding.Writer) error {
 	return w.Ubyte(c.WindowId)
 }
 
-func (c *CloseContainer) Decode(r io.Reader) error {
+func (c *CloseContainer) Decode(r encoding.Reader) error {
 	return r.Ubyte(&c.WindowId)
 }

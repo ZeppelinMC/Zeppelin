@@ -3,9 +3,8 @@ package login
 import (
 	"fmt"
 
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
-
 	"github.com/google/uuid"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 type Textures struct {
@@ -46,7 +45,7 @@ func (LoginSuccess) ID() int32 {
 	return 0x02
 }
 
-func (l *LoginSuccess) Encode(w io.Writer) error {
+func (l *LoginSuccess) Encode(w encoding.Writer) error {
 	if err := w.UUID(l.UUID); err != nil {
 		return err
 	}
@@ -75,7 +74,7 @@ func (l *LoginSuccess) Encode(w io.Writer) error {
 	return w.Bool(l.StrictErrorHandling)
 }
 
-func (l *LoginSuccess) Decode(r io.Reader) error {
+func (l *LoginSuccess) Decode(r encoding.Reader) error {
 	if err := r.UUID(&l.UUID); err != nil {
 		return err
 	}
@@ -118,10 +117,10 @@ func (LoginAcknowledged) ID() int32 {
 	return 0x03
 }
 
-func (*LoginAcknowledged) Encode(io.Writer) error {
+func (*LoginAcknowledged) Encode(encoding.Writer) error {
 	return nil
 }
 
-func (*LoginAcknowledged) Decode(io.Reader) error {
+func (*LoginAcknowledged) Decode(encoding.Reader) error {
 	return nil
 }

@@ -23,3 +23,6 @@ server-icon.png
 /resources
 /server/session/atomicSlice.go
 /server/session/a_test.go
+/qnbt2
+/qnbt2test.go
+/main

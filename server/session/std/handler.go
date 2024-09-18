@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/zeppelinmc/zeppelin/protocol/net"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/configuration"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
@@ -40,14 +40,15 @@ func (session *StandardSession) handlePackets() {
 		select {
 		case <-keepAlive.C:
 			l := time.Now().UnixMilli()
-			session.cbLastKeepAlive.Set(l)
+			session.cbLastKeepAlive.Store(l)
 			session.conn.WritePacket(&play.ClientboundKeepAlive{KeepAliveID: l})
 		default:
-			if lastKeepAlive := session.sbLastKeepalive.Get(); lastKeepAlive != 0 && time.Now().UnixMilli()-lastKeepAlive > (21*1000) {
+			if lastKeepAlive := session.sbLastKeepalive.Load(); lastKeepAlive != 0 && time.Now().UnixMilli()-lastKeepAlive > (21*1000) {
 				session.Disconnect(text.TextComponent{Text: "Timed out"})
 			}
 			p, err := session.conn.ReadPacket()
 			if err != nil {
+				log.Infolnf("[%s] Player %s disconnected: lost connection", session.Addr(), session.Username())
 				session.broadcast.RemovePlayer(session)
 				return
 			}
@@ -60,23 +61,24 @@ func (session *StandardSession) handlePackets() {
 			if !ok {
 				switch pk := p.(type) {
 				case *play.ChunkBatchReceived:
-					session.awaitingChunkBatchAcknowledgement.Set(false)
+					session.chunksPerTick.Store(int32(pk.ChunksPerTick))
+					session.awaitingChunkBatchAcknowledgement.Store(false)
 				case *play.ServerboundKeepAlive:
-					session.sbLastKeepalive.Set(time.Now().UnixMilli())
+					session.sbLastKeepalive.Store(time.Now().UnixMilli())
 					session.broadcast.PlayerInfoUpdateLatency(session)
 				case *play.PlayerSession:
-					session.hasSessionData.Set(true)
+					session.hasSessionData.Store(true)
 					session.sessionData.Set(*pk)
 
 					session.broadcast.PlayerInfoUpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						_, data, _ := io.VarInt(pk.Data)
+						_, data, _ := encoding.VarInt(pk.Data)
 						session.clientName = string(data)
 					}
 				case *play.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						_, data, _ := io.VarInt(pk.Data)
+						_, data, _ := encoding.VarInt(pk.Data)
 						session.clientName = string(data)
 					}
 				case *configuration.AcknowledgeFinishConfiguration:

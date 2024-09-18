@@ -5,8 +5,8 @@ import (
 	"slices"
 	"unsafe"
 
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/buffers"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
@@ -27,7 +27,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	buf.Reset()
 	defer buffers.Buffers.Put(buf)
 
-	w := io.NewWriter(buf)
+	w := encoding.NewWriter(buf)
 
 	pk := &play.ChunkDataUpdateLight{
 		CX: chunk.X,
@@ -39,12 +39,12 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 
 		BlockEntities: make([]play.BlockEntity, len(chunk.BlockEntities)),
 
-		SkyLightMask:      make(io.BitSet, 1),
-		EmptySkyLightMask: make(io.BitSet, 1),
+		SkyLightMask:      make(encoding.BitSet, 1),
+		EmptySkyLightMask: make(encoding.BitSet, 1),
 		SkyLightArrays:    make([][]byte, 1, len(chunk.Sections)+1),
 
-		BlockLightMask:      make(io.BitSet, 1),
-		EmptyBlockLightMask: make(io.BitSet, 1),
+		BlockLightMask:      make(encoding.BitSet, 1),
+		EmptyBlockLightMask: make(encoding.BitSet, 1),
 		BlockLightArrays:    make([][]byte, 1, len(chunk.Sections)+1),
 	}
 

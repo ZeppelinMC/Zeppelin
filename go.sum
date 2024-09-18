@@ -1,5 +1,9 @@
 github.com/4kills/go-libdeflate/v2 v2.2.0 h1:2kdYT79I+k23LO6VLn9p0l1Og47EWWgKbC1n353zE30=
 github.com/4kills/go-libdeflate/v2 v2.2.0/go.mod h1:hyouZv4OAhHaaMpYuejstUN0xOg8mA+yy75WE3Ty6SM=
+github.com/4kills/go-zlib v1.2.0 h1:h/OjHfOi0ZGAhotXzFVJK7V97cKNsEqRJVmJo4e8H6A=
+github.com/4kills/go-zlib v1.2.0/go.mod h1:ngBUonyN1YJBHSknfLPNtWokAjYhHsaZDio8yS+BqSo=
+github.com/aimjel/minecraft v0.0.0-20240907220502-e1fe5798908b h1:P5dA2C10r7BqzbhXqjjx07+LBV1tcsioFJrogWBOOBY=
+github.com/aimjel/minecraft v0.0.0-20240907220502-e1fe5798908b/go.mod h1:jb47g4nDw3J8JdA4WxQpDx25NoIZiyNCjFOtM1b3Urk=
 github.com/aquilax/go-perlin v1.1.0 h1:Gg+3jQ24wT4Y5GI7TCRLmYarzUG0k+n/JATFqOimb7s=
 github.com/aquilax/go-perlin v1.1.0/go.mod h1:z9Rl7EM4BZY0Ikp2fEN1I5mKSOJ26HQpk0O2TBdN2HE=
 github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=
@@ -11,8 +15,8 @@ github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovk
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
-github.com/oq-x/unsafe2 v0.0.0-20240826185617-691f34b78bf1 h1:wf86Y+hhivCZUfAPdbmj8LxHkYIOfRSKYnK5kCMSdxo=
-github.com/oq-x/unsafe2 v0.0.0-20240826185617-691f34b78bf1/go.mod h1:x0z103mg/p7DX2tk7+9ubWfXbh+ynkAtwRlEOVEbIkk=
+github.com/oq-x/unsafe2 v0.0.0-20240901191313-2b7bec1d9e3b h1:ffDVPOtSkPRHwJxp34oBUxgxR8H4arPUSzQMwT3fZi8=
+github.com/oq-x/unsafe2 v0.0.0-20240901191313-2b7bec1d9e3b/go.mod h1:x0z103mg/p7DX2tk7+9ubWfXbh+ynkAtwRlEOVEbIkk=
 github.com/pierrec/lz4/v4 v4.1.21 h1:yOVMLb6qSIDP67pl/5F7RepeKYu/VmTyEXvuMI5d9mQ=
 github.com/pierrec/lz4/v4 v4.1.21/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

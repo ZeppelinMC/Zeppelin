@@ -2,7 +2,7 @@ package play
 
 import (
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/login"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
@@ -46,7 +46,7 @@ func (PlayerInfoUpdate) ID() int32 {
 	return 0x3E
 }
 
-func (p *PlayerInfoUpdate) Encode(w io.Writer) error {
+func (p *PlayerInfoUpdate) Encode(w encoding.Writer) error {
 	if err := w.Byte(p.Actions); err != nil {
 		return err
 	}
@@ -125,6 +125,6 @@ func (p *PlayerInfoUpdate) Encode(w io.Writer) error {
 	return nil
 }
 
-func (p *PlayerInfoUpdate) Decode(r io.Reader) error {
+func (p *PlayerInfoUpdate) Decode(r encoding.Reader) error {
 	return nil //TODO
 }

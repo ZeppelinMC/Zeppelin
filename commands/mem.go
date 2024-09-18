@@ -13,7 +13,7 @@ import (
 var memStats runtime.MemStats
 
 var mem = command.Command{
-	Node:      command.NewCommand("mem"),
+	Node:      command.NewLiteral("mem"),
 	Namespace: "zeppelin",
 	Callback: func(ccc command.CommandCallContext) {
 		runtime.ReadMemStats(&memStats)

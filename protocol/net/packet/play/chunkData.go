@@ -3,7 +3,7 @@ package play
 import (
 	"bytes"
 
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 type BlockEntity struct {
@@ -24,7 +24,7 @@ type ChunkDataUpdateLight struct {
 	Heightmaps                                                           Heightmaps
 	Data                                                                 *bytes.Buffer //[]byte
 	BlockEntities                                                        []BlockEntity
-	SkyLightMask, BlockLightMask, EmptySkyLightMask, EmptyBlockLightMask io.BitSet
+	SkyLightMask, BlockLightMask, EmptySkyLightMask, EmptyBlockLightMask encoding.BitSet
 	SkyLightArrays                                                       [][]byte
 	BlockLightArrays                                                     [][]byte
 }
@@ -33,7 +33,7 @@ func (ChunkDataUpdateLight) ID() int32 {
 	return 0x27
 }
 
-func (c *ChunkDataUpdateLight) Encode(w io.Writer) error {
+func (c *ChunkDataUpdateLight) Encode(w encoding.Writer) error {
 	if err := w.Int(c.CX); err != nil {
 		return err
 	}
@@ -103,6 +103,6 @@ func (c *ChunkDataUpdateLight) Encode(w io.Writer) error {
 	return nil
 }
 
-func (c *ChunkDataUpdateLight) Decode(io.Reader) error {
+func (c *ChunkDataUpdateLight) Decode(encoding.Reader) error {
 	return nil
 }

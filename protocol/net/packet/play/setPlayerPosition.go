@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdSetPlayerPosition = 0x1A
@@ -14,7 +16,7 @@ func (SetPlayerPosition) ID() int32 {
 	return 0x1A
 }
 
-func (s *SetPlayerPosition) Encode(w io.Writer) error {
+func (s *SetPlayerPosition) Encode(w encoding.Writer) error {
 	if err := w.Double(s.X); err != nil {
 		return err
 	}
@@ -27,7 +29,7 @@ func (s *SetPlayerPosition) Encode(w io.Writer) error {
 	return w.Bool(s.OnGround)
 }
 
-func (s *SetPlayerPosition) Decode(r io.Reader) error {
+func (s *SetPlayerPosition) Decode(r encoding.Reader) error {
 	if err := r.Double(&s.X); err != nil {
 		return err
 	}

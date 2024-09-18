@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdBlockAction = 0x08
@@ -15,7 +17,7 @@ func (BlockAction) ID() int32 {
 	return PacketIdBlockAction
 }
 
-func (b *BlockAction) Encode(w io.Writer) error {
+func (b *BlockAction) Encode(w encoding.Writer) error {
 	if err := w.Position(b.X, b.Y, b.Z); err != nil {
 		return err
 	}
@@ -28,7 +30,7 @@ func (b *BlockAction) Encode(w io.Writer) error {
 	return w.VarInt(b.BlockType)
 }
 
-func (b *BlockAction) Decode(r io.Reader) error {
+func (b *BlockAction) Decode(r encoding.Reader) error {
 	if err := r.Position(&b.X, &b.Y, &b.Z); err != nil {
 		return err
 	}

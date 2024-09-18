@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
@@ -17,7 +17,7 @@ func (ServerData) ID() int32 {
 	return PacketIdServerData
 }
 
-func (d *ServerData) Encode(w io.Writer) error {
+func (d *ServerData) Encode(w encoding.Writer) error {
 	if err := w.TextComponent(d.MOTD); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (d *ServerData) Encode(w io.Writer) error {
 	return nil
 }
 
-func (d *ServerData) Decode(r io.Reader) error {
+func (d *ServerData) Decode(r encoding.Reader) error {
 	if err := r.TextComponent(&d.MOTD); err != nil {
 		return err
 	}

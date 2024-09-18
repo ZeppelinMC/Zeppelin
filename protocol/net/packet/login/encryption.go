@@ -1,8 +1,10 @@
 package login
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
-//two-sided
+// two-sided
 const PacketIdEncryption = 0x01
 
 type EncryptionRequest struct {
@@ -15,7 +17,7 @@ func (EncryptionRequest) ID() int32 {
 	return 0x01
 }
 
-func (e *EncryptionRequest) Encode(w io.Writer) error {
+func (e *EncryptionRequest) Encode(w encoding.Writer) error {
 	if err := w.String(""); err != nil {
 		return err
 	}
@@ -28,7 +30,7 @@ func (e *EncryptionRequest) Encode(w io.Writer) error {
 	return w.Bool(e.ShouldAuthenticate)
 }
 
-func (e *EncryptionRequest) Decode(r io.Reader) error {
+func (e *EncryptionRequest) Decode(r encoding.Reader) error {
 	var s string
 	if err := r.String(&s); err != nil {
 		return err
@@ -51,14 +53,14 @@ func (EncryptionResponse) ID() int32 {
 	return 0x01
 }
 
-func (e *EncryptionResponse) Encode(w io.Writer) error {
+func (e *EncryptionResponse) Encode(w encoding.Writer) error {
 	if err := w.ByteArray(e.SharedSecret); err != nil {
 		return err
 	}
 	return w.ByteArray(e.VerifyToken)
 }
 
-func (e *EncryptionResponse) Decode(r io.Reader) error {
+func (e *EncryptionResponse) Decode(r encoding.Reader) error {
 	if err := r.ByteArray(&e.SharedSecret); err != nil {
 		return err
 	}

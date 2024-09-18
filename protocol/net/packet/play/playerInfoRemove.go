@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 const PacketIdPlayerInfoRemove = 0x3D
@@ -17,7 +17,7 @@ func (PlayerInfoRemove) ID() int32 {
 	return 0x3D
 }
 
-func (p *PlayerInfoRemove) Encode(w io.Writer) error {
+func (p *PlayerInfoRemove) Encode(w encoding.Writer) error {
 	if err := w.VarInt(int32(len(p.UUIDs))); err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (p *PlayerInfoRemove) Encode(w io.Writer) error {
 	return nil
 }
 
-func (p *PlayerInfoRemove) Decode(r io.Reader) error {
+func (p *PlayerInfoRemove) Decode(r encoding.Reader) error {
 	var length int32
 	if _, err := r.VarInt(&length); err != nil {
 		return err

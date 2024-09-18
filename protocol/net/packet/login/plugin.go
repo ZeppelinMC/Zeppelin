@@ -1,8 +1,10 @@
 package login
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
-//clientbound
+// clientbound
 const PacketIdLoginPluginRequest = 0x04
 
 type LoginPluginRequest struct {
@@ -15,7 +17,7 @@ func (LoginPluginRequest) ID() int32 {
 	return 0x04
 }
 
-func (l *LoginPluginRequest) Encode(w io.Writer) error {
+func (l *LoginPluginRequest) Encode(w encoding.Writer) error {
 	if err := w.VarInt(l.MessageID); err != nil {
 		return err
 	}
@@ -25,7 +27,7 @@ func (l *LoginPluginRequest) Encode(w io.Writer) error {
 	return w.FixedByteArray(l.Data)
 }
 
-func (l *LoginPluginRequest) Decode(r io.Reader) error {
+func (l *LoginPluginRequest) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&l.MessageID); err != nil {
 		return err
 	}
@@ -35,7 +37,7 @@ func (l *LoginPluginRequest) Decode(r io.Reader) error {
 	return r.ReadAll(&l.Data)
 }
 
-//serverbound
+// serverbound
 const PacketIdLoginPluginResponse = 0x02
 
 type LoginPluginResponse struct {
@@ -48,7 +50,7 @@ func (LoginPluginResponse) ID() int32 {
 	return 0x02
 }
 
-func (l *LoginPluginResponse) Encode(w io.Writer) error {
+func (l *LoginPluginResponse) Encode(w encoding.Writer) error {
 	if err := w.VarInt(l.MessageID); err != nil {
 		return err
 	}
@@ -63,7 +65,7 @@ func (l *LoginPluginResponse) Encode(w io.Writer) error {
 	return nil
 }
 
-func (l *LoginPluginResponse) Decode(r io.Reader) error {
+func (l *LoginPluginResponse) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&l.MessageID); err != nil {
 		return err
 	}

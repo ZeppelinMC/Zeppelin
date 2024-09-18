@@ -2,7 +2,7 @@ package play
 
 import (
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
@@ -33,7 +33,7 @@ type PlayerChatMessage struct {
 
 	UnsignedContent *text.TextComponent
 	FilterType      int32
-	FilterBits      io.BitSet
+	FilterBits      encoding.BitSet
 
 	ChatType   int32
 	SenderName text.TextComponent
@@ -45,7 +45,7 @@ func (PlayerChatMessage) ID() int32 {
 	return PacketIdPlayerChatMessage
 }
 
-func (p *PlayerChatMessage) Encode(w io.Writer) error {
+func (p *PlayerChatMessage) Encode(w encoding.Writer) error {
 	if err := w.UUID(p.Sender); err != nil {
 		return err
 	}
@@ -121,6 +121,6 @@ func (p *PlayerChatMessage) Encode(w io.Writer) error {
 	return nil
 }
 
-func (p *PlayerChatMessage) Decode(r io.Reader) error {
+func (p *PlayerChatMessage) Decode(r encoding.Reader) error {
 	return nil //TODO
 }

@@ -67,7 +67,7 @@ func (f *File) Encode(w *os.File, compressionScheme byte) error {
 
 		switch compressionScheme {
 		case CompressionGzip:
-			data, err = compress.CompressGzip(chunkBuffer.Bytes(), nil)
+			//data, err = compress.CompressGzip(chunkBuffer.Bytes(), nil)
 			if err != nil {
 				return err
 			}

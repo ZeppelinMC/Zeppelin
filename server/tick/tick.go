@@ -3,28 +3,39 @@ package tick
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/server/session"
-	"github.com/zeppelinmc/zeppelin/util/atomic"
 )
 
 // New creates a new tick manager with tps ticks per second
 func New(tps int, b *session.Broadcast) *TickManager {
-	return &TickManager{
-		d: atomic.Value(time.Second / time.Duration(tps)),
+	mgr := &TickManager{
 		b: b,
 	}
+	mgr.d.Store(int64(time.Second / time.Duration(tps)))
+
+	return mgr
 }
 
 type TickManager struct {
 	tickers []*time.Ticker
 
 	mu sync.RWMutex
-	d  atomic.AtomicValue[time.Duration]
+	d  atomic.Int64
 
 	b *session.Broadcast
+}
+
+func (mgr *TickManager) AddNew(f func()) {
+	tick := mgr.New()
+	go func() {
+		for range tick.C {
+			f()
+		}
+	}()
 }
 
 func (mgr *TickManager) SetFrequency(tps int) error {
@@ -36,7 +47,7 @@ func (mgr *TickManager) SetFrequency(tps int) error {
 	}
 
 	d := time.Second / time.Duration(tps)
-	mgr.d.Set(d)
+	mgr.d.Store(int64(d))
 
 	for _, ticker := range mgr.tickers {
 		ticker.Reset(d)
@@ -61,7 +72,7 @@ func (mgr *TickManager) Freeze() {
 }
 
 func (mgr *TickManager) Unfreeze() {
-	freq := mgr.d.Get()
+	freq := time.Duration(mgr.d.Load())
 	for _, ticker := range mgr.tickers {
 		ticker.Reset(freq)
 	}
@@ -93,6 +104,15 @@ func (mgr *TickManager) Count() int {
 	return len(mgr.tickers)
 }
 
+func (mgr *TickManager) Remove(ticker *time.Ticker) (ok bool) {
+	for _, t := range mgr.tickers {
+		if t == ticker {
+			return true
+		}
+	}
+	return
+}
+
 func (mgr *TickManager) Frequency() time.Duration {
-	return mgr.d.Get()
+	return time.Duration(mgr.d.Load())
 }

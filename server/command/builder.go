@@ -75,7 +75,7 @@ func NewNode(n play.Node, children ...Node) Node {
 	return Node{n, children}
 }
 
-func NewCommand(name string, nodes ...Node) Node {
+func NewLiteral(name string, nodes ...Node) Node {
 	return Node{
 		Node: play.Node{
 			Flags: play.NodeLiteral,
@@ -121,13 +121,25 @@ func NewIntegerArgument(name string, min, max *int32, nodes ...Node) Node {
 	}
 }
 
-func NewStringArgument(name string, typ int32, nodes ...Node) Node {
+func NewStringArgument(name string, typ int, nodes ...Node) Node {
 	return Node{
 		Node: play.Node{
 			Flags:      play.NodeArgument,
 			Name:       name,
 			ParserId:   Integer,
 			Properties: []any{typ},
+		},
+		children: nodes,
+	}
+}
+
+func NewTimeArgument(name string, min int32, nodes ...Node) Node {
+	return Node{
+		Node: play.Node{
+			Flags:      play.NodeArgument,
+			Name:       name,
+			ParserId:   Time,
+			Properties: []any{min},
 		},
 		children: nodes,
 	}

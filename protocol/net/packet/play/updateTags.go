@@ -1,8 +1,10 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
-//clientbound
+// clientbound
 const PacketIdUpdateTags = 0x78
 
 type UpdateTags struct {
@@ -13,7 +15,7 @@ func (UpdateTags) ID() int32 {
 	return PacketIdUpdateTags
 }
 
-func (u *UpdateTags) Encode(w io.Writer) error {
+func (u *UpdateTags) Encode(w encoding.Writer) error {
 	if err := w.VarInt(int32(len(u.Tags))); err != nil {
 		return err
 	}
@@ -42,7 +44,7 @@ func (u *UpdateTags) Encode(w io.Writer) error {
 	return nil
 }
 
-func (u *UpdateTags) Decode(r io.Reader) error {
+func (u *UpdateTags) Decode(r encoding.Reader) error {
 	var length int32
 	if _, err := r.VarInt(&length); err != nil {
 		return err

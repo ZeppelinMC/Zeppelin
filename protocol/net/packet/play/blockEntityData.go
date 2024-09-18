@@ -2,7 +2,7 @@ package play
 
 import (
 	"github.com/zeppelinmc/zeppelin/protocol/nbt"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 // clientbound
@@ -18,7 +18,7 @@ func (BlockEntityData) ID() int32 {
 	return PacketIdBlockEntityData
 }
 
-func (b *BlockEntityData) Encode(w io.Writer) error {
+func (b *BlockEntityData) Encode(w encoding.Writer) error {
 	if err := w.Position(b.X, b.Y, b.Z); err != nil {
 		return err
 	}
@@ -31,6 +31,6 @@ func (b *BlockEntityData) Encode(w io.Writer) error {
 	return w.NBT(b.Data)
 }
 
-func (b *BlockEntityData) Decode(r io.Reader) error {
+func (b *BlockEntityData) Decode(r encoding.Reader) error {
 	return nil //TODO
 }

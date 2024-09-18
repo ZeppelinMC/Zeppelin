@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdAcknowledgeBlockChange = 0x05
@@ -13,11 +15,11 @@ func (AcknowledgeBlockChange) ID() int32 {
 	return PacketIdAcknowledgeBlockChange
 }
 
-func (b *AcknowledgeBlockChange) Encode(w io.Writer) error {
+func (b *AcknowledgeBlockChange) Encode(w encoding.Writer) error {
 	return w.VarInt(b.SequenceId)
 }
 
-func (b *AcknowledgeBlockChange) Decode(r io.Reader) error {
+func (b *AcknowledgeBlockChange) Decode(r encoding.Reader) error {
 	_, err := r.VarInt(&b.SequenceId)
 	return err
 }

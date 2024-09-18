@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdUpdateSectionBlocks = 0x49
@@ -16,7 +18,7 @@ func (UpdateSectionBlocks) ID() int32 {
 	return PacketIdUpdateSectionBlocks
 }
 
-func (b *UpdateSectionBlocks) Encode(w io.Writer) error {
+func (b *UpdateSectionBlocks) Encode(w encoding.Writer) error {
 	if err := w.Long(((int64(b.ChunkX) & 0x3FFFFF) << 42) | (int64(b.ChunkY) & 0xFFFFF) | ((int64(b.ChunkZ) & 0x3FFFFF) << 20)); err != nil {
 		return err
 	}
@@ -32,7 +34,7 @@ func (b *UpdateSectionBlocks) Encode(w io.Writer) error {
 	return nil
 }
 
-func (b *UpdateSectionBlocks) Decode(r io.Reader) error {
+func (b *UpdateSectionBlocks) Decode(r encoding.Reader) error {
 	var sectionPos int64
 	if err := r.Long(&sectionPos); err != nil {
 		return err

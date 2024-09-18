@@ -1,6 +1,8 @@
 package slot
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 type Slot struct {
 	ItemCount int32
@@ -14,7 +16,7 @@ type Component struct {
 	Data any
 }
 
-func (s *Slot) Encode(w io.Writer) error {
+func (s *Slot) Encode(w encoding.Writer) error {
 	if err := w.VarInt(s.ItemCount); err != nil {
 		return err
 	}
@@ -38,7 +40,7 @@ func (s *Slot) Encode(w io.Writer) error {
 	return nil
 }
 
-func (s *Slot) Decode(r io.Reader) error {
+func (s *Slot) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&s.ItemCount); err != nil {
 		return err
 	}
@@ -50,6 +52,7 @@ func (s *Slot) Decode(r io.Reader) error {
 		if _, err := r.VarInt(&componentAddLength); err != nil {
 			return err
 		}
+
 		s.Add = make([]Component, componentAddLength)
 		for _, comp := range s.Add {
 			if err := decode(r, &comp); err != nil {

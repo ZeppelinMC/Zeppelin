@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"unsafe"
-
-	"github.com/zeppelinmc/zeppelin/protocol/net/io/util"
 )
 
 type BlockLocation struct {
@@ -25,10 +23,10 @@ type Block []BlockState
 func ReadBlock(f io.ReaderAt, loc BlockLocation) (Block, error) {
 	var blockStates Block
 
-	maxxer := util.NewReaderAtMaxxer(f, int(loc.Size), int64(loc.Offset))
+	limiter := io.NewSectionReader(f, int64(loc.Offset), int64(loc.Size))
 
 	var stateCount uint16
-	if err := binary.Read(maxxer, binary.BigEndian, &stateCount); err != nil {
+	if err := binary.Read(limiter, binary.BigEndian, &stateCount); err != nil {
 		return blockStates, err
 	}
 
@@ -41,10 +39,10 @@ func ReadBlock(f io.ReaderAt, loc BlockLocation) (Block, error) {
 			blockStateId  int32
 			propertyCount uint8
 		)
-		if err := binary.Read(maxxer, binary.BigEndian, &blockStateId); err != nil {
+		if err := binary.Read(limiter, binary.BigEndian, &blockStateId); err != nil {
 			return blockStates, err
 		}
-		if err := binary.Read(maxxer, binary.BigEndian, &propertyCount); err != nil {
+		if err := binary.Read(limiter, binary.BigEndian, &propertyCount); err != nil {
 			return blockStates, err
 		}
 
@@ -52,11 +50,11 @@ func ReadBlock(f io.ReaderAt, loc BlockLocation) (Block, error) {
 		blockStates[i].Properties = make(map[string]string, propertyCount)
 
 		for j := 0; j < int(propertyCount); j++ {
-			propertyName, err := readString(maxxer, stringlen)
+			propertyName, err := readString(limiter, stringlen)
 			if err != nil {
 				return blockStates, nil
 			}
-			propertyValue, err := readString(maxxer, stringlen)
+			propertyValue, err := readString(limiter, stringlen)
 			if err != nil {
 				return blockStates, nil
 			}

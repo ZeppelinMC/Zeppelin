@@ -1,6 +1,8 @@
 package login
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdCookieRequest = 0x05
@@ -13,11 +15,11 @@ func (CookieRequest) ID() int32 {
 	return 0x05
 }
 
-func (s *CookieRequest) Encode(w io.Writer) error {
+func (s *CookieRequest) Encode(w encoding.Writer) error {
 	return w.String(s.Key)
 }
 
-func (s *CookieRequest) Decode(r io.Reader) error {
+func (s *CookieRequest) Decode(r encoding.Reader) error {
 	return r.String(&s.Key)
 }
 
@@ -31,7 +33,7 @@ func (CookieResponse) ID() int32 {
 	return 0x04
 }
 
-func (s *CookieResponse) Encode(w io.Writer) error {
+func (s *CookieResponse) Encode(w encoding.Writer) error {
 	if err := w.String(s.Key); err != nil {
 		return err
 	}
@@ -44,7 +46,7 @@ func (s *CookieResponse) Encode(w io.Writer) error {
 	return nil
 }
 
-func (s *CookieResponse) Decode(r io.Reader) error {
+func (s *CookieResponse) Decode(r encoding.Reader) error {
 	if err := r.String(&s.Key); err != nil {
 		return err
 	}

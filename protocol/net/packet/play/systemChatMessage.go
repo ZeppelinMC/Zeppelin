@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
@@ -17,14 +17,14 @@ func (SystemChatMessage) ID() int32 {
 	return PacketIdSystemChatMessage
 }
 
-func (s *SystemChatMessage) Encode(w io.Writer) error {
+func (s *SystemChatMessage) Encode(w encoding.Writer) error {
 	if err := w.TextComponent(s.Content); err != nil {
 		return err
 	}
 	return w.Bool(s.Overlay)
 }
 
-func (s *SystemChatMessage) Decode(r io.Reader) error {
+func (s *SystemChatMessage) Decode(r encoding.Reader) error {
 	if err := r.TextComponent(&s.Content); err != nil {
 		return err
 	}

@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdSetEntityVelocity = 0x5A
@@ -14,7 +16,7 @@ func (SetEntityVelocity) ID() int32 {
 	return PacketIdSetEntityVelocity
 }
 
-func (d *SetEntityVelocity) Encode(w io.Writer) error {
+func (d *SetEntityVelocity) Encode(w encoding.Writer) error {
 	if err := w.VarInt(d.EntityId); err != nil {
 		return err
 	}
@@ -27,7 +29,7 @@ func (d *SetEntityVelocity) Encode(w io.Writer) error {
 	return w.Short(d.Z)
 }
 
-func (d *SetEntityVelocity) Decode(r io.Reader) error {
+func (d *SetEntityVelocity) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&d.EntityId); err != nil {
 		return err
 	}

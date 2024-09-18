@@ -17,9 +17,9 @@ func handleCloseContainer(s *std.StandardSession, p packet.Decodeable) {
 	if !ok {
 		return
 	}
-	if s.WindowView.Get() == int32(pk.WindowId) {
+	if s.WindowView.Load() == int32(pk.WindowId) {
 		pos, w, ok := s.Dimension().WindowManager.Get(int32(pk.WindowId))
-		s.WindowView.Set(0)
+		s.WindowView.Store(0)
 		if !ok {
 			return
 		}

@@ -2,8 +2,10 @@ package item
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/zeppelinmc/zeppelin/protocol/net/slot"
+	"github.com/zeppelinmc/zeppelin/protocol/net/tags"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
@@ -119,6 +121,11 @@ type Item struct {
 		CreativeSlotLock         CreativeSlotLock         `nbt:"minecraft:creative_slot_lock"`
 		MapPostProcessing        int32                    `nbt:"minecraft:map_post_processing"`
 	} `nbt:"components"`*/
+}
+
+// Is checks if the tag applies to the item
+func (item *Item) Is(tagName string) bool {
+	return slices.Index(tags.Tags.Tags["minecraft:item"][tagName], registry.Item.Get(item.Id)) != -1
 }
 
 // returns the block of the item, if found

@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 // serverbound
@@ -26,7 +26,7 @@ func (SynchronizePlayerPosition) ID() int32 {
 	return PacketIdSynchronizePlayerPosition
 }
 
-func (s *SynchronizePlayerPosition) Encode(w io.Writer) error {
+func (s *SynchronizePlayerPosition) Encode(w encoding.Writer) error {
 	if err := w.Double(s.X); err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (s *SynchronizePlayerPosition) Encode(w io.Writer) error {
 	return w.VarInt(s.TeleportID)
 }
 
-func (s *SynchronizePlayerPosition) Decode(r io.Reader) error {
+func (s *SynchronizePlayerPosition) Decode(r encoding.Reader) error {
 	if err := r.Double(&s.X); err != nil {
 		return err
 	}

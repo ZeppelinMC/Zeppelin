@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/zeppelinmc/zeppelin/protocol/net"
@@ -47,6 +48,9 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Decodeable) {
 	itemInHand, ok := s.Player().Inventory().Slot(item.DataSlot(s.Player().SelectedItemSlot()))
 	if !ok {
 		return
+	}
+	if itemInHand.Is("beds") {
+		fmt.Println("is placing bed ")
 	}
 	blockSet, ok := itemInHand.Block()
 	if !ok {

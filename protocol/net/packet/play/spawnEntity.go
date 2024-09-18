@@ -2,7 +2,7 @@ package play
 
 import (
 	"github.com/google/uuid"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 const (
@@ -31,7 +31,7 @@ func (SpawnEntity) ID() int32 {
 	return 0x01
 }
 
-func (s *SpawnEntity) Encode(w io.Writer) error {
+func (s *SpawnEntity) Encode(w encoding.Writer) error {
 	if err := w.VarInt(s.EntityId); err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (s *SpawnEntity) Encode(w io.Writer) error {
 	return w.Short(s.VelZ)
 }
 
-func (s *SpawnEntity) Decode(r io.Reader) error {
+func (s *SpawnEntity) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&s.EntityId); err != nil {
 		return err
 	}

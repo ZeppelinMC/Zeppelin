@@ -7,10 +7,11 @@ import (
 	nnet "net"
 	"slices"
 	"sync"
+	"sync/atomic"
 
 	"github.com/google/uuid"
 	"github.com/zeppelinmc/zeppelin/protocol/net"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/configuration"
@@ -34,7 +35,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/util"
-	"github.com/zeppelinmc/zeppelin/util/atomic"
+	a "github.com/zeppelinmc/zeppelin/util/atomic"
 )
 
 var _ session.Session = (*StandardSession)(nil)
@@ -52,12 +53,12 @@ type StandardSession struct {
 	conn *net.Conn
 
 	clientName string // constant
-	ClientInfo atomic.AtomicValue[configuration.ClientInformation]
+	ClientInfo a.AtomicValue[configuration.ClientInformation]
 
 	statusProviderProvider func() net.StatusProvider
 
-	hasSessionData atomic.AtomicValue[bool]
-	sessionData    atomic.AtomicValue[play.PlayerSession]
+	hasSessionData atomic.Bool
+	sessionData    a.AtomicValue[play.PlayerSession]
 
 	spawned_ents_mu sync.Mutex
 	spawnedEntities []int32
@@ -67,31 +68,35 @@ type StandardSession struct {
 	registryIndexes map[string][]string
 
 	// the index that should be sent in player chat messages
-	ChatIndex atomic.AtomicValue[int32]
+	ChatIndex atomic.Int32
 
-	inBundle atomic.AtomicValue[bool]
+	inBundle atomic.Bool
 
-	AwaitingTeleportAcknowledgement   atomic.AtomicValue[bool]
-	awaitingChunkBatchAcknowledgement atomic.AtomicValue[bool]
+	AwaitingTeleportAcknowledgement,
+	awaitingChunkBatchAcknowledgement atomic.Bool
 
 	// the time in milliseconds that the keep alive packet was sent to the server from the client
-	sbLastKeepalive atomic.AtomicValue[int64]
+	sbLastKeepalive atomic.Int64
 	// the time in milliseconds that the keep alive packet was sent to the client from the server
-	cbLastKeepAlive atomic.AtomicValue[int64]
+	cbLastKeepAlive atomic.Int64
 
 	load_ch_mu   sync.RWMutex
 	loadedChunks map[uint64]struct{}
 
-	listed atomic.AtomicValue[bool]
+	listed atomic.Bool
 
 	tick *tick.TickManager
 
+	stopTick chan struct{}
+
 	// the window id the client is viewing currently, 0 if none (inventory)
-	WindowView atomic.AtomicValue[int32]
+	WindowView atomic.Int32
+
+	chunksPerTick atomic.Int32
 }
 
 func (s *StandardSession) Latency() int64 {
-	return s.sbLastKeepalive.Get() - s.cbLastKeepAlive.Get()
+	return s.sbLastKeepalive.Load() - s.cbLastKeepAlive.Load()
 }
 
 func New(
@@ -114,12 +119,12 @@ func New(
 		commandManager:         commandManager,
 		loadedChunks:           make(map[uint64]struct{}),
 
-		tick: tickManager,
-
-		listed: atomic.Value(true),
+		tick:     tickManager,
+		stopTick: make(chan struct{}),
 
 		registryIndexes: make(map[string][]string),
 	}
+	s.listed.Store(true)
 	s.ChunkLoadWorker = NewChunkLoadWorker(s)
 
 	s.Input.SetPosition(s.player.Position())
@@ -147,17 +152,17 @@ func (session *StandardSession) ReadPacket() (packet.Decodeable, error) {
 }
 
 func (session *StandardSession) Listed() bool {
-	return session.listed.Get()
+	return session.listed.Load()
 }
 
 func (session *StandardSession) SetListed(v bool) {
-	session.listed.Set(v)
+	session.listed.Store(v)
 }
 
 func (session *StandardSession) SynchronizePosition(x, y, z float64, yaw, pitch float32) error {
 	session.player.SetPosition(x, y, z)
 	session.player.SetRotation(yaw, pitch)
-	session.AwaitingTeleportAcknowledgement.Set(true)
+	session.AwaitingTeleportAcknowledgement.Store(true)
 	return session.WritePacket(&play.SynchronizePlayerPosition{X: x, Y: y, Z: z, Yaw: yaw, Pitch: pitch})
 }
 
@@ -230,7 +235,7 @@ func (session *StandardSession) Properties() []login.Property {
 }
 
 func (session *StandardSession) SessionData() (play.PlayerSession, bool) {
-	return session.sessionData.Get(), session.hasSessionData.Get()
+	return session.sessionData.Get(), session.hasSessionData.Load()
 }
 
 func (session *StandardSession) PlayerInfoUpdate(pk *play.PlayerInfoUpdate) error {
@@ -255,7 +260,7 @@ func (session *StandardSession) Configure() error {
 	go session.handlePackets()
 	if err := session.WritePacket(&configuration.ClientboundPluginMessage{
 		Channel: "minecraft:brand",
-		Data:    io.AppendString(nil, "Zeppelin"),
+		Data:    encoding.AppendString(nil, "Zeppelin"),
 	}); err != nil {
 		return err
 	}
@@ -322,7 +327,7 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
-	if err := session.WritePacket(session.commandManager.Encode()); err != nil {
+	if err := session.WritePacket(&play.SetHeldItemClientbound{Slot: int8(session.player.SelectedItemSlot())}); err != nil {
 		return err
 	}
 
@@ -348,11 +353,11 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
-	x, y, z := session.player.Position()
-	yaw, pitch := session.player.Rotation()
+	if err := session.WritePacket(session.commandManager.Encode()); err != nil {
+		return err
+	}
 
 	status := session.statusProviderProvider()(session.conn)
-
 	if err := session.WritePacket(&play.ServerData{
 		MOTD: status.Description,
 		Icon: status.Favicon,
@@ -362,10 +367,7 @@ func (session *StandardSession) login() error {
 
 	session.broadcast.AddPlayer(session)
 
-	if err := session.SendInventory(); err != nil {
-		return err
-	}
-	if err := session.WritePacket(&play.SetHeldItemClientbound{Slot: int8(session.player.SelectedItemSlot())}); err != nil {
+	if err := session.sendTime(); err != nil {
 		return err
 	}
 
@@ -378,9 +380,16 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
+	if err := session.initializeTicker(); err != nil {
+		return err
+	}
+
 	if err := session.sendSpawnChunks(); err != nil {
 		return err
 	}
+
+	x, y, z := session.player.Position()
+	yaw, pitch := session.player.Rotation()
 
 	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
 		return err
@@ -390,9 +399,11 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
-	session.broadcast.SpawnPlayer(session)
-	session.createTicker()
+	if err := session.SendInventory(); err != nil {
+		return err
+	}
 
+	session.broadcast.SpawnPlayer(session)
 	return nil
 }
 
@@ -444,18 +455,18 @@ func (session *StandardSession) DespawnEntities(entityIds ...int32) error {
 }
 
 func (session *StandardSession) bundleStart() error {
-	if session.inBundle.Get() {
+	if session.inBundle.Load() {
 		return nil
 	}
-	session.inBundle.Set(true)
+	session.inBundle.Store(true)
 	return session.WritePacket(&play.BundleDelimiter{})
 }
 
 func (session *StandardSession) bundleStop() error {
-	if !session.inBundle.Get() {
+	if !session.inBundle.Load() {
 		return nil
 	}
-	session.inBundle.Set(false)
+	session.inBundle.Store(false)
 	return session.WritePacket(&play.BundleDelimiter{})
 }
 
@@ -536,48 +547,6 @@ func (session *StandardSession) SetGameMode(gm level.GameMode) error {
 	})
 }
 
-func (session *StandardSession) sendSpawnChunks() error {
-	viewDistance := session.ViewDistance()
-
-	x, _, z := session.player.Position()
-	chunkX, chunkZ := int32(x)>>4, int32(z)>>4
-
-	if err := session.WritePacket(&play.SetCenterChunk{ChunkX: chunkX, ChunkZ: chunkZ}); err != nil {
-		return err
-	}
-
-	var chunks int32
-
-	if err := session.WritePacket(&play.ChunkBatchStart{}); err != nil {
-		return err
-	}
-
-	for x := chunkX - viewDistance; x < chunkX+viewDistance; x++ {
-		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
-			c, err := session.Dimension().GetChunk(x, z)
-			if err != nil {
-				continue
-			}
-
-			if err := session.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
-				return err
-			}
-			chunks++
-		}
-	}
-
-	if err := session.WritePacket(&play.ChunkBatchFinished{
-		BatchSize: chunks,
-	}); err != nil {
-		return err
-	}
-
-	session.awaitingChunkBatchAcknowledgement.Set(true)
-	session.ChunkLoadWorker.start()
-
-	return nil
-}
-
 func (session *StandardSession) DamageEvent(attacker, attacked session.Session, damageType string) error {
 	causeType := slices.Index(session.registryIndexes["minecraft:damage_type"], damageType)
 	if causeType == -1 {
@@ -623,10 +592,10 @@ func (session *StandardSession) setContainerContent(container window.Window) err
 }
 
 func (session *StandardSession) OpenWindow(w *window.Window) error {
-	if curw := session.WindowView.Get(); curw != 0 {
+	if curw := session.WindowView.Load(); curw != 0 {
 		return fmt.Errorf("window %d already open for client", curw)
 	}
-	session.WindowView.Set(w.Id)
+	session.WindowView.Store(w.Id)
 
 	err := session.WritePacket(&play.OpenScreen{
 		WindowId:    w.Id,

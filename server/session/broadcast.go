@@ -203,7 +203,6 @@ func (b *Broadcast) RemoveUUIDs(disconnectionReason text.TextComponent, uuids ..
 
 // when a player leaves the server
 func (b *Broadcast) RemovePlayer(session Session) {
-	log.Infolnf("[%s] Player %s disconnected", session.Addr(), session.Username())
 	b.sessions_mu.Lock()
 	defer b.sessions_mu.Unlock()
 	delete(b.sessions, session.UUID())

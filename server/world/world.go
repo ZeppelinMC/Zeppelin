@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
 
 	"github.com/zeppelinmc/zeppelin/protocol/properties"
 	"github.com/zeppelinmc/zeppelin/server/session"
@@ -11,7 +12,6 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
-	"github.com/zeppelinmc/zeppelin/util/atomic"
 	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
@@ -27,7 +27,7 @@ type World struct {
 	lock *os.File
 
 	path              string
-	worldAge, dayTime atomic.AtomicValue[int64]
+	worldAge, dayTime atomic.Int64
 }
 
 const version = 19133
@@ -58,8 +58,8 @@ func NewWorld(props properties.ServerProperties) (*World, error) {
 		return nil, fmt.Errorf("failed to obtain session.lock")
 	}
 
-	w.worldAge = atomic.Value(w.Level.Data.Time)
-	w.dayTime = atomic.Value(w.Level.Data.DayTime)
+	w.worldAge.Store(w.Level.Data.Time)
+	w.dayTime.Store(w.Level.Data.DayTime)
 	w.dimensions = map[string]*dimension.Dimension{
 		"minecraft:overworld": dimension.New(
 			props.LevelName+"/region",
@@ -125,13 +125,26 @@ func (w *World) RegisterDimension(name string, dim *dimension.Dimension) {
 
 // increments the day time and world age by one tick and returns the updated time
 func (w *World) IncrementTime() (worldAge, dayTime int64) {
-	worldAge = w.worldAge.Get() + 1
-	dayTime = w.dayTime.Get() + 1
-
-	w.worldAge.Set(worldAge)
-	w.dayTime.Set(dayTime)
+	worldAge = w.worldAge.Add(1)
+	dayTime = w.dayTime.Add(1)
 
 	return
+}
+
+func (w *World) Time() (worldAge, dayTime int64) {
+	return w.worldAge.Load(), w.dayTime.Load()
+}
+
+func (w *World) DaytimeAdd(delta int64) {
+	w.dayTime.Add(delta)
+}
+
+func (w *World) DaytimeSet(v int64) {
+	w.dayTime.Store(v)
+}
+
+func (w *World) WorldAgeSet(v int64) {
+	w.worldAge.Store(v)
 }
 
 func (w *World) LoadedChunks() int32 {

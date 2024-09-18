@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdSetHeldItemServerbound = 0x2F
@@ -13,10 +15,10 @@ func (SetHeldItemServerbound) ID() int32 {
 	return PacketIdSetHeldItemServerbound
 }
 
-func (s *SetHeldItemServerbound) Encode(w io.Writer) error {
+func (s *SetHeldItemServerbound) Encode(w encoding.Writer) error {
 	return w.Short(s.Slot)
 }
 
-func (s *SetHeldItemServerbound) Decode(r io.Reader) error {
+func (s *SetHeldItemServerbound) Decode(r encoding.Reader) error {
 	return r.Short(&s.Slot)
 }

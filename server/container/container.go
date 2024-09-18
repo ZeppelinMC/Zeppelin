@@ -54,11 +54,11 @@ func (c *Container) SetSlot(item item.Item) {
 }
 
 // finds the item at the specified data slot
-func (c Container) Slot(slot item.DataSlot) (item.Item, bool) {
+func (c Container) Slot(slot item.DataSlot) (*item.Item, bool) {
 	for _, item := range c {
 		if item.Slot == slot {
-			return item, true
+			return &item, true
 		}
 	}
-	return item.Item{}, false
+	return nil, false
 }

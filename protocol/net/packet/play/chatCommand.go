@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdChatCommand = 0x04
@@ -13,10 +15,10 @@ func (ChatCommand) ID() int32 {
 	return PacketIdChatCommand
 }
 
-func (c *ChatCommand) Encode(w io.Writer) error {
+func (c *ChatCommand) Encode(w encoding.Writer) error {
 	return w.String(c.Command)
 }
 
-func (c *ChatCommand) Decode(r io.Reader) error {
+func (c *ChatCommand) Decode(r encoding.Reader) error {
 	return r.String(&c.Command)
 }

@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // serverbound
 const PacketIdSetPlayerRotation = 0x1C
@@ -14,7 +16,7 @@ func (SetPlayerRotation) ID() int32 {
 	return 0x1C
 }
 
-func (s *SetPlayerRotation) Encode(w io.Writer) error {
+func (s *SetPlayerRotation) Encode(w encoding.Writer) error {
 	if err := w.Float(s.Yaw); err != nil {
 		return err
 	}
@@ -24,7 +26,7 @@ func (s *SetPlayerRotation) Encode(w io.Writer) error {
 	return w.Bool(s.OnGround)
 }
 
-func (s *SetPlayerRotation) Decode(r io.Reader) error {
+func (s *SetPlayerRotation) Decode(r encoding.Reader) error {
 	if err := r.Float(&s.Yaw); err != nil {
 		return err
 	}

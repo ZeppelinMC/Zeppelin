@@ -12,6 +12,5 @@ func init() {
 }
 
 func handleConfirmTeleportation(session *std.StandardSession, p packet.Decodeable) {
-	session.AwaitingTeleportAcknowledgement.Set(false)
-
+	session.AwaitingTeleportAcknowledgement.Store(false)
 }

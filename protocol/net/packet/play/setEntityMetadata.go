@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/metadata"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
@@ -18,7 +18,7 @@ func (SetEntityMetadata) ID() int32 {
 	return PacketIdSetEntityMetadata
 }
 
-func (s *SetEntityMetadata) Encode(w io.Writer) error {
+func (s *SetEntityMetadata) Encode(w encoding.Writer) error {
 	if err := w.VarInt(s.EntityId); err != nil {
 		return err
 	}
@@ -273,6 +273,6 @@ func (s *SetEntityMetadata) Encode(w io.Writer) error {
 	return w.Ubyte(0xFF)
 }
 
-func (*SetEntityMetadata) Decode(r io.Reader) error {
+func (*SetEntityMetadata) Decode(r encoding.Reader) error {
 	return nil //TODO
 }

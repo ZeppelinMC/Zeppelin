@@ -1,3 +1,4 @@
+// deprecated: :(
 package qnbt
 
 import (

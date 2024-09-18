@@ -1,11 +1,11 @@
 package slot
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
-func decode(r io.Reader, comp *Component) error {
+func decode(r encoding.Reader, comp *Component) error {
 	switch comp.Type {
 	case CustomData:
 		comp.Data = make(map[string]any)

@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdUpdateEntityPosition = 0x2E
@@ -15,7 +17,7 @@ func (UpdateEntityPosition) ID() int32 {
 	return PacketIdUpdateEntityPosition
 }
 
-func (s *UpdateEntityPosition) Encode(w io.Writer) error {
+func (s *UpdateEntityPosition) Encode(w encoding.Writer) error {
 	if err := w.VarInt(s.EntityId); err != nil {
 		return err
 	}
@@ -31,7 +33,7 @@ func (s *UpdateEntityPosition) Encode(w io.Writer) error {
 	return w.Bool(s.OnGround)
 }
 
-func (s *UpdateEntityPosition) Decode(r io.Reader) error {
+func (s *UpdateEntityPosition) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&s.EntityId); err != nil {
 		return err
 	}

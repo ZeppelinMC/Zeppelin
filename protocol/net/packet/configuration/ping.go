@@ -1,8 +1,10 @@
 package configuration
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
-//two-sided
+// two-sided
 const PacketIdPing = 0x05
 
 type Ping struct {
@@ -13,11 +15,11 @@ func (Ping) ID() int32 {
 	return 0x05
 }
 
-func (p *Ping) Encode(w io.Writer) error {
+func (p *Ping) Encode(w encoding.Writer) error {
 	return w.Int(p.ID_)
 }
 
-func (p *Ping) Decode(r io.Reader) error {
+func (p *Ping) Decode(r encoding.Reader) error {
 	return r.Int(&p.ID_)
 }
 

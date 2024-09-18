@@ -1,8 +1,10 @@
 package configuration
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
-//two-sided
+// two-sided
 const PacketIdPluginMessage = 0x01
 
 type ClientboundPluginMessage struct {
@@ -14,14 +16,14 @@ func (ClientboundPluginMessage) ID() int32 {
 	return 0x01
 }
 
-func (c *ClientboundPluginMessage) Encode(w io.Writer) error {
+func (c *ClientboundPluginMessage) Encode(w encoding.Writer) error {
 	if err := w.Identifier(c.Channel); err != nil {
 		return err
 	}
 	return w.FixedByteArray(c.Data)
 }
 
-func (c *ClientboundPluginMessage) Decode(r io.Reader) error {
+func (c *ClientboundPluginMessage) Decode(r encoding.Reader) error {
 	if err := r.Identifier(&c.Channel); err != nil {
 		return err
 	}

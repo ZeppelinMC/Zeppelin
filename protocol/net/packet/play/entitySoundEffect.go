@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdEntitySoundEffect = 0x67
@@ -21,7 +23,7 @@ func (EntitySoundEffect) ID() int32 {
 	return PacketIdEntitySoundEffect
 }
 
-func (s *EntitySoundEffect) Encode(w io.Writer) error {
+func (s *EntitySoundEffect) Encode(w encoding.Writer) error {
 	if err := w.VarInt(s.SoundId + 1); err != nil {
 		return err
 	}
@@ -53,6 +55,6 @@ func (s *EntitySoundEffect) Encode(w io.Writer) error {
 	return w.Long(s.Seed)
 }
 
-func (s *EntitySoundEffect) Decode(r io.Reader) error {
+func (s *EntitySoundEffect) Decode(r encoding.Reader) error {
 	return nil //TODO
 }

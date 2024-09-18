@@ -1,7 +1,7 @@
 package play
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
 )
 
@@ -16,11 +16,11 @@ func (ChunkBatchFinished) ID() int32 {
 	return PacketIdChunkBatchFinished
 }
 
-func (c *ChunkBatchFinished) Encode(w io.Writer) error {
+func (c *ChunkBatchFinished) Encode(w encoding.Writer) error {
 	return w.VarInt(c.BatchSize)
 }
 
-func (c *ChunkBatchFinished) Decode(r io.Reader) error {
+func (c *ChunkBatchFinished) Decode(r encoding.Reader) error {
 	_, err := r.VarInt(&c.BatchSize)
 	return err
 }
@@ -45,10 +45,10 @@ func (ChunkBatchReceived) ID() int32 {
 	return PacketIdChunkBatchReceived
 }
 
-func (c *ChunkBatchReceived) Encode(w io.Writer) error {
+func (c *ChunkBatchReceived) Encode(w encoding.Writer) error {
 	return w.Float(c.ChunksPerTick)
 }
 
-func (c *ChunkBatchReceived) Decode(r io.Reader) error {
+func (c *ChunkBatchReceived) Decode(r encoding.Reader) error {
 	return r.Float(&c.ChunksPerTick)
 }

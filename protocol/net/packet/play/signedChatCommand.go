@@ -1,6 +1,8 @@
 package play
 
-import "github.com/zeppelinmc/zeppelin/protocol/net/io"
+import (
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
+)
 
 // clientbound
 const PacketIdSignedChatCommand = 0x05
@@ -10,7 +12,7 @@ type SignedChatCommand struct {
 	Timestamp, Salt int64
 	Arguments       []SignedArgument
 	MessageCount    int32
-	Acknowledged    io.FixedBitSet
+	Acknowledged    encoding.FixedBitSet
 }
 
 type SignedArgument struct {
@@ -22,7 +24,7 @@ func (SignedChatCommand) ID() int32 {
 	return PacketIdChatCommand
 }
 
-func (c *SignedChatCommand) Encode(w io.Writer) error {
+func (c *SignedChatCommand) Encode(w encoding.Writer) error {
 	if err := w.String(c.Command); err != nil {
 		return err
 	}
@@ -49,7 +51,7 @@ func (c *SignedChatCommand) Encode(w io.Writer) error {
 	return w.FixedBitSet(c.Acknowledged)
 }
 
-func (c *SignedChatCommand) Decode(r io.Reader) error {
+func (c *SignedChatCommand) Decode(r encoding.Reader) error {
 	if err := r.String(&c.Command); err != nil {
 		return err
 	}

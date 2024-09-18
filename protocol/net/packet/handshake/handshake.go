@@ -1,7 +1,7 @@
 package handshake
 
 import (
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 const (
@@ -24,7 +24,7 @@ func (Handshaking) ID() int32 {
 	return 0x00
 }
 
-func (h *Handshaking) Decode(r io.Reader) error {
+func (h *Handshaking) Decode(r encoding.Reader) error {
 	if _, err := r.VarInt(&h.ProtocolVersion); err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (h *Handshaking) Decode(r io.Reader) error {
 	return err
 }
 
-func (h Handshaking) Encode(w io.Writer) error {
+func (h Handshaking) Encode(w encoding.Writer) error {
 	if err := w.VarInt(h.ProtocolVersion); err != nil {
 		return err
 	}

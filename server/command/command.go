@@ -2,6 +2,7 @@
 package command
 
 import (
+	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/session"
 )
 
@@ -36,4 +37,8 @@ type CommandCallContext struct {
 	Server   any
 
 	Arguments Arguments
+}
+
+func (c CommandCallContext) Reply(msg text.TextComponent) error {
+	return c.Executor.SystemMessage(msg)
 }

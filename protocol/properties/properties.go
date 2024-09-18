@@ -71,8 +71,8 @@ type ServerProperties struct {
 	SpawnNPCs       bool `properties:"spawn-npcs"`
 	SpawnProtection int  `properties:"spawn-protection"`
 
-	ViewDistance int  `properties:"view-distance"`
-	WhiteList    bool `properties:"white-list"`
+	ViewDistance int32 `properties:"view-distance"`
+	WhiteList    bool  `properties:"white-list"`
 }
 
 var Default = ServerProperties{

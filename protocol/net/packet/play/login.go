@@ -3,7 +3,7 @@ package play
 import (
 	"fmt"
 
-	"github.com/zeppelinmc/zeppelin/protocol/net/io"
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
 // clientbound
@@ -44,7 +44,7 @@ func (Login) ID() int32 {
 	return 0x2B
 }
 
-func (l *Login) Encode(w io.Writer) error {
+func (l *Login) Encode(w encoding.Writer) error {
 	if err := w.Int(l.EntityID); err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (l *Login) Encode(w io.Writer) error {
 	return w.Bool(l.EnforcesSecureChat)
 }
 
-func (l *Login) Decode(r io.Reader) error {
+func (l *Login) Decode(r encoding.Reader) error {
 	if err := r.Int(&l.EntityID); err != nil {
 		return err
 	}
