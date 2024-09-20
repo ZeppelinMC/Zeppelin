@@ -12,6 +12,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/status"
+	"github.com/zeppelinmc/zeppelin/protocol/properties"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/block/pos"
@@ -28,16 +29,19 @@ type Broadcast struct {
 	dummies     []DummySession
 	sessions_mu sync.RWMutex
 
+	cfg properties.ServerProperties
+
 	EventManager EventManager
 
 	prev_msgs_mu     sync.Mutex
 	previousMessages []play.PreviousMessage
 }
 
-func NewBroadcast(dummies ...DummySession) *Broadcast {
+func NewBroadcast(cfg properties.ServerProperties, dummies ...DummySession) *Broadcast {
 	return &Broadcast{
 		sessions:     make(map[uuid.UUID]Session),
 		dummies:      dummies,
+		cfg:          cfg,
 		EventManager: Default,
 	}
 }
@@ -296,7 +300,7 @@ func (b *Broadcast) SpawnPlayer(session Session) {
 
 	x, y, z := session.Player().Position()
 
-	log.Infolnf("[%s] Player %s (%s) joined with entity id %d (%f %f %f)", session.Addr(), session.Username(), session.UUID(), session.Player().EntityId(), x, y, z)
+	log.Infolnf("%sPlayer %s (%s) joined with entity id %d (%f %f %f)", log.FormatAddr(b.cfg.LogIPs, session.Addr()), session.Username(), session.UUID(), session.Player().EntityId(), x, y, z)
 
 	dim := session.Player().Dimension()
 

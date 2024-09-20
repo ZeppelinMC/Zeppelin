@@ -34,6 +34,16 @@ func (session *StandardSession) readIntercept(pk packet.Decodeable) (stop bool) 
 	return
 }
 
+func (session *StandardSession) kill(err bool, reason string) {
+	var logfn = log.Infolnf
+	if err {
+		logfn = log.Errorlnf
+	}
+	logfn("%sPlayer %s disconnected: %s", log.FormatAddr(session.config.LogIPs, session.Addr()), session.Username())
+	session.stopTick <- struct{}{}
+	session.broadcast.RemovePlayer(session)
+}
+
 func (session *StandardSession) handlePackets() {
 	keepAlive := time.NewTicker(time.Second * 20)
 	for {
@@ -45,16 +55,16 @@ func (session *StandardSession) handlePackets() {
 		default:
 			if lastKeepAlive := session.sbLastKeepalive.Load(); lastKeepAlive != 0 && time.Now().UnixMilli()-lastKeepAlive > (21*1000) {
 				session.Disconnect(text.TextComponent{Text: "Timed out"})
+				session.kill(false, "timed out")
+				return
 			}
-			p, err := session.conn.ReadPacket()
+			p, s, err := session.conn.ReadPacket()
 			if err != nil {
-				log.Infolnf("[%s] Player %s disconnected: lost connection", session.Addr(), session.Username())
-				session.stopTick <- struct{}{}
-				session.broadcast.RemovePlayer(session)
+				session.kill(false, "lost connection")
 				return
 			}
 
-			if session.readIntercept(p) {
+			if s || session.readIntercept(p) {
 				continue
 			}
 
@@ -74,13 +84,15 @@ func (session *StandardSession) handlePackets() {
 					session.broadcast.PlayerInfoUpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						i, data, _ := encoding.VarInt(pk.Data)
-						session.clientName = string(data[:i])
+						if err := session.updateBrand(pk.Data); err != nil {
+							session.kill(true, "malformed brand")
+						}
 					}
 				case *play.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						i, data, _ := encoding.VarInt(pk.Data)
-						session.clientName = string(data[:i])
+						if err := session.updateBrand(pk.Data); err != nil {
+							session.kill(true, "malformed brand")
+						}
 					}
 				case *configuration.AcknowledgeFinishConfiguration:
 					session.conn.SetState(net.PlayState)
@@ -93,4 +105,9 @@ func (session *StandardSession) handlePackets() {
 			handler(session, p)
 		}
 	}
+}
+
+func (session *StandardSession) updateBrand(data []byte) (err error) {
+	session.clientName, err = encoding.String(data)
+	return
 }

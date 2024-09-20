@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"net"
 	"runtime"
 	"strings"
 	"sync"
@@ -17,6 +18,13 @@ var stackColor = color.New(color.FgHiBlack).SprintFunc()
 var infoColor = color.New(color.FgHiBlue, color.Bold).SprintFunc()
 var errorColor = color.New(color.FgRed, color.Bold).SprintFunc()
 var warningColor = color.New(color.FgYellow, color.Bold).SprintFunc()
+
+func FormatAddr(logIps bool, addr net.Addr) string {
+	if logIps {
+		return "[" + addr.String() + "] "
+	}
+	return ""
+}
 
 func timeString() string {
 	time := time.Now()

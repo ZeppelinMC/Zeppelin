@@ -36,7 +36,7 @@ func NewWorld(props properties.ServerProperties) (*World, error) {
 	var err error
 	w := &World{
 		path:      props.LevelName,
-		Broadcast: session.NewBroadcast(),
+		Broadcast: session.NewBroadcast(props),
 		props:     props,
 	}
 

@@ -93,8 +93,10 @@ var pkcppool = sync.Pool{
 }
 
 func (conn *Conn) WritePacket(pk packet.Encodeable) error {
-	conn.write_mu.Lock() //TODO: fix concurrent ticking with encryption!
-	defer conn.write_mu.Unlock()
+	if conn.encrypted {
+		conn.write_mu.Lock()
+		defer conn.write_mu.Unlock()
+	} //no lock seems to work fine without encryption (?)
 	if PacketEncodeInterceptor != nil {
 		if PacketEncodeInterceptor(conn, pk) {
 			return nil
@@ -136,7 +138,7 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 			packetBuf.Bytes()[i] |= 0x80
 		}
 
-		_, err := packetBuf.WriteTo(conn)
+		_, err := conn.Write(packetBuf.Bytes())
 		return err
 	} else { // yes compression
 		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len())-6 { // packet is too small to be compressed
@@ -145,7 +147,7 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 				packetBuf.Bytes()[i] |= 0x80
 			}
 
-			_, err := packetBuf.WriteTo(conn)
+			_, err := conn.Write(packetBuf.Bytes())
 			return err
 		} else { // packet is compressed
 			uncompressedLength := int32(packetBuf.Len() - 6)
@@ -165,7 +167,7 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 				packetBuf.Bytes()[i] |= 0x80
 			}
 
-			if _, err := packetBuf.WriteTo(conn); err != nil {
+			if _, err := conn.Write(packetBuf.Bytes()); err != nil {
 				return err
 			}
 
@@ -198,7 +200,7 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 	return conn.Conn.Write(data)
 }
 
-func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
+func (conn *Conn) ReadPacket() (decoded packet.Decodeable, interceptionStopped bool, err error) {
 	conn.read_mu.Lock()
 	defer conn.read_mu.Unlock()
 
@@ -208,22 +210,22 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 	)
 	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
 		if _, err := rd.VarInt(&length); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		if length <= 0 {
-			return nil, fmt.Errorf("malformed packet: empty")
+			return nil, false, fmt.Errorf("malformed packet: empty")
 		}
 		if length > 4096 {
-			return nil, fmt.Errorf("packet too big")
+			return nil, false, fmt.Errorf("packet too big")
 		}
 
 		var packet = make([]byte, length)
 		if _, err := conn.Read(packet); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		id, data, err := encoding.VarInt(packet)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		packetId = id
 		packet = data
@@ -232,7 +234,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 
 		if PacketReadInterceptor != nil {
 			if PacketReadInterceptor(conn, br, packetId) {
-				return nil, fmt.Errorf("stopped by interceptor")
+				return nil, true, nil
 			}
 		}
 
@@ -240,33 +242,33 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 	} else {
 		var packetLength int32
 		if _, err := rd.VarInt(&packetLength); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		if packetLength <= 0 {
-			return nil, fmt.Errorf("malformed packet: empty")
+			return nil, false, fmt.Errorf("malformed packet: empty")
 		}
 		var dataLength int32
 		dataLengthSize, err := rd.VarInt(&dataLength)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		if dataLength < 0 {
-			return nil, fmt.Errorf("malformed packet: negative length")
+			return nil, false, fmt.Errorf("malformed packet: negative length")
 		}
 		if dataLength == 0 { //packet is uncompressed
 			length = packetLength - int32(dataLengthSize)
 			if length < 0 {
-				return nil, fmt.Errorf("malformed packet: negative length")
+				return nil, false, fmt.Errorf("malformed packet: negative length")
 			}
 			if length != 0 {
 				var packet = make([]byte, length)
 				if _, err := conn.Read(packet); err != nil {
-					return nil, err
+					return nil, false, err
 				}
 
 				id, data, err := encoding.VarInt(packet)
 				if err != nil {
-					return nil, err
+					return nil, false, err
 				}
 				packetId = id
 				packet = data
@@ -276,7 +278,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 
 				if PacketReadInterceptor != nil {
 					if PacketReadInterceptor(conn, r, packetId) {
-						return nil, fmt.Errorf("stopped by interceptor")
+						return nil, true, nil
 					}
 				}
 
@@ -295,12 +297,12 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 
 			uncompressedPacket, err := compress.DecompressZlib(packetBuf.Bytes(), &ilength)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 
 			id, data, err := encoding.VarInt(uncompressedPacket)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			packetId = id
 			uncompressedPacket = data
@@ -310,7 +312,7 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 
 			if PacketReadInterceptor != nil {
 				if PacketReadInterceptor(conn, r, packetId) {
-					return nil, fmt.Errorf("stopped by interceptor")
+					return nil, true, nil
 				}
 			}
 
@@ -326,18 +328,18 @@ func (conn *Conn) ReadPacket() (packet.Decodeable, error) {
 			Id:      packetId,
 			Length:  length,
 			Payload: rd,
-		}, nil
+		}, false, nil
 	} else {
 		pk = pc()
 
 		if PacketDecodeInterceptor != nil {
 			if PacketDecodeInterceptor(conn, pk) {
-				return nil, fmt.Errorf("stopped by interceptor")
+				return nil, true, nil
 			}
 		}
 
 		err := pk.Decode(rd)
-		return pk, err
+		return pk, false, err
 	}
 }
 
@@ -390,9 +392,12 @@ var fml2hs = [...]byte{0, 70, 79, 82, 71, 69}
 // Handles the handshake, and status/login state for the connection
 // Returns true if the client is logging in
 func (conn *Conn) handleHandshake() bool {
-	pk, err := conn.ReadPacket()
+	pk, s, err := conn.ReadPacket()
 	if err != nil {
 		conn.writeClassicDisconnect(clientVeryOldMsg)
+		return false
+	}
+	if s {
 		return false
 	}
 	handshaking, ok := pk.(*handshake.Handshaking)
@@ -412,8 +417,8 @@ func (conn *Conn) handleHandshake() bool {
 	switch handshaking.NextState {
 	case handshake.Status:
 		conn.state.Store(StatusState)
-		pk, err := conn.ReadPacket()
-		if err != nil {
+		pk, s, err := conn.ReadPacket()
+		if err != nil || s {
 			return false
 		}
 		switch pac := pk.(type) {
@@ -422,8 +427,8 @@ func (conn *Conn) handleHandshake() bool {
 				return false
 			}
 
-			pk, err = conn.ReadPacket()
-			if err != nil {
+			pk, s, err = conn.ReadPacket()
+			if err != nil || s {
 				return false
 			}
 
@@ -453,8 +458,8 @@ func (conn *Conn) handleHandshake() bool {
 			conn.WritePacket(&login.Disconnect{Reason: text.TextComponent{Text: clientTooOldMsg}})
 			return false
 		}
-		pk, err := conn.ReadPacket()
-		if err != nil {
+		pk, s, err := conn.ReadPacket()
+		if err != nil || s {
 			return false
 		}
 		loginStart, ok := pk.(*login.LoginStart)
@@ -502,8 +507,8 @@ func (conn *Conn) handleHandshake() bool {
 		if err := conn.WritePacket(suc); err != nil {
 			return false
 		}
-		pk, err = conn.ReadPacket()
-		if err != nil {
+		pk, s, err = conn.ReadPacket()
+		if err != nil || s {
 			return false
 		}
 		_, ok = pk.(*login.LoginAcknowledged)

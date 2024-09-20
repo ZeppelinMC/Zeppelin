@@ -150,6 +150,15 @@ func AppendString(data []byte, str string) []byte {
 	return append(data, str...)
 }
 
+func String(data []byte) (string, error) {
+	l, strd, err := VarInt(data)
+	if err != nil {
+		return "", err
+	}
+
+	return unsafe.String(unsafe.SliceData(strd), l), nil
+}
+
 type BitSet []int64
 
 func (set BitSet) Get(i int) bool {

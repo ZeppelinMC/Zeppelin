@@ -68,13 +68,13 @@ func (session *StandardSession) initializeTicker() error {
 				return
 			case <-ticker.C:
 				if err := session.processInput(); err != nil {
-					log.Errorlnf("[%s] Player %s disconnected (tick error: failed to process input: %v) (on tick %d)", session.Addr(), session.Username(), err, tick)
+					log.Errorlnf("%sPlayer %s disconnected (tick error: failed to process input: %v) (on tick %d)", log.FormatAddr(session.config.LogIPs, session.Addr()), session.Username(), err, tick)
 					session.Disconnect(text.Sprint("Tick error"))
 					return
 				}
 				if tick%20 == 0 {
 					if err := session.sendTime(); err != nil {
-						log.Errorlnf("[%s] Player %s disconnected (tick error: failed to update time: %v) (on tick %d)", session.Addr(), session.Username(), err, tick)
+						log.Errorlnf("%sPlayer %s disconnected (tick error: failed to update time: %v) (on tick %d)", log.FormatAddr(session.config.LogIPs, session.Addr()), session.Username(), err, tick)
 						session.Disconnect(text.Sprint("Tick error"))
 						return
 					}

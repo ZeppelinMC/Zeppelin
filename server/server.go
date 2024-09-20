@@ -137,15 +137,21 @@ func (srv *Server) Start(ts time.Time) {
 		}
 	}
 
-	log.Infoln("Preparing world spawn...")
+	log.Info("Preparing world spawn... ")
 	ow := srv.World.Dimension("minecraft:overworld")
+	var chunks int32
 
 	spawnCX, spawnCZ := srv.World.Data.SpawnX>>4, srv.World.Data.SpawnZ>>4
 	for x := spawnCX - srv.cfg.ViewDistance; x < spawnCX+srv.cfg.ViewDistance; x++ {
 		for z := spawnCZ - srv.cfg.ViewDistance; z < spawnCZ+srv.cfg.ViewDistance; z++ {
-			ow.GetChunk(x, z)
+			_, err := ow.GetChunk(x, z)
+			if err == nil {
+				chunks++
+			}
 		}
 	}
+
+	fmt.Printf("cached %d chunks\n\r", chunks)
 
 	srv.timeStart = ts
 	log.Infolnf("Done! (%s)", time.Since(ts))
@@ -170,7 +176,7 @@ func (srv *Server) Start(ts time.Time) {
 }
 
 func (srv *Server) handleNewConnection(conn *net.Conn) {
-	log.Infolnf("[%s] Player attempting to connect: %s (%s)", conn.RemoteAddr(), conn.Username(), conn.UUID())
+	log.Infolnf("%sPlayer attempting to connect: %s (%s)", log.FormatAddr(srv.cfg.LogIPs, conn.RemoteAddr()), conn.Username(), conn.UUID())
 	if _, ok := srv.World.Broadcast.SessionByUsername(conn.Username()); ok {
 		conn.WritePacket(&configuration.Disconnect{
 			Reason: text.TextComponent{Text: "You are already connected to the server from another session. Please disconnect then try again"},

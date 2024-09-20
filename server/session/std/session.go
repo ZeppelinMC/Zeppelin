@@ -147,7 +147,7 @@ func (session *StandardSession) WritePacket(pk packet.Encodeable) error {
 	return session.conn.WritePacket(pk)
 }
 
-func (session *StandardSession) ReadPacket() (packet.Decodeable, error) {
+func (session *StandardSession) ReadPacket() (pk packet.Decodeable, interceptStop bool, err error) {
 	return session.conn.ReadPacket()
 }
 

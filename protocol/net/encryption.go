@@ -33,8 +33,8 @@ func (c *Conn) encrypt() error {
 		VerifyToken:        verifyToken,
 		ShouldAuthenticate: c.listener.cfg.Authenticate,
 	})
-	p, err := c.ReadPacket()
-	if err != nil {
+	p, s, err := c.ReadPacket()
+	if err != nil || s {
 		return err
 	}
 	res, ok := p.(*login.EncryptionResponse)
