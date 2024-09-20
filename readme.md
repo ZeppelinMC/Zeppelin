@@ -1,4 +1,6 @@
+![zeppelinbanner (1)](https://github.com/user-attachments/assets/21605ec4-1253-460e-84c3-d984df14f212)
 # Zeppelin
+
 Highly optimized server implementation written in [Go](https://go.dev) for Minecraft 1.21.1
 
 [Discord Server](https://discord.gg/T8qEtDWPak)
