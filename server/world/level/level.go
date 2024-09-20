@@ -189,6 +189,7 @@ func New(gen region.Generator, props properties.ServerProperties, worldPath stri
 	l.Data.Version.Name = "1.21"
 	l.Data.Version.Series = "main"
 	l.Data.ServerBrands = []string{"Zeppelin"}
+	l.basePath = worldPath
 
 	return l
 }
