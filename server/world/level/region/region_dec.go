@@ -53,9 +53,6 @@ func (r *File) LoadedChunks() int32 {
 	return int32(len(r.chunks))
 }
 
-// 1MiB
-var MaxDecompressedChunkSize = 1024 * 1024
-
 func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	hash := ChunkHash(x, z)
 

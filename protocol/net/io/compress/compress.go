@@ -9,7 +9,7 @@ import (
 	"github.com/4kills/go-zlib"
 )
 
-var Decompressors = sync.Pool{
+var decompressors = sync.Pool{
 	New: func() any {
 		dc, _ := libdeflate.NewDecompressor()
 		return dc

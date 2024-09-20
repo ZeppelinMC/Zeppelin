@@ -28,7 +28,7 @@ func (mgr *Manager) Register(cmds ...Command) {
 	mgr.graph = nil
 }
 
-func (mgr *Manager) Call(command string, caller session.Session) {
+func (mgr *Manager) Call(command string, caller session.DummySession) {
 	arguments := strings.Split(command, " ")
 	if len(arguments) == 0 {
 		caller.SystemMessage(

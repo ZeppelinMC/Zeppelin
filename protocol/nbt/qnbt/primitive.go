@@ -262,12 +262,29 @@ func (d *Decoder) readByteArray(ptr unsafe.Pointer) error {
 	return d.decodeByteArray(int(l), ptr)
 }
 
-func (d *Decoder) decodeByteArray(len int, ptr unsafe.Pointer) error {
+/*func (d *Decoder) decodeByteArray(len int, ptr unsafe.Pointer) error {
 	data, err := d.rd.readBytes(len)
 	if err != nil {
 		return err
 	}
 	copy(unsafe.Slice((*byte)(ptr), len), data)
+
+	return nil
+}
+*/
+
+func (d *Decoder) decodeByteArray(l int, ptr unsafe.Pointer) error {
+	for l > 0 {
+		lr := min(len(d.rd.buf), l)
+		data, err := d.rd.readBytes(lr)
+		if err != nil {
+			return err
+		}
+
+		copy(unsafe.Slice((*byte)(ptr), l), data)
+		l -= lr
+		ptr = unsafe.Add(ptr, lr)
+	}
 
 	return nil
 }

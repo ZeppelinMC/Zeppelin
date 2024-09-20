@@ -6,6 +6,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 	"github.com/zeppelinmc/zeppelin/server"
 	"github.com/zeppelinmc/zeppelin/server/command"
+	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/util"
 )
 
@@ -14,7 +15,15 @@ var debug = command.Command{
 	Aliases:   []string{"f3"},
 	Namespace: "zeppelin",
 	Callback: func(ccc command.CommandCallContext) {
-		player := ccc.Executor.Player()
+		s, ok := ccc.Executor.(session.Session)
+		if !ok {
+			ccc.Executor.SystemMessage(text.TextComponent{
+				Text:  "This command should be used by a player.",
+				Color: "red",
+			})
+			return
+		}
+		player := s.Player()
 		if player == nil {
 			ccc.Executor.SystemMessage(text.TextComponent{
 				Text:  "This command should be used by a player.",
@@ -57,7 +66,7 @@ var debug = command.Command{
 			name, props,
 			util.NormalizeYaw(yaw), pitch,
 			sky+block, sky, block,
-			ccc.Executor.ClientName(),
+			s.ClientName(),
 		))
 	},
 }

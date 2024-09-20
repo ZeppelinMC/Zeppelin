@@ -197,7 +197,7 @@ func (srv *Server) Stop() {
 	log.InfolnClean("Saving player data")
 	srv.Players.SaveAll()
 
-	//srv.World.Save()
+	srv.World.Save()
 	log.InfolnfClean("Server lasted for %s", srv.formatTimestart())
 	srv.stopLoop <- struct{}{}
 }

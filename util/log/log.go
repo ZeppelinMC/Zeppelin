@@ -2,15 +2,18 @@ package log
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/fatih/color"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
 )
 
 var timeColor = color.New(color.FgBlack).SprintFunc()
+var stackColor = color.New(color.FgHiBlack).SprintFunc()
 var infoColor = color.New(color.FgHiBlue, color.Bold).SprintFunc()
 var errorColor = color.New(color.FgRed, color.Bold).SprintFunc()
 var warningColor = color.New(color.FgYellow, color.Bold).SprintFunc()
@@ -75,6 +78,53 @@ var colors = map[string]*color.Color{
 	"light_purple": color.New(color.FgHiMagenta),
 	"yellow":       color.New(color.FgHiYellow),
 	"white":        color.New(color.FgHiWhite),
+}
+
+var stackBuf = sync.Pool{
+	New: func() any {
+		return make([]byte, 1024)
+	},
+}
+
+func stackCallerModule() string {
+	buf := stackBuf.Get().([]byte)
+	defer stackBuf.Put(buf)
+
+	buf = buf[:runtime.Stack(buf, false)]
+	str := unsafe.String(unsafe.SliceData(buf), len(buf))
+
+	for _, line := range strings.Split(str, "\n")[1:] {
+		if len(line) == 0 {
+			continue
+		}
+		isPath := line[0] == '\t'
+		if isPath {
+			continue
+		}
+
+		sp := strings.Split(line, "/")
+		if len(sp) == 0 {
+			continue
+		}
+		i := strings.Index(sp[len(sp)-1], ".")
+		if i != -1 {
+			sp[len(sp)-1] = sp[len(sp)-1][:i]
+		}
+
+		if i := strings.Index(sp[0], "."); i != -1 {
+			sp = sp[2:]
+		}
+
+		modName := sp[0]
+		pkgName := sp[len(sp)-1]
+
+		if pkgName == "log" {
+			continue
+		}
+
+		return modName + "::" + pkgName
+	}
+	return ""
 }
 
 /*
@@ -150,97 +200,97 @@ func Printlnf(format string, v ...any) (i int, err error) {
 
 // prints the contents prefixed by a carriage return + time, blue info text and suffixed with a newline and "> "
 func Infoln(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), infoColor("INFO"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), infoColor("INFO"), stackColor(stackCallerModule()))
 	fmt.Println(v...)
 	fmt.Print("\r> ")
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a new line
 func InfolnClean(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), infoColor("INFO"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), infoColor("INFO"), stackColor(stackCallerModule()))
 	fmt.Print(v...)
 	fmt.Println("\r")
 }
 
 // prints the contents formatted prefixed by a carriage return + blue info text and suffixed with a new line
 func InfolnfClean(format string, v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), infoColor("INFO"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), infoColor("INFO"), stackColor(stackCallerModule()))
 	fmt.Printf(format, v...)
 	fmt.Println("\r")
 }
 
 // prints the contents prefixed by a carriage return + blue info text
 func Info(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), infoColor("INFO"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), infoColor("INFO"), stackColor(stackCallerModule()))
 	fmt.Print(v...)
 }
 
 // prints the contents prefixed by a carriage return + blue info text
 func Infof(format string, v ...any) {
-	fmt.Printf("\r%s %s: %s", timeColor(timeString()), infoColor("INFO"), fmt.Sprintf(format, v...))
+	fmt.Printf("\r%s %s %s: %s", timeColor(timeString()), infoColor("INFO"), stackColor(stackCallerModule()), fmt.Sprintf(format, v...))
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a newline and "> "
 func Infolnf(format string, v ...any) {
-	fmt.Printf("\r%s %s: %s\n\r> ", timeColor(timeString()), infoColor("INFO"), fmt.Sprintf(format, v...))
+	fmt.Printf("\r%s %s %s: %s\n\r> ", timeColor(timeString()), infoColor("INFO"), stackColor(stackCallerModule()), fmt.Sprintf(format, v...))
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a newline and "> "
 func Errorln(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), errorColor("ERROR"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), errorColor("ERROR"), stackColor(stackCallerModule()))
 	fmt.Println(v...)
 	fmt.Print("\r> ")
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a new line
 func ErrorlnClean(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), errorColor("ERROR"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), errorColor("ERROR"), stackColor(stackCallerModule()))
 	fmt.Print(v...)
 	fmt.Println("\r")
 }
 
 // prints the contents prefixed by a carriage return + blue info text
 func Error(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), errorColor("ERROR"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), errorColor("ERROR"), stackColor(stackCallerModule()))
 	fmt.Print(v...)
 }
 
 // prints the contents prefixed by a carriage return + blue info text
 func Errorf(format string, v ...any) {
-	fmt.Printf("\r%s %s: %s", timeColor(timeString()), errorColor("ERROR"), fmt.Sprintf(format, v...))
+	fmt.Printf("\r%s %s %s: %s", timeColor(timeString()), errorColor("ERROR"), stackColor(stackCallerModule()), fmt.Sprintf(format, v...))
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a newline and "> "
 func Errorlnf(format string, v ...any) {
-	fmt.Printf("\r%s %s: %s\n\r> ", timeColor(timeString()), errorColor("ERROR"), fmt.Sprintf(format, v...))
+	fmt.Printf("\r%s %s %s: %s\n\r> ", timeColor(timeString()), errorColor("ERROR"), stackColor(stackCallerModule()), fmt.Sprintf(format, v...))
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a newline and "> "
 func Warnln(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), warningColor("WARN"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), warningColor("WARN"), stackColor(stackCallerModule()))
 	fmt.Println(v...)
 	fmt.Print("\r> ")
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a new line
 func WarnlnClean(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), warningColor("WARN"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), warningColor("WARN"), stackColor(stackCallerModule()))
 	fmt.Print(v...)
 	fmt.Println("\r")
 }
 
 // prints the contents prefixed by a carriage return + blue info text
 func Warn(v ...any) {
-	fmt.Printf("\r%s %s: ", timeColor(timeString()), warningColor("WARN"))
+	fmt.Printf("\r%s %s %s: ", timeColor(timeString()), warningColor("WARN"), stackColor(stackCallerModule()))
 	fmt.Print(v...)
 }
 
 // prints the contents prefixed by a carriage return + blue info text
 func Warnf(format string, v ...any) {
-	fmt.Printf("\r%s %s: %s", timeColor(timeString()), warningColor("WARN"), fmt.Sprintf(format, v...))
+	fmt.Printf("\r%s %s %s: %s", timeColor(timeString()), warningColor("WARN"), stackColor(stackCallerModule()), fmt.Sprintf(format, v...))
 }
 
 // prints the contents prefixed by a carriage return + blue info text and suffixed with a newline and "> "
 func Warnlnf(format string, v ...any) {
-	fmt.Printf("\r%s %s: %s\n\r> ", timeColor(timeString()), warningColor("WARN"), fmt.Sprintf(format, v...))
+	fmt.Printf("\r%s %s %s: %s\n\r> ", timeColor(timeString()), warningColor("WARN"), stackColor(stackCallerModule()), fmt.Sprintf(format, v...))
 }

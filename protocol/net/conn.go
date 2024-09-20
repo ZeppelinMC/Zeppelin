@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"unicode/utf16"
 
-	"github.com/4kills/go-zlib"
 	"github.com/zeppelinmc/zeppelin/protocol/net/cfb8"
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/compress"
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
@@ -154,27 +153,21 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 				packetBuf.Bytes()[i+3] |= 0x80
 			}
 
-			z := compress.WZlib.Get().(*zlib.Writer)
-			defer compress.WZlib.Put(z)
+			compressedPacket, err := compress.CompressZlib(packetBuf.Bytes()[6:], &MaxCompressedPacketSize)
+			if err != nil {
+				return err
+			}
 
-			c := pkcppool.Get().(*bytes.Buffer)
-			c.Reset()
-			defer pkcppool.Put(c)
+			packetBuf.Truncate(6)
+			packetBuf.Write(compressedPacket)
 
-			z.Reset(c)
-			z.Write(packetBuf.Bytes()[6:])
-			z.Flush()
-
-			compressedLength := c.Len() + 3
-
-			if i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(compressedLength)); i != 2 {
+			if i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len())-3); i != 2 {
 				packetBuf.Bytes()[i] |= 0x80
 			}
 
-			if _, err := conn.Write(packetBuf.Bytes()[:6]); err != nil {
+			if _, err := packetBuf.WriteTo(conn); err != nil {
 				return err
 			}
-			_, err := conn.Write(c.Bytes())
 
 			return err
 		}

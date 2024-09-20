@@ -17,9 +17,3 @@ func Size() int {
 
 	return buf.Cap()
 }
-
-func Reset() {
-	buf := Buffers.Get().(*bytes.Buffer)
-	buf.Reset()
-	Buffers.Put(buf)
-}

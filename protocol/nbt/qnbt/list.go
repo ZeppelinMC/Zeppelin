@@ -9,7 +9,7 @@ import (
 )
 
 func (d *Decoder) decodeListSlice(ptr unsafe.Pointer, t *ptrType) error {
-	tag, err := d.rd.readBytesString(1)
+	tag, err := d.readByte2()
 	if err != nil {
 		return err
 	}
@@ -19,7 +19,7 @@ func (d *Decoder) decodeListSlice(ptr unsafe.Pointer, t *ptrType) error {
 		return err
 	}
 
-	if tag == end_t_b {
+	if tag == end_t {
 		return nil
 	}
 
@@ -50,7 +50,7 @@ func (a *array_t) index(i int) unsafe.Pointer {
 }
 
 func (d *Decoder) decodeListArray(a *array_t) error {
-	tag, err := d.rd.readBytesString(1)
+	tag, err := d.readByte2()
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (d *Decoder) decodeListArray(a *array_t) error {
 		return err
 	}
 
-	if tag == end_t_b {
+	if tag == end_t {
 		return nil
 	}
 
@@ -71,7 +71,7 @@ func (d *Decoder) decodeListArray(a *array_t) error {
 	return d.readListArray(tag, l, a)
 }
 
-func (d *Decoder) readListArray(tag string, l int32, a *array_t) error {
+func (d *Decoder) readListArray(tag byte, l int32, a *array_t) error {
 	kind := kindOf(a.elem)
 
 	for i := 0; i < int(l); i++ {
@@ -82,23 +82,23 @@ func (d *Decoder) readListArray(tag string, l int32, a *array_t) error {
 		//}
 
 		switch tag {
-		case byte_t_b:
+		case byte_t:
 			if err := d.readBytePtr(iptr); err != nil {
 				return err
 			}
-		case short_t_b:
+		case short_t:
 			if err := d.readShortPtr(iptr); err != nil {
 				return err
 			}
-		case int_t_b, float_t_b:
+		case int_t, float_t:
 			if err := d.readIntPtr(iptr); err != nil {
 				return err
 			}
-		case long_t_b, double_t_b:
+		case long_t, double_t:
 			if err := d.readLongPtr(iptr); err != nil {
 				return err
 			}
-		case byte_array_t_b:
+		case byte_array_t:
 			switch kind {
 			case array_k:
 				if err := d.readByteArray(iptr); err != nil {
@@ -116,11 +116,11 @@ func (d *Decoder) readListArray(tag string, l int32, a *array_t) error {
 				}
 				setSliceArray(iptr, ptr, int(l))
 			}
-		case string_t_b:
+		case string_t:
 			if err := d.readStringPtr(iptr); err != nil {
 				return err
 			}
-		case long_array_t_b:
+		case long_array_t:
 			switch kind {
 			case array_k:
 				if err := d.readLongArray(iptr); err != nil {
@@ -138,7 +138,7 @@ func (d *Decoder) readListArray(tag string, l int32, a *array_t) error {
 				}
 				setSliceArray(iptr, ptr, int(l))
 			}
-		case int_array_t_b:
+		case int_array_t:
 			switch kind {
 			case array_k:
 				if err := d.readIntArray(iptr); err != nil {
@@ -156,7 +156,7 @@ func (d *Decoder) readListArray(tag string, l int32, a *array_t) error {
 				}
 				setSliceArray(iptr, ptr, int(l))
 			}
-		case compound_t_b:
+		case compound_t:
 			switch kind {
 			case struct_k:
 				s := newStruct((*structType)(unsafe.Pointer(a.elem)), iptr)
@@ -171,7 +171,7 @@ func (d *Decoder) readListArray(tag string, l int32, a *array_t) error {
 						name:         strconv.Itoa(i),
 						expectedKind: "struct/map[string]string",
 						gotKind:      fmt.Sprintf("map[%s]%s", kind_name(kK), kind_name(kE)),
-						tag:          tagName(tag),
+						//tag:          tagName(tag),
 					}
 				}
 
@@ -179,14 +179,14 @@ func (d *Decoder) readListArray(tag string, l int32, a *array_t) error {
 
 				if m == nil {
 					m = make(map[string]string)
-					*(*uintptr)(iptr) = uintptr(unsafe.Pointer(&m))
+					*(*map[string]string)(iptr) = m
 				}
 
 				if err := d.decodeMapString(m); err != nil {
 					return err
 				}
 			}
-		case list_t_b:
+		case list_t:
 			switch kind {
 			case array_k:
 				arr := (*arrayType)(unsafe.Pointer(a.elem))

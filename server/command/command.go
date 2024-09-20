@@ -33,7 +33,7 @@ func (a Arguments) Fallback(i int, fb string) string {
 
 type CommandCallContext struct {
 	Command  Command
-	Executor session.Session
+	Executor session.DummySession
 	Server   any
 
 	Arguments Arguments

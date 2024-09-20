@@ -110,12 +110,13 @@ func (w *World) Dimension(name string) *dimension.Dimension {
 }
 
 func (w *World) Save() {
-	for _, dim := range w.dimensions {
+	/*for _, dim := range w.dimensions {
 		dim.Save()
 		log.Infoln("Saved dimension", dim.Name())
-	}
+	}*/
 
 	level.Create(w.Level)
+	log.Infoln("Saved level")
 	w.lock.Close()
 }
 

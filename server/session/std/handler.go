@@ -49,6 +49,7 @@ func (session *StandardSession) handlePackets() {
 			p, err := session.conn.ReadPacket()
 			if err != nil {
 				log.Infolnf("[%s] Player %s disconnected: lost connection", session.Addr(), session.Username())
+				session.stopTick <- struct{}{}
 				session.broadcast.RemovePlayer(session)
 				return
 			}
@@ -73,13 +74,13 @@ func (session *StandardSession) handlePackets() {
 					session.broadcast.PlayerInfoUpdateSession(session)
 				case *configuration.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						_, data, _ := encoding.VarInt(pk.Data)
-						session.clientName = string(data)
+						i, data, _ := encoding.VarInt(pk.Data)
+						session.clientName = string(data[:i])
 					}
 				case *play.ServerboundPluginMessage:
 					if pk.Channel == "minecraft:brand" {
-						_, data, _ := encoding.VarInt(pk.Data)
-						session.clientName = string(data)
+						i, data, _ := encoding.VarInt(pk.Data)
+						session.clientName = string(data[:i])
 					}
 				case *configuration.AcknowledgeFinishConfiguration:
 					session.conn.SetState(net.PlayState)

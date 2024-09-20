@@ -133,7 +133,7 @@ func (d *Decoder) decodeStructCompound(s *struct_t) error {
 						return err
 					}
 
-					ptr := mallocgc(uintptr(l), nil, false)
+					ptr := mallocgc(uintptr(l), nil, true)
 					if err := d.decodeByteArray(int(l), ptr); err != nil {
 						return err
 					}
@@ -151,7 +151,7 @@ func (d *Decoder) decodeStructCompound(s *struct_t) error {
 						return err
 					}
 
-					ptr := mallocgc(uintptr(l)*8, nil, false)
+					ptr := mallocgc(uintptr(l)*8, nil, true)
 					if err := d.decodeLongArray(int(l), ptr); err != nil {
 						return err
 					}
@@ -169,7 +169,7 @@ func (d *Decoder) decodeStructCompound(s *struct_t) error {
 						return err
 					}
 
-					ptr := mallocgc(uintptr(l)*4, nil, false)
+					ptr := mallocgc(uintptr(l)*4, nil, true)
 					if err := d.decodeIntArray(int(l), ptr); err != nil {
 						return err
 					}
@@ -240,9 +240,8 @@ func (d *Decoder) decodeStructCompound(s *struct_t) error {
 				}
 			}
 		}
+		//fmt.Println(tag, name)
 	}
-
-	return nil
 }
 
 func match(name, tag_b string, t *unsafe2.Type) error {

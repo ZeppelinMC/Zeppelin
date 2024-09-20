@@ -10,7 +10,6 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/protocol/nbt"
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/buffers"
-	"github.com/zeppelinmc/zeppelin/protocol/net/io/compress"
 )
 
 type bufferCloser struct {
@@ -72,10 +71,10 @@ func (f *File) Encode(w *os.File, compressionScheme byte) error {
 				return err
 			}
 		case CompressionZlib:
-			data, err = compress.CompressZlib(chunkBuffer.Bytes(), nil)
+			/*data, err = compress.CompressZlib(chunkBuffer.Bytes(), nil)
 			if err != nil {
 				return err
-			}
+			}*/
 		case CompressionNone:
 			data = chunkBuffer.Bytes()
 		default:

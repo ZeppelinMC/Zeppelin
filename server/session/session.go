@@ -111,7 +111,7 @@ type Session interface {
 	// updates the block entity for the player
 	UpdateBlockEntity(pos pos.BlockPosition, be chunk.BlockEntity) error
 
-	// sent damage event to the client
+	// send damage event to the client
 	DamageEvent(attacker, attacked Session, damageType string) error
 
 	// deletes a signed message for the client
@@ -175,9 +175,11 @@ type DummySession interface {
 	// updates the block entity for the player
 	UpdateBlockEntity(pos pos.BlockPosition, be chunk.BlockEntity) error
 
-	// sent damage event to the client
+	// send damage event to the client
 	DamageEvent(attacker, attacked Session, damageType string) error
 
 	// deletes a signed message for the client
 	DeleteMessage(id int32, sig [256]byte) error
+
+	DespawnEntities(entityIds ...int32) error
 }

@@ -9,8 +9,8 @@ import (
 // Decompress zlib. If decompressedLength is provided, the data returned will only be safe to use until the next operation
 // It is recommmended to provide the decompressed length to avoid allocation. If you don't know it, provide a number likely bigger than the decompressed length.
 func DecompressZlib(compressed []byte, decompressedLength *int) ([]byte, error) {
-	dc := Decompressors.Get().(libdeflate.Decompressor)
-	defer Decompressors.Put(dc)
+	dc := decompressors.Get().(libdeflate.Decompressor)
+	defer decompressors.Put(dc)
 
 	if decompressedLength != nil {
 		dst := bufs.Get().(*bytes.Buffer)

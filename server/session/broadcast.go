@@ -25,7 +25,7 @@ import (
 type Broadcast struct {
 	sessions map[uuid.UUID]Session
 	// a dummy session is not included in the player list
-	dummies     []Session
+	dummies     []DummySession
 	sessions_mu sync.RWMutex
 
 	EventManager EventManager
@@ -34,7 +34,7 @@ type Broadcast struct {
 	previousMessages []play.PreviousMessage
 }
 
-func NewBroadcast(dummies ...Session) *Broadcast {
+func NewBroadcast(dummies ...DummySession) *Broadcast {
 	return &Broadcast{
 		sessions:     make(map[uuid.UUID]Session),
 		dummies:      dummies,
@@ -43,7 +43,7 @@ func NewBroadcast(dummies ...Session) *Broadcast {
 }
 
 // adds a dummy session to the broadcast. A dummy session is not listed in the player list
-func (b *Broadcast) AddDummy(session Session) {
+func (b *Broadcast) AddDummy(session DummySession) {
 	b.sessions_mu.Lock()
 	defer b.sessions_mu.Unlock()
 	b.dummies = append(b.dummies, session)
@@ -207,7 +207,6 @@ func (b *Broadcast) RemoveUUIDs(disconnectionReason text.TextComponent, uuids ..
 // when a player leaves the server
 func (b *Broadcast) RemovePlayer(session Session) {
 	b.sessions_mu.Lock()
-	defer b.sessions_mu.Unlock()
 	delete(b.sessions, session.UUID())
 
 	id := session.Player().EntityId()
@@ -220,6 +219,10 @@ func (b *Broadcast) RemovePlayer(session Session) {
 		ses.PlayerInfoRemove(session.UUID())
 		ses.DespawnEntities(id)
 	}
+
+	b.sessions_mu.Unlock()
+
+	b.EventManager.OnSessionRemove.Trigger(session)
 }
 
 // when a new player joins the server
@@ -284,7 +287,7 @@ func (b *Broadcast) AddPlayer(session Session) {
 	b.sessions[session.UUID()] = session
 
 	b.sessions_mu.Unlock()
-	b.EventManager.OnSessionAdd.call(session)
+	b.EventManager.OnSessionAdd.Trigger(session)
 }
 
 func (b *Broadcast) SpawnPlayer(session Session) {

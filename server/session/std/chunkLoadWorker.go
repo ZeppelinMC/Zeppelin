@@ -56,6 +56,7 @@ func (c ChunkLoadWorker) sendChunksRadius(chunkX, chunkZ, rad int32) error {
 	}); err != nil {
 		return err
 	}
+	c.s.awaitingChunkBatchAcknowledgement.Store(true)
 
 	return nil
 }

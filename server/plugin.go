@@ -60,6 +60,7 @@ func (srv *Server) loadPlugin(name string) {
 	}
 	plugin.basePluginsPath = "plugins"
 	plugin.srv = srv
-	plugin.OnLoad(plugin)
 	os.Mkdir(plugin.Dir(), 0755)
+
+	plugin.OnLoad(plugin)
 }

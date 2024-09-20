@@ -26,6 +26,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	buf := buffers.Buffers.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer buffers.Buffers.Put(buf)
+	bstateId := int32(slices.Index(biomeIndexes, "minecraft:plains"))
 
 	w := encoding.NewWriter(buf)
 
@@ -67,13 +68,13 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	}
 
 	for secI, sec := range chunk.Sections {
-		var blockCount int16
-		var airId = -1
+		var blockCount int16 = 1024
+		//var airId = -1
 		skyLight, blockLight := sec.Light()
 		blockBitsPerEntry, blockPalette, blockStates := sec.BlockStates()
 		biomeBitsPerEntry, biomePalette, biomeStates := sec.Biomes()
 
-		for i, state := range blockPalette {
+		/*for i, state := range blockPalette {
 			name, _ := state.Encode()
 			if name == "minecraft:air" {
 				airId = i
@@ -105,7 +106,7 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 					pos += blockBitsPerEntry
 				}
 			}
-		}
+		}*/
 
 		//Block Count
 		w.Short(blockCount)
@@ -143,16 +144,23 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 
 		switch {
 		case biomeBitsPerEntry == 0:
-			pale := biomePalette[0]
-			stateId := int32(slices.Index(biomeIndexes, pale))
+			//pale := biomePalette[0]
+			/*stateId := int32(slices.Index(biomeIndexes, pale))
+			if stateId == -1 {
+				fmt.Println("h", pale)
+			}*/
 
-			w.VarInt(stateId)
+			w.VarInt(bstateId)
 		case biomeBitsPerEntry >= 1 && biomeBitsPerEntry <= 3:
 			w.VarInt(int32(len(biomePalette)))
 			for _, e := range biomePalette {
-				stateId := int32(slices.Index(biomeIndexes, e))
+				_ = e
+				/*stateId := int32(slices.Index(biomeIndexes, e))
+				if stateId == -1 {
+					fmt.Println("h", e)
+				}*/
 
-				w.VarInt(stateId)
+				w.VarInt(bstateId)
 			}
 		case biomeBitsPerEntry == 6: // no palette
 		default:
