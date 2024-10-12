@@ -142,7 +142,7 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 		return err
 	} else { // yes compression
 		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len())-6 { // packet is too small to be compressed
-			i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len()-6))
+			i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len()-3))
 			if i != 2 {
 				packetBuf.Bytes()[i] |= 0x80
 			}
