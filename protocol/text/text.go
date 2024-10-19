@@ -13,24 +13,24 @@ const (
 )
 
 const (
-	Default    = "minecraft:default"
-	Uniform    = "minecraft:uniform"
-	Alt        = "minecraft:alt"
-	Illageralt = "minecraft:illageralt"
+	FontDefault    = "minecraft:default"
+	FontUniform    = "minecraft:uniform"
+	FontAlt        = "minecraft:alt"
+	FontIllageralt = "minecraft:illageralt"
 )
 
 const (
-	OpenURL         = "open_url"
-	RunCommand      = "run_command"
-	SuggestCommand  = "suggest_command"
-	ChangePage      = "change_page"
-	CopyToClipboard = "copy_to_clipboard"
+	ClickEventOpenURL         = "open_url"
+	ClickEventRunCommand      = "run_command"
+	ClickEventSuggestCommand  = "suggest_command"
+	ClickEventChangePage      = "change_page"
+	ClickEventCopyToClipboard = "copy_to_clipboard"
 )
 
 const (
-	ShowText   = "show_text"
-	ShowItem   = "show_item"
-	ShowEntity = "show_entity"
+	HoverEventShowText   = "show_text"
+	HoverEventShowItem   = "show_item"
+	HoverEventShowEntity = "show_entity"
 )
 
 type ClickEvent struct {
