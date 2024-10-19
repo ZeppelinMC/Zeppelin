@@ -4,12 +4,12 @@ package text
 import "fmt"
 
 const (
-	Text         = "text"
-	Translatable = "translatable"
-	Keybind      = "keybind"
-	Score        = "score"
-	Selector     = "selector"
-	NBT          = "nbt"
+	TypeText         = "text"
+	TypeTranslatable = "translatable"
+	TypeKeybind      = "keybind"
+	TypeScore        = "score"
+	TypeSelector     = "selector"
+	TypeNBT          = "nbt"
 )
 
 const (

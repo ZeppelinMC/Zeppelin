@@ -16,7 +16,7 @@ type BlockEntity struct {
 const PacketIdChunkDataUpdateLight = 0x27
 
 type Heightmaps struct {
-	MOTION_BLOCKING, WORLD_SURFACE [37]int64
+	MOTION_BLOCKING, WORLD_SURFACE []int64
 }
 
 type ChunkDataUpdateLight struct {
