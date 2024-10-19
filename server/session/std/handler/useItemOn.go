@@ -46,10 +46,10 @@ func handleUseItemOn(s *std.StandardSession, pk packet.Decodeable) {
 	}
 
 	itemInHand, ok := s.Player().Inventory().Slot(item.DataSlot(s.Player().SelectedItemSlot()))
-	if !ok {
+	if !ok || itemInHand.Is(item.Air) {
 		return
 	}
-	if itemInHand.Is("beds") {
+	if itemInHand.IsTag("beds") {
 		fmt.Println("is placing bed ")
 	}
 	blockSet, ok := itemInHand.Block()

@@ -92,11 +92,7 @@ var pkcppool = sync.Pool{
 	},
 }
 
-func (conn *Conn) WritePacket(pk packet.Encodeable) error {
-	if conn.encrypted {
-		conn.write_mu.Lock()
-		defer conn.write_mu.Unlock()
-	} //no lock seems to work fine without encryption (?)
+func (conn *Conn) wpk(pk packet.Encodeable) error {
 	if PacketEncodeInterceptor != nil {
 		if PacketEncodeInterceptor(conn, pk) {
 			return nil
@@ -142,7 +138,7 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 		return err
 	} else { // yes compression
 		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len())-6 { // packet is too small to be compressed
-			i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len()-6))
+			i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len()-3))
 			if i != 2 {
 				packetBuf.Bytes()[i] |= 0x80
 			}
@@ -174,6 +170,14 @@ func (conn *Conn) WritePacket(pk packet.Encodeable) error {
 			return err
 		}
 	}
+}
+
+func (conn *Conn) WritePacket(pk packet.Encodeable) error {
+	if conn.encrypted {
+		conn.write_mu.Lock()
+		defer conn.write_mu.Unlock()
+	} //no lock seems to work fine without encryption (?)
+	return conn.wpk(pk)
 }
 
 // 1MiB

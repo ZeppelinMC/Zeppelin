@@ -6,6 +6,7 @@ package level
 
 import (
 	"compress/gzip"
+	"errors"
 	"io"
 	"os"
 	"strconv"
@@ -13,9 +14,11 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/protocol/nbt"
 	"github.com/zeppelinmc/zeppelin/protocol/properties"
-	"github.com/zeppelinmc/zeppelin/server/world/level/region"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/level/seed"
 )
+
+var ErrAlreadyClosed = errors.New("already closed")
 
 var SessionLock = []byte{0xE2, 0x98, 0x83}
 
@@ -126,6 +129,8 @@ type Level struct {
 
 	// the base path of the world
 	basePath string `nbt:"-"`
+
+	closed bool
 }
 
 // worldPath is the base path of the world
@@ -164,7 +169,15 @@ func Create(l Level) error {
 	return nbt.NewEncoder(w).Encode("", l)
 }
 
-func New(gen region.Generator, props properties.ServerProperties, worldPath string) Level {
+func (l *Level) Close() error {
+	if l.closed {
+		return ErrAlreadyClosed
+	}
+	l.closed = true
+	return Create(*l)
+}
+
+func New(gen chunk.Generator, props properties.ServerProperties, worldPath string) Level {
 	var l Level
 	l.Data.SpawnX, l.Data.SpawnY, l.Data.SpawnZ = gen.GenerateWorldSpawn()
 	l.Data.AllowCommands = true
@@ -194,7 +207,7 @@ func New(gen region.Generator, props properties.ServerProperties, worldPath stri
 	return l
 }
 
-func Refresh(props properties.ServerProperties, l *Level) {
+func (l *Level) Refresh(props properties.ServerProperties) {
 	l.Data.AllowCommands = true
 	l.Data.DataPacks.Enabled = []string{"vanilla"}
 	l.Data.Difficulty = diffstr(props.Difficulty)

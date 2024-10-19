@@ -37,5 +37,5 @@ func handleSetCreativeSlot(s *std.StandardSession, pk packet.Decodeable) {
 		return
 	}
 
-	inv.SetSlot(item)
+	inv.Set(item)
 }

@@ -9,6 +9,11 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
 
+type Generator interface {
+	NewChunk(x, z int32) Chunk
+	GenerateWorldSpawn() (x, y, z int32)
+}
+
 const MinChunkY = -4
 
 type BlockEntity struct {

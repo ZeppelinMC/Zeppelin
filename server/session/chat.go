@@ -51,3 +51,30 @@ func (b *Broadcast) SystemChatMessage(content text.TextComponent) {
 		ses.SystemMessage(content)
 	}
 }
+
+func onChatMessage(ev ChatMessageEvent) bool {
+	cfg := ev.Sender.Config()
+	b := ev.Sender.Broadcast()
+
+	if !cfg.EnableChat {
+		return true
+	}
+	if cfg.EnforceSecureProfile && ev.HasSignature {
+		b.SecureChatMessage(ev.Sender, ev.ChatMessage, ev.Index)
+		return true
+	}
+	if cfg.SystemChatFormat == "" {
+		comp := text.TextComponent{Text: ev.Message}
+		//if s.Config().Chat.Colors {
+		//	comp = text.Unmarshal(cm.Message, s.Config().Chat.Formatter.Rune())
+		//}
+		b.DisguisedChatMessage(ev.Sender, comp)
+	}
+	return true
+}
+
+type ChatMessageEvent struct {
+	play.ChatMessage
+	Sender Session
+	Index  int32
+}

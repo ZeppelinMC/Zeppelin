@@ -26,6 +26,10 @@ func (chunk *Chunk) Encode(biomeIndexes []string) *play.ChunkDataUpdateLight {
 	buf := buffers.Buffers.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer buffers.Buffers.Put(buf)
+	return chunk.EncodeBuf(biomeIndexes, buf)
+}
+
+func (chunk *Chunk) EncodeBuf(biomeIndexes []string, buf *bytes.Buffer) *play.ChunkDataUpdateLight {
 	bstateId := int32(slices.Index(biomeIndexes, "minecraft:plains"))
 
 	w := encoding.NewWriter(buf)

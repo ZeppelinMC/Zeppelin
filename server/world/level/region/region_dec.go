@@ -16,16 +16,10 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 )
 
-type Generator interface {
-	NewChunk(x, z int32) chunk.Chunk
-	GenerateWorldSpawn() (x, y, z int32)
-}
-
 type File struct {
 	rx, rz int32
 
-	generateEmpty bool
-	generator     Generator
+	generator chunk.Generator
 
 	reader    io.ReaderAt
 	locations []byte
@@ -41,7 +35,7 @@ func chunkLocation(l int32) (offset, size int32) {
 	return offset * 4096, size * 4096
 }
 
-func (r *File) generateChunkAt(x, z int32, tgt *chunk.Chunk, generator Generator) {
+func (r *File) generateChunkAt(x, z int32, tgt *chunk.Chunk, generator chunk.Generator) {
 	c := generator.NewChunk(x, z)
 
 	*tgt = c
@@ -54,6 +48,14 @@ func (r *File) LoadedChunks() int32 {
 }
 
 func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
+	var chunkBuffer = buffers.Buffers.Get().(*bytes.Buffer)
+	chunkBuffer.Reset()
+	defer buffers.Buffers.Put(chunkBuffer)
+
+	return r.GetChunkBuf(x, z, chunkBuffer)
+}
+
+func (r *File) GetChunkBuf(x, z int32, chunkBuffer *bytes.Buffer) (*chunk.Chunk, error) {
 	hash := ChunkHash(x, z)
 
 	r.chu_mu.Lock()
@@ -61,6 +63,7 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	if c, ok := r.chunks[hash]; ok {
 		return c, nil
 	}
+
 	locationIndex := 4 * ((x & 31) + (z&31)*32)
 	if int(locationIndex) >= len(r.locations) {
 		if r.generator != nil {
@@ -99,10 +102,6 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	}
 
 	var reader = io.NewSectionReader(r.reader, int64(offset)+5, int64(length))
-
-	var chunkBuffer = buffers.Buffers.Get().(*bytes.Buffer)
-	chunkBuffer.Reset()
-	defer buffers.Buffers.Put(chunkBuffer)
 
 	switch compression {
 	case CompressionZlib:
@@ -151,27 +150,33 @@ func (r *File) GetChunk(x, z int32) (*chunk.Chunk, error) {
 			blocks[i] = b
 		}
 
-		r.chunks[hash].Sections[i] = section.New(sec.Y, blocks, sec.BlockStates.Data, sec.Biomes.Palette, sec.Biomes.Data, *(*[]byte)(unsafe.Pointer(&sec.SkyLight)), *(*[]byte)(unsafe.Pointer(&sec.BlockLight)))
+		r.chunks[hash].Sections[i] = section.New(sec.Y,
+			blocks,
+			sec.BlockStates.Data,
+			sec.Biomes.Palette,
+			sec.Biomes.Data,
+			*(*[]byte)(unsafe.Pointer(&sec.SkyLight)),
+			*(*[]byte)(unsafe.Pointer(&sec.BlockLight)),
+		)
 	}
-	if emptySections == len(r.chunks[hash].Sections) && r.generateEmpty && r.generator != nil {
+	/*if emptySections == len(r.chunks[hash].Sections) && r.generateEmpty && r.generator != nil {
 		r.chunks[hash] = new(chunk.Chunk)
 		r.generateChunkAt(x, z, r.chunks[hash], r.generator)
 		return r.chunks[hash], nil
-	}
+	}*/
 
 	return r.chunks[hash], err
 }
 
-func Empty(f *File, rx, rz int32, generateEmpty bool, generator Generator) {
+func Empty(f *File, rx, rz int32, generator chunk.Generator) {
 	*f = File{
 		chunks: make(map[uint64]*chunk.Chunk),
 		rx:     rx, rz: rz,
-		generateEmpty: generateEmpty,
-		generator:     generator,
+		generator: generator,
 	}
 }
 
-func Decode(r io.ReaderAt, f *File, rx, rz int32, generateEmpty bool, generator Generator) error {
+func Decode(r io.ReaderAt, f *File, rx, rz int32, generator chunk.Generator) error {
 	var locationTable = make([]byte, 4096)
 
 	_, err := r.ReadAt(locationTable, 0)
@@ -182,10 +187,9 @@ func Decode(r io.ReaderAt, f *File, rx, rz int32, generateEmpty bool, generator 
 	*f = File{
 		chunks: make(map[uint64]*chunk.Chunk),
 		rx:     rx, rz: rz,
-		generateEmpty: generateEmpty,
-		generator:     generator,
-		locations:     locationTable,
-		reader:        r,
+		generator: generator,
+		locations: locationTable,
+		reader:    r,
 	}
 
 	return nil

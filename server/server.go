@@ -99,6 +99,10 @@ func (srv *Server) setOnConnectionIntercept(i func(conn *net.Conn, stop *bool)) 
 	srv.onConnectionIntercept = i
 }
 
+func (srv *Server) Listener() *net.Listener {
+	return srv.listener
+}
+
 func (srv *Server) provideStatus(*net.Conn) status.StatusResponseData {
 	count := srv.World.Broadcast.NumSession()
 	max := srv.cfg.MaxPlayers

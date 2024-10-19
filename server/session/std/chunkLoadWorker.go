@@ -1,6 +1,9 @@
 package std
 
 import (
+	"bytes"
+
+	"github.com/zeppelinmc/zeppelin/protocol/net/io/buffers"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 )
@@ -85,19 +88,24 @@ func (session *StandardSession) sendSpawnChunks() error {
 		return err
 	}
 
+	buf := buffers.Buffers.Get().(*bytes.Buffer)
+
 	for x := chunkX - viewDistance; x < chunkX+viewDistance; x++ {
 		for z := chunkZ - viewDistance; z < chunkZ+viewDistance; z++ {
-			c, err := session.Dimension().GetChunk(x, z)
+			buf.Reset()
+			c, err := session.Dimension().GetChunkBuf(x, z, buf)
 			if err != nil {
 				continue
 			}
+			buf.Reset()
 
-			if err := session.WritePacket(c.Encode(session.registryIndexes["minecraft:worldgen/biome"])); err != nil {
+			if err := session.WritePacket(c.EncodeBuf(session.registryIndexes["minecraft:worldgen/biome"], buf)); err != nil {
 				return err
 			}
 			chunks++
 		}
 	}
+	buffers.Buffers.Put(buf)
 
 	if err := session.WritePacket(&play.ChunkBatchFinished{
 		BatchSize: chunks,

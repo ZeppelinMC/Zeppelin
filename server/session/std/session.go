@@ -34,6 +34,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
+	"github.com/zeppelinmc/zeppelin/server/world/level/item"
 	"github.com/zeppelinmc/zeppelin/util"
 	a "github.com/zeppelinmc/zeppelin/util/atomic"
 )
@@ -91,6 +92,11 @@ type StandardSession struct {
 
 	// the window id the client is viewing currently, 0 if none (inventory)
 	WindowView atomic.Int32
+
+	// the window state id for this client
+	StateID atomic.Int32
+
+	CarriedItem item.Item
 
 	chunksPerTick atomic.Int32
 }
@@ -384,10 +390,6 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
-	if err := session.sendSpawnChunks(); err != nil {
-		return err
-	}
-
 	x, y, z := session.player.Position()
 	yaw, pitch := session.player.Rotation()
 
@@ -395,7 +397,15 @@ func (session *StandardSession) login() error {
 		return err
 	}
 
+	if err := session.sendSpawnChunks(); err != nil {
+		return err
+	}
+
 	if err := session.WritePacket(&play.GameEvent{Event: play.GameEventStartWaitingChunks}); err != nil {
+		return err
+	}
+
+	if err := session.SynchronizePosition(x, y, z, yaw, pitch); err != nil {
 		return err
 	}
 
@@ -578,14 +588,14 @@ func (session *StandardSession) DeleteMessage(id int32, sig [256]byte) error {
 
 func (session *StandardSession) SendInventory() error {
 	return session.WritePacket(&play.SetContainerContent{
-		StateId: 1,
+		StateId: session.StateID.Add(1),
 		Slots:   session.player.Inventory().EncodeResize(46),
 	})
 }
 
-func (session *StandardSession) setContainerContent(container window.Window) error {
+func (session *StandardSession) SetContainerContent(container window.Window) error {
 	return session.WritePacket(&play.SetContainerContent{
-		StateId:  1,
+		StateId:  session.StateID.Add(1),
 		WindowID: byte(container.Id),
 		Slots:    container.Items.Encode(),
 	})
@@ -608,7 +618,7 @@ func (session *StandardSession) OpenWindow(w *window.Window) error {
 
 	w.Viewers++
 
-	return session.setContainerContent(*w)
+	return session.SetContainerContent(*w)
 }
 
 func (session *StandardSession) Textures() (login.Textures, error) {

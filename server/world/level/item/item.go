@@ -124,8 +124,12 @@ type Item struct {
 }
 
 // Is checks if the tag applies to the item
-func (item *Item) Is(tagName string) bool {
+func (item *Item) IsTag(tagName string) bool {
 	return slices.Index(tags.Tags.Tags["minecraft:item"][tagName], registry.Item.Get(item.Id)) != -1
+}
+
+func (item *Item) Is(i Item) bool {
+	return item.Id == i.Id && item.Components == i.Components
 }
 
 // returns the block of the item, if found

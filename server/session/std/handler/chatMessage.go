@@ -5,6 +5,7 @@ import (
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet"
 	"github.com/zeppelinmc/zeppelin/protocol/net/packet/play"
 	"github.com/zeppelinmc/zeppelin/protocol/text"
+	"github.com/zeppelinmc/zeppelin/server/session"
 	"github.com/zeppelinmc/zeppelin/server/session/std"
 )
 
@@ -18,23 +19,8 @@ func handleChatMessage(s *std.StandardSession, pk packet.Decodeable) {
 			s.Disconnect(text.TextComponent{Text: "Chat message over 256 characters is not allowed"})
 			return
 		}
-		cfg := s.Config()
-
-		if !cfg.EnableChat {
-			return
-		}
-		if cfg.EnforceSecureProfile {
-			i := s.ChatIndex.Add(1)
-			s.Broadcast().SecureChatMessage(s, *cm, i-1)
-			return
-		}
-		if cfg.SystemChatFormat == "" {
-			comp := text.TextComponent{Text: cm.Message}
-			//if s.Config().Chat.Colors {
-			//	comp = text.Unmarshal(cm.Message, s.Config().Chat.Formatter.Rune())
-			//}
-			s.Broadcast().DisguisedChatMessage(s, comp)
-		}
-
+		s.Broadcast().EventManager.OnChatMessage.Trigger(session.ChatMessageEvent{
+			ChatMessage: *cm, Sender: s, Index: s.ChatIndex.Add(1) - 1,
+		})
 	}
 }

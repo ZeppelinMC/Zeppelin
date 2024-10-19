@@ -1,6 +1,8 @@
 package container
 
 import (
+	"fmt"
+
 	"github.com/zeppelinmc/zeppelin/protocol/net/slot"
 	"github.com/zeppelinmc/zeppelin/server/registry"
 	"github.com/zeppelinmc/zeppelin/server/world/level/item"
@@ -42,23 +44,70 @@ func (c Container) Encode() []slot.Slot {
 	return s
 }
 
-// adds the item to the container and replaces the existing one if found, and returns if the operation was successful
-func (c *Container) SetSlot(item item.Item) {
-	for i := range *c {
-		if (*c)[i].Slot == item.Slot {
-			(*c)[i] = item
+// Set adds the item to the container and replaces the existing one if found, and returns if the operation was successful
+func (c *Container) Set(item item.Item) {
+	for x, i := range *c {
+		if i.Slot == item.Slot {
+			(*c)[x] = item
 			return
 		}
 	}
 	*c = append(*c, item)
 }
 
+// Add adds the item to the container and replaces the existing one if found, and returns if the operation was successful
+func (c *Container) SetAt(item item.Item, slot item.DataSlot) {
+	item.Slot = slot
+	c.Set(item)
+}
+
 // finds the item at the specified data slot
-func (c Container) Slot(slot item.DataSlot) (*item.Item, bool) {
+func (c Container) Slot(slot item.DataSlot) (item.Item, bool) {
 	for _, item := range c {
 		if item.Slot == slot {
-			return &item, true
+			return item, true
 		}
 	}
-	return nil, false
+	return item.Air, false
+}
+
+func (c *Container) Merge(slot item.DataSlot, carriedItem *item.Item) {
+	if carriedItem.Is(item.Air) {
+		return
+	}
+	it, ok := c.Slot(slot)
+	if !ok {
+		fmt.Println("nothing occupies slot! setting to", slot, *carriedItem)
+		c.SetAt(*carriedItem, slot)
+
+		s, _ := c.Slot(slot)
+		fmt.Println("new item:", slot, s)
+		return
+	}
+	if !carriedItem.Is(it) || it.Count > 64 {
+		fmt.Println("swap", it, "with", *carriedItem)
+		c.SetAt(*carriedItem, slot)
+		*carriedItem = it
+
+		s, _ := c.Slot(slot)
+		fmt.Println("new item:", slot, s)
+		return
+	}
+
+	it.Count += carriedItem.Count
+	carriedItem.Count = 0
+
+	if it.Count > 64 {
+		carriedItem.Count = it.Count - 64
+
+		it.Count = 64
+	}
+
+	if carriedItem.Count == 0 {
+		*carriedItem = item.Air
+	}
+
+	fmt.Println("new item:", it)
+
+	c.SetAt(it, slot)
 }

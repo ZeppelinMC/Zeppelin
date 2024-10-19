@@ -1,6 +1,7 @@
 package dimension
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"sync"
@@ -10,33 +11,34 @@ import (
 	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/chunk/section"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension/window"
+	"github.com/zeppelinmc/zeppelin/server/world/level"
 	"github.com/zeppelinmc/zeppelin/server/world/level/region"
+	"github.com/zeppelinmc/zeppelin/util/log"
 )
 
-// if generateEmptyChunks is true, the server will override empty chunks with generated ones
-func New(regionPath string, typ string, name string, broadcast *session.Broadcast, generator region.Generator, generateEmptyChunks bool) *Dimension {
+func New(regionPath, typ, name string, broadcast *session.Broadcast, chunkGenerator chunk.Generator, level level.Level) *Dimension {
 	return &Dimension{
 		regions: make(map[uint64]*region.File),
 
-		regionPath:          regionPath,
-		typ:                 typ,
-		name:                name,
-		generator:           generator,
-		broadcast:           broadcast,
-		WindowManager:       window.NewManager(),
-		generateEmptyChunks: generateEmptyChunks && generator != nil,
+		regionPath:    regionPath,
+		typ:           typ,
+		name:          name,
+		generator:     chunkGenerator,
+		broadcast:     broadcast,
+		WindowManager: window.NewManager(),
+		Level:         level,
 	}
 }
 
 type Dimension struct {
 	reg_mu  sync.Mutex
 	regions map[uint64]*region.File
+	Level   level.Level
 
 	broadcast *session.Broadcast
 
-	generator           region.Generator
-	generateEmptyChunks bool
-	WindowManager       *window.WindowManager
+	generator     chunk.Generator
+	WindowManager *window.WindowManager
 
 	typ  string
 	name string
@@ -58,7 +60,9 @@ func (s *Dimension) Name() string {
 
 func (s *Dimension) Save() {
 	s.syncWindows()
-	s.saveAllRegions()
+	//s.saveAllRegions()
+	s.Level.Close()
+	log.Infoln("Saved dimension", s.name)
 }
 
 func (s *Dimension) syncWindows() {
@@ -148,6 +152,20 @@ func (s *Dimension) BlockEntity(x, y, z int32) (*chunk.BlockEntity, bool) {
 	return chunk.BlockEntity(x, y, z)
 }
 
+func (s *Dimension) GetChunkBuf(x, z int32, buf *bytes.Buffer) (*chunk.Chunk, error) {
+	rx, rz := s.chunkPosToRegionPos(x, z)
+	region, err := s.getRegion(rx, rz)
+	if err != nil {
+		if s.generator != nil {
+			region = s.newRegion(rx, rz)
+		} else {
+			return nil, err
+		}
+	}
+
+	return region.GetChunkBuf(x, z, buf)
+}
+
 func (s *Dimension) GetChunk(x, z int32) (*chunk.Chunk, error) {
 	rx, rz := s.chunkPosToRegionPos(x, z)
 	region, err := s.getRegion(rx, rz)
@@ -167,7 +185,7 @@ func (s *Dimension) newRegion(rx, rz int32) *region.File {
 	defer s.reg_mu.Unlock()
 	hash := s.regionHash(rx, rz)
 	s.regions[hash] = new(region.File)
-	region.Empty(s.regions[hash], rx, rz, s.generateEmptyChunks, s.generator)
+	region.Empty(s.regions[hash], rx, rz, s.generator)
 
 	return s.regions[hash]
 }
@@ -213,7 +231,7 @@ func (s *Dimension) openRegion(rx, rz int32) (*region.File, error) {
 
 	s.regions[hash] = new(region.File)
 
-	err = region.Decode(file, s.regions[hash], rx, rz, s.generateEmptyChunks, s.generator)
+	err = region.Decode(file, s.regions[hash], rx, rz, s.generator)
 
 	return s.regions[hash], err
 }

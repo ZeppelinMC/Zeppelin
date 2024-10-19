@@ -1,6 +1,8 @@
 package slot
 
 import (
+	"slices"
+
 	"github.com/zeppelinmc/zeppelin/protocol/net/io/encoding"
 )
 
@@ -10,6 +12,12 @@ type Slot struct {
 	Add       []Component
 	Remove    []int32
 }
+
+func (s Slot) Is(s1 Slot) bool {
+	return s.ItemCount == s1.ItemCount && s.ItemId == s1.ItemId && slices.Equal(s.Add, s1.Add) && slices.Equal(s.Remove, s1.Remove)
+}
+
+var Air Slot
 
 type Component struct {
 	Type int32
@@ -52,6 +60,9 @@ func (s *Slot) Decode(r encoding.Reader) error {
 		if _, err := r.VarInt(&componentAddLength); err != nil {
 			return err
 		}
+		if componentAddLength != 0 {
+			panic("no comp decode!")
+		}
 
 		s.Add = make([]Component, componentAddLength)
 		for _, comp := range s.Add {
@@ -61,6 +72,9 @@ func (s *Slot) Decode(r encoding.Reader) error {
 		}
 
 		var componentRemoveLength int32
+		if componentRemoveLength != 0 {
+			panic("no comp decode!")
+		}
 		if _, err := r.VarInt(&componentRemoveLength); err != nil {
 			return err
 		}

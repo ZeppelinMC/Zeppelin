@@ -40,6 +40,7 @@ var ServerboundPool = map[int32]map[int32]func() packet.Decodeable{
 		0x08: func() packet.Decodeable { return &play.ChunkBatchReceived{} },
 		0x07: func() packet.Decodeable { return &play.PlayerSession{} },
 		0x0A: func() packet.Decodeable { return &play.ClientInformation{} },
+		0x0E: func() packet.Decodeable { return &play.ClickContainer{} },
 		0x0F: func() packet.Decodeable { return &play.CloseContainer{} },
 		0x12: func() packet.Decodeable { return &play.ServerboundPluginMessage{} },
 		0x16: func() packet.Decodeable { return &play.Interact{} },

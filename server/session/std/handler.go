@@ -34,12 +34,13 @@ func (session *StandardSession) readIntercept(pk packet.Decodeable) (stop bool) 
 	return
 }
 
+// kills the session's ticker, and removes it from the server broadcast
 func (session *StandardSession) kill(err bool, reason string) {
 	var logfn = log.Infolnf
 	if err {
 		logfn = log.Errorlnf
 	}
-	logfn("%sPlayer %s disconnected: %s", log.FormatAddr(session.config.LogIPs, session.Addr()), session.Username())
+	logfn("%sPlayer %s disconnected: %s", log.FormatAddr(session.config.LogIPs, session.Addr()), session.Username(), reason)
 	session.stopTick <- struct{}{}
 	session.broadcast.RemovePlayer(session)
 }

@@ -27,7 +27,7 @@ func (e Event[T]) Prepend(handlers ...Handler[T]) {
 
 // Override replaces all of the handlers of the event with the new handlers
 func (e Event[T]) Override(handlers ...Handler[T]) {
-	e.handlers = handlers
+	e.handlers = e.handlers[:copy(e.handlers, handlers)]
 }
 
 // Chan creates a new channel handler
@@ -57,12 +57,14 @@ func (e Event[T]) Trigger(v T) {
 type EventManager struct {
 	OnSessionAdd    Event[Session]
 	OnSessionRemove Event[Session]
+	OnChatMessage   Event[ChatMessageEvent]
 }
 
 // Default is the default event manager
 var Default = EventManager{
 	OnSessionAdd:    NewEvent(onSessionAdd),
 	OnSessionRemove: NewEvent(onSessionRemove),
+	OnChatMessage:   NewEvent(onChatMessage),
 }
 
 func onSessionAdd(s Session) bool {

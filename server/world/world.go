@@ -8,9 +8,9 @@ import (
 
 	"github.com/zeppelinmc/zeppelin/protocol/properties"
 	"github.com/zeppelinmc/zeppelin/server/session"
+	"github.com/zeppelinmc/zeppelin/server/world/chunk"
 	"github.com/zeppelinmc/zeppelin/server/world/dimension"
 	"github.com/zeppelinmc/zeppelin/server/world/level"
-	"github.com/zeppelinmc/zeppelin/server/world/level/region"
 	"github.com/zeppelinmc/zeppelin/server/world/terrain"
 	"github.com/zeppelinmc/zeppelin/util/log"
 )
@@ -67,17 +67,17 @@ func NewWorld(props properties.ServerProperties) (*World, error) {
 			"minecraft:overworld",
 			w.Broadcast,
 			owgen,
-			true,
+			w.Level,
 		),
 	}
 
-	level.Refresh(w.props, &w.Level)
+	w.Level.Refresh(w.props)
 
 	return w, nil
 }
 
 // prepareLevel creates a new level.dat file and other world folders
-func (w *World) prepareLevel(owgen region.Generator, props properties.ServerProperties) {
+func (w *World) prepareLevel(owgen chunk.Generator, props properties.ServerProperties) {
 	w.Level = level.New(owgen, props, w.path)
 
 	os.MkdirAll(w.path+"/playerdata", 0755)
@@ -110,14 +110,11 @@ func (w *World) Dimension(name string) *dimension.Dimension {
 }
 
 func (w *World) Save() {
-	/*for _, dim := range w.dimensions {
+	for _, dim := range w.dimensions {
 		dim.Save()
-		log.Infoln("Saved dimension", dim.Name())
-	}*/
-
-	level.Create(w.Level)
-	log.Infoln("Saved level")
+	}
 	w.lock.Close()
+	log.Infoln("Closed world")
 }
 
 func (w *World) RegisterDimension(name string, dim *dimension.Dimension) {
