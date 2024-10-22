@@ -73,6 +73,8 @@ type ServerProperties struct {
 
 	ViewDistance int32 `properties:"view-distance"`
 	WhiteList    bool  `properties:"white-list"`
+
+	ConnectionsPerSecond int `json:"connections-per-second" yaml:"connections-per-second"`
 }
 
 var Default = ServerProperties{

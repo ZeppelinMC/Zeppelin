@@ -15,7 +15,10 @@ require (
 
 require github.com/oq-x/unsafe2 v0.0.0-20240901191313-2b7bec1d9e3b
 
-require github.com/grailbio/base v0.0.11 // indirect
+require (
+	github.com/grailbio/base v0.0.11 // indirect
+	golang.org/x/time v0.7.0 // indirect
+)
 
 require (
 	github.com/4kills/go-zlib v1.2.0
