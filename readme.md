@@ -5,6 +5,36 @@ Highly optimized server implementation written in [Go](https://go.dev) for Minec
 
 [Discord Server](https://discord.gg/T8qEtDWPak)
 
+## How to start the server
+First, clone the repository
+```
+https://github.com/ZeppelinMC/Zeppelin.git
+```
+
+Install pkg-config
+```
+sudo apt-get install pkg-config
+```
+
+Install Zlib
+```
+sudo apt-get install zlib1g-dev
+```
+
+Build and install libdeflate
+```
+# Install build dependencies
+sudo apt-get install cmake build-essential
+
+# Clone and build libdeflate
+git clone https://github.com/ebiggers/libdeflate.git
+cd libdeflate
+mkdir build && cd build
+cmake ..
+make
+sudo make install
+```
+
 ## Goal
 A fast, efficient, and reliable server, with a plugin API and clean code
 
