@@ -205,7 +205,6 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 	return conn.Conn.Write(data)
 }
 
-// Add this method right after the Conn struct definition, before other methods
 func (conn *Conn) initPacketHandler() {
 	conn.packetHandler = NewPacketHandler(conn)
 }
