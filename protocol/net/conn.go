@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/binary"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -204,147 +203,12 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 	return conn.Conn.Write(data)
 }
 
-func (conn *Conn) ReadPacket() (decoded packet.Decodeable, interceptionStopped bool, err error) {
+func (conn *Conn) ReadPacket() (packet.Decodeable, bool, error) {
 	conn.read_mu.Lock()
 	defer conn.read_mu.Unlock()
 
-	var rd = encoding.NewReader(conn, 0)
-	var (
-		length, packetId int32
-	)
-	if conn.listener.cfg.CompressionThreshold < 0 || !conn.compressionSet { // no compression
-		if _, err := rd.VarInt(&length); err != nil {
-			return nil, false, err
-		}
-		if length <= 0 {
-			return nil, false, fmt.Errorf("malformed packet: empty")
-		}
-		if length > 4096 {
-			return nil, false, fmt.Errorf("packet too big")
-		}
-
-		var packet = make([]byte, length)
-		if _, err := conn.Read(packet); err != nil {
-			return nil, false, err
-		}
-		id, data, err := encoding.VarInt(packet)
-		if err != nil {
-			return nil, false, err
-		}
-		packetId = id
-		packet = data
-		length = int32(len(data))
-		br := bytes.NewReader(packet)
-
-		if PacketReadInterceptor != nil {
-			if PacketReadInterceptor(conn, br, packetId) {
-				return nil, true, nil
-			}
-		}
-
-		rd = encoding.NewReader(br, int(length))
-	} else {
-		var packetLength int32
-		if _, err := rd.VarInt(&packetLength); err != nil {
-			return nil, false, err
-		}
-		if packetLength <= 0 {
-			return nil, false, fmt.Errorf("malformed packet: empty")
-		}
-		var dataLength int32
-		dataLengthSize, err := rd.VarInt(&dataLength)
-		if err != nil {
-			return nil, false, err
-		}
-		if dataLength < 0 {
-			return nil, false, fmt.Errorf("malformed packet: negative length")
-		}
-		if dataLength == 0 { //packet is uncompressed
-			length = packetLength - int32(dataLengthSize)
-			if length < 0 {
-				return nil, false, fmt.Errorf("malformed packet: negative length")
-			}
-			if length != 0 {
-				var packet = make([]byte, length)
-				if _, err := conn.Read(packet); err != nil {
-					return nil, false, err
-				}
-
-				id, data, err := encoding.VarInt(packet)
-				if err != nil {
-					return nil, false, err
-				}
-				packetId = id
-				packet = data
-				length = int32(len(data))
-
-				r := bytes.NewReader(packet)
-
-				if PacketReadInterceptor != nil {
-					if PacketReadInterceptor(conn, r, packetId) {
-						return nil, true, nil
-					}
-				}
-
-				rd = encoding.NewReader(r, int(length))
-			}
-		} else { //packet is compressed
-			length = dataLength
-			compressedLength := packetLength - int32(dataLengthSize)
-
-			var ilength = int(length)
-
-			var packetBuf = pkpool.Get().(*bytes.Buffer)
-			packetBuf.Reset()
-			packetBuf.ReadFrom(io.LimitReader(conn, int64(compressedLength)))
-			defer pkpool.Put(packetBuf)
-
-			uncompressedPacket, err := compress.DecompressZlib(packetBuf.Bytes(), &ilength)
-			if err != nil {
-				return nil, false, err
-			}
-
-			id, data, err := encoding.VarInt(uncompressedPacket)
-			if err != nil {
-				return nil, false, err
-			}
-			packetId = id
-			uncompressedPacket = data
-			length = int32(len(data))
-
-			r := bytes.NewReader(uncompressedPacket)
-
-			if PacketReadInterceptor != nil {
-				if PacketReadInterceptor(conn, r, packetId) {
-					return nil, true, nil
-				}
-			}
-
-			rd = encoding.NewReader(r, int(length))
-		}
-	}
-
-	var pk packet.Decodeable
-	pc, ok := ServerboundPool[conn.state.Load()][packetId]
-
-	if !ok {
-		return packet.UnknownPacket{
-			Id:      packetId,
-			Length:  length,
-			Payload: rd,
-		}, false, nil
-	} else {
-		pk = pc()
-
-		if PacketDecodeInterceptor != nil {
-			if PacketDecodeInterceptor(conn, pk) {
-				return nil, true, nil
-			}
-		}
-
-		err := pk.Decode(rd)
-		return pk, false, err
-	}
+	handler := NewPacketHandler(conn)
+	return handler.readAndDecodePacket()
 }
 
 func (conn *Conn) writeLegacyStatus(status status.StatusResponseData) {

@@ -31,6 +31,16 @@ func AppendLong(data []byte, l int64) []byte {
 	return append(data, byte(l>>56), byte(l>>48), byte(l>>40), byte(l>>32), byte(l>>24), byte(l>>16), byte(l>>8), byte(l))
 }
 
+func VarIntSize(value int32) int32 {
+	ux := uint32(value)
+	size := int32(1)
+	for ux >= 0x80 {
+		size++
+		ux >>= 7
+	}
+	return size
+}
+
 func AppendVarInt(data []byte, value int32) []byte {
 	ux := uint32(value)
 	for ux >= 0x80 {
