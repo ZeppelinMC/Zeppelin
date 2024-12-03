@@ -39,6 +39,8 @@ type Conn struct {
 
 	listener *Listener
 
+	packetHandler *PacketHandler // Add PacketHandler to the struct
+
 	username   string
 	uuid       uuid.UUID
 	properties []login.Property
@@ -135,7 +137,7 @@ func (conn *Conn) wpk(pk packet.Encodeable) error {
 
 		_, err := conn.Write(packetBuf.Bytes())
 		return err
-	} else { // yes compression
+	} else {                                                                   // yes compression
 		if conn.listener.cfg.CompressionThreshold > int32(packetBuf.Len())-6 { // packet is too small to be compressed
 			i := encoding.PutVarInt(packetBuf.Bytes()[:3], int32(packetBuf.Len()-3))
 			if i != 2 {
@@ -203,12 +205,21 @@ func (conn *Conn) Write(data []byte) (i int, err error) {
 	return conn.Conn.Write(data)
 }
 
+// Add this method right after the Conn struct definition, before other methods
+func (conn *Conn) initPacketHandler() {
+	conn.packetHandler = NewPacketHandler(conn)
+}
+
 func (conn *Conn) ReadPacket() (packet.Decodeable, bool, error) {
 	conn.read_mu.Lock()
 	defer conn.read_mu.Unlock()
 
-	handler := NewPacketHandler(conn)
-	return handler.readAndDecodePacket()
+	// Initialize packet handler if not already done
+	if conn.packetHandler == nil {
+		conn.initPacketHandler()
+	}
+
+	return conn.packetHandler.readAndDecodePacket()
 }
 
 func (conn *Conn) writeLegacyStatus(status status.StatusResponseData) {
